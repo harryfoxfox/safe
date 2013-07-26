@@ -65,6 +65,7 @@
 		96E3E6FE17A2ED4F0071439F /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 96E3E6FD17A2ED4F0071439F /* libxml2.dylib */; };
 		96E3E70017A2EE680071439F /* fsconfig.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6FF17A2EE670071439F /* fsconfig.pb.cc */; };
 		96E3E70217A2EE730071439F /* interface.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E70117A2EE730071439F /* interface.pb.cc */; };
+		96E3E70817A332800071439F /* run_encfs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E70717A332800071439F /* run_encfs.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -82,10 +83,6 @@
 		963D09B917A1D89D00AEE673 /* LBXAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LBXAppDelegate.m; sourceTree = "<group>"; };
 		963D09BC17A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		963D09C417A1D89D00AEE673 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
-		963D09CB17A1D89D00AEE673 /* LockboxTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LockboxTests-Info.plist"; sourceTree = "<group>"; };
-		963D09CD17A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		963D09CF17A1D89D00AEE673 /* LockboxTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LockboxTests.h; sourceTree = "<group>"; };
-		963D09D017A1D89D00AEE673 /* LockboxTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LockboxTests.m; sourceTree = "<group>"; };
 		96E3E65117A257DB0071439F /* autosprintf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = autosprintf.cpp; path = encfs/base/autosprintf.cpp; sourceTree = SOURCE_ROOT; };
 		96E3E65217A257DB0071439F /* autosprintf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = autosprintf.h; path = encfs/base/autosprintf.h; sourceTree = SOURCE_ROOT; };
 		96E3E65317A257DB0071439F /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = base64.cpp; path = encfs/base/base64.cpp; sourceTree = SOURCE_ROOT; };
@@ -193,6 +190,8 @@
 		96E3E6FD17A2ED4F0071439F /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = usr/lib/libxml2.dylib; sourceTree = SDKROOT; };
 		96E3E6FF17A2EE670071439F /* fsconfig.pb.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fsconfig.pb.cc; path = encfs/fs/fsconfig.pb.cc; sourceTree = SOURCE_ROOT; };
 		96E3E70117A2EE730071439F /* interface.pb.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = interface.pb.cc; path = encfs/base/interface.pb.cc; sourceTree = SOURCE_ROOT; };
+		96E3E70717A332800071439F /* run_encfs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = run_encfs.cpp; sourceTree = "<group>"; };
+		96E3E70917A332A30071439F /* run_encfs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = run_encfs.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -216,7 +215,6 @@
 				96E3E6F717A2E1470071439F /* libbotan-1.10.a */,
 				96E3E6F217A2DA910071439F /* libglog.a */,
 				963D09AC17A1D89D00AEE673 /* Lockbox */,
-				963D09C917A1D89D00AEE673 /* LockboxTests */,
 				963D09A517A1D89D00AEE673 /* Frameworks */,
 				963D09A417A1D89D00AEE673 /* Products */,
 			);
@@ -253,6 +251,8 @@
 		963D09AC17A1D89D00AEE673 /* Lockbox */ = {
 			isa = PBXGroup;
 			children = (
+				96E3E70917A332A30071439F /* run_encfs.h */,
+				96E3E70717A332800071439F /* run_encfs.cpp */,
 				96E3E6AE17A259750071439F /* webdav-fuse */,
 				96E3E5FE17A2540E0071439F /* tinyxml */,
 				96E3E5FB17A2521A0071439F /* encfs */,
@@ -272,25 +272,6 @@
 				963D09B217A1D89D00AEE673 /* main.m */,
 				963D09B417A1D89D00AEE673 /* Lockbox-Prefix.pch */,
 				963D09B517A1D89D00AEE673 /* Credits.rtf */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		963D09C917A1D89D00AEE673 /* LockboxTests */ = {
-			isa = PBXGroup;
-			children = (
-				963D09CF17A1D89D00AEE673 /* LockboxTests.h */,
-				963D09D017A1D89D00AEE673 /* LockboxTests.m */,
-				963D09CA17A1D89D00AEE673 /* Supporting Files */,
-			);
-			path = LockboxTests;
-			sourceTree = "<group>";
-		};
-		963D09CA17A1D89D00AEE673 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				963D09CB17A1D89D00AEE673 /* LockboxTests-Info.plist */,
-				963D09CC17A1D89D00AEE673 /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -674,6 +655,7 @@
 				96E3E6EA17A25A1A0071439F /* tinyxmlparser.cpp in Sources */,
 				96E3E70017A2EE680071439F /* fsconfig.pb.cc in Sources */,
 				96E3E70217A2EE730071439F /* interface.pb.cc in Sources */,
+				96E3E70817A332800071439F /* run_encfs.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -702,14 +684,6 @@
 				963D09BC17A1D89D00AEE673 /* en */,
 			);
 			name = MainMenu.xib;
-			sourceTree = "<group>";
-		};
-		963D09CC17A1D89D00AEE673 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				963D09CD17A1D89D00AEE673 /* en */,
-			);
-			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

@@ -11,5 +11,15 @@
 @interface LBXAppDelegate : NSObject <NSApplicationDelegate>
 
 @property (assign) IBOutlet NSWindow *window;
+@property (assign) IBOutlet NSPathControl *srcPathControl;
+@property (assign) IBOutlet NSPathControl *dstPathControl;
+@property (assign) IBOutlet NSSecureTextField *passwordTextField;
+@property (assign) IBOutlet NSPanel *sheetPanel;
+@property (assign) IBOutlet NSProgressIndicator *mountProgressIndicator;
+
+
+
+- (IBAction)mountEncryptedFS:(id)sender;
+- (void)onMountDone:(id)args;
 
 @end
