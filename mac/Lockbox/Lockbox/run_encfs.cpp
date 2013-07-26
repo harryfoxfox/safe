@@ -65,7 +65,7 @@ static struct fuse_operations encfs_oper = {
 };
 
 bool
-run_encfs(const char *encrypted_path, const char *password) {
+run_encfs(const char *encrypted_path, char *password) {
   google::InitGoogleLogging("encfs");
   google::InstallFailureSignalHandler();
 
@@ -77,6 +77,7 @@ run_encfs(const char *encrypted_path, const char *password) {
   shared_ptr<EncFS_Opts> opts = shared_ptr<EncFS_Opts>(new EncFS_Opts());
   opts->configMode = Config_Paranoia;
   opts->rootDir = encrypted_path_str;
+  opts->rawPass = password;
 
   EncFS_Context *ctx = new EncFS_Context();
   ctx->publicFilesystem = opts->ownerCreate;

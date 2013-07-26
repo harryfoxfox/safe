@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 bool
-run_encfs(const char *encrypted_path, const char *password);
+run_encfs(const char *encrypted_path, char *password);
 
 #ifdef __cplusplus
 }
