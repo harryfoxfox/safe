@@ -20,6 +20,20 @@
                ReferencedContainer = "container:Lockbox.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "963D09C217A1D89D00AEE673"
+               BuildableName = "LockboxTests.octest"
+               BlueprintName = "LockboxTests"
+               ReferencedContainer = "container:Lockbox.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

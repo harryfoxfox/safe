@@ -67,6 +67,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		9676F35517A70B54004BF276 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 963D099B17A1D89D00AEE673 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9676F35117A705DB004BF276;
+			remoteInfo = protobuf;
+		};
 		969321D317A5EBFA002B0C9A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 963D099B17A1D89D00AEE673 /* Project object */;
@@ -198,7 +205,6 @@
 		96E3E6E317A25A1A0071439F /* tinyxml.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxml.cpp; path = tinyxml/tinyxml.cpp; sourceTree = SOURCE_ROOT; };
 		96E3E6E517A25A1A0071439F /* tinyxmlerror.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxmlerror.cpp; path = tinyxml/tinyxmlerror.cpp; sourceTree = SOURCE_ROOT; };
 		96E3E6E617A25A1A0071439F /* tinyxmlparser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxmlparser.cpp; path = tinyxml/tinyxmlparser.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E6F917A2E5070071439F /* protobuf.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = protobuf.xcconfig; sourceTree = "<group>"; };
 		96E3E6FB17A2E8AA0071439F /* tinyxml.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyxml.h; path = tinyxml/tinyxml.h; sourceTree = SOURCE_ROOT; };
 		96E3E6FD17A2ED4F0071439F /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = usr/lib/libxml2.dylib; sourceTree = SDKROOT; };
 		96E3E6FF17A2EE670071439F /* fsconfig.pb.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fsconfig.pb.cc; path = encfs/fs/fsconfig.pb.cc; sourceTree = SOURCE_ROOT; };
@@ -224,7 +230,6 @@
 			isa = PBXGroup;
 			children = (
 				96E3E6FD17A2ED4F0071439F /* libxml2.dylib */,
-				96E3E6F917A2E5070071439F /* protobuf.xcconfig */,
 				963D09AC17A1D89D00AEE673 /* Lockbox */,
 				963D09A517A1D89D00AEE673 /* Frameworks */,
 				963D09A417A1D89D00AEE673 /* Products */,
@@ -438,6 +443,20 @@
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
+		9676F35117A705DB004BF276 /* protobuf */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "-j4 $(ACTION)";
+			buildConfigurationList = 9676F35417A705DB004BF276 /* Build configuration list for PBXLegacyTarget "protobuf" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "$(SRCROOT)/protobuf";
+			dependencies = (
+			);
+			name = protobuf;
+			passBuildSettingsInEnvironment = 1;
+			productName = protobuf;
+		};
 		969321CF17A5EB95002B0C9A /* Botan */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "-j4 $(ACTION)";
@@ -484,6 +503,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				9676F35617A70B54004BF276 /* PBXTargetDependency */,
 				969321DA17A5F912002B0C9A /* PBXTargetDependency */,
 				969321D417A5EBFA002B0C9A /* PBXTargetDependency */,
 			);
@@ -517,6 +537,7 @@
 				963D09A217A1D89D00AEE673 /* Lockbox */,
 				969321CF17A5EB95002B0C9A /* Botan */,
 				969321D517A5F7AE002B0C9A /* google-glog */,
+				9676F35117A705DB004BF276 /* protobuf */,
 			);
 		};
 /* End PBXProject section */
@@ -591,7 +612,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "echo \"Generating protobuf code\" `date`\ncd \"${SRCROOT}/encfs/protos\"\nprotoc --cpp_out=../base interface.proto\nprotoc --cpp_out=../fs fsconfig.proto\n# because fsconfig.pb.h imports interface\ncp ../base/interface.pb.h ../fs\n\ncd \"${SRCROOT}\"\necho -n \"PROTOBUF_CFLAGS = \" > protobuf.xcconfig\npkg-config --cflags protobuf >> protobuf.xcconfig\necho -n \"PROTOBUF_LDFLAGS = \" >> protobuf.xcconfig\npkg-config --libs protobuf >> protobuf.xcconfig\n";
+			shellScript = "echo \"Generating protobuf code\" `date`\ncd \"${SRCROOT}/encfs/protos\"\n\"${BUILT_PRODUCTS_DIR}/prefix/bin/protoc\" --cpp_out=../base interface.proto\n\"${BUILT_PRODUCTS_DIR}/prefix/bin/protoc\" --cpp_out=../fs fsconfig.proto\n# because fsconfig.pb.h imports interface\ncp ../base/interface.pb.h ../fs";
 		};
 		96E3E6FC17A2E8BB0071439F /* Copy tinyxml.h to system */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -675,6 +696,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		9676F35617A70B54004BF276 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9676F35117A705DB004BF276 /* protobuf */;
+			targetProxy = 9676F35517A70B54004BF276 /* PBXContainerItemProxy */;
+		};
 		969321D417A5EBFA002B0C9A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 969321CF17A5EB95002B0C9A /* Botan */;
@@ -776,7 +802,6 @@
 		};
 		963D09D517A1D89D00AEE673 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 96E3E6F917A2E5070071439F /* protobuf.xcconfig */;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libstdc++";
@@ -802,6 +827,7 @@
 					"$(PROTOBUF_LDFLAGS)",
 					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libglog.a",
 					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libbotan-1.10.a",
+					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libprotobuf.a",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/encfs $(DERIVED_FILE_DIR)/user_headers";
@@ -811,7 +837,6 @@
 		};
 		963D09D617A1D89D00AEE673 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 96E3E6F917A2E5070071439F /* protobuf.xcconfig */;
 			buildSettings = {
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libstdc++";
@@ -837,10 +862,32 @@
 					"$(PROTOBUF_LDFLAGS)",
 					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libglog.a",
 					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libbotan-1.10.a",
+					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libprotobuf.a",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/encfs $(DERIVED_FILE_DIR)/user_headers";
 				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		9676F35217A705DB004BF276 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		9676F35317A705DB004BF276 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -907,6 +954,14 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		9676F35417A705DB004BF276 /* Build configuration list for PBXLegacyTarget "protobuf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9676F35217A705DB004BF276 /* Debug */,
+				9676F35317A705DB004BF276 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		969321D017A5EB96002B0C9A /* Build configuration list for PBXLegacyTarget "Botan" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -914,6 +969,7 @@
 				969321D217A5EB96002B0C9A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		969321D617A5F7AF002B0C9A /* Build configuration list for PBXLegacyTarget "google-glog" */ = {
 			isa = XCConfigurationList;
@@ -922,6 +978,7 @@
 				969321D817A5F7AF002B0C9A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
