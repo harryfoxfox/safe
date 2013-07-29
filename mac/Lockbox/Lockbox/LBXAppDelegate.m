@@ -37,13 +37,12 @@ run_mount_webdav_process_fn(void *p) {
     if (ret_asprintf < 0) {
         abort();
     }
-    
-    
+
     time_t finish = time(NULL);
     if (finish < 0) {
         abort();
     }
-    
+
     bool mounted = false;
     finish += 60 * 60;
     while (!mounted) {
@@ -51,13 +50,15 @@ run_mount_webdav_process_fn(void *p) {
         if (cur_time >= finish) {
             break;
         }
-        
+
         int ret = system(command);
         NSLog(@"RET FROM SYSTEM: %d <- \"%s\"", ret, command);
         mounted = !ret;
     }
-    
+
     [(__bridge LBXAppDelegate *)args->delegate performSelectorOnMainThread:@selector(onMountDone:) withObject:nil waitUntilDone:NO];
+    
+    return NULL;
 }
 
 static void *
@@ -86,20 +87,31 @@ mount_webdav_thread_fn(void *p) {
 
 @implementation LBXAppDelegate
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
-{
-    [self.srcPathControl setURL:[NSURL fileURLWithPath:@"/Users/rian/testenc"]];
-    [self.dstPathControl setURL:[NSURL fileURLWithPath:@"/Users/rian/testdenc"]];
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    [self.srcPathControl setURL:[NSURL fileURLWithPath:NSHomeDirectory()]];
+    [self.dstPathControl setURL:[NSURL fileURLWithPath:NSHomeDirectory()]];
 }
 
 - (void)awakeFromNib {
 }
 
 - (void)onMountDone:(id)args {
+    char *sup;
+    int ret = asprintf(&sup, "open \"%s\"", self.dstPathControl.URL.path.UTF8String);
+    if (ret < 0) {
+        abort();
+    }
+
     [self.window close];
+
+    system(sup);
+
+    free(sup);
 }
 
 - (IBAction)mountEncryptedFS:(id)sender {
+    /* TODO: check if input is valid */
+
     [self.mountProgressIndicator startAnimation:self];
     
     [NSApp beginSheet: self.sheetPanel

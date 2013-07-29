@@ -66,6 +66,9 @@ static struct fuse_operations encfs_oper = {
 
 bool
 run_encfs(const char *encrypted_path, char *password) {
+  FLAGS_logtostderr = 1;
+  FLAGS_minloglevel = 0; // DEBUG and above.
+
   google::InitGoogleLogging("encfs");
   google::InstallFailureSignalHandler();
 
@@ -73,7 +76,7 @@ run_encfs(const char *encrypted_path, char *password) {
 
   // context is not a smart pointer because it will live for the life of
   // the filesystem.
-  std::string encrypted_path_str(encrypted_path);
+  string encrypted_path_str(encrypted_path);
   shared_ptr<EncFS_Opts> opts = shared_ptr<EncFS_Opts>(new EncFS_Opts());
   opts->configMode = Config_Paranoia;
   opts->rootDir = encrypted_path_str;
@@ -87,7 +90,7 @@ run_encfs(const char *encrypted_path, char *password) {
 
   if (rootInfo) {
     // set the globally visible root directory node
-    ctx->setRoot( rootInfo->root );
+    ctx->setRoot(rootInfo->root);
     ctx->args = shared_ptr<EncFS_Args>();
     ctx->opts = opts;
 
@@ -102,7 +105,6 @@ run_encfs(const char *encrypted_path, char *password) {
       char arg1[] = "-s";
       char *argv[2] = {arg0, arg1};
       int res = fuse_main(argc, argv, &encfs_oper, (void *) ctx);
-
       if (!res) {
         returnCode = EXIT_SUCCESS;
       }

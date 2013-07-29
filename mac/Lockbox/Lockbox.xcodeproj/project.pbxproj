@@ -10,7 +10,6 @@
 		963D09A717A1D89D00AEE673 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 963D09A617A1D89D00AEE673 /* Cocoa.framework */; };
 		963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 963D09AF17A1D89D00AEE673 /* InfoPlist.strings */; };
 		963D09B317A1D89D00AEE673 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 963D09B217A1D89D00AEE673 /* main.m */; };
-		963D09B717A1D89D00AEE673 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 963D09B517A1D89D00AEE673 /* Credits.rtf */; };
 		963D09BA17A1D89D00AEE673 /* LBXAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 963D09B917A1D89D00AEE673 /* LBXAppDelegate.m */; };
 		963D09BD17A1D89D00AEE673 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963D09BB17A1D89D00AEE673 /* MainMenu.xib */; };
 		96E3E65F17A257DB0071439F /* autosprintf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65117A257DB0071439F /* autosprintf.cpp */; };
@@ -61,12 +60,28 @@
 		96E3E6E817A25A1A0071439F /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6E317A25A1A0071439F /* tinyxml.cpp */; };
 		96E3E6E917A25A1A0071439F /* tinyxmlerror.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6E517A25A1A0071439F /* tinyxmlerror.cpp */; };
 		96E3E6EA17A25A1A0071439F /* tinyxmlparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6E617A25A1A0071439F /* tinyxmlparser.cpp */; };
-		96E3E6FA17A2E5070071439F /* protobuf.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 96E3E6F917A2E5070071439F /* protobuf.xcconfig */; };
 		96E3E6FE17A2ED4F0071439F /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 96E3E6FD17A2ED4F0071439F /* libxml2.dylib */; };
 		96E3E70017A2EE680071439F /* fsconfig.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6FF17A2EE670071439F /* fsconfig.pb.cc */; };
 		96E3E70217A2EE730071439F /* interface.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E70117A2EE730071439F /* interface.pb.cc */; };
 		96E3E70817A332800071439F /* run_encfs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E70717A332800071439F /* run_encfs.cpp */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		969321D317A5EBFA002B0C9A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 963D099B17A1D89D00AEE673 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 969321CF17A5EB95002B0C9A;
+			remoteInfo = Botan;
+		};
+		969321D917A5F912002B0C9A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 963D099B17A1D89D00AEE673 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 969321D517A5F7AE002B0C9A;
+			remoteInfo = "google-glog";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		963D09A317A1D89D00AEE673 /* Lockbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lockbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -183,8 +198,6 @@
 		96E3E6E317A25A1A0071439F /* tinyxml.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxml.cpp; path = tinyxml/tinyxml.cpp; sourceTree = SOURCE_ROOT; };
 		96E3E6E517A25A1A0071439F /* tinyxmlerror.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxmlerror.cpp; path = tinyxml/tinyxmlerror.cpp; sourceTree = SOURCE_ROOT; };
 		96E3E6E617A25A1A0071439F /* tinyxmlparser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxmlparser.cpp; path = tinyxml/tinyxmlparser.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E6F217A2DA910071439F /* libglog.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglog.a; path = "google-glog/.libs/libglog.a"; sourceTree = "<group>"; };
-		96E3E6F717A2E1470071439F /* libbotan-1.10.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libbotan-1.10.a"; path = "botan/libbotan-1.10.a"; sourceTree = "<group>"; };
 		96E3E6F917A2E5070071439F /* protobuf.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = protobuf.xcconfig; sourceTree = "<group>"; };
 		96E3E6FB17A2E8AA0071439F /* tinyxml.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyxml.h; path = tinyxml/tinyxml.h; sourceTree = SOURCE_ROOT; };
 		96E3E6FD17A2ED4F0071439F /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = usr/lib/libxml2.dylib; sourceTree = SDKROOT; };
@@ -212,8 +225,6 @@
 			children = (
 				96E3E6FD17A2ED4F0071439F /* libxml2.dylib */,
 				96E3E6F917A2E5070071439F /* protobuf.xcconfig */,
-				96E3E6F717A2E1470071439F /* libbotan-1.10.a */,
-				96E3E6F217A2DA910071439F /* libglog.a */,
 				963D09AC17A1D89D00AEE673 /* Lockbox */,
 				963D09A517A1D89D00AEE673 /* Frameworks */,
 				963D09A417A1D89D00AEE673 /* Products */,
@@ -426,13 +437,42 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXLegacyTarget section */
+		969321CF17A5EB95002B0C9A /* Botan */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "-j4 $(ACTION)";
+			buildConfigurationList = 969321D017A5EB96002B0C9A /* Build configuration list for PBXLegacyTarget "Botan" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "$(SRCROOT)/botan";
+			dependencies = (
+			);
+			name = Botan;
+			passBuildSettingsInEnvironment = 1;
+			productName = Botan;
+		};
+		969321D517A5F7AE002B0C9A /* google-glog */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "-j4 $(ACTION)";
+			buildConfigurationList = 969321D617A5F7AF002B0C9A /* Build configuration list for PBXLegacyTarget "google-glog" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "$(SRCROOT)/google-glog";
+			dependencies = (
+			);
+			name = "google-glog";
+			passBuildSettingsInEnvironment = 1;
+			productName = "google-glog";
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
 		963D09A217A1D89D00AEE673 /* Lockbox */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 963D09D417A1D89D00AEE673 /* Build configuration list for PBXNativeTarget "Lockbox" */;
 			buildPhases = (
-				96E3E6F117A2D81A0071439F /* Build glog */,
-				96E3E6F617A2DF520071439F /* Build botan */,
 				96E3E6EF17A2D4540071439F /* Copy fdevent.h & fuse.h */,
 				96E3E6FC17A2E8BB0071439F /* Copy tinyxml.h to system */,
 				96E3E6F417A2DBBE0071439F /* Create encfs config.h */,
@@ -444,6 +484,8 @@
 			buildRules = (
 			);
 			dependencies = (
+				969321DA17A5F912002B0C9A /* PBXTargetDependency */,
+				969321D417A5EBFA002B0C9A /* PBXTargetDependency */,
 			);
 			name = Lockbox;
 			productName = Lockbox;
@@ -473,6 +515,8 @@
 			projectRoot = "";
 			targets = (
 				963D09A217A1D89D00AEE673 /* Lockbox */,
+				969321CF17A5EB95002B0C9A /* Botan */,
+				969321D517A5F7AE002B0C9A /* google-glog */,
 			);
 		};
 /* End PBXProject section */
@@ -483,9 +527,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
-				963D09B717A1D89D00AEE673 /* Credits.rtf in Resources */,
 				963D09BD17A1D89D00AEE673 /* MainMenu.xib in Resources */,
-				96E3E6FA17A2E5070071439F /* protobuf.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -494,14 +536,14 @@
 /* Begin PBXShellScriptBuildPhase section */
 		96E3E6EF17A2D4540071439F /* Copy fdevent.h & fuse.h */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/../../webdav-fuse/fdevent_select.h",
-				"$(SRCROOT)/../../webdav-fuse/fuse.h",
-				"$(SRCROOT)/../../webdav-fuse/fuse_common.h",
-				"$(SRCROOT)/../../webdav-fuse/fuse_opt.h",
+				"$(SRCROOT)/../../webdav-fuse/src/fdevent_select.h",
+				"$(SRCROOT)/../../webdav-fuse/src/fuse.h",
+				"$(SRCROOT)/../../webdav-fuse/src/fuse_common.h",
+				"$(SRCROOT)/../../webdav-fuse/src/fuse_opt.h",
 			);
 			name = "Copy fdevent.h & fuse.h";
 			outputPaths = (
@@ -512,42 +554,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "mkdir -p \"${DERIVED_FILE_DIR}/user_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fdevent_select.h\" \"${DERIVED_FILE_DIR}/user_headers/fdevent.h\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse.h\" \"${DERIVED_FILE_DIR}/system_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse_common.h\" \"${DERIVED_FILE_DIR}/system_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse_opt.h\" \"${DERIVED_FILE_DIR}/system_headers\"";
-		};
-		96E3E6F117A2D81A0071439F /* Build glog */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Build glog";
-			outputPaths = (
-				"$(SRCROOT)/google-glog/install-dir/lib/libglog.a",
-				"$(DERIVED_FILE_DIR)/system_headers/glog/**",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "cd google-glog\nif [ ! -e Makefile ]; then ./configure \"--prefix=$SRCROOT/google-glog/install-dir\"; fi\nmake install\n\n# copy headers\ncp -r install-dir/include/glog \"${DERIVED_FILE_DIR}/system_headers/glog\"";
+			shellScript = "echo \"Generating fdevent.h & fuse.h\" `date`\nmkdir -p \"${DERIVED_FILE_DIR}/user_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fdevent_select.h\" \"${DERIVED_FILE_DIR}/user_headers/fdevent.h\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse.h\" \"${DERIVED_FILE_DIR}/system_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse_common.h\" \"${DERIVED_FILE_DIR}/system_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse_opt.h\" \"${DERIVED_FILE_DIR}/system_headers\"";
 		};
 		96E3E6F417A2DBBE0071439F /* Create encfs config.h */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/Lockbox/encfs-config.h",
 			);
 			name = "Create encfs config.h";
 			outputPaths = (
-				"${SRCROOT}/encfs/base/config.h",
+				"$(SRCROOT)/encfs/base/config.h",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cat <<EOF > ${SRCROOT}/encfs/base/config.h\n#define VERSION \"2.0\"\n\n//#define HAVE_ATTR_XATTR_H\n#define HAVE_SYS_XATTR_H\n#define XATTR_ADD_OPT\n#define HAVE_COMMON_CRYPTO\n\n#define HAVE_TR1_MEMORY\n#define HAVE_TR1_UNORDERED_MAP\n#define HAVE_TR1_UNORDERED_SET\n#define HAVE_TR1_TUPLE\n\n//#define HAVE_VALGRIND_VALGRIND_H\n//#define HAVE_VALGRIND_MEMCHECK_H\n\n//#define WITH_OPENSSL\n//#define WITH_COMMON_CRYPTO\n#define WITH_BOTAN\n#define HAVE_SEC_RANDOM_H\n\n#define HAVE_EVP_BF\n#define HAVE_EVP_AES\n#define HAVE_EVP_AES_XTS\n\n#define HAVE_LCHMOD\n\n/* TODO: add other thread library support. */\n#define CMAKE_USE_PTHREADS_INIT\nEOF";
+			shellScript = "echo \"Generating encfs/base/config.h\" `date`\ncp \"${SRCROOT}/Lockbox/encfs-config.h\" \"${SRCROOT}/encfs/base/config.h\"";
 		};
 		96E3E6F517A2DEC90071439F /* Create encfs protobuf code */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputPaths = (
@@ -556,33 +583,19 @@
 			);
 			name = "Create encfs protobuf code";
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/encfs/base/interface.pb.cc",
-				"$(DERIVED_FILE_DIR)/encfs/base/interface.pb.h",
-				"$(DERIVED_FILE_DIR)/encfs/fs/fsconfig.pb.h",
-				"$(DERIVED_FILE_DIR)/encfs/fs/fsconfig.pb.cc",
+				"$(SRCROOT)/encfs/base/interface.pb.cc",
+				"$(SRCROOT)/encfs/base/interface.pb.h",
+				"$(SRCROOT)/encfs/fs/fsconfig.pb.h",
+				"$(SRCROOT)/encfs/fs/fsconfig.pb.cc",
+				"$(SRCROOT)/encfs/fs/interface.pb.h",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd ${SRCROOT}/encfs/protos\nprotoc --cpp_out=../base interface.proto\nprotoc --cpp_out=../fs fsconfig.proto\n# because fsconfig.pb.h imports interface\ncp ../base/interface.pb.h ../fs\n\ncd ${SRCROOT}\necho -n \"PROTOBUF_CFLAGS = \" > protobuf.xcconfig\npkg-config --cflags protobuf >> protobuf.xcconfig\necho -n \"PROTOBUF_LDFLAGS = \" >> protobuf.xcconfig\npkg-config --libs protobuf >> protobuf.xcconfig\n";
-		};
-		96E3E6F617A2DF520071439F /* Build botan */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Build botan";
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/system_headers/botan/**",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "cd botan\nmkdir -p install\nif [ ! -e Makefile ]; then ./configure.py --prefix=./install; fi\nmake install\n\ncp -r install/include/botan-1.10/botan ${DERIVED_FILE_DIR}/system_headers/botan";
+			shellScript = "echo \"Generating protobuf code\" `date`\ncd \"${SRCROOT}/encfs/protos\"\nprotoc --cpp_out=../base interface.proto\nprotoc --cpp_out=../fs fsconfig.proto\n# because fsconfig.pb.h imports interface\ncp ../base/interface.pb.h ../fs\n\ncd \"${SRCROOT}\"\necho -n \"PROTOBUF_CFLAGS = \" > protobuf.xcconfig\npkg-config --cflags protobuf >> protobuf.xcconfig\necho -n \"PROTOBUF_LDFLAGS = \" >> protobuf.xcconfig\npkg-config --libs protobuf >> protobuf.xcconfig\n";
 		};
 		96E3E6FC17A2E8BB0071439F /* Copy tinyxml.h to system */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputPaths = (
@@ -594,7 +607,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp ${SRCROOT}/tinyxml/tinyxml.h ${DERIVED_FILE_DIR}/system_headers";
+			shellScript = "echo \"Generating tinyxml.h\" `date`\nmkdir -p \"${DERIVED_FILE_DIR}/prefix/include\"\ncp \"${SRCROOT}/tinyxml/tinyxml.h\" \"${DERIVED_FILE_DIR}/system_headers/tinyxml.h\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -660,6 +673,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		969321D417A5EBFA002B0C9A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 969321CF17A5EB95002B0C9A /* Botan */;
+			targetProxy = 969321D317A5EBFA002B0C9A /* PBXContainerItemProxy */;
+		};
+		969321DA17A5F912002B0C9A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 969321D517A5F7AE002B0C9A /* google-glog */;
+			targetProxy = 969321D917A5F912002B0C9A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		963D09AF17A1D89D00AEE673 /* InfoPlist.strings */ = {
@@ -762,19 +788,20 @@
 				HEADER_SEARCH_PATHS = (
 					$DERIVED_FILE_DIR/system_headers,
 					/usr/include/libxml2,
+					$BUILT_PRODUCTS_DIR/prefix/include,
+					"$BUILT_PRODUCTS_DIR/prefix/include/botan-1.10",
 				);
 				INFOPLIST_FILE = "Lockbox/Lockbox-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/google-glog/.libs\"",
-					"\"$(SRCROOT)/botan\"",
+					"\"$BUILT_PRODUCTS_DIR/prefix/lib\"",
 				);
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(PROTOBUF_LDFLAGS)",
-					"$(SRCROOT)/google-glog/install-dir/lib/libglog.a",
-					"$(SRCROOT)/botan/install/lib/libbotan-1.10.a",
+					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libglog.a",
+					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libbotan-1.10.a",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/encfs $(DERIVED_FILE_DIR)/user_headers";
@@ -796,23 +823,66 @@
 				HEADER_SEARCH_PATHS = (
 					$DERIVED_FILE_DIR/system_headers,
 					/usr/include/libxml2,
+					$BUILT_PRODUCTS_DIR/prefix/include,
+					"$BUILT_PRODUCTS_DIR/prefix/include/botan-1.10",
 				);
 				INFOPLIST_FILE = "Lockbox/Lockbox-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/google-glog/.libs\"",
-					"\"$(SRCROOT)/botan\"",
+					"\"$BUILT_PRODUCTS_DIR/prefix/lib\"",
 				);
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"$(PROTOBUF_LDFLAGS)",
-					"$(SRCROOT)/google-glog/install-dir/lib/libglog.a",
-					"$(SRCROOT)/botan/install/lib/libbotan-1.10.a",
+					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libglog.a",
+					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libbotan-1.10.a",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/encfs $(DERIVED_FILE_DIR)/user_headers";
 				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		969321D117A5EB96002B0C9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		969321D217A5EB96002B0C9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		969321D717A5F7AF002B0C9A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		969321D817A5F7AF002B0C9A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -836,6 +906,22 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		969321D017A5EB96002B0C9A /* Build configuration list for PBXLegacyTarget "Botan" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				969321D117A5EB96002B0C9A /* Debug */,
+				969321D217A5EB96002B0C9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		969321D617A5F7AF002B0C9A /* Build configuration list for PBXLegacyTarget "google-glog" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				969321D717A5F7AF002B0C9A /* Debug */,
+				969321D817A5F7AF002B0C9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};
