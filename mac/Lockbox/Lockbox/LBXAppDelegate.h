@@ -17,8 +17,6 @@
 @property (assign) IBOutlet NSPanel *sheetPanel;
 @property (assign) IBOutlet NSProgressIndicator *mountProgressIndicator;
 
-
-
 - (IBAction)mountEncryptedFS:(id)sender;
 - (void)onMountDone:(id)args;
 

@@ -64,30 +64,54 @@ static struct fuse_operations encfs_oper = {
   .release = encfs_release,
 };
 
-bool
+static string
+slashTerminate( const string &src ) {
+  string result = src;
+  if (result[result.length() - 1] != '/') {
+    result.append( "/" );
+  }
+  return result;
+}
+
+void
+init_encfs(void) {
+    FLAGS_logtostderr = 1;
+    FLAGS_minloglevel = 0; // DEBUG and above.
+    
+    google::InitGoogleLogging("encfs");
+    google::InstallFailureSignalHandler();
+    
+    CipherV1::init(true);
+}
+
+void
+deinit_encfs(void) {
+    CipherV1::shutdown(true);
+}
+
+run_encfs_error_t
 run_encfs(const char *encrypted_path, char *password) {
-  FLAGS_logtostderr = 1;
-  FLAGS_minloglevel = 0; // DEBUG and above.
+  if (!isDirectory(encrypted_path)) {
+    /* this should almost never happen,
+       but anyway, the protocol here is that we do *not* support
+       auto creating directories */
+    return RUN_ENCFS_ERROR_IS_NOT_DIRECTORY;
+  }
 
-  google::InitGoogleLogging("encfs");
-  google::InstallFailureSignalHandler();
-
-  CipherV1::init(true);
-
-  // context is not a smart pointer because it will live for the life of
-  // the filesystem.
-  string encrypted_path_str(encrypted_path);
+  string encrypted_path_str = slashTerminate(string(encrypted_path));
   shared_ptr<EncFS_Opts> opts = shared_ptr<EncFS_Opts>(new EncFS_Opts());
   opts->configMode = Config_Paranoia;
   opts->rootDir = encrypted_path_str;
   opts->rawPass = password;
 
+  // context is not a smart pointer because it will live for the life of
+  // the filesystem.
   EncFS_Context *ctx = new EncFS_Context();
+  bool badPassword;
   ctx->publicFilesystem = opts->ownerCreate;
-  RootPtr rootInfo = initFS(ctx, opts);
+  RootPtr rootInfo = initFS(ctx, opts, badPassword);
 
-  int returnCode = EXIT_FAILURE;
-
+  run_encfs_error_t returnCode = RUN_ENCFS_ERROR_GENERAL;
   if (rootInfo) {
     // set the globally visible root directory node
     ctx->setRoot(rootInfo->root);
@@ -96,19 +120,17 @@ run_encfs(const char *encrypted_path, char *password) {
 
     // reset umask now, since we don't want it to interfere with the
     // pass-thru calls..
+    /* TODO: remove this, do this at the FS layer */
     umask(0);
 
     try {
       // fuse_main returns an error code in newer versions of fuse..
-      int argc = 2;
-      char arg0[] = "encfs";
-      char arg1[] = "-s";
-      char *argv[2] = {arg0, arg1};
+      char arg0[] = "encfs", arg1[] = "-s", *argv[] = {arg0, arg1};
+      int argc = sizeof(argv) / sizeof(argv[0]);
       int res = fuse_main(argc, argv, &encfs_oper, (void *) ctx);
       if (!res) {
-        returnCode = EXIT_SUCCESS;
+        returnCode = RUN_ENCFS_ERROR_NONE;
       }
-
     }
     catch(std::exception &ex) {
       LOG(ERROR) << "Internal error: Caught exception from main loop: "
@@ -118,12 +140,16 @@ run_encfs(const char *encrypted_path, char *password) {
       LOG(ERROR) << "Internal error: Caught unexpected exception";
     }
   }
+  else {
+    returnCode = badPassword
+      ? RUN_ENCFS_ERROR_PASSWORD_INCORRECT
+      : RUN_ENCFS_ERROR_GENERAL;
+  }
 
   // cleanup so that we can check for leaked resources..
   rootInfo.reset();
-  ctx->setRoot( shared_ptr<DirNode>() );
-
-  CipherV1::shutdown(true);
+  ctx->setRoot(shared_ptr<DirNode>());
+  delete ctx;
 
   return returnCode;
 }
