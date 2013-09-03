@@ -12,6 +12,7 @@
 		963D09B317A1D89D00AEE673 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 963D09B217A1D89D00AEE673 /* main.m */; };
 		963D09BA17A1D89D00AEE673 /* LBXAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 963D09B917A1D89D00AEE673 /* LBXAppDelegate.m */; };
 		963D09BD17A1D89D00AEE673 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963D09BB17A1D89D00AEE673 /* MainMenu.xib */; };
+		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
 		96E3E65F17A257DB0071439F /* autosprintf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65117A257DB0071439F /* autosprintf.cpp */; };
 		96E3E66017A257DB0071439F /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65317A257DB0071439F /* base64.cpp */; };
 		96E3E66117A257DB0071439F /* ConfigReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65517A257DB0071439F /* ConfigReader.cpp */; };
@@ -105,6 +106,8 @@
 		963D09B917A1D89D00AEE673 /* LBXAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LBXAppDelegate.m; sourceTree = "<group>"; };
 		963D09BC17A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		963D09C417A1D89D00AEE673 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
+		96E1639217A74F55009BE867 /* Lock-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Lock-icon.png"; sourceTree = "<group>"; };
+		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = output.icns; sourceTree = "<group>"; };
 		96E3E65117A257DB0071439F /* autosprintf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = autosprintf.cpp; path = encfs/base/autosprintf.cpp; sourceTree = SOURCE_ROOT; };
 		96E3E65217A257DB0071439F /* autosprintf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = autosprintf.h; path = encfs/base/autosprintf.h; sourceTree = SOURCE_ROOT; };
 		96E3E65317A257DB0071439F /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = base64.cpp; path = encfs/base/base64.cpp; sourceTree = SOURCE_ROOT; };
@@ -229,6 +232,8 @@
 		963D099A17A1D89D00AEE673 = {
 			isa = PBXGroup;
 			children = (
+				96E1639417A7528D009BE867 /* output.icns */,
+				96E1639217A74F55009BE867 /* Lock-icon.png */,
 				96E3E6FD17A2ED4F0071439F /* libxml2.dylib */,
 				963D09AC17A1D89D00AEE673 /* Lockbox */,
 				963D09A517A1D89D00AEE673 /* Frameworks */,
@@ -549,6 +554,7 @@
 			files = (
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
 				963D09BD17A1D89D00AEE673 /* MainMenu.xib in Resources */,
+				96E1639517A7528D009BE867 /* output.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -961,6 +967,7 @@
 				9676F35317A705DB004BF276 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		969321D017A5EB96002B0C9A /* Build configuration list for PBXLegacyTarget "Botan" */ = {
 			isa = XCConfigurationList;

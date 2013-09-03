@@ -29,7 +29,7 @@ typedef struct {
     bool mounted;
 } StartWebdavEncfsServerArgs;
 
-const NSTimeInterval CHECK_MOUNT_INTERVAL_IN_SECONDS = 1;
+const NSTimeInterval CHECK_MOUNT_INTERVAL_IN_SECONDS = 5.0;
 
 static void *
 mount_webdav_thread_fn(void *p) {

@@ -1,6 +1,6 @@
 #****************************************************************************
 #
-# Makefil for TinyXml test.
+# Makefile for TinyXml test.
 # Lee Thomason
 # www.grinninglizard.com
 #
@@ -8,10 +8,14 @@
 #****************************************************************************
 
 # DEBUG can be set to YES to include debugging info, or NO otherwise
-DEBUG          := YES
+DEBUG          := NO
 
 # PROFILE can be set to YES to include profiling info, or NO otherwise
 PROFILE        := NO
+
+# TINYXML_USE_STL can be used to turn on STL support. NO, then STL
+# will not be used. YES will include the STL files.
+TINYXML_USE_STL := NO
 
 #****************************************************************************
 
@@ -21,8 +25,8 @@ LD     := g++
 AR     := ar rc
 RANLIB := ranlib
 
-DEBUG_CFLAGS     := -Wall -Wno-unknown-pragmas -Wno-format -g -DDEBUG
-RELEASE_CFLAGS   := -Wall -Wno-unknown-pragmas -Wno-format -O2
+DEBUG_CFLAGS     := -Wall -Wno-format -g -DDEBUG
+RELEASE_CFLAGS   := -Wall -Wno-unknown-pragmas -Wno-format -O3
 
 LIBS		 :=
 
@@ -43,8 +47,8 @@ else
 endif
 
 ifeq (YES, ${PROFILE})
-   CFLAGS   := ${CFLAGS} -pg
-   CXXFLAGS := ${CXXFLAGS} -pg
+   CFLAGS   := ${CFLAGS} -pg -O3
+   CXXFLAGS := ${CXXFLAGS} -pg -O3
    LDFLAGS  := ${LDFLAGS} -pg
 endif
 
@@ -52,8 +56,8 @@ endif
 # Preprocessor directives
 #****************************************************************************
 
-ifeq (YES, ${PROFILE})
-  DEFS :=
+ifeq (YES, ${TINYXML_USE_STL})
+  DEFS := -DTIXML_USE_STL
 else
   DEFS :=
 endif
@@ -86,7 +90,7 @@ all: ${OUTPUT}
 # Source files
 #****************************************************************************
 
-SRCS := tinyxml.cpp tinyxmlparser.cpp xmltest.cpp tinyxmlerror.cpp
+SRCS := tinyxml.cpp tinyxmlparser.cpp xmltest.cpp tinyxmlerror.cpp tinystr.cpp
 
 # Add on the sources for libraries
 SRCS := ${SRCS}
@@ -111,8 +115,16 @@ ${OUTPUT}: ${OBJS}
 %.o : %.c
 	${CC} -c ${CFLAGS} ${INCS} $< -o $@
 
+dist:
+	bash makedistlinux
+
 clean:
 	-rm -f core ${OBJS} ${OUTPUT}
 
 depend:
-	makedepend ${INCS} ${SRCS}
+	#makedepend ${INCS} ${SRCS}
+
+tinyxml.o: tinyxml.h tinystr.h
+tinyxmlparser.o: tinyxml.h tinystr.h
+xmltest.o: tinyxml.h tinystr.h
+tinyxmlerror.o: tinyxml.h tinystr.h
