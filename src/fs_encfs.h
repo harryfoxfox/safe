@@ -19,21 +19,21 @@
 #ifndef _FS_ENCFS_H
 #define _FS_ENCFS_H
 
+#include <limits.h>
+#include <stddef.h>
 
-/* we can't include the following because C files need to be able to include
-   this header */
-/* #include <EncfsFsIO.h> */
-
-struct _encfs_fs_io;
+#define OUT_VAR
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+struct _fs_encfs_handle;
 struct _fs_encfs_directory_handle;
+struct _fs_encfs_file_handle;
 
-typedef int fs_encfs_t;
-typedef HANDLE fs_encfs_file_handle_t;
+typedef struct _fs_encfs_handle *fs_encfs_t;
+typedef struct _fs_encfs_file_handle *fs_encfs_file_handle_t;
 typedef struct _fs_encfs_directory_handle *fs_encfs_directory_handle_t;
 
 /* non-opaque structures */
@@ -56,8 +56,8 @@ typedef unsigned long long fs_encfs_off_t;
 
 /* NB: not totally sure about defining constants like this,
    a #define might be better */
-HEADER_CONST const fs_encfs_time_t FS_ENCFS_INVALID_TIME = LLONG_MAX;
-HEADER_CONST const fs_encfs_off_t FS_ENCFS_INVALID_OFF = ULLONG_MAX;
+static const fs_encfs_time_t FS_ENCFS_INVALID_TIME = LLONG_MAX;
+static const fs_encfs_off_t FS_ENCFS_INVALID_OFF = ULLONG_MAX;
 
 typedef struct {
   fs_encfs_time_t modified_time;
@@ -147,10 +147,10 @@ fs_encfs_path_is_parent(fs_encfs_t fs,
 const char *
 fs_encfs_path_sep(fs_encfs_t fs);
 
-CREATE_IMPL_TAG(FS_ENCFS_IMPL);
-
 #ifdef __cplusplus
 }
 #endif
+
+#undef OUT_VAR
 
 #endif

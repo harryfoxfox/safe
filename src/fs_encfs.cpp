@@ -3,7 +3,7 @@
   Copyright (C) 2013 Rian Hunter <rian@alum.mit.edu>
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Lessage General Public License as published by
+  it under the terms of the GNU Lesser General Public License as published by
   the Free Software Foundation, either version 2 of the License, or
   (at your option) any later version.
 
@@ -16,17 +16,48 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+#include "fs_encfs.h"
 
-#include <memory>
+#include "fs_encfs_fs.h"
 
 #include <encfs/base/optional.h>
 #include <encfs/fs/EncfsFsIO.h>
 
-#include "fs_encfs_fs.h"
+#include <memory>
 
-#include "_fs_encfs.hpp"
+// make sure our casts are okay
 
 extern "C" {
+
+encfs::EncfsFsIO *fs_handle_to_pointer(fs_encfs_t h) {
+  static_assert(sizeof(fs_encfs_t) >= sizeof(encfs::EncfsFsIO *),
+                "fs_encfs_handle_t cannot hold encfs::File");
+  return (encfs::EncfsFsIO *) h;
+}
+
+encfs::File *file_handle_to_pointer(fs_encfs_file_handle_t h) {
+  static_assert(sizeof(fs_encfs_file_handle_t) >= sizeof(encfs::File *),
+                "fs_encfs_file_handle_t cannot hold encfs::File");
+  return (encfs::File *) h;
+}
+
+encfs::Directory *directory_handle_to_pointer(fs_encfs_directory_handle_t h) {
+  static_assert(sizeof(fs_encfs_directory_handle_t) >= sizeof(encfs::Directory *),
+                "fs_encfs_directory_handle_t cannot hold encfs::File");
+  return (encfs::Directory *) h;
+}
+
+fs_encfs_t pointer_to_fs_handle(encfs::EncfsFsIO *h) {
+  return (fs_encfs_t) h;
+}
+
+fs_encfs_file_handle_t pointer_to_file_handle(encfs::File *h) {
+  return (fs_encfs_file_handle_t) h;
+}
+
+fs_encfs_directory_handle_t pointer_to_directory_handle(encfs::Directory *h) {
+  return (fs_encfs_directory_handle_t) h;
+}
 
 enum {
   DONT_CREATE = false,
@@ -47,7 +78,7 @@ fs_encfs_default_new(void) {
 
 fs_encfs_t
 fs_encfs_new(fs_t base_fs, const char *root_dir, const char *password) {
-  auto opts = std::make_shared<EncFS_Opts>();
+  auto opts = std::make_shared<encfs::EncFS_Opts>();
 
   opts->fs_io = std::make_shared<CFsToFsIO>(base_fs);
   opts->passwordReader = std::make_shared<StringPasswordReader>(password);
@@ -56,7 +87,7 @@ fs_encfs_new(fs_t base_fs, const char *root_dir, const char *password) {
 
   auto fs = new encfs::EncfsFsIO();
   try {
-    fs->initFS(opts);
+    fs->initFS(opts, opt::nullopt);
   }
   catch (...) {
     delete fs;
@@ -64,18 +95,19 @@ fs_encfs_new(fs_t base_fs, const char *root_dir, const char *password) {
     return NULL;
   }
 
-  return fs;
+  return pointer_to_fs_handle(fs);
 }
 
 fs_encfs_error_t
-fs_encfs_open(fs_encfs_t fs,
-              const char *path, bool should_create,
+fs_encfs_open(fs_encfs_t fs_,
+              const char *cpath, bool should_create,
               OUT_VAR fs_encfs_file_handle_t *handle,
               OUT_VAR bool *created) {
+  auto fs = fs_handle_to_pointer(fs_);
 
-  opt::optional<Path> path;
+  opt::optional<encfs::Path> path;
   try {
-    path = fs->pathFromString(path);
+    path = fs->pathFromString(cpath);
   }
   catch (...) {
     return FS_ENCFS_ERROR_INVALID_ARG;
@@ -85,7 +117,7 @@ fs_encfs_open(fs_encfs_t fs,
 
   if (created && should_create) {
     try {
-      fs->get_attrs(path);
+      fs->get_attrs(*path);
       *created = false;
     }
     catch (const std::system_error & err) {
@@ -98,7 +130,8 @@ fs_encfs_open(fs_encfs_t fs,
 
   try {
     auto f = fs->openfile(std::move( *path ), NEED_WRITE, should_create);
-    return new File(std::move(*f));
+    *handle = pointer_to_file_handle(new encfs::File(std::move(f)));
+    return FS_ENCFS_ERROR_SUCCESS;
   }
   catch (...) {
     // TODO: return more specific error code

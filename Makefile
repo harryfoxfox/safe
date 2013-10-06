@@ -1,11 +1,45 @@
-DAVFUSE_ROOT = ../davfuse
-ENCFS_ROOT = ../encfs
+DAVFUSE_ROOT := $(CURDIR)/../davfuse
+ENCFS_ROOT := $(CURDIR)/../encfs
+HEADERS_ROOT := $(CURDIR)/out/headers
+DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
 
-WEBDAV_SERVER_STATIC_LIBRARY = $(DAVFUSE_ROOT)/out/targets/libwebdav_server_sockets_fs.a
-ENCFS_STATIC_LIBRARY = $(ENCFS_ROOT)/fs/libencfs.a
+WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_sockets_fs.a
+ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
+
+CXX_FLAGS = -std=c++11 -stdlib=libc++ -I/Users/rian/encfs-dev-prefix/include -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src
 
 $(WEBDAV_SERVER_STATIC_LIBRARY):
-	@make -C "$(DAVFUSE_ROOT)" "$(basename $(WEBDAV_SERVER_STATIC_LIBRARY))"
+	@make -C  "$(DAVFUSE_ROOT)" "$(notdir $(WEBDAV_SERVER_STATIC_LIBRARY))"
 
+# TODO: add all *.h and *.cpp files the library depends on
+#       or make this a phony target and attempt to build everytime
+#       (relying on the build system to rebuild)
 $(ENCFS_STATIC_LIBRARY):
-	@make -C "$(ENCFS_ROOT)/fs" "$(basename $(ENCFS_STATIC_LIBRARY))"
+#	TODO: don't require fuse when configuring encfs
+	@cmake $(ENCFS_ROOT) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/Users/rian/encfs-dev-prefix/ -DCMAKE_CXX_FLAGS=-stdlib=libc++
+	@make -C "$(ENCFS_ROOT)" clean
+	@make -C "$(ENCFS_ROOT)" -j6 encfs-base encfs-cipher encfs-fs
+#	copy all encfs headers into our build headers dir
+	@find -X $(ENCFS_ROOT) -name '*.h' | (while read F; do ROOT=$(ENCFS_ROOT); NEWF=$$(echo $$F | sed "s|^$$ROOT|out/deps/include/encfs|"); mkdir -p $$(dirname "$$NEWF"); cp $$F $$NEWF; done)
+#       create archive
+# TODO: it would probably be better if the encfs build system did this
+	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
+	@TMPDIR=`mktemp -d /tmp/temp.XXXX`; \
+         cd $$TMPDIR; \
+         ar -x $(ENCFS_ROOT)/cipher/libencfs-cipher.a; \
+         ar -x $(ENCFS_ROOT)/fs/libencfs-fs.a; \
+         ar -x $(ENCFS_ROOT)/base/libencfs-base.a; ar rcs $(ENCFS_STATIC_LIBRARY) *.o;
+
+libencfs.a: $(ENCFS_STATIC_LIBRARY)
+
+# TODO: don't hardcode this
+FS_IMPL=posix
+
+$(HEADERS_ROOT)/fs_encfs_fs.h: $(DAVFUSE_ROOT)/generate-interface-implementation.sh
+	@mkdir -p $(dir $@)
+	FS_ENCFS_FS_DEF=fs_encfs/fs/$(FS_IMPL) sh $(DAVFUSE_ROOT)/generate-interface-implementation.sh fs_encfs_fs $(DAVFUSE_ROOT)/src/fs.idef > $@
+
+src/fs_encfs.o: $(HEADERS_ROOT)/fs_encfs_fs.h src/fs_encfs.cpp $(ENCFS_STATIC_LIBRARY)# $(WEBDAV_SERVER_STATIC_LIBRARY)
+	$(CXX) $(CXX_FLAGS) -o $@ src/fs_encfs.cpp
+
+.PHONY: libencfs.a
