@@ -37,11 +37,15 @@ libencfs.a: $(ENCFS_STATIC_LIBRARY)
 # TODO: don't hardcode this
 FS_IMPL=posix
 
-$(HEADERS_ROOT)/fs_encfs_fs.h: $(DAVFUSE_ROOT)/generate-interface-implementation.sh
+$(HEADERS_ROOT)/c_fs_to_fs_io_fs.h: $(DAVFUSE_ROOT)/generate-interface-implementation.sh
 	@mkdir -p $(dir $@)
-	FS_ENCFS_FS_DEF=fs_encfs/fs/$(FS_IMPL) sh $(DAVFUSE_ROOT)/generate-interface-implementation.sh fs_encfs_fs $(DAVFUSE_ROOT)/src/fs.idef > $@
+	C_FS_TO_FS_IO_FS_DEF=c_fs_to_fs_io/fs/$(FS_IMPL) sh $(DAVFUSE_ROOT)/generate-interface-implementation.sh c_fs_to_fs_io_fs $(DAVFUSE_ROOT)/src/fs.idef > $@
 
 src/fs_FsIO.o: src/fs_FsIO.cpp $(ENCFS_STATIC_LIBRARY)# $(WEBDAV_SERVER_STATIC_LIBRARY)
 	$(CXX) $(CXX_FLAGS) -c -o $@ src/fs_FsIO.cpp
+
+src/CFsToFsIO.o: src/CFsToFsIO.cpp $(HEADERS_ROOT)/c_fs_to_fs_io_fs.h $(ENCFS_STATIC_LIBRARY)# $(WEBDAV_SERVER_STATIC_LIBRARY)
+	$(CXX) $(CXX_FLAGS) -c -o $@ src/CFsToFsIO.cpp
+
 
 .PHONY: libencfs.a
