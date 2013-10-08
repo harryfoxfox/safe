@@ -15,6 +15,8 @@ $(WEBDAV_SERVER_STATIC_LIBRARY):
 #       or make this a phony target and attempt to build everytime
 #       (relying on the build system to rebuild)
 $(ENCFS_STATIC_LIBRARY):
+	@rm -fr $(DEPS_INSTALL_ROOT)/include/encfs
+	@rm -fr $(ENCFS_STATIC_LIBRARY)
 #	TODO: don't require fuse when configuring encfs
 	@cmake $(ENCFS_ROOT) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/Users/rian/encfs-dev-prefix/ -DCMAKE_CXX_FLAGS=-stdlib=libc++
 	@make -C "$(ENCFS_ROOT)" clean
@@ -39,7 +41,7 @@ $(HEADERS_ROOT)/fs_encfs_fs.h: $(DAVFUSE_ROOT)/generate-interface-implementation
 	@mkdir -p $(dir $@)
 	FS_ENCFS_FS_DEF=fs_encfs/fs/$(FS_IMPL) sh $(DAVFUSE_ROOT)/generate-interface-implementation.sh fs_encfs_fs $(DAVFUSE_ROOT)/src/fs.idef > $@
 
-src/fs_encfs.o: $(HEADERS_ROOT)/fs_encfs_fs.h src/fs_encfs.cpp $(ENCFS_STATIC_LIBRARY)# $(WEBDAV_SERVER_STATIC_LIBRARY)
-	$(CXX) $(CXX_FLAGS) -o $@ src/fs_encfs.cpp
+src/fs_FsIO.o: src/fs_FsIO.cpp $(ENCFS_STATIC_LIBRARY)# $(WEBDAV_SERVER_STATIC_LIBRARY)
+	$(CXX) $(CXX_FLAGS) -c -o $@ src/fs_FsIO.cpp
 
 .PHONY: libencfs.a
