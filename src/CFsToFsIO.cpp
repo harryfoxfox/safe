@@ -21,13 +21,52 @@
 #include "c_fs_to_fs_io_fs.h"
 
 #include <encfs/fs/FsIO.h>
+#include <encfs/base/Interface.h>
+#include <encfs/base/optional.h>
+
+#include <davfuse/logging.h>
+
+#include <cstring>
+
+namespace lockbox {
 
 class fs_error : public std::exception {
 public:
-  fs_error( fs_error_t /*err*/ ) {}
+  fs_error(fs_error_t /*err*/) {}
 };
 
-class CFsToFsIOPath final : public encfs::StringPath<fs_encfs_path_sep> {
+class CFsToFsIOPath final : public encfs::StringPathDynamicSep {
+protected:
+  fs_t _fs;
+
+  virtual std::shared_ptr<encfs::PathPoly> _from_string(std::string str) const
+  {
+    return std::make_shared<CFsToFsIOPath>( _fs, std::move( str ) );
+  }
+
+public:
+  CFsToFsIOPath(fs_t fs, std::string str)
+    : StringPathDynamicSep( fs_path_sep(fs), std::move( str ) )
+  , _fs( fs )
+  {
+    // TODO: support this
+    assert(strlen(fs_path_sep(fs)) != 1);
+  }
+
+  virtual encfs::Path dirname() const override
+  {
+    if (fs_path_is_root(_fs, _path.c_str())) return _from_string(_path);
+
+    /* do this */
+    auto last = _path.rfind(_sep);
+    assert(last != std::string::npos);
+    return _from_string(_path.substr(0, last));
+  }
+
+  virtual bool is_root() const
+  {
+    return fs_path_is_root(_fs, _path.c_str());
+  }
 };
 
 class CFsToFsIODirectoryIO final : public encfs::DirectoryIO {
@@ -35,7 +74,7 @@ private:
   fs_t _fs;
   fs_directory_handle_t _dh;
 
-  CFsToFsIODirectoryIO(fs_t fs, directory_handle_t dh) noexcept
+  CFsToFsIODirectoryIO(fs_t fs, fs_directory_handle_t dh) noexcept
     : _fs(fs), _dh(dh) {}
 
 public:
@@ -62,9 +101,9 @@ public:
 
   virtual ~CFsToFsIOFileIO() override;
 
-  virtual Interface interface() const override;
+  virtual encfs::Interface interface() const override;
 
-  virtual FsFileAttrs get_attrs() const override;
+  virtual encfs::FsFileAttrs get_attrs() const override;
 
   virtual size_t read(const encfs::IORequest & req) const override;
   virtual void write(const encfs::IORequest &req) override;
@@ -82,25 +121,26 @@ CFsToFsIODirectoryIO::~CFsToFsIODirectoryIO() {
 }
 
 opt::optional<encfs::FsDirEnt> CFsToFsIODirectoryIO::readdir() {
-  char *name;
+  char *cname;
   bool attrs_is_filled;
   FsAttrs attrs;
-  auto err = fs_readdir(_fs, _dh, &name, &attrs_is_filled, &attrs);
+  auto err = fs_readdir(_fs, _dh, &cname, &attrs_is_filled, &attrs);
   if (err) throw fs_error( err );
 
-  if (!name) return opt::nullopt;
+  if (!cname) return opt::nullopt;
 
-  auto toret = encfs::FsDirEnt(name);
-  free(name);
+  auto name = std::string(cname);
+  free(cname);
 
-  if (attrs_is_filled) {
-    toret.file_id = attrs.file_id;
-    toret.type = attrs.is_directory
-      ? FsFileType::DIRECTORY
-      : FsFileType::REGULAR;
-  }
+  // TODO: fix this, make fs_readdir interface congruent
+  //       to DirectoryIO::readdir interface
+  //       (i.e. make file_id required in both or neither)
+  if (!attrs_is_filled) throw std::runtime_error("bad readdir");
 
-  return std::move(toret);
+  return encfs::FsDirEnt(std::string(name), attrs.file_id,
+                         attrs.is_directory
+                         ? encfs::FsFileType::DIRECTORY
+                         : encfs::FsFileType::REGULAR);
 }
 
 CFsToFsIOFileIO::~CFsToFsIOFileIO() {
@@ -108,9 +148,9 @@ CFsToFsIOFileIO::~CFsToFsIOFileIO() {
   if (err) log_error("couldn't close file handle, leaking...");
 }
 
-static Interface CFsToFsIOFileIO_iface = makeInterface("FileIO/CFsToFsIO", 1, 0, 0);
+static encfs::Interface CFsToFsIOFileIO_iface = encfs::makeInterface("FileIO/CFsToFsIO", 1, 0, 0);
 
-Interface CFsToFsIOFileIO::interface() const {
+encfs::Interface CFsToFsIOFileIO::interface() const {
   return CFsToFsIOFileIO_iface;
 }
 
@@ -119,50 +159,86 @@ encfs::FsFileAttrs CFsToFsIOFileIO::get_attrs() const {
   auto err = fs_fgetattr(_fs, _fh, &attrs);
   if (err) throw fs_error(err);
 
-  return (FsFileAttrs) {
-    .type = attrs.is_directory ? FsFileType::DIRECTORY : FsFileType::REGULAR,
+  return (encfs::FsFileAttrs) {
+    .type = (attrs.is_directory ?
+             encfs::FsFileType::DIRECTORY :
+             encfs::FsFileType::REGULAR),
     .mtime = attrs.modified_time,
     .size = attrs.size,
+    .file_id = attrs.file_id,
+    .posix = opt::nullopt
    };
 }
 
-size_t CFsToFsIOFileIO::read(const IORequest & req) const {
+size_t CFsToFsIOFileIO::read(const encfs::IORequest & req) const {
+  size_t amt_read;
+  auto err = fs_read(_fs, _fh, (char *) req.data,
+                     req.dataLen, req.offset, &amt_read);
+  if (err) throw fs_error(err);
+  return amt_read;
 }
 
-void CFsToFsIOFileIO::write(const IORequest &req) {
+void CFsToFsIOFileIO::write(const encfs::IORequest &req) {
+  if (!_open_for_write) throw fs_error(FS_POSIX_ERROR_PERM);
+
+  size_t written = 0;
+  while (written != req.dataLen) {
+    size_t amt;
+    auto err = fs_write(_fs, _fh, (char *) req.data + written,
+                        req.dataLen - written, req.offset + written,
+                        &amt);
+    // NB: this is bad to fail a write() in the middle
+    // we should change the interface of FileIO::write to
+    // allow partial writes
+    if (err) throw fs_error(err);
+
+    written += amt;
+  }
 }
 
-void CFsToFsIOFileIO::truncate( fs_off_t size ) {
+void CFsToFsIOFileIO::truncate(encfs::fs_off_t size) {
+  if (!_open_for_write) throw fs_error(FS_POSIX_ERROR_PERM);
+  auto err = fs_ftruncate(_fs, _fh, size);
+  if (err) throw fs_error(err);
 }
 
 bool CFsToFsIOFileIO::isWritable() const  {
+  return _open_for_write;
 }
 
-void CFsToFsIOFileIO::sync(bool datasync) {
+void CFsToFsIOFileIO::sync(bool /*datasync*/) {
+  // C Fs does not support this interface
 }
 
-CFsToFsIO::CFsToFsIO(fs_t fs_)
-  : fs(fs_) {
+CFsToFsIO::CFsToFsIO(fs_t fs)
+  : _fs(fs) {
 }
 
-Path CFsToFsIO::pathFromString(const std::string &path) const {
+const std::string &CFsToFsIO::path_sep() const {
+  static const std::string _path_sep = fs_path_sep(_fs);
+  return _path_sep;
+}
+
+encfs::Path CFsToFsIO::pathFromString(const std::string &path) const {
   // in the fs C interface, paths are always UTF-8 encoded strings
   // TODO: check UTF-8 validity
-  return CFsToFsIOPath(fs_encfs_path_is_root(fs, path.c_str()), path);
+  return std::make_shared<CFsToFsIOPath>(_fs, path);
 }
 
-Directory CFsToFsIO::opendir(const Path &path) const {
+encfs::Directory CFsToFsIO::opendir(const encfs::Path &path) const {
   fs_directory_handle_t dh;
-  auto err = fs_opendir(fs, path.c_str(), &dh);
+  auto err = fs_opendir(_fs, path.c_str(), &dh);
   if (err) throw fs_error( err );
-  return CFsToFsIODirectoryIO(dh);
+  return std::unique_ptr<CFsToFsIODirectoryIO>(new CFsToFsIODirectoryIO(_fs, dh));
 }
 
-File openfile(const Path &path,
-              bool open_for_write,
-              bool create) {
+encfs::File CFsToFsIO::openfile(const encfs::Path &path,
+                                bool open_for_write,
+                                bool create) {
   fs_file_handle_t fh;
-  auto err = fs_open(fs, path.c_str(), create, &fh, NULL);
+  auto err = fs_open(_fs, path.c_str(), create, &fh, NULL);
   if (err) throw fs_error( err );
-  return CFsToFsIOFileIO(fh, open_for_write);
+  return std::unique_ptr<CFsToFsIOFileIO>(new CFsToFsIOFileIO(_fs, fh, open_for_write));
+}
+
 }

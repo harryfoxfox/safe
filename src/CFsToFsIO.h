@@ -21,25 +21,28 @@
 #ifndef _CFsToFsIO_incl_
 #define _CFsToFsIO_incl_
 
+#include "c_fs_to_fs_io_fs.h"
+
 #include <encfs/fs/FsIO.h>
 
 namespace lockbox {
 
 class CFsToFsIO : public encfs::FsIO {
 private:
-  fs_t fs;
+  fs_t _fs;
 
 public:
   CFsToFsIO(fs_t fs);
   virtual ~CFsToFsIO() override = default;
 
   // generic fs methods
-  virtual Path pathFromString(const std::string &path) const override;
+  virtual const std::string &path_sep() const override;
+  virtual encfs::Path pathFromString(const std::string &path) const override;
 
-  virtual Directory opendir(const encfs::Path &path) const override;
-  virtual File openfile(const encfs::Path &path,
-                        bool open_for_write = false,
-                        bool create = false) override;
+  virtual encfs::Directory opendir(const encfs::Path &path) const override;
+  virtual encfs::File openfile(const encfs::Path &path,
+                               bool open_for_write = false,
+                               bool create = false) override;
 
   virtual void mkdir(const encfs::Path &path) override;
 
@@ -51,8 +54,6 @@ public:
   virtual void set_times(const encfs::Path &path,
                          const opt::optional<encfs::fs_time_t> &atime,
                          const opt::optional<encfs::fs_time_t> &mtime) override;
-
-  virtual FsFileAttrs get_attrs(const encfs::Path &path) const override;
 };
 
 }
