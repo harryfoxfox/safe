@@ -26,6 +26,8 @@
 
 #include <davfuse/logging.h>
 
+#include <limits>
+
 #include <cstring>
 
 namespace lockbox {
@@ -47,14 +49,12 @@ protected:
 public:
   CFsToFsIOPath(fs_t fs, std::string str)
     : StringPathDynamicSep( fs_path_sep(fs), std::move( str ) )
-  , _fs( fs )
-  {
+    , _fs( fs ) {
     // TODO: support this
     assert(strlen(fs_path_sep(fs)) != 1);
   }
 
-  virtual encfs::Path dirname() const override
-  {
+  virtual encfs::Path dirname() const override {
     if (fs_path_is_root(_fs, _path.c_str())) return _from_string(_path);
 
     /* do this */
@@ -63,8 +63,7 @@ public:
     return _from_string(_path.substr(0, last));
   }
 
-  virtual bool is_root() const
-  {
+  virtual bool is_root() const {
     return fs_path_is_root(_fs, _path.c_str());
   }
 };
@@ -228,7 +227,7 @@ encfs::Path CFsToFsIO::pathFromString(const std::string &path) const {
 encfs::Directory CFsToFsIO::opendir(const encfs::Path &path) const {
   fs_directory_handle_t dh;
   auto err = fs_opendir(_fs, path.c_str(), &dh);
-  if (err) throw fs_error( err );
+  if (err) throw fs_error(err);
   return std::unique_ptr<CFsToFsIODirectoryIO>(new CFsToFsIODirectoryIO(_fs, dh));
 }
 
@@ -237,8 +236,50 @@ encfs::File CFsToFsIO::openfile(const encfs::Path &path,
                                 bool create) {
   fs_file_handle_t fh;
   auto err = fs_open(_fs, path.c_str(), create, &fh, NULL);
-  if (err) throw fs_error( err );
+  if (err) throw fs_error(err);
   return std::unique_ptr<CFsToFsIOFileIO>(new CFsToFsIOFileIO(_fs, fh, open_for_write));
+}
+
+void CFsToFsIO::mkdir(const encfs::Path &path) {
+  auto err = fs_mkdir( _fs, path.c_str() );
+  if (err) throw fs_error(err);
+}
+
+void CFsToFsIO::rename(const encfs::Path &pathSrc, const encfs::Path &pathDst) {
+  auto err = fs_rename( _fs, pathSrc.c_str(), pathDst.c_str() );
+  if (err) throw fs_error(err);
+}
+
+void CFsToFsIO::unlink(const encfs::Path &path) {
+  auto err = fs_remove( _fs, path.c_str() );
+  if (err) throw fs_error(err);
+}
+
+void CFsToFsIO::rmdir(const encfs::Path &path) {
+  auto err = fs_remove( _fs, path.c_str() );
+  if (err) throw fs_error(err);
+}
+
+void CFsToFsIO::set_times(const encfs::Path &path,
+                          const opt::optional<encfs::fs_time_t> &atime,
+                          const opt::optional<encfs::fs_time_t> &mtime) {
+  if(atime &&
+     (*atime > std::numeric_limits<::fs_time_t>::max() ||
+      *mtime < std::numeric_limits<::fs_time_t>::lowest())) {
+    throw fs_error(FS_ERROR_INVALID_ARG);
+  }
+
+  if(mtime &&
+     (*mtime > std::numeric_limits<::fs_time_t>::max() ||
+      *mtime < std::numeric_limits<::fs_time_t>::lowest())) {
+    throw fs_error(FS_ERROR_INVALID_ARG);
+  }
+
+  ::fs_time_t atime_in = atime ? (::fs_time_t) *atime : FS_INVALID_TIME;
+  ::fs_time_t mtime_in = mtime ? (::fs_time_t) *mtime : FS_INVALID_TIME;
+
+  auto err = fs_set_times(_fs, path.c_str(), atime_in, mtime_in);
+  if (err) throw fs_error(err);
 }
 
 }
