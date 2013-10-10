@@ -23,6 +23,8 @@
 
 #include <encfs/fs/FsIO.h>
 
+#include <davfuse/iface_util.h>
+
 #include <climits>
 #include <cstddef>
 
@@ -160,6 +162,7 @@ fs_FsIO_path_is_parent(fs_FsIO_t fs,
 const char *
 fs_FsIO_path_sep(fs_FsIO_t fs);
 
+CREATE_IMPL_TAG(FS_FSIO_IMPL);
 
 #ifdef __cplusplus
 }
