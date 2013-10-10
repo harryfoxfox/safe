@@ -115,8 +115,8 @@ create_enc_fs(std::shared_ptr<FsIO> base_fs_io,
               const encfs::SecureMem *password) {
   // encfs options
   auto encfs_opts = std::make_shared<EncFS_Opts>();
-  encfs_opts->fs_io = std::move( base_fs_io );
-  encfs_opts->rootDir = std::move( encrypted_folder_path );
+  encfs_opts->fs_io = std::move(base_fs_io);
+  encfs_opts->rootDir = std::move(encrypted_folder_path);
   // TODO: add password reader
 
   // encfs
