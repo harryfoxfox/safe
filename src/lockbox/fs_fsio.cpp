@@ -441,13 +441,8 @@ fs_fsio_path_is_parent(fs_handle_t fs,
 
   try {
     auto parent_path = fsio->pathFromString(potential_parent);
-
-    auto cur_path = fsio->pathFromString(potential_child).dirname();
-    while (!cur_path.is_root()) {
-      if (parent_path == cur_path) return true;
-    }
-
-    return false;
+    auto child_path = fsio->pathFromString(potential_child);
+    return path_is_parent(parent_path, child_path);
   }
   catch (...) {
     return FS_ERROR_INVALID_ARG;
