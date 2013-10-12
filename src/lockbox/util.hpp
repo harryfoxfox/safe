@@ -11,12 +11,13 @@ private:
   Destroyer f;
 public:
   CDestroyer(const T & var, Destroyer f_) : myt(var), f(f_) {}
-  CDestroyer(const CFreer & var) = delete;
+  CDestroyer(const CDestroyer & var) = delete;
+  CDestroyer(CDestroyer && var) = default;
   ~CDestroyer() { f(myt);};
 };
 
 template <class T, class Destroyer>
-CDestroyer<T, Destroyer> create_destroyer(class T & obj, Destroyer f) {
+CDestroyer<T, Destroyer> create_destroyer(const T & obj, Destroyer f) {
   return CDestroyer<T, Destroyer>(obj, f);
 }
 

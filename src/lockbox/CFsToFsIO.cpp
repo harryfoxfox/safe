@@ -16,15 +16,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include "CFsToFsIO.h"
-
-#include "c_fs_to_fs_io_fs.h"
+#include "CFsToFsIO.hpp"
 
 #include <encfs/fs/FsIO.h>
 #include <encfs/base/Interface.h>
 #include <encfs/base/optional.h>
 
 #include <davfuse/logging.h>
+#include <davfuse/fs.h>
 
 #include <limits>
 
@@ -39,7 +38,7 @@ public:
 
 class CFsToFsIOPath final : public encfs::StringPathDynamicSep {
 protected:
-  fs_t _fs;
+  fs_handle_t _fs;
 
   virtual std::shared_ptr<encfs::PathPoly> _from_string(std::string str) const
   {
@@ -47,14 +46,14 @@ protected:
   }
 
 public:
-  CFsToFsIOPath(fs_t fs, std::string str)
+  CFsToFsIOPath(fs_handle_t fs, std::string str)
     : StringPathDynamicSep( fs_path_sep(fs), std::move( str ) )
     , _fs( fs ) {
     // TODO: support this
-    assert(strlen(fs_path_sep(fs)) != 1);
+    assert(strlen(fs_path_sep(fs)) == 1);
   }
 
-  virtual encfs::Path dirname() const override {
+  virtual std::shared_ptr<encfs::PathPoly> dirname() const override {
     if (fs_path_is_root(_fs, _path.c_str())) return _from_string(_path);
 
     /* do this */
@@ -70,10 +69,10 @@ public:
 
 class CFsToFsIODirectoryIO final : public encfs::DirectoryIO {
 private:
-  fs_t _fs;
+  fs_handle_t _fs;
   fs_directory_handle_t _dh;
 
-  CFsToFsIODirectoryIO(fs_t fs, fs_directory_handle_t dh) noexcept
+  CFsToFsIODirectoryIO(fs_handle_t fs, fs_directory_handle_t dh) noexcept
     : _fs(fs), _dh(dh) {}
 
 public:
@@ -84,12 +83,12 @@ public:
 };
 
 class CFsToFsIOFileIO : public encfs::FileIO {
-  fs_t _fs;
+  fs_handle_t _fs;
   fs_file_handle_t _fh;
   bool _open_for_write;
 
 public:
-  CFsToFsIOFileIO(fs_t fs, fs_file_handle_t fh, bool open_for_write)
+  CFsToFsIOFileIO(fs_handle_t fs, fs_file_handle_t fh, bool open_for_write)
     : _fs(fs)
     , _fh(fh)
     , _open_for_write(open_for_write) {}
@@ -178,7 +177,7 @@ size_t CFsToFsIOFileIO::read(const encfs::IORequest & req) const {
 }
 
 void CFsToFsIOFileIO::write(const encfs::IORequest &req) {
-  if (!_open_for_write) throw fs_error(FS_POSIX_ERROR_PERM);
+  if (!_open_for_write) throw fs_error(FS_ERROR_PERM);
 
   size_t written = 0;
   while (written != req.dataLen) {
@@ -196,7 +195,7 @@ void CFsToFsIOFileIO::write(const encfs::IORequest &req) {
 }
 
 void CFsToFsIOFileIO::truncate(encfs::fs_off_t size) {
-  if (!_open_for_write) throw fs_error(FS_POSIX_ERROR_PERM);
+  if (!_open_for_write) throw fs_error(FS_ERROR_PERM);
   auto err = fs_ftruncate(_fs, _fh, size);
   if (err) throw fs_error(err);
 }
@@ -209,8 +208,16 @@ void CFsToFsIOFileIO::sync(bool /*datasync*/) {
   // C Fs does not support this interface
 }
 
-CFsToFsIO::CFsToFsIO(fs_t fs)
-  : _fs(fs) {
+CFsToFsIO::CFsToFsIO(fs_handle_t fs, bool destroy_on_delete)
+  : _fs(fs)
+  , _destroy_on_delete(destroy_on_delete) {
+}
+
+CFsToFsIO::~CFsToFsIO() {
+  if (_destroy_on_delete) {
+    const auto success = fs_destroy(_fs);
+    if (!success) log_error("failure destroying fs");
+  }
 }
 
 const std::string &CFsToFsIO::path_sep() const {

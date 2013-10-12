@@ -1,32 +1,37 @@
 DAVFUSE_ROOT := $(CURDIR)/../davfuse
 ENCFS_ROOT := $(CURDIR)/../encfs
+BOTAN_ROOT := $(CURDIR)/encfs-dependencies/botan
+TINYXML_ROOT := $(CURDIR)/encfs-dependencies/tinyxml
+GLOG_ROOT := $(CURDIR)/../google-glog
+PROTOBUF_ROOT := $(CURDIR)/../protobuf
 HEADERS_ROOT := $(CURDIR)/out/headers
 DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
 
 WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_sockets_fs.a
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
+ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 
 INHERITED_CXXFLAGS := $(CXX_FLAGS)
-CXX_FLAGS = -Wall -Wextra -Werror -std=c++11 -I/Users/rian/encfs-dev-prefix/include -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src
+CPPFLAGS = -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src
+CXXFLAGS = -g -Wall -Wextra -Werror -std=c++11
+CFLAGS = -g -Wall -Wextra -Werror -std=c99
 
-$(WEBDAV_SERVER_STATIC_LIBRARY):
+all: test_encfs_main
+
+libwebdav_server: clean
 	@rm -rf "$(DAVFUSE_ROOT)/out"
-	@make -C  "$(DAVFUSE_ROOT)" "$(notdir $(WEBDAV_SERVER_STATIC_LIBRARY))"
+	@cd $(DAVFUSE_ROOT); make -j6 USE_DYNAMIC_FS=1 libwebdav_server_sockets_fs.a
 	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
 	@cp "$(DAVFUSE_ROOT)/out/targets/$(notdir $(WEBDAV_SERVER_STATIC_LIBRARY))" $(WEBDAV_SERVER_STATIC_LIBRARY)
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/davfuse
 	@find $(DAVFUSE_ROOT) -name '*.h' | (while read F; do cp $$F $(DEPS_INSTALL_ROOT)/include/davfuse/$$(basename $$F); done)
 
-# TODO: add all *.h and *.cpp files the library depends on
-#       or make this a phony target and attempt to build everytime
-#       (relying on the build system to rebuild)
-$(ENCFS_STATIC_LIBRARY):
-	@rm -fr $(DEPS_INSTALL_ROOT)/include/encfs
-	@rm -fr $(ENCFS_STATIC_LIBRARY)
+libencfs: clean
 #	TODO: don't require fuse when configuring encfs
-	@OLDDIR="$${PWD}"; cd $(ENCFS_ROOT) && cmake . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) -DCMAKE_CXX_FLAGS=$(INHERITED_CXXFLAGS) && cd "$${OLDDIR}"
-	@make -C "$(ENCFS_ROOT)" clean
-	@make -C "$(ENCFS_ROOT)" -j6 encfs-base encfs-cipher encfs-fs
+	@cd $(ENCFS_ROOT); rm -f CMakeCache.txt
+	@cd $(ENCFS_ROOT); cmake . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) -DCMAKE_CXX_FLAGS=$(INHERITED_CXXFLAGS)
+	@cd $(ENCFS_ROOT); make clean
+	@cd $(ENCFS_ROOT); make -j6 encfs-base encfs-cipher encfs-fs
 #	copy all encfs headers into our build headers dir
 	@find $(ENCFS_ROOT) -name '*.h' | (while read F; do ROOT=$(ENCFS_ROOT); NEWF=$$(echo $$F | sed "s|^$$ROOT|out/deps/include/encfs|"); mkdir -p $$(dirname "$$NEWF"); cp $$F $$NEWF; done)
 #       create archive
@@ -38,20 +43,52 @@ $(ENCFS_STATIC_LIBRARY):
          ar -x $(ENCFS_ROOT)/fs/libencfs-fs.a; \
          ar -x $(ENCFS_ROOT)/base/libencfs-base.a; ar rcs $(ENCFS_STATIC_LIBRARY) *.o;
 
-libencfs.a: $(ENCFS_STATIC_LIBRARY)
+libbotan: clean
+	@cd $(BOTAN_ROOT); ./configure.py --prefix=$(DEPS_INSTALL_ROOT) --disable-shared
+	@cd $(BOTAN_ROOT); make clean
+	@cd $(BOTAN_ROOT); make -j6
+	@cd $(BOTAN_ROOT); make install
 
-# TODO: don't hardcode this
-FS_IMPL=posix
+libglog: clean
+	@cd $(GLOG_ROOT); ./configure --prefix=$(DEPS_INSTALL_ROOT) --disable-shared
+	@cd $(GLOG_ROOT); make clean
+	@cd $(GLOG_ROOT); make -j6
+	@cd $(GLOG_ROOT); make install
 
-$(HEADERS_ROOT)/c_fs_to_fs_io_fs.h: $(DAVFUSE_ROOT)/generate-interface-implementation.sh
-	@mkdir -p $(dir $@)
-	C_FS_TO_FS_IO_FS_DEF=c_fs_to_fs_io/fs/$(FS_IMPL) sh $(DAVFUSE_ROOT)/generate-interface-implementation.sh c_fs_to_fs_io_fs $(DAVFUSE_ROOT)/src/fs.idef > $@
+libprotobuf: clean
+	@cd $(PROTOBUF_ROOT); if [ ! -e configure ]; then ./autogen.sh; fi
+	@cd $(PROTOBUF_ROOT); ./configure --prefix=$(DEPS_INSTALL_ROOT) --disable-shared
+	@cd $(PROTOBUF_ROOT); make clean
+	@cd $(PROTOBUF_ROOT); make -j6
+	@cd $(PROTOBUF_ROOT); make install
 
-src/fs_FsIO.o: src/fs_FsIO.cpp $(ENCFS_STATIC_LIBRARY)# $(WEBDAV_SERVER_STATIC_LIBRARY)
-	$(CXX) $(CXX_FLAGS) -c -o $@ src/fs_FsIO.cpp
+libtinyxml: clean
+	@cd $(TINYXML_ROOT); rm -f libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o  
+	@cd $(TINYXML_ROOT); $(CXX) $(CXXFLAGS) -c tinystr.cpp  tinyxml.cpp  tinyxmlerror.cpp  tinyxmlparser.cpp  
+	@cd $(TINYXML_ROOT); ar rcs libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o  
+	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
+	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
 
-src/CFsToFsIO.o: src/CFsToFsIO.cpp $(HEADERS_ROOT)/c_fs_to_fs_io_fs.h $(ENCFS_STATIC_LIBRARY) $(WEBDAV_SERVER_STATIC_LIBRARY)
-	$(CXX) $(CXX_FLAGS) -c -o $@ src/CFsToFsIO.cpp
+dependencies: libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server
+
+clean-deps:
+	rm -rf out
+
+clean:
+	rm -f src/lockbox/*.o
+
+src/lockbox/*.o: Makefile
+
+%.cpp.o: %.cpp
+	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 
-.PHONY: libencfs.a
+SRCS = test_encfs_main.cpp fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp SecureMemPasswordReader.cpp
+OBJS = $(patsubst %,src/lockbox/%.o,${SRCS})
+
+test_encfs_main: $(OBJS) $(ENCFS_STATIC_LIBRARY) $(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
+
+test_encfs_main:
+	$(CXX) -L$(DEPS_INSTALL_ROOT)/lib $(CXXFLAGS) -o $@ $(OBJS) -lwebdav_server_sockets_fs -lencfs `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf -lglog  -ltinyxml
+
+.PHONY: dependencies clean libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server

@@ -17,32 +17,47 @@
  */
 
 #include <encfs/cipher/MemoryPool.h>
+#include <encfs/fs/EncfsFsIO.h>
+#include <encfs/fs/FileUtils.h>
 
 #include <davfuse/c_util.h>
 #include <davfuse/http_backend_sockets_fdevent.h>
-#include <davfuse/http_backend_sockets_fdevent_fdevent.h>
+#include <davfuse/fdevent.h>
 #include <davfuse/iface_util.h>
 #include <davfuse/logging.h>
-#include <davfuse/logging_log_printer.h>
 #include <davfuse/webdav_backend_fs.h>
-#include <davfuse/webdav_backend_fs_fs.h>
+#include <davfuse/fs.h>
+#include <davfuse/fs_dynamic.h>
+#include <davfuse/fs_native.h>
 #include <davfuse/webdav_server.h>
 #include <davfuse/webdav_server_xml.h>
 #include <davfuse/uthread.h>
 #include <davfuse/util.h>
 #include <davfuse/util_sockets.h>
 
+#include <lockbox/CFsToFsIO.hpp>
 #include <lockbox/util.hpp>
+#include <lockbox/SecureMemPasswordReader.hpp>
 
-#include <lockbox/lockbox_serer.hpp>
+#include <lockbox/lockbox_server.hpp>
 
-ASSERT_SAME_IMPL(HTTP_SERVER_HTTP_BACKEND_IMPL,
-                 HTTP_BACKEND_SOCKETS_FDEVENT_IMPL);
-ASSERT_SAME_IMPL(WEBDAV_SERVER_WEBDAV_BACKEND_IMPL,
-                 WEBDAV_BACKEND_FS_IMPL);
+ASSERT_SAME_IMPL(FS_IMPL, FS_DYNAMIC_IMPL);
+ASSERT_SAME_IMPL(HTTP_BACKEND_IMPL, HTTP_BACKEND_SOCKETS_FDEVENT_IMPL);
+ASSERT_SAME_IMPL(WEBDAV_BACKEND_IMPL, WEBDAV_BACKEND_FS_IMPL);
+
+#ifndef _CXX_STATIC_BUILD
+#define CXX_STATIC_ATTR
+#endif
 
 namespace lockbox {
 
+CXX_STATIC_ATTR
+int
+localhost_socketpair(int /*sv*/[2]) {
+  return -1;
+}
+
+CXX_STATIC_ATTR
 bool
 global_webdav_init() {
   /* init sockets */
@@ -72,6 +87,7 @@ global_webdav_init() {
   return false;
 }
 
+CXX_STATIC_ATTR
 void
 global_webdav_shutdown() {
   shutdown_xml_parser();
@@ -80,44 +96,84 @@ global_webdav_shutdown() {
   shutdown_socket_subsystem();
 }
 
-std::shared_ptr<FsIO>
+static FsOperations native_ops = {
+  .open = fs_native_open,
+  .fgetattr = fs_native_fgetattr,
+  .ftruncate = fs_native_ftruncate,
+  .read = fs_native_read,
+  .write = fs_native_write,
+  .close = fs_native_close,
+  .opendir = fs_native_opendir,
+  .readdir = fs_native_readdir,
+  .closedir = fs_native_closedir,
+  .remove = fs_native_remove,
+  .mkdir = fs_native_mkdir,
+  .getattr = fs_native_getattr,
+  .rename = fs_native_rename,
+  .set_times = fs_native_set_times,
+  .path_is_root = fs_native_path_is_root,
+  .path_sep = fs_native_path_sep,
+  .path_equals = fs_native_path_equals,
+  .path_is_parent = fs_native_path_is_parent,
+  .destroy = fs_native_destroy,
+};
+
+CXX_STATIC_ATTR
+std::shared_ptr<encfs::FsIO>
 create_base_fs() {
-  const auto base_fs = fs_default_new();
-  if (!base_fs) throw std::runtime_error("error while creating base fs!");
   const bool destroy_fs_on_delete = true;
+  const auto native_fs = fs_native_default_new();
+  if (!native_fs) throw std::runtime_error("error while creating posix fs!");
+  const auto base_fs = fs_dynamic_new(native_fs, &native_ops, destroy_fs_on_delete);
+  if (!base_fs) {
+    fs_native_destroy(native_fs);
+    throw std::runtime_error("error while creating base fs!");
+  }
   return std::make_shared<CFsToFsIO>(base_fs, destroy_fs_on_delete);
 }
 
+CXX_STATIC_ATTR
 encfs::EncfsConfig
-read_encfs_config(std::shared_ptr<FsIO> fs_io,
+read_encfs_config(std::shared_ptr<encfs::FsIO> fs_io,
                   const encfs::Path & encrypted_folder_path) {
   // TODO: implemenent fails with a catchable exception i.e.
   // EncryptedFolderDoesNotExist
   // NoConfigurationFile
   // BadlyFormattedFile
-  return EncfsFsOpts();
+
+  encfs::EncfsConfig config;
+  if (encfs::readConfig(fs_io, encrypted_folder_path, config) == encfs::Config_None) {
+    throw std::runtime_error("bad config");
+  }
+
+  return std::move(config);
 }
 
+CXX_STATIC_ATTR
 void
-write_encfs_config(std::shared_ptr<FsIO> fs_io,
-                   const encfs::Path & encrypted_folder_path,b
-                   const encfs::EncfsConfig &cfg) {
+write_encfs_config(std::shared_ptr<encfs::FsIO> /*fs_io*/,
+                   const encfs::Path & /*encrypted_folder_path*/,
+                   const encfs::EncfsConfig & /*cfg*/) {
 }
 
-bool verify_password(const encfs::EncfsConfig & cfg, const encfs::SecureMem *password) {
+CXX_STATIC_ATTR
+bool
+verify_password(const encfs::EncfsConfig & /*cfg*/,
+                const encfs::SecureMem & /*password*/) {
   return false;
 }
 
-std::shared_ptr<FsIO>
-create_enc_fs(std::shared_ptr<FsIO> base_fs_io,
+CXX_STATIC_ATTR
+std::shared_ptr<encfs::FsIO>
+create_enc_fs(std::shared_ptr<encfs::FsIO> base_fs_io,
               encfs::Path encrypted_folder_path,
               const encfs::EncfsConfig & cfg,
-              const encfs::SecureMem *password) {
+              encfs::SecureMem password) {
   // encfs options
-  auto encfs_opts = std::make_shared<EncFS_Opts>();
+  auto encfs_opts = std::make_shared<encfs::EncFS_Opts>();
   encfs_opts->fs_io = std::move(base_fs_io);
   encfs_opts->rootDir = std::move(encrypted_folder_path);
-  // TODO: add password reader
+  encfs_opts->passwordReader = std::make_shared<SecureMemPasswordReader>(std::move(password));
 
   // encfs
   auto encfs_io = std::make_shared<encfs::EncfsFsIO>();
@@ -129,23 +185,27 @@ create_enc_fs(std::shared_ptr<FsIO> base_fs_io,
 struct RunningCallbackCtx {
   int send_sock;
   int recv_sock;
-  fdevent_t loop;
-  std::function<void(fdevent_t)> fn;
+  fdevent_loop_t loop;
+  std::function<void(fdevent_loop_t)> fn;
 };
 
+CXX_STATIC_ATTR
 static
 EVENT_HANDLER_DEFINE(_when_server_runs, ev_type, ev, ud) {
-  RunningCallbackCtx *ctx = ud;
+  (void) ev_type;
+  (void) ev;
+  RunningCallbackCtx *ctx = (RunningCallbackCtx *) ud;
   close(ctx->send_sock);
   close(ctx->recv_sock);
   ctx->fn(ctx->loop);
 }
 
+CXX_STATIC_ATTR
 void
-run_lockbox_webdav_server(shared_ptr<FsIO> fs_io,
+run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                           char *root_path,
                           port_t port,
-                          std::function<void(fdevent_t))> when_done) {
+                          std::function<void(fdevent_loop_t)> when_done) {
   // create event loop (implemented by file descriptors)
   fdevent_loop_t loop = fdevent_default_new();
   if (!loop) throw std::runtime_error("Couldn't create event loop");
@@ -159,12 +219,12 @@ run_lockbox_webdav_server(shared_ptr<FsIO> fs_io,
     http_backend_sockets_fdevent_new(loop,
                                      (struct sockaddr *) &listen_addr,
                                      sizeof(listen_addr));
-  if (!http_backend) throw std::runtime_error("Couldn't create network io");
+  if (!network_io) throw std::runtime_error("Couldn't create network io");
   auto _destroy_network_io =
-    create_destroyer(fs, http_backend_sockets_fdevent_destroy);
+    create_destroyer(network_io, http_backend_sockets_fdevent_destroy);
 
   // create server storage backend (implemented by the file system)
-  auto server_backend = webdav_backend_fs_new(fs_io.get(), root_path);
+  auto server_backend = webdav_backend_fs_new((fs_handle_t) fs_io.get(), root_path);
   if (!server_backend) {
     throw std::runtime_error("Couldn't create webdav server backend");
   }
@@ -184,9 +244,9 @@ run_lockbox_webdav_server(shared_ptr<FsIO> fs_io,
   int sv[2];
   auto ret_socketpair = localhost_socketpair(sv);
   if (ret_socketpair) abort();
-  auto ret_send = send(sv[0], "1", 1);
+  auto ret_send = send(sv[0], "1", 1, 0);
   if (ret_send) throw std::runtime_error("couldn't set up startup callback");
-  auto ctx = RunningCallbackCtx(sv[0], sv[1], loop, std::move(when_done));
+  auto ctx = RunningCallbackCtx {sv[0], sv[1], loop, std::move(when_done)};
   auto success_add_watch =
     fdevent_add_watch(loop, sv[1], create_stream_events(true, false),
                       _when_server_runs, &ctx, NULL);
@@ -201,3 +261,7 @@ run_lockbox_webdav_server(shared_ptr<FsIO> fs_io,
 }
 
 }
+
+#ifndef _CXX_STATIC_BUILD
+#undef CXX_STATIC_ATTR
+#endif

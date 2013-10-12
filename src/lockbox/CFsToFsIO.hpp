@@ -21,7 +21,7 @@
 #ifndef _CFsToFsIO_incl_
 #define _CFsToFsIO_incl_
 
-#include "c_fs_to_fs_io_fs.h"
+#include <davfuse/fs.h>
 
 #include <encfs/fs/FsIO.h>
 
@@ -29,11 +29,12 @@ namespace lockbox {
 
 class CFsToFsIO : public encfs::FsIO {
 private:
-  fs_t _fs;
+  fs_handle_t _fs;
+  bool _destroy_on_delete;
 
 public:
-  CFsToFsIO(fs_t fs);
-  virtual ~CFsToFsIO() override = default;
+  CFsToFsIO(fs_handle_t fs, bool destroy_on_delete);
+  virtual ~CFsToFsIO() override;
 
   // generic fs methods
   virtual const std::string &path_sep() const override;
