@@ -9,12 +9,12 @@ DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
 
 WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_sockets_fs.a
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
-ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 
-INHERITED_CXXFLAGS := $(CXX_FLAGS)
-CPPFLAGS = -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src
-CXXFLAGS = -g -Wall -Wextra -Werror -std=c++11
-CFLAGS = -g -Wall -Wextra -Werror -std=c99
+MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src
+MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11
+
+# encfs on mac makes use of the Security framework
+EXTRA_LIBRARIES := $(if $(shell test `uname` == Darwin && echo 1),-framework Security,)
 
 all: test_encfs_main
 
@@ -29,7 +29,7 @@ libwebdav_server: clean
 libencfs: clean
 #	TODO: don't require fuse when configuring encfs
 	@cd $(ENCFS_ROOT); rm -f CMakeCache.txt
-	@cd $(ENCFS_ROOT); cmake . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) -DCMAKE_CXX_FLAGS=$(INHERITED_CXXFLAGS)
+	@cd $(ENCFS_ROOT); cmake . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT)
 	@cd $(ENCFS_ROOT); make clean
 	@cd $(ENCFS_ROOT); make -j6 encfs-base encfs-cipher encfs-fs
 #	copy all encfs headers into our build headers dir
@@ -44,7 +44,7 @@ libencfs: clean
          ar -x $(ENCFS_ROOT)/base/libencfs-base.a; ar rcs $(ENCFS_STATIC_LIBRARY) *.o;
 
 libbotan: clean
-	@cd $(BOTAN_ROOT); ./configure.py --prefix=$(DEPS_INSTALL_ROOT) --disable-shared
+	@cd $(BOTAN_ROOT); ./configure.py --prefix=$(DEPS_INSTALL_ROOT) --disable-shared $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,)
 	@cd $(BOTAN_ROOT); make clean
 	@cd $(BOTAN_ROOT); make -j6
 	@cd $(BOTAN_ROOT); make install
@@ -80,8 +80,7 @@ clean:
 src/lockbox/*.o: Makefile
 
 %.cpp.o: %.cpp
-	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(CXXFLAGS) $(CPPFLAGS) -c -o $@ $<
-
+	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
 
 SRCS = test_encfs_main.cpp fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp SecureMemPasswordReader.cpp
 OBJS = $(patsubst %,src/lockbox/%.o,${SRCS})
@@ -89,6 +88,9 @@ OBJS = $(patsubst %,src/lockbox/%.o,${SRCS})
 test_encfs_main: $(OBJS) $(ENCFS_STATIC_LIBRARY) $(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
 
 test_encfs_main:
-	$(CXX) -L$(DEPS_INSTALL_ROOT)/lib $(CXXFLAGS) -o $@ $(OBJS) -lwebdav_server_sockets_fs -lencfs `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf -lglog  -ltinyxml
+	$(CXX) -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(OBJS) \
+ -lwebdav_server_sockets_fs -lencfs \
+ `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
+ -lglog  -ltinyxml $(EXTRA_LIBRARIES)
 
 .PHONY: dependencies clean libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server

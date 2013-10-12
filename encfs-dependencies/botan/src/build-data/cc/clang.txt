@@ -10,7 +10,8 @@ add_include_dir_option -I
 add_lib_dir_option -L
 add_lib_option -l
 
-lang_flags "-D_REENTRANT -ansi -Wno-long-long"
+# RH: added -stdlib=libc++ for all clang builds, this is a hack
+lang_flags "-D_REENTRANT -ansi -Wno-long-long -stdlib=libc++"
 warning_flags "-W -Wall"
 
 makefile_style unix
