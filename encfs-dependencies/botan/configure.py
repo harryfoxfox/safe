@@ -38,6 +38,23 @@ if 'dont_write_bytecode' in sys.__dict__:
 
 import botan_version
 
+# monkey patch for mingw builds
+_using_mingw = False
+_old_join = os.path.join
+
+def set_mingw_monkey_patch():
+    def path_join(*comps):
+        if comps and not comps[0]:
+            comps = comps[1:]
+        return '/'.join(comps)
+    def path_split(p):
+        print p
+        return p.rsplit('/', 1)
+    os.path.normpath = lambda n: n
+    os.path.join = path_join
+    os.path.sep = '/'
+    os.sep = '/'
+
 def flatten(l):
     return sum(l, [])
 
@@ -1677,6 +1694,10 @@ def main(argv = None):
 
     options = process_command_line(argv[1:])
 
+    if options.os == 'mingw':
+        # so our python runtime acts like a unix python runtime
+        set_mingw_monkey_patch()
+
     def log_level():
         if options.verbose:
             return logging.DEBUG
@@ -1879,8 +1900,6 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        logging.error(str(e))
-        #import traceback
-        #traceback.print_exc(file=sys.stderr)
+        logging.exception("Exception in main method")
         sys.exit(1)
     sys.exit(0)

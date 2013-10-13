@@ -29,6 +29,7 @@
 #include <davfuse/fs.h>
 #include <davfuse/fs_dynamic.h>
 #include <davfuse/fs_native.h>
+#include <davfuse/sockets.h>
 #include <davfuse/webdav_server.h>
 #include <davfuse/webdav_server_xml.h>
 #include <davfuse/uthread.h>
@@ -40,6 +41,8 @@
 #include <lockbox/SecureMemPasswordReader.hpp>
 
 #include <lockbox/lockbox_server.hpp>
+
+#include <sstream>
 
 ASSERT_SAME_IMPL(FS_IMPL, FS_DYNAMIC_IMPL);
 ASSERT_SAME_IMPL(HTTP_BACKEND_IMPL, HTTP_BACKEND_SOCKETS_FDEVENT_IMPL);
@@ -53,7 +56,7 @@ namespace lockbox {
 
 CXX_STATIC_ATTR
 int
-localhost_socketpair(int /*sv*/[2]) {
+localhost_socketpair(fd_t /*sv*/[2]) {
   return -1;
 }
 
@@ -183,8 +186,8 @@ create_enc_fs(std::shared_ptr<encfs::FsIO> base_fs_io,
 }
 
 struct RunningCallbackCtx {
-  int send_sock;
-  int recv_sock;
+  fd_t send_sock;
+  fd_t recv_sock;
   fdevent_loop_t loop;
   std::function<void(fdevent_loop_t)> fn;
 };
@@ -195,8 +198,8 @@ EVENT_HANDLER_DEFINE(_when_server_runs, ev_type, ev, ud) {
   (void) ev_type;
   (void) ev;
   RunningCallbackCtx *ctx = (RunningCallbackCtx *) ud;
-  close(ctx->send_sock);
-  close(ctx->recv_sock);
+  closesocket(ctx->send_sock);
+  closesocket(ctx->recv_sock);
   ctx->fn(ctx->loop);
 }
 
@@ -232,7 +235,9 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                                                   webdav_backend_fs_destroy);
 
   // create server
-  auto public_uri_root = "http://localhost:" + std::to_string(port) + "/";
+  std::ostringstream os;
+  os << "http://localhost:" << port << "/";
+  auto public_uri_root = os.str();
   auto internal_root = "/";
   auto server = webdav_server_start(network_io,
                                     public_uri_root.c_str(),
@@ -241,7 +246,7 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   if (!server) throw std::runtime_error("Couldn't start webdav server");
 
   // now set up callback
-  int sv[2];
+  fd_t sv[2];
   auto ret_socketpair = localhost_socketpair(sv);
   if (ret_socketpair) abort();
   auto ret_send = send(sv[0], "1", 1, 0);
