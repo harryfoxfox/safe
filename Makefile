@@ -17,7 +17,7 @@ MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROO
 MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11
 
 # encfs on mac makes use of the Security framework
-EXTRA_LIBRARIES := $(if $(shell test `uname` == Darwin && echo 1),-framework Security,)
+EXTRA_LIBRARIES := $(if $(shell test `uname` == Darwin && echo 1),-framework Security,) $(if $(IS_MSYS),-lws2_32,)
 
 all: test_encfs_main
 
@@ -32,7 +32,7 @@ libwebdav_server: clean
 libencfs: clean
 #	TODO: don't require fuse when configuring encfs
 	@cd $(ENCFS_ROOT); rm -rf CMakeCache.txt CMakeFiles
-	@cd $(ENCFS_ROOT); cmake . -DCMAKE_BUILD_TYPE=Debug $(if $(IS_MSYS),-G"MSYS Makefiles",) -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) $(if $(IS_MSYS),-DCMAKE_INCLUDE_PATH=$(DEPS_INSTALL_ROOT)/include/botan-1.10,)
+	@cd $(ENCFS_ROOT); CXXFLAGS="$(CXXFLAGS) -DGOOGLE_GLOG_DLL_DECL=''" cmake . -DCMAKE_BUILD_TYPE=Debug $(if $(IS_MSYS),-G"MSYS Makefiles",) -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) $(if $(IS_MSYS),-DCMAKE_INCLUDE_PATH=$(DEPS_INSTALL_ROOT)/include/botan-1.10,)
 	@cd $(ENCFS_ROOT); make clean
 	@cd $(ENCFS_ROOT); make -j$(PROCS) encfs-base encfs-cipher encfs-fs
 #	copy all encfs headers into our build headers dir
@@ -60,7 +60,7 @@ libglog: clean
 
 libprotobuf: clean
 	@cd $(PROTOBUF_ROOT); if [ ! -e configure ]; then ./autogen.sh; fi
-	@cd $(PROTOBUF_ROOT); ./configure --prefix=$(DEPS_INSTALL_ROOT) --disable-shared
+	@cd $(PROTOBUF_ROOT); CXXFLAGS="$(CXXFLAGS) -DGOOGLE_GLOG_DLL_DECL=''" ./configure --prefix=$(DEPS_INSTALL_ROOT) --disable-shared
 	@cd $(PROTOBUF_ROOT); make clean
 	@cd $(PROTOBUF_ROOT); make -j$(PROCS)
 	@cd $(PROTOBUF_ROOT); make install

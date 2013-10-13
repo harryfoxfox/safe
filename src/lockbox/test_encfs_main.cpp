@@ -20,7 +20,16 @@ int
 main(int argc, char *argv[]) {
   if (argc < 2) return MAIN_RETURN_CODE_BAD_ARGS;
 
-  std::cout << "Enter Your Password: " << std::endl;
+  auto base_fs = lockbox::create_base_fs();
+
+  // TODO: elegantly deal with bad input paths
+  auto encrypted_folder_path = base_fs->pathFromString(argv[1]);
+
+  // TODO: deal with bad / non-existent config
+  auto encfs_config =
+    lockbox::read_encfs_config(base_fs, encrypted_folder_path);
+
+  std::cout << "Enter Your Password: ";
   std::string password;
   std::getline(std::cin, password);
 
@@ -28,26 +37,23 @@ main(int argc, char *argv[]) {
   memmove(secure_password.data(), password.c_str(), password.size() + 1);
   clear_string(password);
 
-  auto base_fs = lockbox::create_base_fs();
-
-  auto encrypted_folder_path = base_fs->pathFromString(argv[1]);
-
-  auto encfs_config = lockbox::read_encfs_config(base_fs, encrypted_folder_path);
-
-  auto enc_fs = lockbox::create_enc_fs(std::move(base_fs), encrypted_folder_path,
-                                       encfs_config, std::move(secure_password));
+  auto enc_fs = lockbox::create_enc_fs(std::move(base_fs),
+                                       encrypted_folder_path,
+                                       encfs_config,
+                                       std::move(secure_password));
 
   // write a file
   auto path = encrypted_folder_path.join("sup");
 
-  std::string test_string = "SUP";
+  auto test_string = std::string("SUP");
 
   auto f = enc_fs->openfile(path, true, true);
   f.write(0, test_string);
 
   auto data = f.read(0, 3);
   if (data != test_string) {
-    std::cerr << "DATA WAS NOT EQUAL: \"" << data << "\" VS \"" << test_string << "\"" << std::endl;
+    std::cerr << "DATA WAS NOT EQUAL: \"" << data <<
+      "\" VS \"" << test_string << "\"" << std::endl;
     return MAIN_RETURN_CODE_BAD_DATA;
   }
 
