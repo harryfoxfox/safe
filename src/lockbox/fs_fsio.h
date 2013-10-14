@@ -89,6 +89,15 @@ fs_error_t
 fs_fsio_rename(fs_handle_t fs,
                const char *src, const char *dst);
 
+fs_error_t
+fs_fsio_set_times(fs_handle_t fs,
+                  const char *path,
+                  fs_time_t atime,
+                  fs_time_t mtime);
+
+bool
+fs_fsio_destroy(fs_handle_t fs);
+
 bool
 fs_fsio_path_is_root(fs_handle_t fs, const char *path);
 

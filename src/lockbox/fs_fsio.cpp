@@ -409,6 +409,44 @@ fs_fsio_close(fs_handle_t /*fs*/, fs_file_handle_t handle) {
   return FS_ERROR_SUCCESS;
 }
 
+fs_error_t
+fs_fsio_set_times(fs_handle_t fs,
+                  const char *path,
+                  fs_time_t atime,
+                  fs_time_t mtime) {
+  auto fsio = fs_handle_to_pointer(fs);
+
+  opt::optional<encfs::Path> maybePath;
+  try {
+    maybePath = fsio->pathFromString(path);
+  }
+  catch (...) {
+    return FS_ERROR_INVALID_ARG;
+  }
+
+  assert(maybePath);
+
+  try {
+    fsio->set_times(*maybePath,
+                    atime == FS_INVALID_TIME ? opt::nullopt : opt::make_optional(atime),
+                    mtime == FS_INVALID_TIME ? opt::nullopt : opt::make_optional(mtime));
+    return FS_ERROR_SUCCESS;
+  }
+  catch (const std::system_error & err) {
+    return get_FsIO_error_or_default(err);
+  }
+  catch (...) {
+    return FS_ERROR_IO;
+  }
+}
+
+bool
+fs_fsio_destroy(fs_handle_t /*fs*/) {
+  // we're never responsible for destroying the FsIO
+  // so it's an error to call this
+  return false;
+}
+
 bool
 fs_fsio_path_is_root(fs_handle_t fs, const char *path) {
   auto fsio = fs_handle_to_pointer(fs);

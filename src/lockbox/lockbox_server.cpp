@@ -37,8 +37,9 @@
 #include <davfuse/util_sockets.h>
 
 #include <lockbox/CFsToFsIO.hpp>
-#include <lockbox/util.hpp>
 #include <lockbox/SecureMemPasswordReader.hpp>
+#include <lockbox/fs_fsio.h>
+#include <lockbox/util.hpp>
 
 #include <lockbox/lockbox_server.hpp>
 
@@ -99,7 +100,7 @@ global_webdav_shutdown() {
   shutdown_socket_subsystem();
 }
 
-static FsOperations native_ops = {
+static const FsOperations native_ops = {
   .open = fs_native_open,
   .fgetattr = fs_native_fgetattr,
   .ftruncate = fs_native_ftruncate,
@@ -185,6 +186,28 @@ create_enc_fs(std::shared_ptr<encfs::FsIO> base_fs_io,
   return encfs_io;
 }
 
+static const FsOperations fsio_ops = {
+  .open = fs_fsio_open,
+  .fgetattr = fs_fsio_fgetattr,
+  .ftruncate = fs_fsio_ftruncate,
+  .read = fs_fsio_read,
+  .write = fs_fsio_write,
+  .close = fs_fsio_close,
+  .opendir = fs_fsio_opendir,
+  .readdir = fs_fsio_readdir,
+  .closedir = fs_fsio_closedir,
+  .remove = fs_fsio_remove,
+  .mkdir = fs_fsio_mkdir,
+  .getattr = fs_fsio_getattr,
+  .rename = fs_fsio_rename,
+  .set_times = fs_fsio_set_times,
+  .path_is_root = fs_fsio_path_is_root,
+  .path_sep = fs_fsio_path_sep,
+  .path_equals = fs_fsio_path_equals,
+  .path_is_parent = fs_fsio_path_is_parent,
+  .destroy = fs_fsio_destroy,
+};
+
 struct RunningCallbackCtx {
   fd_t send_sock;
   fd_t recv_sock;
@@ -206,11 +229,11 @@ EVENT_HANDLER_DEFINE(_when_server_runs, ev_type, ev, ud) {
 CXX_STATIC_ATTR
 void
 run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
-                          char *root_path,
+                          encfs::Path root_path,
                           port_t port,
                           std::function<void(fdevent_loop_t)> when_done) {
   // create event loop (implemented by file descriptors)
-  fdevent_loop_t loop = fdevent_default_new();
+  auto loop = fdevent_default_new();
   if (!loop) throw std::runtime_error("Couldn't create event loop");
   auto _free_loop = create_destroyer(loop, fdevent_destroy);
 
@@ -226,8 +249,15 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   auto _destroy_network_io =
     create_destroyer(network_io, http_backend_sockets_fdevent_destroy);
 
+  // create cfs for webdav backend
+  const bool destroy_fs_on_delete = false;
+  const auto cfs = fs_dynamic_new((fs_handle_t) fs_io.get(), &fsio_ops,
+                                  destroy_fs_on_delete);
+  auto _destroy_cfs =
+    create_destroyer(cfs, fs_dynamic_destroy);
+
   // create server storage backend (implemented by the file system)
-  auto server_backend = webdav_backend_fs_new((fs_handle_t) fs_io.get(), root_path);
+  auto server_backend = webdav_backend_fs_new(cfs, root_path.c_str());
   if (!server_backend) {
     throw std::runtime_error("Couldn't create webdav server backend");
   }
@@ -235,14 +265,11 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                                                   webdav_backend_fs_destroy);
 
   // create server
-  std::ostringstream os;
-  os << "http://localhost:" << port << "/";
-  auto public_uri_root = os.str();
+  auto public_uri_root =
+    (std::ostringstream() << "http://localhost:" << port << "/").str();
   auto internal_root = "/";
-  auto server = webdav_server_start(network_io,
-                                    public_uri_root.c_str(),
-                                    internal_root,
-                                    server_backend);
+  auto server = webdav_server_start(network_io, public_uri_root.c_str(),
+                                    internal_root, server_backend);
   if (!server) throw std::runtime_error("Couldn't start webdav server");
 
   // now set up callback

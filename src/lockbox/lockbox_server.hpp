@@ -75,7 +75,7 @@ create_enc_fs(std::shared_ptr<encfs::FsIO> base_fs_io,
 CXX_STATIC_ATTR
 void
 run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
-                          char *root_path,
+                          encfs::Path root_path,
                           port_t port,
                           std::function<void(fdevent_loop_t)> when_done);
 
