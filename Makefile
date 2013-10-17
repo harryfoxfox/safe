@@ -14,7 +14,7 @@ WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_sockets
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 
 MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src
-MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11
+MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11 $(if $(IS_MSYS),-D_UNICODE -DUNICODE,)
 
 # encfs on mac makes use of the Security framework
 EXTRA_LIBRARIES := $(if $(shell test `uname` = Darwin && echo 1),-framework Security,) $(if $(IS_MSYS),-lws2_32,)
@@ -106,6 +106,6 @@ windows_app_main:
 	$(CXX) -mwindows -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
- -lglog  -ltinyxml $(EXTRA_LIBRARIES)
+ -lglog  -ltinyxml -lole32 $(EXTRA_LIBRARIES)
 
 .PHONY: dependencies clean libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server
