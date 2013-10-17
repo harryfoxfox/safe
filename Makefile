@@ -85,13 +85,25 @@ src/lockbox/*.o: Makefile
 %.cpp.o: %.cpp
 	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
 
-SRCS = test_encfs_main.cpp fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp SecureMemPasswordReader.cpp
-OBJS = $(patsubst %,src/lockbox/%.o,${SRCS})
+SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp SecureMemPasswordReader.cpp
 
-test_encfs_main: $(OBJS) $(ENCFS_STATIC_LIBRARY) $(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
+TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
+TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
+
+WINDOWS_APP_MAIN_SRCS = windows_app_main.cpp $(SRCS)
+WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
+
+test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) $(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
+windows_app_main: $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) $(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
 
 test_encfs_main:
-	$(CXX) -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(OBJS) \
+	$(CXX) -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(TEST_ENCFS_MAIN_OBJS) \
+ -lwebdav_server_sockets_fs -lencfs \
+ `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
+ -lglog  -ltinyxml $(EXTRA_LIBRARIES)
+
+windows_app_main:
+	$(CXX) -mwindows -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
  -lglog  -ltinyxml $(EXTRA_LIBRARIES)
