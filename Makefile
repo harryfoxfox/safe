@@ -6,7 +6,7 @@ GLOG_ROOT := $(CURDIR)/../google-glog
 PROTOBUF_ROOT := $(CURDIR)/../protobuf
 HEADERS_ROOT := $(CURDIR)/out/headers
 DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
-PROCS := 1
+PROCS := $(if $(shell `which nproc`),$(shell nproc),1)
 
 IS_MSYS := $(shell uname | grep -i mingw)
 
@@ -17,7 +17,7 @@ MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROO
 MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11
 
 # encfs on mac makes use of the Security framework
-EXTRA_LIBRARIES := $(if $(shell test `uname` == Darwin && echo 1),-framework Security,) $(if $(IS_MSYS),-lws2_32,)
+EXTRA_LIBRARIES := $(if $(shell test `uname` = Darwin && echo 1),-framework Security,) $(if $(IS_MSYS),-lws2_32,)
 
 all: test_encfs_main
 

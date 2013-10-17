@@ -235,8 +235,9 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                                                   webdav_backend_fs_destroy);
 
   // create server
-  auto public_uri_root =
-    (std::ostringstream() << "http://localhost:" << port << "/").str();
+  std::ostringstream build_uri_root;
+  build_uri_root << "http://localhost:" << port << "/";
+  auto public_uri_root = std::move(build_uri_root).str();
   auto internal_root = "/";
   auto server = webdav_server_start(network_io, public_uri_root.c_str(),
                                     internal_root, server_backend);
