@@ -1,3 +1,10 @@
+#include <lockbox/lockbox_server.hpp>
+
+#include <encfs/fs/FsIO.h>
+#include <encfs/fs/FileUtils.h>
+
+#include <encfs/base/optional.h>
+
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -10,6 +17,11 @@
 #include <Shlobj.h>
 
 const wchar_t g_szClassName[] = L"myWindowClass";
+
+class WindowData {
+public:
+  std::shared_ptr<encfs::FsIO> native_fs;
+};
 
 enum {
   BUTTON_CLASS = 0x0080,
@@ -77,6 +89,12 @@ widen(const std::string & s) {
   return std::wstring(out.get(), required_buffer_size);
 }
 
+void
+quick_alert(HWND owner, std::string msg, std::string title) {
+  MessageBoxW(owner, widen(msg).c_str(), widen(title).c_str(),
+              MB_ICONEXCLAMATION | MB_OK);
+}
+
 static
 std::string
 narrow(const std::wstring & s) {
@@ -101,41 +119,96 @@ narrow(const std::wstring & s) {
   return std::string(out.get(), required_buffer_size);
 }
 
-//WINAPI
-BOOL mount_encrypted_folder_dialog(HWND owner) {
-  BROWSEINFOW bi;
-  memset(&bi, 0, sizeof(bi));
-  bi.hwndOwner = owner;
-  bi.lpszTitle = L"Select Encrypted Folder";
-  bi.ulFlags = BIF_USENEWUI;
-  auto pidllist = SHBrowseForFolderW(&bi);
-  if (pidllist) {
-    wchar_t file_buffer_ret[MAX_PATH];
-    const bool success = SHGetPathFromIDList(pidllist, file_buffer_ret);
-    if (success) {
-      std::ostringstream os;
-      os << "You Selected: " << narrow(file_buffer_ret);
-      MessageBoxW(NULL, widen(os.str()).c_str(), L"Success!",
-                  MB_ICONEXCLAMATION | MB_OK);
-      std::cout << "the selected file was: " << file_buffer_ret << std::endl;
+WINAPI
+opt::optional<std::string>
+get_folder_dialog(HWND owner) {
+  while (true) {
+    wchar_t chosen_name[MAX_PATH];
+    BROWSEINFOW bi;
+    memset(&bi, 0, sizeof(bi));
+    bi.hwndOwner = owner;
+    bi.lpszTitle = L"Select Encrypted Folder";
+    bi.ulFlags = BIF_USENEWUI;
+    bi.pszDisplayName = chosen_name;
+    auto pidllist = SHBrowseForFolderW(&bi);
+    if (pidllist) {
+      wchar_t file_buffer_ret[MAX_PATH];
+      const auto success = SHGetPathFromIDList(pidllist, file_buffer_ret);
+      CoTaskMemFree(pidllist);
+      if (success) return narrow(file_buffer_ret);
+      else {
+        std::ostringstream os;
+        os << "Your selection \"" << narrow(bi.pszDisplayName) <<
+          "\" is not a valid folder!";
+        quick_alert(owner, os.str(), "Bad Selection!");
+      }
     }
-    CoTaskMemFree(pidllist);
-    return true;
+    else return opt::nullopt;
   }
-  else return false;
+}
+
+WINAPI
+void
+mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
+                              HWND owner) {
+  auto maybe_chosen_folder = get_folder_dialog(owner);
+  // they pressed cancel
+  if (!maybe_chosen_folder) return;
+  auto chosen_folder = std::move(*maybe_chosen_folder);
+
+  opt::optional<encfs::Path> maybe_encrypted_directory_path;
+  try {
+    maybe_encrypted_directory_path =
+      native_fs->pathFromString(chosen_folder);
+  }
+  catch (const std::exception & err) {
+    std::ostringstream os;
+    os << "Bad path for encrypted directory: " <<
+      chosen_folder;
+    quick_alert(owner, os.str(), "Bad Path!");
+    return;
+  }
+
+  auto encrypted_directory_path =
+    std::move(*maybe_encrypted_directory_path);
+
+  // TODO: DO THIS ON A DIFFERENT THREAD
+  // attempt to read configuration
+  opt::optional<encfs::EncfsConfig> maybe_encfs_config;
+  try {
+    maybe_encfs_config =
+      encfs::read_config(native_fs, encrypted_directory_path);
+  }
+  catch (const encfs::ConfigurationFileDoesNotExist &) {
+    // this is fine, we'll just attempt to create it
+  }
+  catch (const encfs::ConfigurationFileIsCorrupted &) {
+    // this is not okay right now, let the user know and exit
+    std::ostringstream os;
+    os << "The configuration file in folder \"" <<
+      chosen_folder << "\" is corrupted";
+    quick_alert(owner, os.str(), "Bad Folder");
+    return;
+  }
+
+  quick_alert(owner, "This folder is cool!", "Cool Folder");
 }
 
 // Step 4: the Window Procedure
 CALLBACK
 LRESULT
 WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+  const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWL_USERDATA);
   switch(msg){
-  case WM_LBUTTONDOWN: {
-    // BEGIN NEW CODE
-    mount_encrypted_folder_dialog(hwnd);
+  case WM_CREATE: {
+      auto pParent = ((LPCREATESTRUCT)lParam)->lpCreateParams;
+      SetWindowLongPtr(hwnd, GWL_USERDATA, (LONG_PTR) pParent);
+      break;
   }
-    // END NEW CODE
+  case WM_LBUTTONDOWN: {
+    mount_encrypted_folder_dialog(wd->native_fs, hwnd);
     break;
+  }
   case WM_CLOSE:
     DestroyWindow(hwnd);
     break;
@@ -154,6 +227,11 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
         LPSTR /*lpCmdLine*/, int nCmdShow)
 {
   OleInitialize(NULL);
+
+  auto native_fs = lockbox::create_native_fs();
+  WindowData wd = {
+    .native_fs = std::move(native_fs),
+  };
 
   // TODO: create a window for the tray icon
   //Step 1: Registering the Window Class
@@ -178,12 +256,12 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   }
 
   // Step 2: Creating the Window
-  auto hwnd = CreateWindowExW(WS_EX_CLIENTEDGE,
-                              g_szClassName,
-                              L"The title of my window",
-                              WS_OVERLAPPEDWINDOW,
-                              CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
-                              NULL, NULL, hInstance, NULL);
+ auto hwnd = CreateWindowExW(WS_EX_CLIENTEDGE,
+                             g_szClassName,
+                             L"The title of my window",
+                             WS_OVERLAPPEDWINDOW,
+                             CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
+                             NULL, NULL, hInstance, &wd);
   if(hwnd == NULL) {
     MessageBoxW(NULL, L"Window Creation Failed!", L"Error!",
                 MB_ICONEXCLAMATION | MB_OK);
