@@ -46,24 +46,7 @@ global_webdav_shutdown();
 
 CXX_STATIC_ATTR
 std::shared_ptr<encfs::FsIO>
-create_base_fs();
-
-
-CXX_STATIC_ATTR
-encfs::EncfsConfig
-read_encfs_config(std::shared_ptr<encfs::FsIO> fs_io,
-                  const encfs::Path & encrypted_folder_path);
-
-CXX_STATIC_ATTR
-void
-write_encfs_config(std::shared_ptr<encfs::FsIO> fs_io,
-                   const encfs::Path & encrypted_folder_path,
-                   const encfs::EncfsConfig & cfg);
-
-CXX_STATIC_ATTR
-bool
-verify_password(const encfs::EncfsConfig & cfg,
-                const encfs::SecureMem & password);
+create_native_fs();
 
 CXX_STATIC_ATTR
 std::shared_ptr<encfs::FsIO>

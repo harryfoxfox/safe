@@ -29,12 +29,84 @@
 
 #include <cstring>
 
+namespace std {
+template <>
+struct is_error_code_enum<fs_error_t> : public true_type {};
+}
+
 namespace lockbox {
 
-class fs_error : public std::exception {
+class fs_error_category_cls : public std::error_category {
 public:
-  fs_error(fs_error_t /*err*/) {}
+  fs_error_category_cls() {}
+
+  std::error_condition
+  default_error_condition(int __i) const noexcept
+  {
+    // TODO: implement bool equivalent(int code, const std::error_condition &)
+    //       if we are equal to other conditions
+    switch ((fs_error_t) __i) {
+    case FS_ERROR_SUCCESS: assert(false);
+    case FS_ERROR_DOES_NOT_EXIST: return std::errc::no_such_file_or_directory;
+    case FS_ERROR_NOT_DIR: return std::errc::not_a_directory;
+    case FS_ERROR_IS_DIR: return std::errc::is_a_directory;
+    case FS_ERROR_IO: return std::errc::io_error;
+    case FS_ERROR_NO_SPACE: return std::errc::no_space_on_device;
+    case FS_ERROR_PERM: return std::errc::operation_not_permitted;
+    case FS_ERROR_EXISTS: return std::errc::file_exists;
+    case FS_ERROR_ACCESS: return std::errc::permission_denied;
+    case FS_ERROR_CROSS_DEVICE: return std::errc::cross_device_link;
+    case FS_ERROR_INVALID_ARG: return std::errc::invalid_argument;
+    case FS_ERROR_NO_MEM: return std::errc::not_enough_memory;
+    default: return std::error_condition(__i, *this);
+    }
+  }
+
+  virtual const char *name() const noexcept {
+    return "fs_error";
+  }
+
+  virtual std::string message(int cond) const {
+#define SC(f) case f: return #f
+    switch ((fs_error_t) cond) {
+    case FS_ERROR_SUCCESS: assert(false);
+      SC(FS_ERROR_DOES_NOT_EXIST);
+      SC(FS_ERROR_NOT_DIR);
+      SC(FS_ERROR_IS_DIR);
+      SC(FS_ERROR_IO);
+      SC(FS_ERROR_NO_SPACE);
+      SC(FS_ERROR_PERM);
+      SC(FS_ERROR_EXISTS);
+      SC(FS_ERROR_ACCESS);
+      SC(FS_ERROR_CROSS_DEVICE);
+      SC(FS_ERROR_INVALID_ARG);
+      SC(FS_ERROR_NO_MEM);
+    default:
+      assert(false);
+    }
+#undef SC
+  }
 };
+
+const std::error_category &fs_error_category() noexcept {
+  static const fs_error_category_cls fs_error_category_instance;
+  return fs_error_category_instance;
+}
+
+std::error_code make_error_code(fs_error_t e) {
+  assert(e);
+  return std::error_code(static_cast<int>(e), fs_error_category());
+}
+
+std::error_condition make_error_condition(fs_error_t e) {
+  assert(e);
+  return std::error_condition(static_cast<int>(e), fs_error_category());
+}
+
+std::system_error fs_error(fs_error_t err) {
+  assert(err);
+  return std::system_error(make_error_code(err));
+}
 
 class CFsToFsIOPath final : public encfs::StringPathDynamicSep {
 protected:
@@ -228,6 +300,8 @@ const std::string &CFsToFsIO::path_sep() const {
 encfs::Path CFsToFsIO::pathFromString(const std::string &path) const {
   // in the fs C interface, paths are always UTF-8 encoded strings
   // TODO: check UTF-8 validity
+  // TODO: there should be a bool fs_path_is_valid(const char *path)
+  //       function in the fs interface
   return std::make_shared<CFsToFsIOPath>(_fs, path);
 }
 

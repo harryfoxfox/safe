@@ -124,7 +124,7 @@ static const FsOperations native_ops = {
 
 CXX_STATIC_ATTR
 std::shared_ptr<encfs::FsIO>
-create_base_fs() {
+create_native_fs() {
   const bool destroy_fs_on_delete = true;
   const auto native_fs = fs_native_default_new();
   if (!native_fs) throw std::runtime_error("error while creating posix fs!");
@@ -134,37 +134,6 @@ create_base_fs() {
     throw std::runtime_error("error while creating base fs!");
   }
   return std::make_shared<CFsToFsIO>(base_fs, destroy_fs_on_delete);
-}
-
-CXX_STATIC_ATTR
-encfs::EncfsConfig
-read_encfs_config(std::shared_ptr<encfs::FsIO> fs_io,
-                  const encfs::Path & encrypted_folder_path) {
-  // TODO: implemenent fails with a catchable exception i.e.
-  // EncryptedFolderDoesNotExist
-  // NoConfigurationFile
-  // BadlyFormattedFile
-
-  encfs::EncfsConfig config;
-  if (encfs::readConfig(fs_io, encrypted_folder_path, config) == encfs::Config_None) {
-    throw std::runtime_error("bad config");
-  }
-
-  return std::move(config);
-}
-
-CXX_STATIC_ATTR
-void
-write_encfs_config(std::shared_ptr<encfs::FsIO> /*fs_io*/,
-                   const encfs::Path & /*encrypted_folder_path*/,
-                   const encfs::EncfsConfig & /*cfg*/) {
-}
-
-CXX_STATIC_ATTR
-bool
-verify_password(const encfs::EncfsConfig & /*cfg*/,
-                const encfs::SecureMem & /*password*/) {
-  return false;
 }
 
 CXX_STATIC_ATTR
