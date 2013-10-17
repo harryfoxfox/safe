@@ -55,11 +55,17 @@ public:
     case FS_ERROR_PERM: return std::errc::operation_not_permitted;
     case FS_ERROR_EXISTS: return std::errc::file_exists;
     case FS_ERROR_ACCESS: return std::errc::permission_denied;
+#ifndef _WIN32
+      // deal with bad win32 libstdc++ headers
     case FS_ERROR_CROSS_DEVICE: return std::errc::cross_device_link;
+#else
+    case FS_ERROR_CROSS_DEVICE: return std::errc::io_error;
+#endif
     case FS_ERROR_INVALID_ARG: return std::errc::invalid_argument;
     case FS_ERROR_NO_MEM: return std::errc::not_enough_memory;
-    default: return std::error_condition(__i, *this);
     }
+    /* should never happen */
+    assert(false);
   }
 
   virtual const char *name() const noexcept {

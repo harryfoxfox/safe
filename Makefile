@@ -6,7 +6,7 @@ GLOG_ROOT := $(CURDIR)/../google-glog
 PROTOBUF_ROOT := $(CURDIR)/../protobuf
 HEADERS_ROOT := $(CURDIR)/out/headers
 DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
-PROCS := $(if $(shell `which nproc`),$(shell nproc),1)
+PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),1)
 
 IS_MSYS := $(shell uname | grep -i mingw)
 
