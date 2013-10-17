@@ -25,42 +25,62 @@
 #define OUT_VAR
 
 #ifdef __cplusplus
+#include <encfs/fs/FsIO.h>
+
 extern "C" {
 #endif
 
+#ifdef __cplusplus
+
+typedef encfs::FsIO *fs_fsio_handle_t;
+typedef encfs::DirectoryIO *fs_fsio_directory_handle_t;
+typedef encfs::FileIO *fs_fsio_file_handle_t;
+
+#else
+
+struct _fsio_handle;
+struct _fsio_directory_handle;
+struct _fsio_file_handle;
+
+typedef struct _fsio_handle *fs_fsio_handle_t;
+typedef struct _fsio_directory_handle *fs_fsio_directory_handle_t;
+typedef struct _fsio_file_handle *fs_fsio_file_handle_t;
+
+#endif
+
 fs_error_t
-fs_fsio_open(fs_handle_t fs,
+fs_fsio_open(fs_fsio_handle_t fs,
              const char *path, bool create,
-             OUT_VAR fs_file_handle_t *handle,
+             OUT_VAR fs_fsio_file_handle_t *handle,
              OUT_VAR bool *created);
 
 fs_error_t
-fs_fsio_fgetattr(fs_handle_t fs, fs_file_handle_t file_handle,
+fs_fsio_fgetattr(fs_fsio_handle_t fs, fs_fsio_file_handle_t file_handle,
                  OUT_VAR FsAttrs *attrs);
 
 fs_error_t
-fs_fsio_ftruncate(fs_handle_t fs, fs_file_handle_t file_handle,
+fs_fsio_ftruncate(fs_fsio_handle_t fs, fs_fsio_file_handle_t file_handle,
                   fs_off_t offset);
 
 fs_error_t
-fs_fsio_read(fs_handle_t fs, fs_file_handle_t file_handle,
+fs_fsio_read(fs_fsio_handle_t fs, fs_fsio_file_handle_t file_handle,
              OUT_VAR char *buf, size_t size, fs_off_t off,
              OUT_VAR size_t *amt_read);
 
 fs_error_t
-fs_fsio_write(fs_handle_t fs, fs_file_handle_t file_handle,
+fs_fsio_write(fs_fsio_handle_t fs, fs_fsio_file_handle_t file_handle,
               const char *buf, size_t size, fs_off_t off,
               OUT_VAR size_t *amt_written);
 
 fs_error_t
-fs_fsio_close(fs_handle_t fs, fs_file_handle_t handle);
+fs_fsio_close(fs_fsio_handle_t fs, fs_fsio_file_handle_t handle);
 
 fs_error_t
-fs_fsio_opendir(fs_handle_t fs, const char *path,
-                OUT_VAR fs_directory_handle_t *dir_handle);
+fs_fsio_opendir(fs_fsio_handle_t fs, const char *path,
+                OUT_VAR fs_fsio_directory_handle_t *dir_handle);
 
 fs_error_t
-fs_fsio_readdir(fs_handle_t fs, fs_directory_handle_t dir_handle,
+fs_fsio_readdir(fs_fsio_handle_t fs, fs_fsio_directory_handle_t dir_handle,
                 /* name is required and malloc'd by the implementation,
                    the user must free the returned pointer
                 */
@@ -70,47 +90,50 @@ fs_fsio_readdir(fs_handle_t fs, fs_directory_handle_t dir_handle,
                 OUT_VAR FsAttrs *attrs);
 
 fs_error_t
-fs_fsio_closedir(fs_handle_t fs, fs_directory_handle_t dir_handle);
+fs_fsio_closedir(fs_fsio_handle_t fs, fs_fsio_directory_handle_t dir_handle);
 
 /* can remove either a file or a directory,
    removing a directory should fail if it's not empty
 */
 fs_error_t
-fs_fsio_remove(fs_handle_t fs, const char *path);
+fs_fsio_remove(fs_fsio_handle_t fs, const char *path);
 
 fs_error_t
-fs_fsio_mkdir(fs_handle_t fs, const char *path);
+fs_fsio_mkdir(fs_fsio_handle_t fs, const char *path);
 
 fs_error_t
-fs_fsio_getattr(fs_handle_t fs, const char *path,
+fs_fsio_getattr(fs_fsio_handle_t fs, const char *path,
                 OUT_VAR FsAttrs *attrs);
 
 fs_error_t
-fs_fsio_rename(fs_handle_t fs,
+fs_fsio_rename(fs_fsio_handle_t fs,
                const char *src, const char *dst);
 
 fs_error_t
-fs_fsio_set_times(fs_handle_t fs,
+fs_fsio_set_times(fs_fsio_handle_t fs,
                   const char *path,
                   fs_time_t atime,
                   fs_time_t mtime);
 
 bool
-fs_fsio_destroy(fs_handle_t fs);
+fs_fsio_destroy(fs_fsio_handle_t fs);
 
 bool
-fs_fsio_path_is_root(fs_handle_t fs, const char *path);
+fs_fsio_path_is_root(fs_fsio_handle_t fs, const char *path);
 
 bool
-fs_fsio_path_equals(fs_handle_t fs, const char *a, const char *b);
+fs_fsio_path_equals(fs_fsio_handle_t fs, const char *a, const char *b);
 
 bool
-fs_fsio_path_is_parent(fs_handle_t fs,
+fs_fsio_path_is_parent(fs_fsio_handle_t fs,
                        const char *potential_parent,
                        const char *potential_child);
 
 const char *
-fs_fsio_path_sep(fs_handle_t fs);
+fs_fsio_path_sep(fs_fsio_handle_t fs);
+
+bool
+fs_fsio_path_is_valid(fs_fsio_handle_t fs, const char *p);
 
 CREATE_IMPL_TAG(FS_FSIO_IMPL);
 

@@ -123,6 +123,7 @@ public:
     , _fs( fs ) {
     // TODO: support this
     assert(strlen(fs_path_sep(fs)) == 1);
+    if (!fs_path_is_valid(fs, ((const std::string &) *this).c_str())) throw std::runtime_error("invalid path: " + str);
   }
 
   virtual std::unique_ptr<encfs::PathPoly> dirname() const override {
@@ -299,9 +300,7 @@ const std::string &CFsToFsIO::path_sep() const {
 
 encfs::Path CFsToFsIO::pathFromString(const std::string &path) const {
   // in the fs C interface, paths are always UTF-8 encoded strings
-  // TODO: check UTF-8 validity
-  // TODO: there should be a bool fs_path_is_valid(const char *path)
-  //       function in the fs interface
+  // CFsToFsIOPath does validity checking in constructor
   return std::unique_ptr<CFsToFsIOPath>(new CFsToFsIOPath(_fs, path));
 }
 

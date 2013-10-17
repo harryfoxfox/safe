@@ -35,34 +35,34 @@ enum {
   DONT_NEED_WRITE = true,
 };
 
-encfs::FsIO *fs_handle_to_pointer(fs_handle_t h) {
+encfs::FsIO *fs_fsio_handle_to_pointer(fs_fsio_handle_t h) {
   return (encfs::FsIO *) h;
 }
 
-encfs::FileIO *file_handle_to_pointer(fs_file_handle_t h) {
+encfs::FileIO *file_handle_to_pointer(fs_fsio_file_handle_t h) {
   return (encfs::FileIO *) h;
 }
 
-encfs::DirectoryIO *directory_handle_to_pointer(fs_directory_handle_t h) {
+encfs::DirectoryIO *directory_handle_to_pointer(fs_fsio_directory_handle_t h) {
   return (encfs::DirectoryIO *) h;
 }
 
-fs_handle_t pointer_to_fs_handle(encfs::FsIO *h) {
-  static_assert(sizeof(fs_handle_t) >= sizeof(encfs::FsIO *),
+fs_fsio_handle_t pointer_to_fs_handle(encfs::FsIO *h) {
+  static_assert(sizeof(fs_fsio_handle_t) >= sizeof(encfs::FsIO *),
                 "fs_fsio_handle_t cannot hold encfs::FsIO *");
-  return (fs_handle_t) h;
+  return (fs_fsio_handle_t) h;
 }
 
-fs_file_handle_t pointer_to_file_handle(encfs::FileIO *h) {
-  static_assert(sizeof(fs_file_handle_t) >= sizeof(encfs::File *),
-                "fs_file_handle_t cannot hold encfs::FileIO *");
-  return (fs_file_handle_t) h;
+fs_fsio_file_handle_t pointer_to_file_handle(encfs::FileIO *h) {
+  static_assert(sizeof(fs_fsio_file_handle_t) >= sizeof(encfs::File *),
+                "fs_fsio_file_handle_t cannot hold encfs::FileIO *");
+  return (fs_fsio_file_handle_t) h;
 }
 
-fs_directory_handle_t pointer_to_directory_handle(encfs::DirectoryIO *h) {
-  static_assert(sizeof(fs_directory_handle_t) >= sizeof(encfs::Directory *),
-                "fs_directory_handle_t cannot hold encfs::Directory *");
-  return (fs_directory_handle_t) h;
+fs_fsio_directory_handle_t pointer_to_directory_handle(encfs::DirectoryIO *h) {
+  static_assert(sizeof(fs_fsio_directory_handle_t) >= sizeof(encfs::Directory *),
+                "fs_fsio_directory_handle_t cannot hold encfs::Directory *");
+  return (fs_fsio_directory_handle_t) h;
 }
 
 static fs_error_t
@@ -94,11 +94,11 @@ strdup_x(const std::string & str) {
 extern "C" {
 
 fs_error_t
-fs_fsio_open(fs_handle_t fs,
+fs_fsio_open(fs_fsio_handle_t fs,
              const char *cpath, bool should_create,
-             OUT_VAR fs_file_handle_t *handle,
+             OUT_VAR fs_fsio_file_handle_t *handle,
              OUT_VAR bool *created) {
-  auto fsio = fs_handle_to_pointer(fs);
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   opt::optional<encfs::Path> path;
   try {
@@ -146,7 +146,7 @@ fill_attrs(encfs::FsFileAttrs *fs_attrs, OUT_VAR FsAttrs *attrs) {
 }
 
 fs_error_t
-fs_fsio_fgetattr(fs_handle_t /*fs_*/, fs_file_handle_t file_handle,
+fs_fsio_fgetattr(fs_fsio_handle_t /*fs_*/, fs_fsio_file_handle_t file_handle,
                  OUT_VAR FsAttrs *attrs) {
   auto fio = file_handle_to_pointer(file_handle);
 
@@ -164,7 +164,7 @@ fs_fsio_fgetattr(fs_handle_t /*fs_*/, fs_file_handle_t file_handle,
 }
 
 fs_error_t
-fs_fsio_ftruncate(fs_handle_t /*fs*/, fs_file_handle_t file_handle,
+fs_fsio_ftruncate(fs_fsio_handle_t /*fs*/, fs_fsio_file_handle_t file_handle,
                   fs_off_t offset) {
   auto fio = file_handle_to_pointer(file_handle);
 
@@ -181,7 +181,7 @@ fs_fsio_ftruncate(fs_handle_t /*fs*/, fs_file_handle_t file_handle,
 }
 
 fs_error_t
-fs_fsio_read(fs_handle_t /*fs*/, fs_file_handle_t file_handle,
+fs_fsio_read(fs_fsio_handle_t /*fs*/, fs_fsio_file_handle_t file_handle,
              OUT_VAR char *buf, size_t size, fs_off_t off,
              OUT_VAR size_t *amt_read) {
   auto fio = file_handle_to_pointer(file_handle);
@@ -199,7 +199,7 @@ fs_fsio_read(fs_handle_t /*fs*/, fs_file_handle_t file_handle,
 }
 
 fs_error_t
-fs_fsio_write(fs_handle_t /*fs*/, fs_file_handle_t file_handle,
+fs_fsio_write(fs_fsio_handle_t /*fs*/, fs_fsio_file_handle_t file_handle,
               const char *buf, size_t size, fs_off_t off,
               OUT_VAR size_t *amt_written) {
   auto fio = file_handle_to_pointer(file_handle);
@@ -218,9 +218,9 @@ fs_fsio_write(fs_handle_t /*fs*/, fs_file_handle_t file_handle,
 }
 
 fs_error_t
-fs_fsio_opendir(fs_handle_t fs, const char *path,
-                OUT_VAR fs_directory_handle_t *dir_handle) {
-  auto fsio = fs_handle_to_pointer(fs);
+fs_fsio_opendir(fs_fsio_handle_t fs, const char *path,
+                OUT_VAR fs_fsio_directory_handle_t *dir_handle) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   opt::optional<encfs::Path> maybePath;
   try {
@@ -246,7 +246,7 @@ fs_fsio_opendir(fs_handle_t fs, const char *path,
 }
 
 fs_error_t
-fs_fsio_readdir(fs_handle_t /*fs*/, fs_directory_handle_t dir_handle,
+fs_fsio_readdir(fs_fsio_handle_t /*fs*/, fs_fsio_directory_handle_t dir_handle,
                 OUT_VAR char **name,
                 OUT_VAR bool *attrs_is_filled,
                 OUT_VAR FsAttrs */*attrs*/) {
@@ -273,7 +273,7 @@ fs_fsio_readdir(fs_handle_t /*fs*/, fs_directory_handle_t dir_handle,
 }
 
 fs_error_t
-fs_fsio_closedir(fs_handle_t /*fs*/, fs_directory_handle_t dir_handle) {
+fs_fsio_closedir(fs_fsio_handle_t /*fs*/, fs_fsio_directory_handle_t dir_handle) {
   delete directory_handle_to_pointer(dir_handle);
   return FS_ERROR_SUCCESS;
 }
@@ -282,8 +282,8 @@ fs_fsio_closedir(fs_handle_t /*fs*/, fs_directory_handle_t dir_handle) {
    removing a directory should fail if it's not empty
 */
 fs_error_t
-fs_fsio_remove(fs_handle_t fs, const char *path) {
-  auto fsio = fs_handle_to_pointer(fs);
+fs_fsio_remove(fs_fsio_handle_t fs, const char *path) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   opt::optional<encfs::Path> maybePath;
   try {
@@ -315,8 +315,8 @@ fs_fsio_remove(fs_handle_t fs, const char *path) {
 }
 
 fs_error_t
-fs_fsio_mkdir(fs_handle_t fs, const char *path) {
-  auto fsio = fs_handle_to_pointer(fs);
+fs_fsio_mkdir(fs_fsio_handle_t fs, const char *path) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   opt::optional<encfs::Path> maybePath;
   try {
@@ -341,9 +341,9 @@ fs_fsio_mkdir(fs_handle_t fs, const char *path) {
 }
 
 fs_error_t
-fs_fsio_getattr(fs_handle_t fs, const char *path,
+fs_fsio_getattr(fs_fsio_handle_t fs, const char *path,
                 OUT_VAR FsAttrs *attrs) {
-  auto fsio = fs_handle_to_pointer(fs);
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   opt::optional<encfs::Path> maybePath;
   try {
@@ -369,9 +369,9 @@ fs_fsio_getattr(fs_handle_t fs, const char *path,
 }
 
 fs_error_t
-fs_fsio_rename(fs_handle_t fs,
+fs_fsio_rename(fs_fsio_handle_t fs,
                const char *src, const char *dst) {
-  auto fsio = fs_handle_to_pointer(fs);
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   opt::optional<encfs::Path> maybeSrcPath, maybeDstPath;
   try {
@@ -404,17 +404,17 @@ fs_fsio_rename(fs_handle_t fs,
 }
 
 fs_error_t
-fs_fsio_close(fs_handle_t /*fs*/, fs_file_handle_t handle) {
+fs_fsio_close(fs_fsio_handle_t /*fs*/, fs_fsio_file_handle_t handle) {
   delete file_handle_to_pointer(handle);
   return FS_ERROR_SUCCESS;
 }
 
 fs_error_t
-fs_fsio_set_times(fs_handle_t fs,
+fs_fsio_set_times(fs_fsio_handle_t fs,
                   const char *path,
                   fs_time_t atime,
                   fs_time_t mtime) {
-  auto fsio = fs_handle_to_pointer(fs);
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   opt::optional<encfs::Path> maybePath;
   try {
@@ -441,15 +441,15 @@ fs_fsio_set_times(fs_handle_t fs,
 }
 
 bool
-fs_fsio_destroy(fs_handle_t /*fs*/) {
+fs_fsio_destroy(fs_fsio_handle_t /*fs*/) {
   // we're never responsible for destroying the FsIO
   // so it's an error to call this
   return false;
 }
 
 bool
-fs_fsio_path_is_root(fs_handle_t fs, const char *path) {
-  auto fsio = fs_handle_to_pointer(fs);
+fs_fsio_path_is_root(fs_fsio_handle_t fs, const char *path) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   try {
     return fsio->pathFromString(path).is_root();
@@ -460,8 +460,8 @@ fs_fsio_path_is_root(fs_handle_t fs, const char *path) {
 }
 
 bool
-fs_fsio_path_equals(fs_handle_t fs, const char *a, const char *b) {
-  auto fsio = fs_handle_to_pointer(fs);
+fs_fsio_path_equals(fs_fsio_handle_t fs, const char *a, const char *b) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   try {
     return fsio->pathFromString(a) == fsio->pathFromString(b);
@@ -472,10 +472,10 @@ fs_fsio_path_equals(fs_handle_t fs, const char *a, const char *b) {
 }
 
 bool
-fs_fsio_path_is_parent(fs_handle_t fs,
+fs_fsio_path_is_parent(fs_fsio_handle_t fs,
                        const char *potential_parent,
                        const char *potential_child) {
-  auto fsio = fs_handle_to_pointer(fs);
+  auto fsio = fs_fsio_handle_to_pointer(fs);
 
   try {
     auto parent_path = fsio->pathFromString(potential_parent);
@@ -488,9 +488,22 @@ fs_fsio_path_is_parent(fs_handle_t fs,
 }
 
 const char *
-fs_fsio_path_sep(fs_handle_t fs) {
+fs_fsio_path_sep(fs_fsio_handle_t fs) {
   // not totally sold on exposing path sep as part of this API
-  return fs_handle_to_pointer(fs)->path_sep().c_str();
+  return fs_fsio_handle_to_pointer(fs)->path_sep().c_str();
 }
+
+bool
+fs_fsio_path_is_valid(fs_fsio_handle_t fs, const char *p) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
+  try {
+    fsio->pathFromString(p);
+    return true;
+  }
+  catch (...) {
+    return false;
+  }
+}
+
 
 }
