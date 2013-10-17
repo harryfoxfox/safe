@@ -108,13 +108,13 @@ std::system_error fs_error(fs_error_t err) {
   return std::system_error(make_error_code(err));
 }
 
-class CFsToFsIOPath final : public encfs::StringPathDynamicSep {
+class CFsToFsIOPath final : public encfs::StringPathDynamicSep<CFsToFsIOPath> {
 protected:
   fs_handle_t _fs;
 
-  virtual std::shared_ptr<encfs::PathPoly> _from_string(std::string str) const
+  virtual std::unique_ptr<encfs::PathPoly> _from_string(std::string str) const
   {
-    return std::make_shared<CFsToFsIOPath>( _fs, std::move( str ) );
+    return std::unique_ptr<CFsToFsIOPath>( new CFsToFsIOPath( _fs, std::move( str ) ) );
   }
 
 public:
@@ -125,7 +125,7 @@ public:
     assert(strlen(fs_path_sep(fs)) == 1);
   }
 
-  virtual std::shared_ptr<encfs::PathPoly> dirname() const override {
+  virtual std::unique_ptr<encfs::PathPoly> dirname() const override {
     if (fs_path_is_root(_fs, _path.c_str())) return _from_string(_path);
 
     /* do this */
@@ -134,7 +134,7 @@ public:
     return _from_string(_path.substr(0, last));
   }
 
-  virtual bool is_root() const {
+  virtual bool is_root() const override {
     return fs_path_is_root(_fs, _path.c_str());
   }
 };
@@ -302,7 +302,7 @@ encfs::Path CFsToFsIO::pathFromString(const std::string &path) const {
   // TODO: check UTF-8 validity
   // TODO: there should be a bool fs_path_is_valid(const char *path)
   //       function in the fs interface
-  return std::make_shared<CFsToFsIOPath>(_fs, path);
+  return std::unique_ptr<CFsToFsIOPath>(new CFsToFsIOPath(_fs, path));
 }
 
 encfs::Directory CFsToFsIO::opendir(const encfs::Path &path) const {
