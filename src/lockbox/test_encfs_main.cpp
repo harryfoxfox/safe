@@ -3,6 +3,7 @@
 #include <lockbox/lockbox_server.hpp>
 
 #include <iostream>
+#include <sstream>
 
 #include <cstring>
 
@@ -87,7 +88,8 @@ main(int argc, char *argv[]) {
       auto is_dir = encfs::isDirectory(native_fs, encrypted_directory_path);
       if (!is_dir) {
         // this is not okay right now, let the user know and exit
-        std::cout << "\"" << encrypted_directory_path << "\" is not a directory!" << std::endl;
+        std::cout << "\"" << encrypted_directory_path <<
+          "\" is not a directory!" << std::endl;
         return MAIN_RETURN_CODE_ENCRYPTED_PATH_IS_NOT_A_DIRECTORY;
       }
     }
