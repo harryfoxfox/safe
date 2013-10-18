@@ -1,4 +1,24 @@
+/*
+  Lockbox: Encrypted File System
+  Copyright (C) 2013 Rian Hunter <rian@alum.mit.edu>
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation, either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+
 #include <lockbox/lockbox_server.hpp>
+#include <lockbox/windows_dialog.hpp>
+#include <lockbox/windows_string.hpp>
 
 #include <encfs/fs/FsIO.h>
 #include <encfs/fs/FileUtils.h>
@@ -25,92 +45,11 @@ public:
   std::shared_ptr<encfs::FsIO> native_fs;
 };
 
-enum class ControlClass : uint16_t {
-  BUTTON = 0x0080,
-  EDIT = 0x0081,
-  STATIC = 0x0082,
-};
-
-uint16_t
-serialize_control_class(ControlClass cls_) {
-  return (uint16_t) cls_;
-}
-
-void
-quick_alert(HWND owner, std::string msg, std::string title);
-
-static
-std::wstring
-widen(const std::string & s) {
-  if (s.empty()) return std::wstring();
-
-  /* TODO: are these flags good? */
-  const DWORD flags = /*MB_COMPOSITE | */MB_ERR_INVALID_CHARS;
-
-  const int required_buffer_size =
-    MultiByteToWideChar(CP_UTF8, flags,
-                        s.data(), s.size(), NULL, 0);
-  if (!required_buffer_size) throw std::runtime_error("error");
-
-  auto out = std::unique_ptr<wchar_t[]>(new wchar_t[required_buffer_size]);
-
-  const int new_return =
-    MultiByteToWideChar(CP_UTF8, flags,
-                        s.data(), s.size(),
-                        out.get(), required_buffer_size);
-  if (!new_return) throw std::runtime_error("error");
-
-  return std::wstring(out.get(), required_buffer_size);
-}
-
-static
-size_t
-narrow_into_buf(const wchar_t *s, size_t num_chars,
-                char *out, size_t buf_size_in_bytes) {
-  DWORD flags = 0 /*| WC_ERR_INVALID_CHARS*/;
-  const int required_buffer_size =
-    WideCharToMultiByte(CP_UTF8, flags,
-                        s, num_chars,
-                        out, buf_size_in_bytes,
-                        NULL, NULL);
-  return required_buffer_size;
-}
-
-static
-std::string
-narrow(const wchar_t *s, size_t num_chars) {
-  if (!num_chars) return std::string();
-
-  /* WC_ERR_INVALID_CHARS is only on windows vista and later */
-  DWORD flags = 0 /*| WC_ERR_INVALID_CHARS*/;
-  const int required_buffer_size =
-    WideCharToMultiByte(CP_UTF8, flags,
-                        s, num_chars,
-                        NULL, 0,
-                        NULL, NULL);
-  if (!required_buffer_size) throw std::runtime_error("error");
-
-  auto out = std::unique_ptr<char[]>(new char[required_buffer_size]);
-
-  const int new_return =
-    WideCharToMultiByte(CP_UTF8, flags,
-                        s, num_chars,
-                        out.get(), required_buffer_size,
-                        NULL, NULL);
-  if (!new_return) throw std::runtime_error("error");
-
-  return std::string(out.get(), required_buffer_size);
-}
-
-static
-std::string
-narrow(const std::wstring & s) {
-  return narrow(s.data(), s.size());
-}
-
 void
 quick_alert(HWND owner, std::string msg, std::string title) {
-  MessageBoxW(owner, widen(msg).c_str(), widen(title).c_str(),
+  MessageBoxW(owner,
+              w32util::widen(msg).c_str(),
+              w32util::widen(title).c_str(),
               MB_ICONEXCLAMATION | MB_OK);
 }
 
@@ -130,10 +69,10 @@ while (true) {
       wchar_t file_buffer_ret[MAX_PATH];
       const auto success = SHGetPathFromIDList(pidllist, file_buffer_ret);
       CoTaskMemFree(pidllist);
-      if (success) return narrow(file_buffer_ret);
+      if (success) return w32util::narrow(file_buffer_ret);
       else {
         std::ostringstream os;
-        os << "Your selection \"" << narrow(bi.pszDisplayName) <<
+        os << "Your selection \"" << w32util::narrow(bi.pszDisplayName) <<
           "\" is not a valid folder!";
         quick_alert(owner, os.str(), "Bad Selection!");
       }
@@ -141,106 +80,6 @@ while (true) {
     else return opt::nullopt;
   }
 }
-
-static
-intptr_t
-next_align_boundary(intptr_t cur, size_t unit) {
-  if (cur % unit) {
-    return cur + unit - cur % unit;
-  }
-  else {
-    return cur;
-  }
-}
-
-
-typedef uint8_t byte;
-
-static
-void
-insert_data(std::vector<byte> & v,
-            size_t align,
-            const byte *a, const byte *b) {
-  if ((intptr_t) v.data() % sizeof(DWORD)) {
-    throw std::runtime_error("data moved to bad place");
-  }
-  auto end_ptr = (intptr_t) v.data() + v.size();
-  v.insert(v.end(),
-           next_align_boundary(end_ptr, align) - end_ptr,
-           '0');
-  v.insert(v.end(), a, b);                      \
-}
-
-template<class T>
-void
-insert_obj(std::vector<byte> & v, size_t align, const T & obj) {
-  insert_data(v, align,
-              (byte *) &obj, (byte *) (&obj + 1));
-}
-
-static
-void
-insert_dialog(std::vector<uint8_t> & v,
-              DWORD style, const std::string & title,
-              WORD cdit,
-              short x, short y,
-              short cx, short cy) {
-  const DLGTEMPLATE dialog_header = {
-    .style = style,
-    .dwExtendedStyle = 0,
-    .cdit = cdit,
-    .x = x,
-    .y = y,
-    .cx = cx,
-    .cy = cy,
-  };
-  insert_obj(v, sizeof(DWORD), dialog_header);
-
-  const uint16_t dialog_menu[] = {0};
-  insert_obj(v, sizeof(WORD), dialog_menu);
-
-  const uint16_t dialog_class[] = {0};
-  insert_obj(v, sizeof(WORD), dialog_class);
-
-  auto wtitle = widen(title);
-  insert_data(v, sizeof(WORD),
-              (byte *) wtitle.c_str(),
-              (byte *) (wtitle.c_str() + wtitle.size() + 1));
-}
-
-static
-void
-insert_control(std::vector<uint8_t> & v,
-               ControlClass cls_, WORD id,
-               const std::string & title,
-               DWORD style,
-               short x, short y,
-               short cx, short cy) {
-
-  const DLGITEMTEMPLATE text_item = {
-    .style = style,
-    .dwExtendedStyle = 0,
-    .x = x,
-    .y = y,
-    .cx = cx,
-    .cy = cy,
-    .id = id,
-  };
-  insert_obj(v, sizeof(DWORD), text_item);
-
-  const uint16_t text_item_class[] =
-    {0xffff, serialize_control_class(cls_)};
-  insert_obj(v, sizeof(WORD), text_item_class);
-
-  auto text_item_title = widen(title);
-  insert_data(v, sizeof(WORD),
-              (byte *) text_item_title.c_str(),
-              (byte *) (text_item_title.c_str() + text_item_title.size() + 1));
-
-  const uint16_t text_item_creation_data[] = {0x0};
-  insert_obj(v, sizeof(WORD), text_item_creation_data);
-}
-
 const WORD IDC_STATIC = ~0;
 const WORD IDPASSWORD = 200;
 const auto MAX_PASS_LEN = 256;
@@ -274,8 +113,8 @@ get_password_dialog_proc(HWND hwnd, UINT Message,
       auto st2 = new encfs::SecureMem(MAX_PASS_LEN * 3);
       size_t ret;
       if (num_chars) {
-        ret = narrow_into_buf((wchar_t *) st1.data(), num_chars,
-                              (char *) st2->data(), st2->size() - 1);
+        ret = w32util::narrow_into_buf((wchar_t *) st1.data(), num_chars,
+                                       (char *) st2->data(), st2->size() - 1);
         // should never happen
         if (!ret) throw std::runtime_error("fail");
       }
@@ -299,39 +138,31 @@ get_password_dialog_proc(HWND hwnd, UINT Message,
 }
 
 WINAPI
+static
 opt::optional<encfs::SecureMem>
 get_password_dialog(HWND hwnd, const encfs::Path & /*path*/) {
-  auto v = std::vector<byte>();
+  using namespace w32util;
 
-  insert_dialog(v,
-                DS_MODALFRAME | WS_POPUP | WS_CAPTION |
-                WS_SYSMENU | WS_VISIBLE,
-                "Enter Your Password",
-                3, 0, 0, 100, 66);
-
-  insert_control(v, ControlClass::STATIC,
-                 IDC_STATIC, "Enter Your Password",
-                 SS_CENTER | WS_GROUP | WS_VISIBLE | WS_CHILD,
-                 15, 10, 70, 33);
-
-  insert_control(v, ControlClass::EDIT,
-                 IDPASSWORD, "",
-                 ES_PASSWORD | ES_LEFT | WS_BORDER |
-                 WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-                 10, 20, 80, 12);
-
-  insert_control(v, ControlClass::BUTTON,
-                 IDOK, "&OK",
-                 BS_DEFPUSHBUTTON | WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-                 25, 40, 50, 14);
-
-  if ((intptr_t) v.data() % sizeof(DWORD)) {
-    throw std::runtime_error("bad data");
-  }
+  auto dlg =
+    DialogTemplate(DialogDesc(DS_MODALFRAME | WS_POPUP |
+                              WS_SYSMENU | WS_VISIBLE |
+                              WS_CAPTION,
+                              "Enter Your Password",
+                              0, 0, 100, 66),
+                   {
+                     CText("Enter Your Password", IDC_STATIC,
+                           15, 10, 70, 33),
+                     EditText(IDPASSWORD, 10, 20, 80, 12,
+                              ES_PASSWORD | ES_LEFT |
+                              WS_BORDER | WS_TABSTOP),
+                     DefPushButton("&OK", IDOK,
+                                   25, 40, 50, 14),
+                   }
+                   );
 
   auto ret_ptr =
     DialogBoxIndirect(GetModuleHandle(NULL),
-                      (LPCDLGTEMPLATE) v.data(),
+                      dlg.get_data(),
                       hwnd, get_password_dialog_proc);
   if (ret_ptr == -1) return opt::nullopt;
 
@@ -339,6 +170,109 @@ get_password_dialog(HWND hwnd, const encfs::Path & /*path*/) {
   auto toret = std::move(*ret);
   delete ret;
   return toret;
+}
+
+CALLBACK
+static
+BOOL
+confirm_new_encrypted_container_proc(HWND hwnd, UINT Message,
+                                     WPARAM wParam, LPARAM /*lParam*/) {
+  switch (Message) {
+  case WM_INITDIALOG:
+    return TRUE;
+  case WM_COMMAND:
+    switch (LOWORD(wParam)) {
+    case IDOK: {
+      EndDialog(hwnd, (INT_PTR) IDOK);
+      break;
+    }
+    case IDCANCEL: {
+      EndDialog(hwnd, (INT_PTR) IDCANCEL);
+      break;
+    }
+    }
+    break;
+  default:
+    return FALSE;
+  }
+  return TRUE;
+}
+
+
+template<class T>
+static
+T
+left_offset(T container_width, T contained_width) {
+  return (container_width - contained_width) / 2;
+}
+
+
+WINAPI
+static
+bool
+confirm_new_encrypted_container(HWND owner,
+                                const encfs::Path & encrypted_directory_path) {
+  using namespace w32util;
+
+  std::ostringstream os;
+  os << "The folder you selected:\r\n\r\n\"" <<
+    (const std::string &) encrypted_directory_path <<
+    ("\"\r\n\r\ndoes not appear to be an encrypted container.\r\n"
+     "Would you like to create one there?");
+  auto dialog_text = os.str();
+
+  const auto FONT_HEIGHT = 8;
+  const auto FONT_WIDTH = 1;
+
+  typedef unsigned unit_t;
+  const unit_t DIALOG_WIDTH =
+    std::max((unit_t) 175,
+             (unit_t)
+             (20 +
+              FONT_WIDTH *
+              (((const std::string &) encrypted_directory_path).size() + 2)));
+  const unit_t TOP_MARGIN = FONT_HEIGHT;
+  const unit_t MIDDLE_MARGIN = FONT_HEIGHT;
+  const unit_t BOTTOM_MARGIN = FONT_HEIGHT;
+  const unit_t TEXT_WIDTH = 160;
+  const unit_t TEXT_HEIGHT = FONT_HEIGHT * 6;
+  const unit_t BUTTON_WIDTH = 50;
+  const unit_t BUTTON_HEIGHT = 14;
+  const unit_t BUTTON_SPACING = 12;
+
+  const auto dlg =
+    DialogTemplate(DialogDesc(DS_MODALFRAME | WS_POPUP |
+                              WS_SYSMENU | WS_VISIBLE |
+                              WS_CAPTION,
+                              "No encrypted container found!",
+                              0, 0, DIALOG_WIDTH,
+                              TOP_MARGIN + MIDDLE_MARGIN + BOTTOM_MARGIN +
+                              TEXT_HEIGHT + BUTTON_HEIGHT),
+                   {
+                     CText(std::move(dialog_text), IDC_STATIC,
+                           left_offset(DIALOG_WIDTH, TEXT_WIDTH),
+                           TOP_MARGIN,
+                           TEXT_WIDTH, TEXT_HEIGHT),
+                     PushButton("&Cancel", IDCANCEL,
+                                left_offset(DIALOG_WIDTH,
+                                            2 * BUTTON_WIDTH + BUTTON_SPACING),
+                                TOP_MARGIN + TEXT_HEIGHT + MIDDLE_MARGIN,
+                                BUTTON_WIDTH, BUTTON_HEIGHT),
+                     DefPushButton("&OK", IDOK,
+                                   left_offset(DIALOG_WIDTH,
+                                               2 * BUTTON_WIDTH +
+                                               BUTTON_SPACING) +
+                                   BUTTON_WIDTH + BUTTON_SPACING,
+                                   TOP_MARGIN + TEXT_HEIGHT + MIDDLE_MARGIN,
+                                   BUTTON_WIDTH, BUTTON_HEIGHT),
+                   }
+                   );
+
+  auto ret_ptr =
+    DialogBoxIndirect(GetModuleHandle(NULL),
+                      dlg.get_data(),
+                      owner, confirm_new_encrypted_container_proc);
+  return ((int) ret_ptr == IDOK);
 }
 
 WINAPI
@@ -388,8 +322,6 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
   opt::optional<encfs::SecureMem> maybe_password;
   if (maybe_encfs_config) {
     // ask for password
-    // get password from console
-    // repeat if user enters invalid password
     while (!maybe_password) {
       maybe_password =
         get_password_dialog(owner, encrypted_directory_path);
@@ -406,6 +338,22 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
     }
   }
   else {
+    // check if the user wants to create an encrypted container
+    auto create =
+      confirm_new_encrypted_container(owner, encrypted_directory_path);
+    quick_alert(owner,
+                create
+                ? "Nice! too bad you can't right now"
+                : "Aw too bad",
+                "Righteous!");
+
+    return;
+
+    // create new password
+    //    maybe_password =
+    //      get_new_password_dialog(owner, encrypted_directory_path);
+    // user pressed cancel
+    //    if (!maybe_password) return;
   }
 
   quick_alert(owner, "This folder is cool!", "Cool Folder");
