@@ -114,8 +114,13 @@ main(int argc, char *argv[]) {
       auto len1 = strlen((char *) p1.data());
       auto len2 = strlen((char *) p2.data());
       if (len1 == len2 &&
-          !strcmp((char *) p1.data(), (char *) p2.data())) maybe_password = std::move(p1);
-      else std::cout << "Passwords did not match, trying again..." << std::endl;
+          !strcmp((char *) p1.data(), (char *) p2.data())) {
+        maybe_password = std::move(p1);
+      }
+      else {
+        std::cout <<
+          "Passwords did not match, trying again..." << std::endl;
+      }
     }
 
     maybe_encfs_config = encfs::create_paranoid_config(*maybe_password);
@@ -128,7 +133,8 @@ main(int argc, char *argv[]) {
     // get password from console
     // repeat if user enters invalid password
     while (!maybe_password) {
-      auto secure_password = read_password_from_console("Enter your password");
+      auto secure_password =
+        read_password_from_console("Enter your password");
 
       const auto correct_password =
         encfs::verify_password(*maybe_encfs_config, secure_password);

@@ -102,8 +102,12 @@ test_encfs_main:
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
  -lglog  -ltinyxml $(EXTRA_LIBRARIES)
 
+ASLR_LINK_FLAGS := -Wl,--dynamicbase=true -Wl,--nxcompat=true
+WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
+
 windows_app_main:
-	$(CXX) -mwindows -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
+	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) \
+	-O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
  -lglog  -ltinyxml -lole32 $(EXTRA_LIBRARIES)

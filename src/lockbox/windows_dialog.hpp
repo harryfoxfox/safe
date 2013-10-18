@@ -254,6 +254,19 @@ CText(std::string text,
 
 static
 DialogItemDesc
+LText(std::string text,
+      WORD id, short x, short y,
+      short width, short height,
+      DWORD style = SS_LEFT | WS_GROUP) {
+  return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
+                        std::move(text),
+                        ControlClass::STATIC,
+                        id,
+                        x, y, width, height);
+}
+
+static
+DialogItemDesc
 EditText(WORD id, short x, short y,
          short width, short height,
          DWORD style = ES_LEFT | WS_BORDER | WS_TABSTOP) {

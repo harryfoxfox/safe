@@ -39,6 +39,10 @@
 #include <Shlobj.h>
 
 const wchar_t g_szClassName[] = L"myWindowClass";
+const WORD IDC_STATIC = ~0;
+const WORD IDPASSWORD = 200;
+const WORD IDCONFIRMPASSWORD = 201;
+const auto MAX_PASS_LEN = 256;
 
 class WindowData {
 public:
@@ -51,6 +55,13 @@ quick_alert(HWND owner, std::string msg, std::string title) {
               w32util::widen(msg).c_str(),
               w32util::widen(title).c_str(),
               MB_ICONEXCLAMATION | MB_OK);
+}
+
+template<class T>
+static
+T
+left_offset(T container_width, T contained_width) {
+  return (container_width - contained_width) / 2;
 }
 
 WINAPI
@@ -80,9 +91,42 @@ while (true) {
     else return opt::nullopt;
   }
 }
-const WORD IDC_STATIC = ~0;
-const WORD IDPASSWORD = 200;
-const auto MAX_PASS_LEN = 256;
+
+void
+clear_field(HWND hwnd, WORD id, size_t num_chars){
+  auto zeroed_bytes =
+    std::unique_ptr<wchar_t[]>(new wchar_t[num_chars + 1]);
+  memset(zeroed_bytes.get(), 0xaa, num_chars * sizeof(wchar_t));
+  zeroed_bytes[num_chars] = 0;
+  SetDlgItemTextW(hwnd, id, zeroed_bytes.get());
+}
+
+encfs::SecureMem
+securely_read_password_field(HWND hwnd, WORD id, bool clear = true) {
+  // securely get what's in dialog box
+  auto st1 = encfs::SecureMem((MAX_PASS_LEN + 1) * sizeof(wchar_t));
+  auto num_chars =
+    GetDlgItemTextW(hwnd, id,
+                    (wchar_t *) st1.data(),
+                    st1.size() / sizeof(wchar_t));
+
+  // attempt to clear what's in dialog box
+  if (clear) clear_field(hwnd, id, num_chars);
+
+  // convert wchars to utf8
+  auto st2 = encfs::SecureMem(MAX_PASS_LEN * 3);
+  size_t ret;
+  if (num_chars) {
+    ret = w32util::narrow_into_buf((wchar_t *) st1.data(), num_chars,
+                                   (char *) st2.data(), st2.size() - 1);
+    // should never happen
+    if (!ret) throw std::runtime_error("fail");
+  }
+  else ret = 0;
+
+  st2.data()[ret] = '\0';
+  return std::move(st2);
+}
 
 CALLBACK
 BOOL
@@ -95,38 +139,13 @@ get_password_dialog_proc(HWND hwnd, UINT Message,
   case WM_COMMAND:
     switch (LOWORD(wParam)) {
     case IDOK: {
-      // securely get what's in dialog box
-      auto st1 = encfs::SecureMem((MAX_PASS_LEN + 1) * sizeof(wchar_t));
-      auto num_chars =
-        GetDlgItemTextW(hwnd, IDPASSWORD,
-                        (wchar_t *) st1.data(),
-                        st1.size() / sizeof(wchar_t));
-
-      // attempt to clear what's in dialog box
-      auto zeroed_bytes =
-        std::unique_ptr<wchar_t[]>(new wchar_t[num_chars + 1]);
-      memset(zeroed_bytes.get(), 0xaa, num_chars * sizeof(wchar_t));
-      zeroed_bytes[num_chars] = 0;
-      SetDlgItemTextW(hwnd, IDPASSWORD, zeroed_bytes.get());
-
-      // convert wchars to utf8
-      auto st2 = new encfs::SecureMem(MAX_PASS_LEN * 3);
-      size_t ret;
-      if (num_chars) {
-        ret = w32util::narrow_into_buf((wchar_t *) st1.data(), num_chars,
-                                       (char *) st2->data(), st2->size() - 1);
-        // should never happen
-        if (!ret) throw std::runtime_error("fail");
-      }
-      else ret = 0;
-
-      st2->data()[ret] = '\0';
-
+      auto secure_pass = securely_read_password_field(hwnd, IDPASSWORD);
+      auto st2 = new encfs::SecureMem(std::move(secure_pass));
       EndDialog(hwnd, (INT_PTR) st2);
       break;
     }
     case IDCANCEL: {
-      EndDialog(hwnd, (INT_PTR) -1);
+      EndDialog(hwnd, (INT_PTR) 0);
       break;
     }
     }
@@ -164,7 +183,7 @@ get_password_dialog(HWND hwnd, const encfs::Path & /*path*/) {
     DialogBoxIndirect(GetModuleHandle(NULL),
                       dlg.get_data(),
                       hwnd, get_password_dialog_proc);
-  if (ret_ptr == -1) return opt::nullopt;
+  if (!ret_ptr) return opt::nullopt;
 
   auto ret = (encfs::SecureMem *) ret_ptr;
   auto toret = std::move(*ret);
@@ -198,15 +217,6 @@ confirm_new_encrypted_container_proc(HWND hwnd, UINT Message,
   return TRUE;
 }
 
-
-template<class T>
-static
-T
-left_offset(T container_width, T contained_width) {
-  return (container_width - contained_width) / 2;
-}
-
-
 WINAPI
 static
 bool
@@ -221,8 +231,12 @@ confirm_new_encrypted_container(HWND owner,
      "Would you like to create one there?");
   auto dialog_text = os.str();
 
+  // TODO: compute this programmatically
   const auto FONT_HEIGHT = 8;
-  const auto FONT_WIDTH = 1;
+  // 5.5 is the width of the 'm' char  with the default font
+  // since it's the widest character we just multiply it by 3/4
+  // to get the 'average' width (crude i know)
+  const auto FONT_WIDTH = 5.5 / 2;
 
   typedef unsigned unit_t;
   const unit_t DIALOG_WIDTH =
@@ -273,6 +287,188 @@ confirm_new_encrypted_container(HWND owner,
                       dlg.get_data(),
                       owner, confirm_new_encrypted_container_proc);
   return ((int) ret_ptr == IDOK);
+}
+
+
+CALLBACK
+static
+BOOL
+get_new_password_dialog_proc(HWND hwnd, UINT Message,
+                             WPARAM wParam, LPARAM /*lParam*/) {
+  switch (Message) {
+  case WM_INITDIALOG: {
+    SendDlgItemMessage(hwnd, IDPASSWORD, EM_LIMITTEXT, MAX_PASS_LEN, 0);
+    SendDlgItemMessage(hwnd, IDCONFIRMPASSWORD, EM_LIMITTEXT, MAX_PASS_LEN, 0);
+    return TRUE;
+  }
+  case WM_COMMAND: {
+    switch (LOWORD(wParam)) {
+    case IDOK: {
+      auto secure_pass_1 =
+        securely_read_password_field(hwnd, IDPASSWORD, false);
+      auto secure_pass_2 =
+        securely_read_password_field(hwnd, IDCONFIRMPASSWORD, false);
+
+      auto num_chars_1 = strlen((char *) secure_pass_1.data());
+      auto num_chars_2 = strlen((char *) secure_pass_2.data());
+      if (num_chars_1 != num_chars_2 ||
+          memcmp(secure_pass_1.data(), secure_pass_2.data(), num_chars_1)) {
+        quick_alert(hwnd, "The Passwords do not match!",
+                    "Passwords don't match");
+        return TRUE;
+      }
+
+      if (!num_chars_1) {
+        quick_alert(hwnd, "Empty password is not allowed!",
+                    "Invalid Password");
+        return TRUE;
+      }
+
+      clear_field(hwnd, IDPASSWORD, num_chars_1);
+      clear_field(hwnd, IDCONFIRMPASSWORD, num_chars_2);
+
+      auto st2 = new encfs::SecureMem(std::move(secure_pass_1));
+      EndDialog(hwnd, (INT_PTR) st2);
+      break;
+    }
+    case IDCANCEL: {
+      EndDialog(hwnd, (INT_PTR) 0);
+      break;
+    }
+    }
+    break;
+  }
+  default:
+    return FALSE;
+  }
+  return TRUE;
+}
+
+WINAPI
+static
+opt::optional<encfs::SecureMem>
+get_new_password_dialog(HWND owner,
+                        const encfs::Path & /*encrypted_directory_path*/) {
+  using namespace w32util;
+
+  // TODO: compute this programmatically
+  const float FONT_HEIGHT = 8;
+  // 5.5 is the width of the 'm' char  with the default font
+  // since it's the widest character we just divide it by 2
+  // to get the 'average' width (crude i know)
+  const float FONT_WIDTH = 5.5 * 0.7;
+
+  typedef unsigned unit_t;
+  const unit_t TOP_MARGIN = FONT_HEIGHT;
+  const unit_t MIDDLE_MARGIN = FONT_HEIGHT;
+  const unit_t BOTTOM_MARGIN = FONT_HEIGHT;
+
+  const unit_t TEXT_WIDTH = 160;
+  const unit_t TEXT_HEIGHT = FONT_HEIGHT;
+
+  const unit_t PASS_LABEL_CHARS = strlen("Confirm Password:");
+
+  const unit_t PASS_LABEL_WIDTH = FONT_WIDTH * PASS_LABEL_CHARS;
+  const unit_t PASS_LABEL_HEIGHT = FONT_HEIGHT;
+
+  const unit_t PASS_LABEL_SPACE = 0;
+  const unit_t PASS_LABEL_VOFFSET = 2;
+  const unit_t PASS_MARGIN = FONT_HEIGHT / 2;
+
+  const unit_t PASS_ENTRY_WIDTH = FONT_WIDTH * 16;
+  const unit_t PASS_ENTRY_HEIGHT = 12;
+
+  const unit_t BUTTON_WIDTH = 50;
+  const unit_t BUTTON_HEIGHT = 14;
+  const unit_t BUTTON_SPACING = 12;
+
+  const unit_t DIALOG_WIDTH =
+    std::max((unit_t) 175,
+             PASS_LABEL_WIDTH + PASS_LABEL_SPACE + PASS_ENTRY_WIDTH + 20);
+
+  const auto dlg =
+    DialogTemplate(DialogDesc(DS_MODALFRAME | WS_POPUP |
+                              WS_SYSMENU | WS_VISIBLE |
+                              WS_CAPTION,
+                              "Create Encrypted Container",
+                              0, 0, DIALOG_WIDTH,
+                              TOP_MARGIN +
+                              TEXT_HEIGHT + MIDDLE_MARGIN +
+                              PASS_ENTRY_HEIGHT + PASS_MARGIN +
+                              PASS_ENTRY_HEIGHT + MIDDLE_MARGIN +
+                              BUTTON_HEIGHT + BOTTOM_MARGIN),
+                   {
+                     CText("Create Encrypted Container", IDC_STATIC,
+                           left_offset(DIALOG_WIDTH, TEXT_WIDTH),
+                           TOP_MARGIN,
+                           TEXT_WIDTH, TEXT_HEIGHT),
+                     LText("New Password:", IDC_STATIC,
+                           left_offset(DIALOG_WIDTH,
+                                       PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
+                                       PASS_ENTRY_WIDTH),
+                           TOP_MARGIN +
+                           TEXT_HEIGHT + MIDDLE_MARGIN + PASS_LABEL_VOFFSET,
+                           PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
+                     EditText(IDPASSWORD,
+                              left_offset(DIALOG_WIDTH,
+                                          PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
+                                          PASS_ENTRY_WIDTH) +
+                              PASS_LABEL_WIDTH + PASS_LABEL_SPACE,
+                              TOP_MARGIN +
+                              TEXT_HEIGHT + MIDDLE_MARGIN,
+                              PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
+                              ES_PASSWORD | ES_LEFT |
+                              WS_BORDER | WS_TABSTOP),
+                     LText("Confirm Password:", IDC_STATIC,
+                           left_offset(DIALOG_WIDTH,
+                                       PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
+                                       PASS_ENTRY_WIDTH),
+                           TOP_MARGIN +
+                           TEXT_HEIGHT + MIDDLE_MARGIN +
+                           PASS_ENTRY_HEIGHT + PASS_MARGIN + PASS_LABEL_VOFFSET,
+                           PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
+                     EditText(IDCONFIRMPASSWORD,
+                              left_offset(DIALOG_WIDTH,
+                                          PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
+                                          PASS_ENTRY_WIDTH) +
+                              PASS_LABEL_WIDTH + PASS_LABEL_SPACE,
+                              TOP_MARGIN +
+                              TEXT_HEIGHT + MIDDLE_MARGIN +
+                              PASS_ENTRY_HEIGHT + PASS_MARGIN,
+                              PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
+                              ES_PASSWORD | ES_LEFT |
+                              WS_BORDER | WS_TABSTOP),
+                     PushButton("&Cancel", IDCANCEL,
+                                left_offset(DIALOG_WIDTH,
+                                            2 * BUTTON_WIDTH + BUTTON_SPACING),
+                                TOP_MARGIN +
+                                TEXT_HEIGHT + MIDDLE_MARGIN +
+                                PASS_ENTRY_HEIGHT + PASS_MARGIN +
+                                PASS_ENTRY_HEIGHT + MIDDLE_MARGIN,
+                                BUTTON_WIDTH, BUTTON_HEIGHT),
+                     DefPushButton("&OK", IDOK,
+                                   left_offset(DIALOG_WIDTH,
+                                               2 * BUTTON_WIDTH +
+                                               BUTTON_SPACING) +
+                                   BUTTON_WIDTH + BUTTON_SPACING,
+                                   TOP_MARGIN +
+                                   TEXT_HEIGHT + MIDDLE_MARGIN +
+                                   PASS_ENTRY_HEIGHT + PASS_MARGIN +
+                                   PASS_ENTRY_HEIGHT + MIDDLE_MARGIN,
+                                   BUTTON_WIDTH, BUTTON_HEIGHT),
+                   }
+                   );
+
+  auto ret_ptr =
+    DialogBoxIndirect(GetModuleHandle(NULL),
+                      dlg.get_data(),
+                      owner, get_new_password_dialog_proc);
+  if (!ret_ptr) return opt::nullopt;
+
+  auto ret = (encfs::SecureMem *) ret_ptr;
+  auto toret = std::move(*ret);
+  delete ret;
+  return toret;
 }
 
 WINAPI
@@ -341,19 +537,17 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
     // check if the user wants to create an encrypted container
     auto create =
       confirm_new_encrypted_container(owner, encrypted_directory_path);
-    quick_alert(owner,
-                create
-                ? "Nice! too bad you can't right now"
-                : "Aw too bad",
-                "Righteous!");
-
-    return;
+    if (!create) return;
 
     // create new password
-    //    maybe_password =
-    //      get_new_password_dialog(owner, encrypted_directory_path);
-    // user pressed cancel
-    //    if (!maybe_password) return;
+    maybe_password =
+      get_new_password_dialog(owner, encrypted_directory_path);
+    if (!maybe_password) return;
+
+    // TODO: DO THIS ON A DIFFERENT THREAD
+    maybe_encfs_config = encfs::create_paranoid_config(*maybe_password);
+    encfs::write_config(native_fs, encrypted_directory_path,
+                        *maybe_encfs_config);
   }
 
   quick_alert(owner, "This folder is cool!", "Cool Folder");
