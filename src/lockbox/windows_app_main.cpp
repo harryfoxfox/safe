@@ -414,11 +414,11 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
 CALLBACK
 LRESULT
 WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWL_USERDATA);
+  const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
   switch(msg){
   case WM_CREATE: {
     auto pParent = ((LPCREATESTRUCT)lParam)->lpCreateParams;
-    SetWindowLongPtr(hwnd, GWL_USERDATA, (LONG_PTR) pParent);
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) pParent);
     break;
   }
   case WM_LBUTTONDOWN: {
