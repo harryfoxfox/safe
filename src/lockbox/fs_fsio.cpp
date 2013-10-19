@@ -21,6 +21,8 @@
 #include <encfs/base/optional.h>
 #include <encfs/fs/FsIO.h>
 
+#include <davfuse/logging.h>
+
 #include <memory>
 
 #define OUT_VAR
@@ -68,7 +70,29 @@ fs_fsio_directory_handle_t pointer_to_directory_handle(encfs::DirectoryIO *h) {
 static fs_error_t
 errc_to_FsIO_error(std::errc e) {
   switch (e) {
-    // TODO: fill this in
+  case std::errc::no_such_file_or_directory:
+    return FS_ERROR_DOES_NOT_EXIST;
+  case std::errc::not_a_directory:
+    return FS_ERROR_NOT_DIR;
+  case std::errc::is_a_directory:
+    return FS_ERROR_IS_DIR;
+  case std::errc::no_space_on_device:
+    return FS_ERROR_NO_SPACE;
+  case std::errc::operation_not_permitted:
+    return FS_ERROR_PERM;
+  case std::errc::file_exists:
+    return FS_ERROR_EXISTS;
+  case std::errc::permission_denied:
+    return FS_ERROR_ACCESS;
+#ifndef _WIN32
+    // deal with bad win32 libstdc++ headers
+  case std::errc::cross_device_link:
+    return FS_ERROR_CROSS_DEVICE;
+#endif
+  case std::errc::invalid_argument:
+    return FS_ERROR_INVALID_ARG;
+  case std::errc::not_enough_memory:
+    return FS_ERROR_NO_MEM;
   default:
     return FS_ERROR_IO;
   }
@@ -76,8 +100,9 @@ errc_to_FsIO_error(std::errc e) {
 
 static fs_error_t
 get_FsIO_error_or_default(const std::system_error & err) {
-  if (err.code().default_error_condition().category() == std::generic_category()) {
-    return errc_to_FsIO_error((std::errc) err.code().value());
+  auto err_cond = err.code().default_error_condition();
+  if (err_cond.category() == std::generic_category()) {
+    return errc_to_FsIO_error((std::errc) err_cond.value());
   }
   else {
     return FS_ERROR_IO;
@@ -116,7 +141,8 @@ fs_fsio_open(fs_fsio_handle_t fs,
       fio = fsio->openfile(std::move( *path ), NEED_WRITE, DONT_CREATE);
     }
     catch (const std::system_error & err) {
-      if (!should_create || err.code() != std::errc::no_such_file_or_directory) throw;
+      if (!should_create ||
+          err.code() != std::errc::no_such_file_or_directory) throw;
       fio = fsio->openfile(std::move( *path ), NEED_WRITE, SHOULD_CREATE);
       // slight race condition here, we may not have created the file
       // (it could have been created between the two `openfile()` calls
@@ -361,9 +387,19 @@ fs_fsio_getattr(fs_fsio_handle_t fs, const char *path,
     return FS_ERROR_SUCCESS;
   }
   catch (const std::system_error & err) {
+    if (err.code() == std::errc::is_a_directory) {
+      // this is okay but not ideal
+      attrs->modified_time = FS_INVALID_TIME;
+      attrs->created_time = FS_INVALID_TIME;
+      attrs->is_directory = true;
+      attrs->file_id = 0;
+      return FS_ERROR_SUCCESS;
+    }
+
     return get_FsIO_error_or_default(err);
   }
-  catch (...) {
+  catch (const std::exception & err) {
+    log_error("WHAT! %s", err.what());
     return FS_ERROR_IO;
   }
 }

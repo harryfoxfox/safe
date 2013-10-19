@@ -57,7 +57,73 @@ namespace lockbox {
 
 CXX_STATIC_ATTR
 int
-localhost_socketpair(fd_t /*sv*/[2]) {
+localhost_socketpair(fd_t sv[2]) {
+  fd_t socket_fd = INVALID_SOCKET;
+  fd_t client_fd = INVALID_SOCKET;
+  int ret_connect = 0;
+  int ret_accept = 0;
+  const unsigned ATTEMPT_LIMIT = 10;
+  port_t target_port = 19872;
+  bool success = false;
+  int filled;
+
+  socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (socket_fd == INVALID_SOCKET) goto fail;
+
+  for (unsigned attempts = 0; !success && attempts < ATTEMPT_LIMIT;
+       ++attempts) {
+    ++target_port;
+    struct sockaddr_in listen_addr;
+    init_sockaddr_in(&listen_addr, target_port);
+
+    auto ret_bind = bind(socket_fd,
+                         (struct sockaddr *) &listen_addr,
+                         sizeof(listen_addr));
+    if (ret_bind) continue;
+
+    auto ret_listen = listen(socket_fd, 5);
+    if (ret_listen) continue;
+
+    success = true;
+  }
+
+  if (!success) goto fail;
+
+  client_fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (client_fd == INVALID_SOCKET) goto fail;
+
+  struct sockaddr_in connect_addr;
+  memset(&connect_addr, 0, sizeof(connect_addr));
+  connect_addr.sin_family = AF_INET;
+  connect_addr.sin_port = htons(target_port);
+  connect_addr.sin_addr.s_addr = htonl(0x7f000001);
+
+  ret_connect =
+    connect(client_fd, (struct sockaddr *) &connect_addr,
+            sizeof(connect_addr));
+  if (ret_connect) goto fail;
+
+  filled = sizeof(connect_addr);
+  ret_accept =
+    accept(socket_fd,
+           (struct sockaddr *) &connect_addr,
+           &filled);
+  if (ret_accept == INVALID_SOCKET) goto fail;
+
+  sv[0] = ret_accept;
+  sv[1] = client_fd;
+
+  closesocket(socket_fd);
+
+  return 0;
+
+ fail:
+  // TODO: log if close() fails
+  if (socket_fd != INVALID_SOCKET) closesocket(socket_fd);
+
+  // TODO: log if close() fails
+  if (client_fd != INVALID_SOCKET) closesocket(client_fd);
+
   return -1;
 }
 
@@ -240,7 +306,7 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   std::ostringstream build_uri_root;
   build_uri_root << "http://localhost:" << port << "/";
   auto public_uri_root = std::move(build_uri_root).str();
-  auto internal_root = "/";
+  auto internal_root = "/webdav";
   auto server = webdav_server_start(network_io, public_uri_root.c_str(),
                                     internal_root, server_backend);
   if (!server) throw std::runtime_error("Couldn't start webdav server");
@@ -250,7 +316,7 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   auto ret_socketpair = localhost_socketpair(sv);
   if (ret_socketpair) abort();
   auto ret_send = send(sv[0], "1", 1, 0);
-  if (ret_send) throw std::runtime_error("couldn't set up startup callback");
+  if (ret_send == -1) throw std::runtime_error("couldn't set up startup callback");
   auto ctx = RunningCallbackCtx {sv[0], sv[1], loop, std::move(when_done)};
   auto success_add_watch =
     fdevent_add_watch(loop, sv[1], create_stream_events(true, false),

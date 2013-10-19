@@ -24,6 +24,7 @@
 
 #include <davfuse/logging.h>
 #include <davfuse/fs.h>
+#include <davfuse/util_fs.h>
 
 #include <limits>
 
@@ -125,19 +126,29 @@ protected:
 
 public:
   CFsToFsIOPath(fs_handle_t fs, std::string str)
-    : StringPathDynamicSep( fs_path_sep(fs), std::move( str ) )
-    , _fs( fs ) {
+    : StringPathDynamicSep(fs_path_sep(fs), std::move(str))
+    , _fs(fs) {
     // TODO: support this
     assert(strlen(fs_path_sep(fs)) == 1);
-    if (!fs_path_is_valid(fs, ((const std::string &) *this).c_str())) throw std::runtime_error("invalid path: " + str);
+    const std::string & str_ = *this;
+    if (!fs_path_is_valid(fs, str_.c_str())) {
+      throw std::runtime_error("invalid path: " + str_);
+    }
   }
 
   virtual std::unique_ptr<encfs::PathPoly> dirname() const override {
     if (fs_path_is_root(_fs, _path.c_str())) return _from_string(_path);
 
-    /* do this */
     auto last = _path.rfind(_sep);
     assert(last != std::string::npos);
+
+    // roots always include the trailing separator
+    // so check if we've got a root already
+    auto potential_root = _path.substr(0, last + 1);
+    if (fs_path_is_root(_fs, potential_root.c_str())) {
+      return _from_string(std::move(potential_root));
+    }
+
     return _from_string(_path.substr(0, last));
   }
 

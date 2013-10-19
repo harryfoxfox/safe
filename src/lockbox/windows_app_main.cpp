@@ -27,6 +27,9 @@
 
 #include <encfs/base/optional.h>
 
+#include <davfuse/log_printer.h>
+#include <davfuse/logging.h>
+
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -47,6 +50,27 @@ const auto MAX_PASS_LEN = 256;
 class WindowData {
 public:
   std::shared_ptr<encfs::FsIO> native_fs;
+};
+
+class ServerThreadParams {
+public:
+  HWND owner;
+  std::shared_ptr<encfs::FsIO> native_fs;
+  encfs::Path encrypted_directory_path;
+  encfs::EncfsConfig encfs_config;
+  encfs::SecureMem password;
+
+  ServerThreadParams(HWND owner_,
+                     std::shared_ptr<encfs::FsIO> native_fs_,
+                     encfs::Path encrypted_directory_path_,
+                     encfs::EncfsConfig encfs_config_,
+                     encfs::SecureMem password_)
+    : owner(owner_)
+    , native_fs(std::move(native_fs_))
+    , encrypted_directory_path(std::move(encrypted_directory_path_))
+    , encfs_config(std::move(encfs_config_))
+    , password(std::move(password_))
+  {}
 };
 
 void
@@ -472,9 +496,46 @@ get_new_password_dialog(HWND owner,
 }
 
 WINAPI
+static
+DWORD
+mount_thread(LPVOID params_) {
+  // TODO: catch all exceptions, since this is a top-level
+
+  auto params =
+    std::unique_ptr<ServerThreadParams>((ServerThreadParams *) params_);
+
+  auto enc_fs =
+    lockbox::create_enc_fs(std::move(params->native_fs),
+                           params->encrypted_directory_path,
+                           std::move(params->encfs_config),
+                           std::move(params->password));
+
+  // TODO: actually search for a port to listen on
+  port_t listen_port = 8081;
+
+  auto our_callback = [=] (fdevent_loop_t /*loop*/) {
+    return;
+    // just mount the file system using the console command
+    std::ostringstream os;
+    os << "C:\\Windows\\system32\\net.exe use X: http://localhost:" << listen_port << "/webdav";
+    auto ret = system(os.str().c_str());
+    // abort if it fails
+    if (ret) abort();
+  };
+
+  lockbox::run_lockbox_webdav_server(std::move(enc_fs),
+                                     std::move(params->encrypted_directory_path),
+                                     8081,
+                                     our_callback);
+
+  // server is done, possible unmount
+  return 0;
+}
+
+WINAPI
 void
 mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
-                                HWND owner) {
+                              HWND owner) {
   auto maybe_chosen_folder = get_folder_dialog(owner);
   // they pressed cancel
   if (!maybe_chosen_folder) return;
@@ -550,8 +611,29 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
                         *maybe_encfs_config);
   }
 
-  quick_alert(owner, "This folder is cool!", "Cool Folder");
+  // okay now we have:
+  // * a valid path
+  // * a valid config
+  // * a valid password
+  // we're ready to mount the drive
+
+  auto thread_params =
+    new ServerThreadParams(owner,
+                           native_fs,
+                           std::move(encrypted_directory_path),
+                           std::move(*maybe_encfs_config),
+                           std::move(*maybe_password));
+
+  auto thread_handle =
+    CreateThread(NULL, 0, mount_thread, (LPVOID) thread_params, 0, NULL);
+  if (!thread_handle) {
+    delete thread_params;
+    quick_alert(owner,
+                "Unable to start encrypted file system!",
+                "Error");
+  }
 }
+
 
 CALLBACK
 LRESULT
@@ -584,7 +666,18 @@ int
 WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
         LPSTR /*lpCmdLine*/, int nCmdShow)
 {
+  // TODO: catch all exceptions, since this is a top-level
+
+  // TODO: de-initialize
   OleInitialize(NULL);
+
+  // TODO: de-initialize
+  log_printer_default_init();
+  logging_set_global_level(LOG_DEBUG);
+  log_debug("Hello world!");
+
+  // TODO: de-initialize
+  lockbox::global_webdav_init();
 
   auto native_fs = lockbox::create_native_fs();
   WindowData wd = {
