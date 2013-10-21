@@ -33,8 +33,8 @@ enum {
 };
 
 enum {
-  NEED_WRITE = false,
-  DONT_NEED_WRITE = true,
+  DONT_NEED_WRITE = false,
+  NEED_WRITE = true,
 };
 
 encfs::FsIO *fs_fsio_handle_to_pointer(fs_fsio_handle_t h) {
@@ -112,7 +112,7 @@ get_FsIO_error_or_default(const std::system_error & err) {
 static char *
 strdup_x(const std::string & str) {
   auto toret = (char *) malloc(str.length() + 1);
-  memcpy(toret, str.c_str(), str.length());
+  memcpy(toret, str.c_str(), str.length() + 1);
   return toret;
 }
 

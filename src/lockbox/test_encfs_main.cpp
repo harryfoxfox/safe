@@ -152,20 +152,48 @@ main(int argc, char *argv[]) {
                                        std::move(*maybe_encfs_config),
                                        std::move(*maybe_password));
 
-  // do a simple test on encfs by writing a file and
-  // reading the same file
   auto path = encrypted_directory_path.join("sup");
 
   auto test_string = std::string("SUP");
 
-  auto f = enc_fs->openfile(path, true, true);
-  f.write(0, test_string);
+  // do a simple test on encfs by writing a file and
+  // reading the same file
+  {
+    auto f = enc_fs->openfile(path, true, true);
+    f.write(0, test_string);
 
-  auto data = f.read(0, 3);
-  if (data != test_string) {
-    std::cerr << "DATA WAS NOT EQUAL: \"" << data <<
-      "\" VS \"" << test_string << "\"" << std::endl;
-    return MAIN_RETURN_CODE_BAD_DATA;
+    auto data = f.read(0, 3);
+    if (data != test_string) {
+      std::cerr << "DATA WAS NOT EQUAL: \"" << data <<
+        "\" VS \"" << test_string << "\"" << std::endl;
+      return MAIN_RETURN_CODE_BAD_DATA;
+    }
+  }
+
+  // okay now this tests reading the file again
+  {
+    auto f = enc_fs->openfile(path, false, false);
+    auto data = f.read(0, 3);
+    if (data != test_string) {
+      std::cerr << "DATA WAS NOT EQUAL after rename: \"" << data <<
+        "\" VS \"" << test_string << "\"" << std::endl;
+      return MAIN_RETURN_CODE_BAD_DATA;
+    }
+  }
+
+  // this tests renaming the file (specifically after opening it)
+  auto path2 = encrypted_directory_path.join("sup2");
+  enc_fs->rename(path, path2);
+
+  // okay now this tests reading the file again
+  {
+    auto f = enc_fs->openfile(path2, false, false);
+    auto data = f.read(0, 3);
+    if (data != test_string) {
+      std::cerr << "DATA WAS NOT EQUAL after rename: \"" << data <<
+        "\" VS \"" << test_string << "\"" << std::endl;
+      return MAIN_RETURN_CODE_BAD_DATA;
+    }
   }
 
   return MAIN_RETURN_CODE_SUCCESS;
