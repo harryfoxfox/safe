@@ -130,8 +130,7 @@ public:
     , _fs(fs) {
     // TODO: support this
     assert(strlen(fs_path_sep(fs)) == 1);
-    const std::string & str_ = *this;
-    if (!fs_path_is_valid(fs, str_.c_str())) {
+    if (!fs_path_is_valid(fs, this->c_str())) {
       throw std::runtime_error("invalid path: " + str_);
     }
   }
