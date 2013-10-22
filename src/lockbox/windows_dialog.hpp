@@ -44,6 +44,7 @@ namespace _int {
 using _int::byte;
 
 enum class ControlClass : uint16_t {
+  INVALID = 0x0,
   BUTTON = 0x0080,
   EDIT = 0x0081,
   STATIC = 0x0082,
@@ -68,12 +69,20 @@ next_align_boundary(intptr_t cur, size_t unit) {
 
 static
 void
-insert_data(std::vector<byte> & v,
-            size_t align,
-            const byte *a, const byte *b) {
+ensure_aligned(const std::vector<byte> & v) {
+  // TODO: make the vector use an aligned allocator
+  // instead of this runtime error
   if ((intptr_t) v.data() % sizeof(DWORD)) {
     throw std::runtime_error("data moved to bad place");
   }
+}
+
+static
+void
+insert_data(std::vector<byte> & v,
+            size_t align,
+            const byte *a, const byte *b) {
+  ensure_aligned(v);
   auto end_ptr = (intptr_t) v.data() + v.size();
   v.insert(v.end(),
            next_align_boundary(end_ptr, align) - end_ptr,
@@ -94,12 +103,16 @@ class DialogTemplate;
 class DialogItemDesc {
   DWORD _style;
   std::string _title;
-  ControlClass _cls;
   WORD _id;
   short _x;
   short _y;
   short _cx;
   short _cy;
+  bool _is_str_class;
+  // could be a union but i don't feel like writing
+  // a custom destructor right now
+  ControlClass _cls;
+  LPCWSTR _str_cls;
 
   void serialize(std::vector<byte> & v) const {
     const DLGITEMTEMPLATE text_item = {
@@ -113,9 +126,16 @@ class DialogItemDesc {
     };
     insert_obj(v, sizeof(DWORD), text_item);
 
-    const uint16_t text_item_class[] =
-      {0xffff, serialize_control_class(_cls)};
-    insert_obj(v, sizeof(WORD), text_item_class);
+    if (_is_str_class) {
+      insert_data(v, sizeof(WORD),
+                  (byte *) _str_cls,
+                  (byte *) (_str_cls + wcslen(_str_cls) + 1));
+    }
+    else {
+      const uint16_t text_item_class[] =
+        {0xffff, serialize_control_class(_cls)};
+      insert_obj(v, sizeof(WORD), text_item_class);
+    }
 
     auto text_item_title = widen(_title);
     insert_data(v, sizeof(WORD),
@@ -127,19 +147,38 @@ class DialogItemDesc {
     insert_obj(v, sizeof(WORD), text_item_creation_data);
   }
 
+private:
+  DialogItemDesc(DWORD style, std::string title,
+                 WORD id,
+                 short x, short y,
+                 short cx, short cy, bool is_str_class,
+                 ControlClass cls, LPCWSTR str_cls)
+    : _style(style)
+    , _title(std::move(title))
+    , _id(id)
+    , _x(x)
+    , _y(y)
+    , _cx(cx)
+    , _cy(cy)
+    , _is_str_class(is_str_class)
+    , _cls(cls)
+    , _str_cls(str_cls) {}
+
 public:
   DialogItemDesc(DWORD style, std::string title,
                  ControlClass cls, WORD id,
                  short x, short y,
                  short cx, short cy)
-    : _style(style)
-    , _title(std::move(title))
-    , _cls(cls)
-    , _id(id)
-    , _x(x)
-    , _y(y)
-    , _cx(cx)
-    , _cy(cy) {}
+    : DialogItemDesc(style, std::move(title),
+                     id, x, y, cx, cy, false, cls, L"") {}
+
+  DialogItemDesc(DWORD style, std::string title,
+                 LPCWSTR cls, WORD id,
+                 short x, short y,
+                 short cx, short cy)
+    : DialogItemDesc(style, std::move(title),
+                     id, x, y, cx, cy, true,
+                     ControlClass::INVALID, cls) {}
 
   friend class DialogTemplate;
 };
@@ -205,16 +244,14 @@ public:
   }
 
   LPCDLGTEMPLATE get_data() const {
-    if ((intptr_t) _data.data() % sizeof(DWORD)) {
-      throw std::runtime_error("bad data");
-    }
+    ensure_aligned(_data);
     return (LPCDLGTEMPLATE) _data.data();
   }
 };
 
 // these are defined to match resource file syntax
 
-static
+inline
 DialogItemDesc
 PushButton(std::string text,
            WORD id, short x, short y,
@@ -227,7 +264,7 @@ PushButton(std::string text,
                         id, x, y, width, height);
 }
 
-static
+inline
 DialogItemDesc
 DefPushButton(std::string text,
               WORD id, short x, short y,
@@ -239,7 +276,7 @@ DefPushButton(std::string text,
                         id, x, y, width, height);
 }
 
-static
+inline
 DialogItemDesc
 CText(std::string text,
       WORD id, short x, short y,
@@ -252,7 +289,7 @@ CText(std::string text,
                         x, y, width, height);
 }
 
-static
+inline
 DialogItemDesc
 LText(std::string text,
       WORD id, short x, short y,
@@ -265,7 +302,7 @@ LText(std::string text,
                         x, y, width, height);
 }
 
-static
+inline
 DialogItemDesc
 EditText(WORD id, short x, short y,
          short width, short height,
@@ -275,6 +312,26 @@ EditText(WORD id, short x, short y,
                         id,
                         x, y, width, height);
 }
+
+inline
+DialogItemDesc
+Control(std::string text, WORD id, LPCWSTR cls_,
+        DWORD style,
+        short x, short y,
+        short width, short height) {
+  return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
+                        std::move(text), cls_,
+                        id,
+                        x, y, width, height);
+}
+
+template<class T>
+inline
+T
+center_offset(T container_width, T contained_width) {
+  return (container_width - contained_width) / 2;
+}
+
 
 }
 

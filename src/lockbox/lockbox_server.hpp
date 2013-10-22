@@ -60,6 +60,7 @@ void
 run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                           encfs::Path root_path,
                           port_t port,
+                          const std::string & mount_name,
                           std::function<void(fdevent_loop_t)> when_done);
 
 }

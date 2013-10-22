@@ -74,7 +74,7 @@ localhost_socketpair(fd_t sv[2]) {
        ++attempts) {
     ++target_port;
     struct sockaddr_in listen_addr;
-    init_sockaddr_in(&listen_addr, target_port);
+    init_sockaddr_in(&listen_addr, 0x7f000001, target_port);
 
     auto ret_bind = bind(socket_fd,
                          (struct sockaddr *) &listen_addr,
@@ -93,10 +93,7 @@ localhost_socketpair(fd_t sv[2]) {
   if (client_fd == INVALID_SOCKET) goto fail;
 
   struct sockaddr_in connect_addr;
-  memset(&connect_addr, 0, sizeof(connect_addr));
-  connect_addr.sin_family = AF_INET;
-  connect_addr.sin_port = htons(target_port);
-  connect_addr.sin_addr.s_addr = htonl(0x7f000001);
+  init_sockaddr_in(&connect_addr, 0x7f000001, target_port);
 
   ret_connect =
     connect(client_fd, (struct sockaddr *) &connect_addr,
@@ -268,6 +265,7 @@ void
 run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                           encfs::Path root_path,
                           port_t port,
+                          const std::string & mount_name,
                           std::function<void(fdevent_loop_t)> when_done) {
   // create event loop (implemented by file descriptors)
   auto loop = fdevent_default_new();
@@ -275,7 +273,7 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   auto _free_loop = create_destroyer(loop, fdevent_destroy);
 
   struct sockaddr_in listen_addr;
-  init_sockaddr_in(&listen_addr, port);
+  init_sockaddr_in(&listen_addr, INADDR_ANY, port);
 
   // create network IO backend (implemented by the Socket API)
   auto network_io =
@@ -306,9 +304,9 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   std::ostringstream build_uri_root;
   build_uri_root << "http://localhost:" << port << "/";
   auto public_uri_root = std::move(build_uri_root).str();
-  auto internal_root = "/webdav";
+  auto internal_root = "/" + mount_name;
   auto server = webdav_server_start(network_io, public_uri_root.c_str(),
-                                    internal_root, server_backend);
+                                    internal_root.c_str(), server_backend);
   if (!server) throw std::runtime_error("Couldn't start webdav server");
 
   // now set up callback

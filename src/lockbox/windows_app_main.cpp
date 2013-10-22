@@ -17,6 +17,7 @@
  */
 
 #include <lockbox/lockbox_server.hpp>
+#include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_string.hpp>
 
@@ -54,38 +55,36 @@ public:
 
 class ServerThreadParams {
 public:
-  HWND owner;
+  DWORD main_thread;
   std::shared_ptr<encfs::FsIO> native_fs;
   encfs::Path encrypted_directory_path;
   encfs::EncfsConfig encfs_config;
   encfs::SecureMem password;
+  std::string mount_name;
 
-  ServerThreadParams(HWND owner_,
+  ServerThreadParams(DWORD main_thread_,
                      std::shared_ptr<encfs::FsIO> native_fs_,
                      encfs::Path encrypted_directory_path_,
                      encfs::EncfsConfig encfs_config_,
-                     encfs::SecureMem password_)
-    : owner(owner_)
+                     encfs::SecureMem password_,
+                     std::string mount_name_)
+    : main_thread(main_thread_)
     , native_fs(std::move(native_fs_))
     , encrypted_directory_path(std::move(encrypted_directory_path_))
     , encfs_config(std::move(encfs_config_))
     , password(std::move(password_))
+    , mount_name(std::move(mount_name_))
   {}
 };
 
 void
-quick_alert(HWND owner, std::string msg, std::string title) {
+quick_alert(HWND owner,
+            const std::string &msg,
+            const std::string &title) {
   MessageBoxW(owner,
               w32util::widen(msg).c_str(),
               w32util::widen(title).c_str(),
               MB_ICONEXCLAMATION | MB_OK);
-}
-
-template<class T>
-static
-T
-left_offset(T container_width, T contained_width) {
-  return (container_width - contained_width) / 2;
 }
 
 WINAPI
@@ -288,16 +287,16 @@ confirm_new_encrypted_container(HWND owner,
                               TEXT_HEIGHT + BUTTON_HEIGHT),
                    {
                      CText(std::move(dialog_text), IDC_STATIC,
-                           left_offset(DIALOG_WIDTH, TEXT_WIDTH),
+                           center_offset(DIALOG_WIDTH, TEXT_WIDTH),
                            TOP_MARGIN,
                            TEXT_WIDTH, TEXT_HEIGHT),
                      PushButton("&Cancel", IDCANCEL,
-                                left_offset(DIALOG_WIDTH,
+                                center_offset(DIALOG_WIDTH,
                                             2 * BUTTON_WIDTH + BUTTON_SPACING),
                                 TOP_MARGIN + TEXT_HEIGHT + MIDDLE_MARGIN,
                                 BUTTON_WIDTH, BUTTON_HEIGHT),
                      DefPushButton("&OK", IDOK,
-                                   left_offset(DIALOG_WIDTH,
+                                   center_offset(DIALOG_WIDTH,
                                                2 * BUTTON_WIDTH +
                                                BUTTON_SPACING) +
                                    BUTTON_WIDTH + BUTTON_SPACING,
@@ -423,18 +422,18 @@ get_new_password_dialog(HWND owner,
                               BUTTON_HEIGHT + BOTTOM_MARGIN),
                    {
                      CText("Create Encrypted Container", IDC_STATIC,
-                           left_offset(DIALOG_WIDTH, TEXT_WIDTH),
+                           center_offset(DIALOG_WIDTH, TEXT_WIDTH),
                            TOP_MARGIN,
                            TEXT_WIDTH, TEXT_HEIGHT),
                      LText("New Password:", IDC_STATIC,
-                           left_offset(DIALOG_WIDTH,
+                           center_offset(DIALOG_WIDTH,
                                        PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
                                        PASS_ENTRY_WIDTH),
                            TOP_MARGIN +
                            TEXT_HEIGHT + MIDDLE_MARGIN + PASS_LABEL_VOFFSET,
                            PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
                      EditText(IDPASSWORD,
-                              left_offset(DIALOG_WIDTH,
+                              center_offset(DIALOG_WIDTH,
                                           PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
                                           PASS_ENTRY_WIDTH) +
                               PASS_LABEL_WIDTH + PASS_LABEL_SPACE,
@@ -444,7 +443,7 @@ get_new_password_dialog(HWND owner,
                               ES_PASSWORD | ES_LEFT |
                               WS_BORDER | WS_TABSTOP),
                      LText("Confirm Password:", IDC_STATIC,
-                           left_offset(DIALOG_WIDTH,
+                           center_offset(DIALOG_WIDTH,
                                        PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
                                        PASS_ENTRY_WIDTH),
                            TOP_MARGIN +
@@ -452,7 +451,7 @@ get_new_password_dialog(HWND owner,
                            PASS_ENTRY_HEIGHT + PASS_MARGIN + PASS_LABEL_VOFFSET,
                            PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
                      EditText(IDCONFIRMPASSWORD,
-                              left_offset(DIALOG_WIDTH,
+                              center_offset(DIALOG_WIDTH,
                                           PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
                                           PASS_ENTRY_WIDTH) +
                               PASS_LABEL_WIDTH + PASS_LABEL_SPACE,
@@ -463,7 +462,7 @@ get_new_password_dialog(HWND owner,
                               ES_PASSWORD | ES_LEFT |
                               WS_BORDER | WS_TABSTOP),
                      PushButton("&Cancel", IDCANCEL,
-                                left_offset(DIALOG_WIDTH,
+                                center_offset(DIALOG_WIDTH,
                                             2 * BUTTON_WIDTH + BUTTON_SPACING),
                                 TOP_MARGIN +
                                 TEXT_HEIGHT + MIDDLE_MARGIN +
@@ -471,7 +470,7 @@ get_new_password_dialog(HWND owner,
                                 PASS_ENTRY_HEIGHT + MIDDLE_MARGIN,
                                 BUTTON_WIDTH, BUTTON_HEIGHT),
                      DefPushButton("&OK", IDOK,
-                                   left_offset(DIALOG_WIDTH,
+                                   center_offset(DIALOG_WIDTH,
                                                2 * BUTTON_WIDTH +
                                                BUTTON_SPACING) +
                                    BUTTON_WIDTH + BUTTON_SPACING,
@@ -495,6 +494,9 @@ get_new_password_dialog(HWND owner,
   return toret;
 }
 
+const UINT MOUNT_DONE_SIGNAL = WM_APP;
+const UINT MOUNT_OVER_SIGNAL = WM_APP + 1;
+
 WINAPI
 static
 DWORD
@@ -512,21 +514,24 @@ mount_thread(LPVOID params_) {
 
   // TODO: actually search for a port to listen on
   port_t listen_port = 8081;
+  bool sent_signal = false;
 
-  auto our_callback = [=] (fdevent_loop_t /*loop*/) {
-    return;
-    // just mount the file system using the console command
-    std::ostringstream os;
-    os << "C:\\Windows\\system32\\net.exe use X: http://localhost:" << listen_port << "/webdav";
-    auto ret = system(os.str().c_str());
-    // abort if it fails
-    if (ret) abort();
+  auto our_callback = [&] (fdevent_loop_t /*loop*/) {
+    PostThreadMessage(params->main_thread, MOUNT_DONE_SIGNAL, 1, listen_port);
+    sent_signal = true;
   };
 
   lockbox::run_lockbox_webdav_server(std::move(enc_fs),
                                      std::move(params->encrypted_directory_path),
-                                     8081,
+                                     listen_port,
+                                     std::move(params->mount_name),
                                      our_callback);
+
+  auto sig = (sent_signal)
+    ? MOUNT_OVER_SIGNAL
+    : MOUNT_DONE_SIGNAL;
+
+  PostThreadMessage(params->main_thread, sig, 0, 0);
 
   // server is done, possible unmount
   return 0;
@@ -534,8 +539,8 @@ mount_thread(LPVOID params_) {
 
 WINAPI
 void
-mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
-                              HWND owner) {
+mount_encrypted_folder_dialog(HWND owner,
+                              std::shared_ptr<encfs::FsIO> native_fs) {
   auto maybe_chosen_folder = get_folder_dialog(owner);
   // they pressed cancel
   if (!maybe_chosen_folder) return;
@@ -557,12 +562,16 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
   auto encrypted_directory_path =
     std::move(*maybe_encrypted_directory_path);
 
-  // TODO: DO THIS ON A DIFFERENT THREAD
   // attempt to read configuration
   opt::optional<encfs::EncfsConfig> maybe_encfs_config;
   try {
     maybe_encfs_config =
-      encfs::read_config(native_fs, encrypted_directory_path);
+      w32util::modal_call(owner, "Reading configuration...",
+                          "Reading configuration...",
+                          encfs::read_config,
+                          native_fs, encrypted_directory_path);
+    // it was canceled
+    if (!maybe_encfs_config) return;
   }
   catch (const encfs::ConfigurationFileDoesNotExist &) {
     // this is fine, we'll just attempt to create it
@@ -584,10 +593,16 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
         get_password_dialog(owner, encrypted_directory_path);
       if (!maybe_password) return;
 
+      log_debug("verifying password...");
       const auto correct_password =
-        encfs::verify_password(*maybe_encfs_config, *maybe_password);
+        w32util::modal_call(owner, "Verifying Password...",
+                            "Verifying password...",
+                            encfs::verify_password,
+                            *maybe_encfs_config, *maybe_password);
+      log_debug("verifying done!");
+      if (!correct_password) return;
 
-      if (!correct_password) {
+      if (!*correct_password) {
         quick_alert(owner, "Incorrect password! Try again",
                     "Incorrect Password");
         maybe_password = opt::nullopt;
@@ -605,10 +620,22 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
       get_new_password_dialog(owner, encrypted_directory_path);
     if (!maybe_password) return;
 
-    // TODO: DO THIS ON A DIFFERENT THREAD
-    maybe_encfs_config = encfs::create_paranoid_config(*maybe_password);
-    encfs::write_config(native_fs, encrypted_directory_path,
-                        *maybe_encfs_config);
+    maybe_encfs_config =
+      w32util::modal_call(owner,
+                          "Creating New Configuration...",
+                          "Creating new configuration...",
+                          encfs::create_paranoid_config,
+                          *maybe_password);
+    if (!maybe_encfs_config) return;
+
+    auto modal_completed =
+      w32util::modal_call_void(owner,
+                               "Saving New Configuration...",
+                               "Saving new configuration...",
+                               encfs::write_config,
+                               native_fs, encrypted_directory_path,
+                               *maybe_encfs_config);
+    if (!modal_completed) return;
   }
 
   // okay now we have:
@@ -617,12 +644,17 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
   // * a valid password
   // we're ready to mount the drive
 
+  // TODO: configure both /webdav and X:
+  auto drive_letter = std::string("X");
+  auto mount_name = std::string("webdav");
+
   auto thread_params =
-    new ServerThreadParams(owner,
+    new ServerThreadParams(GetCurrentThreadId(),
                            native_fs,
                            std::move(encrypted_directory_path),
                            std::move(*maybe_encfs_config),
-                           std::move(*maybe_password));
+                           std::move(*maybe_password),
+                           mount_name);
 
   auto thread_handle =
     CreateThread(NULL, 0, mount_thread, (LPVOID) thread_params, 0, NULL);
@@ -631,6 +663,53 @@ mount_encrypted_folder_dialog(std::shared_ptr<encfs::FsIO> native_fs,
     quick_alert(owner,
                 "Unable to start encrypted file system!",
                 "Error");
+    return;
+  }
+  auto _close_thread = lockbox::create_destroyer(thread_handle, CloseHandle);
+
+  auto msg_ptr = w32util::modal_until_message(owner,
+                                              "Mounting Encrypted Container...",
+                                              "Mounting encrypted container...",
+                                              MOUNT_DONE_SIGNAL);
+  if (!msg_ptr) return;
+
+  assert(msg_ptr->message == MOUNT_DONE_SIGNAL);
+
+  if (!msg_ptr->wParam) {
+    quick_alert(owner,
+                "Unable to start encrypted file system!",
+                "Error");
+    return;
+  }
+
+  auto listen_port = (port_t) msg_ptr->lParam;
+
+  // just mount the file system using the console command
+  std::ostringstream os;
+  os << "use " << drive_letter <<
+    ": http://localhost:" << listen_port << "/" << mount_name;
+  auto ret_shell1 = (int) ShellExecuteW(NULL, L"open",
+                                        L"c:\\windows\\system32\\net.exe",
+                                        w32util::widen(os.str()).c_str(),
+                                        NULL, SW_HIDE);
+  // abort if it fails
+  if (ret_shell1 <= 32) {
+    // TODO kill thread
+    log_error("ShellExecuteW error: Ret was: %d", ret_shell1);
+    quick_alert(owner,
+                "Unable to start encrypted file system!",
+                "Error");
+    return;
+  }
+
+  // now open up the file system with explorer
+  auto ret_shell2 =
+    (int) ShellExecuteW(NULL, L"explore",
+                        w32util::widen(drive_letter + ":\\").c_str(),
+                        NULL, NULL, SW_SHOW);
+  if (ret_shell2 <= 32) {
+    // this is not that bad, we were just opening the windows
+    log_error("ShellExecuteW error: Ret was: %d", ret_shell2);
   }
 }
 
@@ -641,12 +720,12 @@ WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
   switch(msg){
   case WM_CREATE: {
-    auto pParent = ((LPCREATESTRUCT)lParam)->lpCreateParams;
+    auto pParent = ((LPCREATESTRUCT) lParam)->lpCreateParams;
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) pParent);
     break;
   }
   case WM_LBUTTONDOWN: {
-    mount_encrypted_folder_dialog(wd->native_fs, hwnd);
+    mount_encrypted_folder_dialog(hwnd, wd->native_fs);
     break;
   }
   case WM_CLOSE:
@@ -669,12 +748,23 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   // TODO: catch all exceptions, since this is a top-level
 
   // TODO: de-initialize
-  OleInitialize(NULL);
-
-  // TODO: de-initialize
   log_printer_default_init();
   logging_set_global_level(LOG_DEBUG);
   log_debug("Hello world!");
+
+  // TODO: de-initialize
+  auto ret_ole = OleInitialize(NULL);
+  if (ret_ole != S_OK) throw std::runtime_error("couldn't initialize ole!");
+
+  INITCOMMONCONTROLSEX icex;
+  icex.dwICC = ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS;
+  icex.dwSize = sizeof(icex);
+  auto success = InitCommonControlsEx(&icex);
+  if (success == FALSE) throw std::runtime_error("Couldn't initialize common controls");
+
+  // TODO: require ComCtl32.dll version >= 6.0
+  // (we do this in the manifest but it would be nice
+  //  to check at runtime too)
 
   // TODO: de-initialize
   lockbox::global_webdav_init();
@@ -725,6 +815,9 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   // Step 3: The Message Loop
   MSG Msg;
   while (GetMessageW(&Msg, NULL, 0, 0)) {
+    if (Msg.message == MOUNT_OVER_SIGNAL) {
+      // TODO: webdav server died, kill mount
+    }
     TranslateMessage(&Msg);
     DispatchMessage(&Msg);
   }

@@ -13,8 +13,8 @@ IS_MSYS := $(shell uname | grep -i mingw)
 WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_sockets_fs.a
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 
-MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src
-MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11 $(if $(IS_MSYS),-D_UNICODE -DUNICODE,)
+MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src  $(if $(IS_MSYS),-D_UNICODE -DUNICODE -D_WIN32_IE=0x0600,)
+MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11
 
 # encfs on mac makes use of the Security framework
 EXTRA_LIBRARIES := $(if $(shell test `uname` = Darwin && echo 1),-framework Security,) $(if $(IS_MSYS),-lws2_32,)
@@ -80,24 +80,40 @@ clean-deps:
 clean:
 	rm -f src/lockbox/*.o
 
-src/lockbox/*.o: Makefile
-
-%.cpp.o: %.cpp
-	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
-
 SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp SecureMemPasswordReader.cpp
 
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
 
-WINDOWS_APP_MAIN_SRCS = windows_app_main.cpp $(SRCS)
+WINDOWS_APP_MAIN_SRCS = windows_app_main.cpp windows_app_main.rc $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
-test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) $(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
-windows_app_main: $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) $(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
+# dependencies
+
+src/lockbox/*.o: Makefile
+
+src/lockbox/windows_app_main.cpp.o: src/lockbox/windows_*.hpp
+
+src/lockbox/windows_app_main.rc.o: src/lockbox/windows_app_main.rc \
+	src/lockbox/windows_app_main.manifest
+
+test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
+	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
+
+windows_app_main.exe: $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
+	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
+
+# build instructions
+
+%.cpp.o: %.cpp
+	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
+
+%.rc.o: %.rc
+	windres -I.\src\lockbox -i $< -o $@
 
 test_encfs_main:
-	$(CXX) -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(TEST_ENCFS_MAIN_OBJS) \
+	$(CXX) -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
+ -o $@ $(TEST_ENCFS_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
  -lglog  -ltinyxml $(EXTRA_LIBRARIES)
@@ -105,11 +121,12 @@ test_encfs_main:
 ASLR_LINK_FLAGS := -Wl,--dynamicbase=true -Wl,--nxcompat=true
 WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
 
-windows_app_main:
-	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) \
-	-O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
+windows_app_main.exe:
+	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
+ -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
- -lglog  -ltinyxml -lole32 $(EXTRA_LIBRARIES)
+ -lglog  -ltinyxml -lole32 -lcomctl32 $(EXTRA_LIBRARIES)
 
-.PHONY: dependencies clean libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server
+.PHONY: dependencies clean libglog libbotan \
+	libprotobuf libtinyxml libencfs libwebdav_server
