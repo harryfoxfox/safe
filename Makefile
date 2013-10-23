@@ -100,7 +100,7 @@ src/lockbox/windows_app_main.rc.o: src/lockbox/windows_app_main.rc \
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
 
-windows_app_main.exe: $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
+Lockbox.exe: $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
 
 # build instructions
@@ -121,7 +121,7 @@ test_encfs_main:
 ASLR_LINK_FLAGS := -Wl,--dynamicbase=true -Wl,--nxcompat=true
 WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
 
-windows_app_main.exe:
+Lockbox.exe:
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
  -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \

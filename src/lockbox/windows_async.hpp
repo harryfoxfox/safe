@@ -63,9 +63,8 @@ _modal_call_dialog_proc(HWND hwnd, UINT Message,
 }
 
 WINAPI
-std::unique_ptr<MSG>
-modal_until_message(HWND parent, std::string title, std::string ui_msg,
-                    UINT msg) {
+HWND
+create_waiting_modal(HWND parent, std::string title, std::string ui_msg) {
   typedef WORD unit_t;
   const unit_t DIALOG_WIDTH = 150;
 
@@ -105,9 +104,18 @@ modal_until_message(HWND parent, std::string title, std::string ui_msg,
                    }
                    );
 
-  auto dialog_wnd = CreateDialogIndirect(NULL,
-                                         dlg.get_data(),
-                                         parent, _modal_call_dialog_proc);
+  return CreateDialogIndirect(NULL,
+                              dlg.get_data(),
+                              parent, _modal_call_dialog_proc);
+}
+
+WINAPI
+std::unique_ptr<MSG>
+modal_until_message(HWND parent, std::string title, std::string ui_msg,
+                    UINT msg) {
+  auto dialog_wnd = create_waiting_modal(parent,
+                                         std::move(title),
+                                         std::move(ui_msg));
   if (!dialog_wnd) return nullptr;
   auto _destroy_dialog_wnd = lockbox::create_destroyer(dialog_wnd, DestroyWindow);
 

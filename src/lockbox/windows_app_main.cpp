@@ -32,6 +32,7 @@
 #include <davfuse/logging.h>
 
 #include <iostream>
+#include <list>
 #include <memory>
 #include <stdexcept>
 #include <sstream>
@@ -48,9 +49,13 @@ const WORD IDPASSWORD = 200;
 const WORD IDCONFIRMPASSWORD = 201;
 const auto MAX_PASS_LEN = 256;
 
-class WindowData {
-public:
+struct MountDetails {
+  std::string drive_letter;
+};
+
+struct WindowData {
   std::shared_ptr<encfs::FsIO> native_fs;
+  std::list<MountDetails> mounts;
 };
 
 class ServerThreadParams {
@@ -538,12 +543,12 @@ mount_thread(LPVOID params_) {
 }
 
 WINAPI
-void
+opt::optional<MountDetails>
 mount_encrypted_folder_dialog(HWND owner,
                               std::shared_ptr<encfs::FsIO> native_fs) {
   auto maybe_chosen_folder = get_folder_dialog(owner);
   // they pressed cancel
-  if (!maybe_chosen_folder) return;
+  if (!maybe_chosen_folder) return opt::nullopt;
   auto chosen_folder = std::move(*maybe_chosen_folder);
 
   opt::optional<encfs::Path> maybe_encrypted_directory_path;
@@ -556,7 +561,7 @@ mount_encrypted_folder_dialog(HWND owner,
     os << "Bad path for encrypted directory: " <<
       chosen_folder;
     quick_alert(owner, os.str(), "Bad Path!");
-    return;
+    return opt::nullopt;
   }
 
   auto encrypted_directory_path =
@@ -571,7 +576,7 @@ mount_encrypted_folder_dialog(HWND owner,
                           encfs::read_config,
                           native_fs, encrypted_directory_path);
     // it was canceled
-    if (!maybe_encfs_config) return;
+    if (!maybe_encfs_config) return opt::nullopt;
   }
   catch (const encfs::ConfigurationFileDoesNotExist &) {
     // this is fine, we'll just attempt to create it
@@ -582,7 +587,7 @@ mount_encrypted_folder_dialog(HWND owner,
     os << "The configuration file in folder \"" <<
       chosen_folder << "\" is corrupted";
     quick_alert(owner, os.str(), "Bad Folder");
-    return;
+    return opt::nullopt;
   }
 
   opt::optional<encfs::SecureMem> maybe_password;
@@ -591,7 +596,7 @@ mount_encrypted_folder_dialog(HWND owner,
     while (!maybe_password) {
       maybe_password =
         get_password_dialog(owner, encrypted_directory_path);
-      if (!maybe_password) return;
+      if (!maybe_password) return opt::nullopt;
 
       log_debug("verifying password...");
       const auto correct_password =
@@ -600,7 +605,7 @@ mount_encrypted_folder_dialog(HWND owner,
                             encfs::verify_password,
                             *maybe_encfs_config, *maybe_password);
       log_debug("verifying done!");
-      if (!correct_password) return;
+      if (!correct_password) return opt::nullopt;
 
       if (!*correct_password) {
         quick_alert(owner, "Incorrect password! Try again",
@@ -613,12 +618,12 @@ mount_encrypted_folder_dialog(HWND owner,
     // check if the user wants to create an encrypted container
     auto create =
       confirm_new_encrypted_container(owner, encrypted_directory_path);
-    if (!create) return;
+    if (!create) return opt::nullopt;
 
     // create new password
     maybe_password =
       get_new_password_dialog(owner, encrypted_directory_path);
-    if (!maybe_password) return;
+    if (!maybe_password) return opt::nullopt;
 
     maybe_encfs_config =
       w32util::modal_call(owner,
@@ -626,7 +631,7 @@ mount_encrypted_folder_dialog(HWND owner,
                           "Creating new configuration...",
                           encfs::create_paranoid_config,
                           *maybe_password);
-    if (!maybe_encfs_config) return;
+    if (!maybe_encfs_config) return opt::nullopt;
 
     auto modal_completed =
       w32util::modal_call_void(owner,
@@ -635,7 +640,7 @@ mount_encrypted_folder_dialog(HWND owner,
                                encfs::write_config,
                                native_fs, encrypted_directory_path,
                                *maybe_encfs_config);
-    if (!modal_completed) return;
+    if (!modal_completed) return opt::nullopt;
   }
 
   // okay now we have:
@@ -663,15 +668,17 @@ mount_encrypted_folder_dialog(HWND owner,
     quick_alert(owner,
                 "Unable to start encrypted file system!",
                 "Error");
-    return;
+    return opt::nullopt;
   }
+  // TODO: don't only close handle, also stop thread
   auto _close_thread = lockbox::create_destroyer(thread_handle, CloseHandle);
 
   auto msg_ptr = w32util::modal_until_message(owner,
-                                              "Mounting Encrypted Container...",
-                                              "Mounting encrypted container...",
+                                              "Starting Encrypted Container...",
+                                              "Starting encrypted container...",
                                               MOUNT_DONE_SIGNAL);
-  if (!msg_ptr) return;
+  // TODO: kill thread
+  if (!msg_ptr) return opt::nullopt;
 
   assert(msg_ptr->message == MOUNT_DONE_SIGNAL);
 
@@ -679,38 +686,69 @@ mount_encrypted_folder_dialog(HWND owner,
     quick_alert(owner,
                 "Unable to start encrypted file system!",
                 "Error");
-    return;
+    return opt::nullopt;
   }
 
   auto listen_port = (port_t) msg_ptr->lParam;
 
-  // just mount the file system using the console command
-  std::ostringstream os;
-  os << "use " << drive_letter <<
-    ": http://localhost:" << listen_port << "/" << mount_name;
-  auto ret_shell1 = (int) ShellExecuteW(NULL, L"open",
-                                        L"c:\\windows\\system32\\net.exe",
-                                        w32util::widen(os.str()).c_str(),
-                                        NULL, SW_HIDE);
-  // abort if it fails
-  if (ret_shell1 <= 32) {
-    // TODO kill thread
-    log_error("ShellExecuteW error: Ret was: %d", ret_shell1);
-    quick_alert(owner,
-                "Unable to start encrypted file system!",
-                "Error");
-    return;
+  {
+    auto dialog_wnd =
+      w32util::create_waiting_modal(owner,
+                                    "Mounting Encrypted Container...",
+                                    "Mounting encrypted container...");
+    // TODO: kill thread
+    if (!dialog_wnd) return opt::nullopt;
+    auto _destroy_dialog_wnd =
+      lockbox::create_destroyer(dialog_wnd, DestroyWindow);
+
+    // disable window
+    EnableWindow(owner, FALSE);
+
+    // just mount the file system using the console command
+    std::ostringstream os;
+    os << "use " << drive_letter <<
+      ": http://localhost:" << listen_port << "/" << mount_name;
+    auto ret_shell1 = (int) ShellExecuteW(owner, L"open",
+                                          L"c:\\windows\\system32\\net.exe",
+                                          w32util::widen(os.str()).c_str(),
+                                          NULL, SW_HIDE);
+
+    // disable window
+    EnableWindow(owner, TRUE);
+
+    // abort if it fails
+    if (ret_shell1 <= 32) {
+      // TODO kill thread
+      log_error("ShellExecuteW error: Ret was: %d", ret_shell1);
+      quick_alert(owner,
+                  "Unable to start encrypted file system!",
+                  "Error");
+      return opt::nullopt;
+    }
   }
 
   // now open up the file system with explorer
-  auto ret_shell2 =
-    (int) ShellExecuteW(NULL, L"explore",
-                        w32util::widen(drive_letter + ":\\").c_str(),
-                        NULL, NULL, SW_SHOW);
-  if (ret_shell2 <= 32) {
-    // this is not that bad, we were just opening the windows
-    log_error("ShellExecuteW error: Ret was: %d", ret_shell2);
+  // NB: we try this more than once because it may not be
+  //     fully mounted after the previous command
+  unsigned i;
+  for (i = 0; i < 5; ++i) {
+    auto ret_shell2 =
+      (int) ShellExecuteW(owner, L"open",
+                          w32util::widen(drive_letter + ":\\").c_str(),
+                          NULL, NULL, SW_SHOWNORMAL);
+    if (ret_shell2 <= 32) {
+      // this is not that bad, we were just opening the windows
+      log_error("ShellExecuteW error: Ret was: %d", ret_shell2);
+      Sleep(0);
+    }
+    else break;
   }
+
+  if (i == 5) {
+    quick_alert(owner, "Success", "Encrypted file system has been mounted!");
+  }
+
+  return MountDetails {drive_letter};
 }
 
 
@@ -725,7 +763,8 @@ WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     break;
   }
   case WM_LBUTTONDOWN: {
-    mount_encrypted_folder_dialog(hwnd, wd->native_fs);
+    auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
+    if (md) wd->mounts.push_back(std::move(*md));
     break;
   }
   case WM_CLOSE:
@@ -760,7 +799,9 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   icex.dwICC = ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS;
   icex.dwSize = sizeof(icex);
   auto success = InitCommonControlsEx(&icex);
-  if (success == FALSE) throw std::runtime_error("Couldn't initialize common controls");
+  if (success == FALSE) {
+    throw std::runtime_error("Couldn't initialize common controls");
+  }
 
   // TODO: require ComCtl32.dll version >= 6.0
   // (we do this in the manifest but it would be nice
@@ -772,6 +813,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   auto native_fs = lockbox::create_native_fs();
   WindowData wd = {
     .native_fs = std::move(native_fs),
+    .mounts = std::list<MountDetails>(),
   };
 
   // TODO: create a window for the tray icon
@@ -820,6 +862,19 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     }
     TranslateMessage(&Msg);
     DispatchMessage(&Msg);
+  }
+
+  // kill all mounts
+  for (const auto & mount : wd.mounts) {
+    std::ostringstream os;
+    os << "use " << mount.drive_letter <<  ": /delete";
+    auto ret_shell1 = (int) ShellExecuteW(hwnd, L"open",
+                                          L"c:\\windows\\system32\\net.exe",
+                                          w32util::widen(os.str()).c_str(),
+                                          NULL, SW_HIDE);
+    if (ret_shell1 <= 32) {
+      log_error("Failed to umount %s", mount.drive_letter.c_str());
+    }
   }
 
   return Msg.wParam;

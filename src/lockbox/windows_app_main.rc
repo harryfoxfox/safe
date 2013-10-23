@@ -19,11 +19,11 @@ BEGIN
     BLOCK "080904b0"
     BEGIN
       VALUE "CompanyName", "Rian Hunter"
-      VALUE "FileDescription", "Lockbox: Encrypted File System"
+      VALUE "FileDescription", "Encrypted File System"
       VALUE "FileVersion", "1.0.0.0"
-      VALUE "InternalName", "Win32App"
+      VALUE "InternalName", "Lockbox"
       VALUE "LegalCopyright", "© 2013 Rian Hunter"
-      VALUE "OriginalFilename", "windows_app_main.exe"
+      VALUE "OriginalFilename", "lockbox.exe"
       VALUE "ProductName", "Lockbox"
       VALUE "ProductVersion", "1.0.0.0"
     END
