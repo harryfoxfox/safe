@@ -8,16 +8,27 @@ HEADERS_ROOT := $(CURDIR)/out/headers
 DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
 PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),1)
 
-IS_MSYS := $(shell uname | grep -i mingw)
+IS_WIN := $(shell uname | grep -i mingw)
+IS_MAC := $(shell test `uname` = Darwin && echo 1)
 
 WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_sockets_fs.a
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 
-MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src  $(if $(IS_MSYS),-D_UNICODE -DUNICODE -D_WIN32_IE=0x0600,)
+# we claim to support windows 2000 and above (to be as simple and tight as possible)
+# although currently we require comctl32.dll >= v6.0, which is only
+# available on minimum windows xp
+GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x500 -DWINVER=0x500 -DNTDDI_VERSION=0x05000000
+
+MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) \
+ -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs \
+ -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src \
+ $(if $(IS_WIN),$(GLOBAL_WINDOWS_DEFINES),)
 MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11
 
 # encfs on mac makes use of the Security framework
-EXTRA_LIBRARIES := $(if $(shell test `uname` = Darwin && echo 1),-framework Security,) $(if $(IS_MSYS),-lws2_32,)
+MAC_EXTRA_LIBRARIES := -framework Security
+WIN_EXTRA_LIBRARIES := -lws2_32
+DEPS_EXTRA_LIBRARIES := $(if $(IS_MAC),$(MAC_EXTRA_LIBRARIES),) $(if $(IS_WIN),$(WIN_EXTRA_LIBRARIES),)
 
 all: test_encfs_main
 
@@ -32,7 +43,7 @@ libwebdav_server: clean
 libencfs: clean
 #	TODO: don't require fuse when configuring encfs
 	@cd $(ENCFS_ROOT); rm -rf CMakeCache.txt CMakeFiles
-	@cd $(ENCFS_ROOT); CXXFLAGS="$(CXXFLAGS) -DGOOGLE_GLOG_DLL_DECL=''" cmake . -DCMAKE_BUILD_TYPE=Debug $(if $(IS_MSYS),-G"MSYS Makefiles",) -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) $(if $(IS_MSYS),-DCMAKE_INCLUDE_PATH=$(DEPS_INSTALL_ROOT)/include/botan-1.10,)
+	@cd $(ENCFS_ROOT); CXXFLAGS="$(CXXFLAGS) -DGOOGLE_GLOG_DLL_DECL=''" cmake . -DCMAKE_BUILD_TYPE=Debug $(if $(IS_WIN),-G"MSYS Makefiles",) -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) $(if $(IS_WIN),-DCMAKE_INCLUDE_PATH=$(DEPS_INSTALL_ROOT)/include/botan-1.10,)
 	@cd $(ENCFS_ROOT); make clean
 	@cd $(ENCFS_ROOT); make -j$(PROCS) encfs-base encfs-cipher encfs-fs
 #	copy all encfs headers into our build headers dir
@@ -47,7 +58,7 @@ libencfs: clean
          ar -x $(ENCFS_ROOT)/base/libencfs-base.a; ar rcs $(ENCFS_STATIC_LIBRARY) *.*;
 
 libbotan: clean
-	@cd $(BOTAN_ROOT); ./configure.py --prefix=$(DEPS_INSTALL_ROOT) --disable-shared $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,) $(if $(IS_MSYS),--os=mingw --cpu=x86,)
+	@cd $(BOTAN_ROOT); ./configure.py --prefix=$(DEPS_INSTALL_ROOT) --disable-shared $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,) $(if $(IS_WIN),--os=mingw --cpu=x86,)
 	@cd $(BOTAN_ROOT); make clean
 	@cd $(BOTAN_ROOT); make -j$(PROCS)
 	@cd $(BOTAN_ROOT); make install
@@ -66,9 +77,9 @@ libprotobuf: clean
 	@cd $(PROTOBUF_ROOT); make install
 
 libtinyxml: clean
-	@cd $(TINYXML_ROOT); rm -f libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o  
-	@cd $(TINYXML_ROOT); $(CXX) $(CXXFLAGS) -c tinystr.cpp  tinyxml.cpp  tinyxmlerror.cpp  tinyxmlparser.cpp  
-	@cd $(TINYXML_ROOT); ar rcs libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o  
+	@cd $(TINYXML_ROOT); rm -f libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o
+	@cd $(TINYXML_ROOT); $(CXX) $(CXXFLAGS) -c tinystr.cpp  tinyxml.cpp  tinyxmlerror.cpp  tinyxmlparser.cpp
+	@cd $(TINYXML_ROOT); ar rcs libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o
 	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
 
@@ -116,7 +127,7 @@ test_encfs_main:
  -o $@ $(TEST_ENCFS_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
- -lglog  -ltinyxml $(EXTRA_LIBRARIES)
+ -lglog  -ltinyxml $(DEPS_EXTRA_LIBRARIES)
 
 ASLR_LINK_FLAGS := -Wl,--dynamicbase=true -Wl,--nxcompat=true
 WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
@@ -126,7 +137,7 @@ Lockbox.exe:
  -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
- -lglog  -ltinyxml -lole32 -lcomctl32 $(EXTRA_LIBRARIES)
+ -lglog  -ltinyxml -lole32 -lcomctl32 $(DEPS_EXTRA_LIBRARIES)
 
 .PHONY: dependencies clean libglog libbotan \
 	libprotobuf libtinyxml libencfs libwebdav_server

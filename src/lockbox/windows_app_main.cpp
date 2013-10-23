@@ -20,6 +20,7 @@
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_string.hpp>
+#include <lockbox/util.hpp>
 
 #include <encfs/fs/FsIO.h>
 #include <encfs/fs/FileUtils.h>
@@ -41,21 +42,49 @@
 
 #include <windows.h>
 #include <CommCtrl.h>
+#include <Shellapi.h>
 #include <Shlobj.h>
+#include <dbt.h>
 
-const wchar_t g_szClassName[] = L"myWindowClass";
+// TODO:
+// 1) Unmount drives / Stop threads
+// 2) Stop threads when drives are unmounted
+// 3) fix GUI fonts/ok/cancel
+// 4) Icons
+// 5) opening dialog
+// 6) Unmount when webdav server stops (defensive coding)
+
+const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const WORD IDC_STATIC = ~0;
 const WORD IDPASSWORD = 200;
 const WORD IDCONFIRMPASSWORD = 201;
 const auto MAX_PASS_LEN = 256;
+const wchar_t TRAY_ICON_TOOLTIP[] = L"Lockbox";
+
+enum class DriveLetter {
+  A, B, C, E, F, G, H, I, J, K, L, M, N, O, P,
+  Q, R, S, T, U, V, W, X, Y, Z,
+};
+
+namespace std {
+  std::string to_string(DriveLetter v) {
+    return std::string(1, (int) v + 'A');
+  }
+}
+
+template<class CharT, class Traits>
+std::basic_ostream<CharT, Traits> & operator<<(std::basic_ostream<CharT, Traits> & os, DriveLetter dl) {
+  return os << std::to_string(dl);
+}
 
 struct MountDetails {
-  std::string drive_letter;
+  DriveLetter drive_letter;
+  std::string name;
 };
 
 struct WindowData {
   std::shared_ptr<encfs::FsIO> native_fs;
-  std::list<MountDetails> mounts;
+  std::vector<MountDetails> mounts;
 };
 
 class ServerThreadParams {
@@ -81,6 +110,27 @@ public:
     , mount_name(std::move(mount_name_))
   {}
 };
+
+
+static
+DriveLetter
+find_free_drive_letter() {
+  // first get all used drive letters
+  auto drive_bitmask = GetLogicalDrives();
+  if (!drive_bitmask) {
+    throw std::runtime_error("Error while calling GetLogicalDrives");
+  }
+
+  // then iterate from A->Z until we find one
+  for (unsigned i = 0; i < 26; ++i) {
+    // is this bit not set => is this drive not in use?
+    if (!((drive_bitmask >> i) & 0x1)) {
+      return (DriveLetter) i;
+    }
+  }
+
+  throw std::runtime_error("No drive letter available!");
+}
 
 void
 quick_alert(HWND owner,
@@ -129,6 +179,7 @@ clear_field(HWND hwnd, WORD id, size_t num_chars){
   SetDlgItemTextW(hwnd, id, zeroed_bytes.get());
 }
 
+
 encfs::SecureMem
 securely_read_password_field(HWND hwnd, WORD id, bool clear = true) {
   // securely get what's in dialog box
@@ -154,6 +205,16 @@ securely_read_password_field(HWND hwnd, WORD id, bool clear = true) {
 
   st2.data()[ret] = '\0';
   return std::move(st2);
+}
+
+bool
+open_mount(HWND owner, const MountDetails & md) {
+  auto ret_shell2 =
+    (int) ShellExecuteW(owner, L"open",
+                        w32util::widen(std::to_string(md.drive_letter) +
+                                       ":\\").c_str(),
+                        NULL, NULL, SW_SHOWNORMAL);
+  return ret_shell2 > 32;
 }
 
 CALLBACK
@@ -517,8 +578,11 @@ mount_thread(LPVOID params_) {
                            std::move(params->encfs_config),
                            std::move(params->password));
 
-  // TODO: actually search for a port to listen on
-  port_t listen_port = 8081;
+  // we only listen on localhost :)
+  ipv4_t ip_addr = 0x7f000001;
+
+  port_t listen_port =
+    lockbox::find_random_free_listen_port(ip_addr, 49152, MAX_PORT);
   bool sent_signal = false;
 
   auto our_callback = [&] (fdevent_loop_t /*loop*/) {
@@ -528,6 +592,7 @@ mount_thread(LPVOID params_) {
 
   lockbox::run_lockbox_webdav_server(std::move(enc_fs),
                                      std::move(params->encrypted_directory_path),
+                                     ip_addr,
                                      listen_port,
                                      std::move(params->mount_name),
                                      our_callback);
@@ -649,9 +714,8 @@ mount_encrypted_folder_dialog(HWND owner,
   // * a valid password
   // we're ready to mount the drive
 
-  // TODO: configure both /webdav and X:
-  auto drive_letter = std::string("X");
-  auto mount_name = std::string("webdav");
+  auto drive_letter = find_free_drive_letter();
+  auto mount_name = encrypted_directory_path.basename();
 
   auto thread_params =
     new ServerThreadParams(GetCurrentThreadId(),
@@ -727,18 +791,17 @@ mount_encrypted_folder_dialog(HWND owner,
     }
   }
 
+  auto md = MountDetails {drive_letter, mount_name};
+
   // now open up the file system with explorer
   // NB: we try this more than once because it may not be
   //     fully mounted after the previous command
   unsigned i;
   for (i = 0; i < 5; ++i) {
-    auto ret_shell2 =
-      (int) ShellExecuteW(owner, L"open",
-                          w32util::widen(drive_letter + ":\\").c_str(),
-                          NULL, NULL, SW_SHOWNORMAL);
-    if (ret_shell2 <= 32) {
-      // this is not that bad, we were just opening the windows
-      log_error("ShellExecuteW error: Ret was: %d", ret_shell2);
+    // this is not that bad, we were just opening the windows
+    if (!open_mount(owner, md)) {
+      log_error("opening mount failed, trying again...: %s",
+                w32util::last_error_message().c_str());
       Sleep(0);
     }
     else break;
@@ -748,31 +811,250 @@ mount_encrypted_folder_dialog(HWND owner,
     quick_alert(owner, "Success", "Encrypted file system has been mounted!");
   }
 
-  return MountDetails {drive_letter};
+  return std::move(md);
 }
 
+static
+void
+stop_relevant_drive_threads(std::vector<MountDetails> & mounts) {
+  auto drive_bitmask = GetLogicalDrives();
+  if (!drive_bitmask) {
+    throw std::runtime_error("Error while calling GetLogicalDrives");
+  }
+
+  for (const auto & md : mounts) {
+    if (!((drive_bitmask >> (int) md.drive_letter) & 0x1)) {
+      log_debug("Drive %s: is no longer mounted",
+                std::to_string(md.drive_letter).c_str());
+    }
+  }
+}
 
 CALLBACK
 LRESULT
-WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+  const static UINT TRAY_ICON_MSG = WM_USER;
   const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
   switch(msg){
+  case WM_DEVICECHANGE: {
+    if (wParam == DBT_DEVICEREMOVECOMPLETE) {
+      stop_relevant_drive_threads(wd->mounts);
+    }
+    break;
+  }
+
   case WM_CREATE: {
-    auto pParent = ((LPCREATESTRUCT) lParam)->lpCreateParams;
-    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) pParent);
+    // set application state (WindowData) in main window
+    const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
+
+    // add tray icon
+    NOTIFYICONDATA icon_data;
+    lockbox::zero_object(icon_data);
+    icon_data.cbSize = NOTIFYICONDATA_V2_SIZE;
+    icon_data.hWnd = hwnd;
+    icon_data.uID = 0;
+    icon_data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    icon_data.uCallbackMessage = TRAY_ICON_MSG;
+    icon_data.hIcon = LoadIconW(NULL, IDI_APPLICATION);
+    memcpy(icon_data.szTip, TRAY_ICON_TOOLTIP, sizeof(TRAY_ICON_TOOLTIP));
+    icon_data.uVersion = NOTIFYICON_VERSION;
+
+    auto success = Shell_NotifyIcon(NIM_ADD, &icon_data);
+    if (!success) {
+      // TODO deal with this?
+      log_error("Error while adding icon: %s", w32util::last_error_message().c_str());
+    }
+    else {
+      // now set tray icon version
+      auto success_version = Shell_NotifyIcon(NIM_SETVERSION, &icon_data);
+      if (!success_version) {
+        // TODO: deal with this
+        log_error("Error while setting icon version: %s",
+                  w32util::last_error_message().c_str());
+      }
+    }
+
     break;
   }
-  case WM_LBUTTONDOWN: {
-    auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
-    if (md) wd->mounts.push_back(std::move(*md));
+
+  case TRAY_ICON_MSG: {
+    switch (lParam) {
+    case WM_LBUTTONDBLCLK: {
+      // on left click
+      // if there is an active mount, open the folder
+      // otherwise allow the user to make a new mount
+      if (wd->mounts.empty()) {
+        auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
+        if (md) wd->mounts.push_back(std::move(*md));
+      }
+      else {
+        auto success = open_mount(hwnd, wd->mounts.front());
+        if (!success) {
+          log_error("Error while opening mount... %s: %s",
+                    std::to_string(wd->mounts.front().drive_letter).c_str(),
+                    w32util::last_error_message().c_str());
+        }
+      }
+      break;
+    }
+
+    case WM_RBUTTONDOWN: {
+      // get x & y offset
+      try {
+        POINT xypos;
+        auto success_pos = GetCursorPos(&xypos);
+        if (!success_pos) throw std::runtime_error("GetCursorPos");
+
+        auto menu_handle = CreatePopupMenu();
+        if (!menu_handle) throw std::runtime_error("CreatePopupMenu");
+        auto _destroy_menu =
+          lockbox::create_destroyer(menu_handle, DestroyMenu);
+
+        // okay our menu is like this
+        // [ Lockbox A ]
+        // [ Lockbox B ]
+        // ...
+        // -------
+        // Open or create a new Lockbox
+
+        unsigned items_added = 0;
+
+        // NB: we start at 1 because TrackPopupMenu()
+        //     returns 0 if the menu was canceledn
+        UINT idx = 1;
+        for (const auto & md : wd->mounts) {
+          auto menu_item_text =
+            w32util::widen("Open \"" + md.name + "\" (" +
+                           std::to_string(md.drive_letter) + ":)");
+
+          MENUITEMINFOW mif;
+          lockbox::zero_object(mif);
+
+          mif.cbSize = sizeof(mif);
+          mif.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
+          mif.fState = items_added ? 0 : MFS_DEFAULT;
+          mif.wID = idx;
+          mif.dwTypeData = const_cast<LPWSTR>(menu_item_text.data());
+          mif.cch = menu_item_text.size();
+
+          auto success_menu_item =
+            InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
+          if (!success_menu_item) {
+            throw std::runtime_error("InsertMenuItem elt");
+          }
+          ++items_added;
+
+          ++idx;
+        }
+
+        // add separator
+        if (!wd->mounts.empty()) {
+          MENUITEMINFOW mif;
+          lockbox::zero_object(mif);
+
+          mif.cbSize = sizeof(mif);
+          mif.fMask = MIIM_FTYPE;
+          mif.fType = MFT_SEPARATOR;
+
+          auto success_menu_item =
+            InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
+          if (!success_menu_item) {
+            throw std::runtime_error("InsertMenuItem sep");
+          }
+          ++items_added;
+        }
+
+        // add create action
+        {
+          MENUITEMINFOW mif;
+          lockbox::zero_object(mif);
+
+          mif.cbSize = sizeof(mif);
+          mif.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
+          mif.fState = wd->mounts.empty() ? MFS_DEFAULT : 0;
+          mif.wID = (UINT) -1;
+          mif.dwTypeData = const_cast<LPWSTR>(L"Open or create a new Lockbox");
+          mif.cch = wcslen(L"Open or create a new Lockbox");
+
+          auto success_menu_item =
+            InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
+          if (!success_menu_item) {
+            throw std::runtime_error("InsertMenuItem create");
+          }
+          ++items_added;
+        }
+
+        // add quit action
+        {
+          MENUITEMINFOW mif;
+          lockbox::zero_object(mif);
+
+          mif.cbSize = sizeof(mif);
+          mif.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+          mif.wID = (UINT) -2;
+          mif.dwTypeData = const_cast<LPWSTR>(L"Quit");
+          mif.cch = wcslen(L"Quit");
+
+          auto success_menu_item =
+            InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
+          if (!success_menu_item) {
+            throw std::runtime_error("InsertMenuItem quit");
+          }
+          ++items_added;
+        }
+
+        // NB: have to do this so the menu disappears
+        // when you click out of it
+        SetForegroundWindow(hwnd);
+
+        SetLastError(0);
+        auto selected =
+          (UINT) TrackPopupMenu(menu_handle,
+                                TPM_LEFTALIGN | TPM_LEFTBUTTON |
+                                TPM_BOTTOMALIGN | TPM_RETURNCMD,
+                                xypos.x, xypos.y,
+                                0, hwnd, NULL);
+        if (!selected && GetLastError()) {
+          throw std::runtime_error("TrackPopupMenu");
+        }
+
+        if (selected == (UINT) -1) {
+          auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
+          if (md) wd->mounts.push_back(std::move(*md));
+        }
+        else if (selected == (UINT) -2) {
+          DestroyWindow(hwnd);
+        }
+        else if (selected) {
+          assert(!wd->mounts.empty());
+          auto success = open_mount(hwnd, wd->mounts[selected - 1]);
+          if (!success) throw std::runtime_error("open_mount");
+        }
+      }
+      catch (const std::exception & err) {
+        log_error("Error while doing: \"%s\": %s",
+                  err.what(),
+                  w32util::last_error_message().c_str());
+      }
+    }
+
+    default:
+      break;
+    }
     break;
   }
-  case WM_CLOSE:
+
+  case WM_CLOSE: {
     DestroyWindow(hwnd);
     break;
-  case WM_DESTROY:
+  }
+
+  case WM_DESTROY: {
     PostQuitMessage(0);
     break;
+  }
+
   default:
     return DefWindowProc(hwnd, msg, wParam, lParam);
   }
@@ -796,8 +1078,10 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   if (ret_ole != S_OK) throw std::runtime_error("couldn't initialize ole!");
 
   INITCOMMONCONTROLSEX icex;
+  lockbox::zero_object(icex);
   icex.dwICC = ICC_STANDARD_CLASSES | ICC_PROGRESS_CLASS;
   icex.dwSize = sizeof(icex);
+
   auto success = InitCommonControlsEx(&icex);
   if (success == FALSE) {
     throw std::runtime_error("Couldn't initialize common controls");
@@ -813,50 +1097,48 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   auto native_fs = lockbox::create_native_fs();
   WindowData wd = {
     .native_fs = std::move(native_fs),
-    .mounts = std::list<MountDetails>(),
+    .mounts = std::vector<MountDetails>(),
   };
 
-  // TODO: create a window for the tray icon
-  //Step 1: Registering the Window Class
-  WNDCLASSEX wc;
+  // register our main window class
+  WNDCLASSEXW wc;
+  lockbox::zero_object(wc);
+  wc.style         = CS_DBLCLKS;
   wc.cbSize        = sizeof(WNDCLASSEX);
-  wc.style         = 0;
-  wc.lpfnWndProc   = WndProc;
-  wc.cbClsExtra    = 0;
-  wc.cbWndExtra    = 0;
+  wc.lpfnWndProc   = main_wnd_proc;
   wc.hInstance     = hInstance;
-  wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
-  wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-  wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-  wc.lpszMenuName  = NULL;
-  wc.lpszClassName = g_szClassName;
-  wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
+  wc.hIcon         = LoadIconW(NULL, IDI_APPLICATION);
+  wc.hCursor       = LoadCursorW(NULL, IDC_ARROW);
+  wc.hbrBackground = (HBRUSH) COLOR_WINDOW;
+  wc.lpszClassName = MAIN_WINDOW_CLASS_NAME;
+  wc.hIconSm       = LoadIconW(NULL, IDI_APPLICATION);
 
   if (!RegisterClassExW(&wc)) {
-    MessageBoxW(NULL, L"Window Registration Failed!", L"Error!",
-                MB_ICONEXCLAMATION | MB_OK);
-    return 0;
+    throw std::runtime_error("Failure registering main window class");
   }
 
-  // Step 2: Creating the Window
+  // create our main window
   auto hwnd = CreateWindowExW(WS_EX_CLIENTEDGE,
-                              g_szClassName,
-                              L"The title of my window",
-                              WS_OVERLAPPEDWINDOW,
-                              CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
+                              MAIN_WINDOW_CLASS_NAME,
+                              L"Lockbox Main Window",
+                              WS_OVERLAPPEDWINDOW | WS_SYSMENU | WS_CAPTION,
+                              CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,
                               NULL, NULL, hInstance, &wd);
-  if(hwnd == NULL) {
-    MessageBoxW(NULL, L"Window Creation Failed!", L"Error!",
-                MB_ICONEXCLAMATION | MB_OK);
+  if (!hwnd) {
+    throw std::runtime_error("Failure to create main window");
     return 0;
   }
 
-  ShowWindow(hwnd, nCmdShow);
+  // update window
   UpdateWindow(hwnd);
 
-  // Step 3: The Message Loop
+  (void) nCmdShow;
+
+  // run message loop
   MSG Msg;
-  while (GetMessageW(&Msg, NULL, 0, 0)) {
+  BOOL ret_getmsg;
+  while ((ret_getmsg = GetMessageW(&Msg, NULL, 0, 0))) {
+    if (ret_getmsg == -1) break;
     if (Msg.message == MOUNT_OVER_SIGNAL) {
       // TODO: webdav server died, kill mount
     }
@@ -873,9 +1155,12 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
                                           w32util::widen(os.str()).c_str(),
                                           NULL, SW_HIDE);
     if (ret_shell1 <= 32) {
-      log_error("Failed to umount %s", mount.drive_letter.c_str());
+      log_error("Failed to umount %s:",
+                std::to_string(mount.drive_letter).c_str());
     }
   }
+
+  if (ret_getmsg == -1) throw std::runtime_error("getmessage failed!");
 
   return Msg.wParam;
 }

@@ -37,6 +37,10 @@
 namespace lockbox {
 
 CXX_STATIC_ATTR
+port_t
+find_random_free_listen_port(ipv4_t ip, port_t low, port_t high);
+
+CXX_STATIC_ATTR
 bool
 global_webdav_init();
 
@@ -59,6 +63,7 @@ CXX_STATIC_ATTR
 void
 run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                           encfs::Path root_path,
+                          ipv4_t ipaddr,
                           port_t port,
                           const std::string & mount_name,
                           std::function<void(fdevent_loop_t)> when_done);

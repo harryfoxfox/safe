@@ -19,7 +19,7 @@ BEGIN
     BLOCK "080904b0"
     BEGIN
       VALUE "CompanyName", "Rian Hunter"
-      VALUE "FileDescription", "Encrypted File System"
+      VALUE "FileDescription", "Lockbox"
       VALUE "FileVersion", "1.0.0.0"
       VALUE "InternalName", "Lockbox"
       VALUE "LegalCopyright", "© 2013 Rian Hunter"

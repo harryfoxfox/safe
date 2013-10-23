@@ -124,6 +124,86 @@ localhost_socketpair(fd_t sv[2]) {
   return -1;
 }
 
+template<class T>
+T gcd(T a, T b) {
+  while (b) {
+    auto t = b;
+    b = a % b;
+    a = t;
+  }
+  return a;
+}
+
+template<class T>
+bool are_mutually_prime(T a, T b) {
+  return b && a && gcd(a, b) == 1;
+}
+
+template<class T>
+T find_random_smaller_mutually_prime(T a) {
+  // monte carlo
+  T toret;
+  do {
+    toret = (std::rand() % (a - 1)) + 1;
+  }
+  while (are_mutually_prime(a, toret));
+
+  // 0 is not mutually prime with anything
+  assert(toret);
+
+  return toret;
+}
+
+CXX_STATIC_ATTR
+port_t
+find_random_free_listen_port(ipv4_t ip, port_t low, port_t high) {
+  // find a port in the range (inclusive) to bind to
+  // based on searching a random permutation of the numbers
+  // in the range
+
+  if (low > high) {
+    throw std::invalid_argument("low bound must be <= high");
+  }
+
+  auto socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (socket_fd == INVALID_SOCKET) {
+    throw std::runtime_error("Couldnt create socket");
+  }
+  auto _close_socket = lockbox::create_destroyer(socket_fd, closesocket);
+
+  auto range_size = high - low + 1;
+
+  auto cur_port = low + std::rand() % range_size;
+  auto adder = high == low
+    ? 0 // we're just iterating once anyway
+    : find_random_smaller_mutually_prime(range_size);
+
+  // TODO: would be nice to implement and use a C++ iterator
+  //       instead of this
+  for (port_t i = 0; i < range_size; ++i) {
+    struct sockaddr_in listen_addr;
+    init_sockaddr_in(&listen_addr, ip, cur_port);
+
+    auto ret_bind = bind(socket_fd,
+                         (struct sockaddr *) &listen_addr,
+                         sizeof(listen_addr));
+    if (!ret_bind) return cur_port;
+    if (last_socket_error() != SOCKET_EADDRINUSE) {
+      throw std::runtime_error("Bind ERROR!");
+    }
+
+    cur_port += adder;
+
+    // deal with wraparound
+    // NB: this is unsigned overflow so it's not undefined
+    if (cur_port > high) cur_port = low + (cur_port - high - 1);
+    else if (cur_port < low) cur_port += low;
+  }
+
+  throw std::runtime_error("no free ports!");
+}
+
+
 CXX_STATIC_ATTR
 bool
 global_webdav_init() {
@@ -264,6 +344,7 @@ CXX_STATIC_ATTR
 void
 run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                           encfs::Path root_path,
+                          ipv4_t ipaddr,
                           port_t port,
                           const std::string & mount_name,
                           std::function<void(fdevent_loop_t)> when_done) {
@@ -273,7 +354,7 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   auto _free_loop = create_destroyer(loop, fdevent_destroy);
 
   struct sockaddr_in listen_addr;
-  init_sockaddr_in(&listen_addr, INADDR_ANY, port);
+  init_sockaddr_in(&listen_addr, ipaddr, port);
 
   // create network IO backend (implemented by the Socket API)
   auto network_io =
@@ -312,9 +393,11 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   // now set up callback
   fd_t sv[2];
   auto ret_socketpair = localhost_socketpair(sv);
-  if (ret_socketpair) abort();
+  if (ret_socketpair) throw std::runtime_error("Couldnt create socketpair!");
   auto ret_send = send(sv[0], "1", 1, 0);
-  if (ret_send == -1) throw std::runtime_error("couldn't set up startup callback");
+  if (ret_send == -1) {
+    throw std::runtime_error("couldn't set up startup callback");
+  }
   auto ctx = RunningCallbackCtx {sv[0], sv[1], loop, std::move(when_done)};
   auto success_add_watch =
     fdevent_add_watch(loop, sv[1], create_stream_events(true, false),

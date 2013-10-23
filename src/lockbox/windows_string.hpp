@@ -36,7 +36,7 @@
 
 namespace w32util {
 
-static
+inline
 std::wstring
 widen(const std::string & s) {
   if (s.empty()) return std::wstring();
@@ -60,7 +60,7 @@ widen(const std::string & s) {
   return std::wstring(out.get(), required_buffer_size);
 }
 
-static
+inline
 size_t
 narrow_into_buf(const wchar_t *s, size_t num_chars,
                 char *out, size_t buf_size_in_bytes) {
@@ -73,7 +73,7 @@ narrow_into_buf(const wchar_t *s, size_t num_chars,
   return required_buffer_size;
 }
 
-static
+inline
 std::string
 narrow(const wchar_t *s, size_t num_chars) {
   if (!num_chars) return std::string();
@@ -99,10 +99,44 @@ narrow(const wchar_t *s, size_t num_chars) {
   return std::string(out.get(), required_buffer_size);
 }
 
-static
+inline
 std::string
 narrow(const std::wstring & s) {
   return narrow(s.data(), s.size());
+}
+
+inline
+std::string
+last_error_message() {
+  enum {
+    MAX_MSG=128,
+  };
+  wchar_t error_buf_wide[MAX_MSG];
+  char error_buf[MAX_MSG];
+
+  auto err_code = GetLastError();
+
+  const DWORD num_chars =
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
+                   FORMAT_MESSAGE_IGNORE_INSERTS, 0, err_code, 0,
+                   error_buf_wide,
+                   sizeof(error_buf_wide) / sizeof(error_buf_wide[0]),
+                   NULL);
+  if (!num_chars) {
+    return "Couldn't get error message, FormatMessageW() failed";
+  }
+
+  const DWORD flags = 0;
+  const int required_buffer_size =
+    WideCharToMultiByte(CP_UTF8, flags,
+                        error_buf_wide, num_chars,
+                        error_buf, sizeof(error_buf),
+                        NULL, NULL);
+  if (!required_buffer_size) {
+    return "Couldn't get error_message, WideCharToMultibyte() failed";
+  }
+
+  return std::string(error_buf, required_buffer_size);
 }
 
 }
