@@ -83,6 +83,11 @@ libtinyxml: clean
 	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
 
+WINHTTP_DEP := $(CURDIR)/out/deps/lib/libwinhttp.a
+$(WINHTTP_DEP): $(CURDIR)/winhttp.h $(CURDIR)/winhttp.def
+	cp $(CURDIR)/winhttp.h out/deps/include/
+	dlltool -k -d winhttp.def -l $(CURDIR)/out/deps/lib/libwinhttp.a
+
 dependencies: libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server
 
 clean-deps:
@@ -101,7 +106,7 @@ WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 # dependencies
 
-src/lockbox/*.o: Makefile
+src/lockbox/*.o: Makefile $(if $(IS_WIN),$(WINHTTP_DEP),,)
 
 src/lockbox/windows_app_main.cpp.o: src/lockbox/windows_*.hpp
 
@@ -137,7 +142,7 @@ Lockbox.exe:
  -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_sockets_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
- -lglog  -ltinyxml -lole32 -lcomctl32 $(DEPS_EXTRA_LIBRARIES)
+ -lglog  -ltinyxml -lole32 -lcomctl32 -lwinhttp $(DEPS_EXTRA_LIBRARIES)
 
 .PHONY: dependencies clean libglog libbotan \
 	libprotobuf libtinyxml libencfs libwebdav_server

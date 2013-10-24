@@ -29,6 +29,7 @@
 
 #include <encfs/base/optional.h>
 
+#include <davfuse/webdav_server.h>
 #include <davfuse/log_printer.h>
 #include <davfuse/logging.h>
 
@@ -45,14 +46,28 @@
 #include <Shellapi.h>
 #include <Shlobj.h>
 #include <dbt.h>
+#include <Winhttp.h>
 
 // TODO:
-// 1) Unmount drives / Stop threads
-// 2) Stop threads when drives are unmounted
+// 1) Unmount drives from tray
 // 3) fix GUI fonts/ok/cancel
 // 4) Icons
 // 5) opening dialog
-// 6) Unmount when webdav server stops (defensive coding)
+// 6) Unmount when webdav server unexpectedly stops (defensive coding)
+// 7) Only one instance at a time
+
+struct CloseHandleDeleter {
+  void operator()(HANDLE a) {
+    CloseHandle(a);
+  }
+};
+
+typedef std::unique_ptr<std::remove_pointer<HANDLE>::type,
+                        CloseHandleDeleter> ManagedThreadHandle;
+
+ManagedThreadHandle create_managed_thread_handle(HANDLE a) {
+  return ManagedThreadHandle(a);
+}
 
 const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const WORD IDC_STATIC = ~0;
@@ -60,6 +75,7 @@ const WORD IDPASSWORD = 200;
 const WORD IDCONFIRMPASSWORD = 201;
 const auto MAX_PASS_LEN = 256;
 const wchar_t TRAY_ICON_TOOLTIP[] = L"Lockbox";
+const ipv4_t LOCALHOST_IP = 0x7f000001;
 
 enum class DriveLetter {
   A, B, C, E, F, G, H, I, J, K, L, M, N, O, P,
@@ -73,44 +89,33 @@ namespace std {
 }
 
 template<class CharT, class Traits>
-std::basic_ostream<CharT, Traits> & operator<<(std::basic_ostream<CharT, Traits> & os, DriveLetter dl) {
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> & os, DriveLetter dl) {
   return os << std::to_string(dl);
 }
 
 struct MountDetails {
   DriveLetter drive_letter;
   std::string name;
+  ManagedThreadHandle thread_handle;
+  port_t listen_port;
 };
 
 struct WindowData {
   std::shared_ptr<encfs::FsIO> native_fs;
   std::vector<MountDetails> mounts;
+  bool is_stopping;
+  bool is_opening;
 };
 
-class ServerThreadParams {
-public:
+struct ServerThreadParams {
   DWORD main_thread;
   std::shared_ptr<encfs::FsIO> native_fs;
   encfs::Path encrypted_directory_path;
   encfs::EncfsConfig encfs_config;
   encfs::SecureMem password;
   std::string mount_name;
-
-  ServerThreadParams(DWORD main_thread_,
-                     std::shared_ptr<encfs::FsIO> native_fs_,
-                     encfs::Path encrypted_directory_path_,
-                     encfs::EncfsConfig encfs_config_,
-                     encfs::SecureMem password_,
-                     std::string mount_name_)
-    : main_thread(main_thread_)
-    , native_fs(std::move(native_fs_))
-    , encrypted_directory_path(std::move(encrypted_directory_path_))
-    , encfs_config(std::move(encfs_config_))
-    , password(std::move(password_))
-    , mount_name(std::move(mount_name_))
-  {}
 };
-
 
 static
 DriveLetter
@@ -132,6 +137,113 @@ find_free_drive_letter() {
   throw std::runtime_error("No drive letter available!");
 }
 
+static
+void
+stop_drive_thread(HANDLE thread_handle, port_t listen_port) {
+  // check if the thread is already dead
+  DWORD exit_code;
+  auto success_getexitcode =
+    GetExitCodeThread(thread_handle, &exit_code);
+  if (!success_getexitcode) {
+    throw std::runtime_error("Couldn't get exit code");
+  }
+
+  // thread is done, we out
+  if (exit_code != STILL_ACTIVE) return;
+
+  // have to send http signal to stop
+  // Use WinHttpOpen to obtain a session handle.
+  auto session =
+    WinHttpOpen(L"WinHTTP Example/1.0",
+                WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                WINHTTP_NO_PROXY_NAME,
+                WINHTTP_NO_PROXY_BYPASS, 0);
+  if (!session) throw std::runtime_error("Couldn't create session");
+  auto _destroy_session =
+    lockbox::create_destroyer(session, WinHttpCloseHandle);
+
+  // Specify an HTTP server.
+  auto connect =
+    WinHttpConnect(session, L"localhost", listen_port, 0);
+  if (!connect) throw std::runtime_error("Couldn't create connection");
+  auto _destroy_connect =
+    lockbox::create_destroyer(connect, WinHttpCloseHandle);
+
+  // Create an HTTP request handle.
+  auto request =
+    WinHttpOpenRequest(connect, L"POST",
+                       w32util::widen(WEBDAV_SERVER_QUIT_URL).c_str(),
+                       NULL, WINHTTP_NO_REFERER,
+                       WINHTTP_DEFAULT_ACCEPT_TYPES,
+                       0);
+  if (!request) throw std::runtime_error("Couldn't create requestr");
+  auto _destroy_request =
+    lockbox::create_destroyer(request, WinHttpCloseHandle);
+
+  // Send a request.
+  auto result = WinHttpSendRequest(request,
+                                   WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                                   WINHTTP_NO_REQUEST_DATA, 0,
+                                   0, 0);
+  if (!result) throw std::runtime_error("failure to send request!");
+}
+
+static
+void
+stop_relevant_drive_threads(std::vector<MountDetails> & mounts) {
+  DWORD last_bitmask = 0;
+
+  while (true) {
+    auto drive_bitmask = GetLogicalDrives();
+    if (!drive_bitmask) {
+      throw std::runtime_error("Error while calling GetLogicalDrives");
+    }
+
+    if (drive_bitmask == last_bitmask) return;
+
+    for (auto it = mounts.begin(); it != mounts.end();) {
+      const auto & md = *it;
+      if (!((drive_bitmask >> (int) md.drive_letter) & 0x1)) {
+        log_debug("Drive %s: is no longer mounted, stopping thread",
+                  std::to_string(md.drive_letter).c_str());
+        auto success =
+          w32util::run_async_void(stop_drive_thread,
+                                  md.thread_handle.get(),
+                                  md.listen_port);
+        // if we got a quit message
+        if (!success) return;
+
+        // now wait for thread to die
+        while (true) {
+          auto ptr = md.thread_handle.get();
+          auto ret =
+            MsgWaitForMultipleObjects(1, &ptr,
+                                      FALSE, INFINITE, QS_ALLINPUT);
+          if (ret == WAIT_OBJECT_0) break;
+          else if (ret == WAIT_OBJECT_0 + 1) {
+            // we have a message - peek and dispatch it
+            MSG msg;
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+              if (msg.message == WM_QUIT) {
+                PostQuitMessage(msg.wParam);
+                return;
+              }
+              TranslateMessage(&msg);
+              DispatchMessage(&msg);
+            }
+          }
+          // random error
+          else return;
+        }
+
+        // thread has died, now delete this mount
+        it = mounts.erase(it);
+      }
+      else ++it;
+    }
+  }
+}
+
 void
 quick_alert(HWND owner,
             const std::string &msg,
@@ -145,7 +257,7 @@ quick_alert(HWND owner,
 WINAPI
 opt::optional<std::string>
 get_folder_dialog(HWND owner) {
-while (true) {
+  while (true) {
     wchar_t chosen_name[MAX_PATH];
     BROWSEINFOW bi;
     memset(&bi, 0, sizeof(bi));
@@ -578,11 +690,11 @@ mount_thread(LPVOID params_) {
                            std::move(params->encfs_config),
                            std::move(params->password));
 
-  // we only listen on localhost :)
-  ipv4_t ip_addr = 0x7f000001;
-
-  port_t listen_port =
+  // we only listen on localhost
+  auto ip_addr = LOCALHOST_IP;
+  auto listen_port =
     lockbox::find_random_free_listen_port(ip_addr, 49152, MAX_PORT);
+
   bool sent_signal = false;
 
   auto our_callback = [&] (fdevent_loop_t /*loop*/) {
@@ -717,16 +829,18 @@ mount_encrypted_folder_dialog(HWND owner,
   auto drive_letter = find_free_drive_letter();
   auto mount_name = encrypted_directory_path.basename();
 
-  auto thread_params =
-    new ServerThreadParams(GetCurrentThreadId(),
-                           native_fs,
-                           std::move(encrypted_directory_path),
-                           std::move(*maybe_encfs_config),
-                           std::move(*maybe_password),
-                           mount_name);
+  auto thread_params = new ServerThreadParams {
+    GetCurrentThreadId(),
+    native_fs,
+    std::move(encrypted_directory_path),
+    std::move(*maybe_encfs_config),
+    std::move(*maybe_password),
+    mount_name,
+  };
 
   auto thread_handle =
-    CreateThread(NULL, 0, mount_thread, (LPVOID) thread_params, 0, NULL);
+    create_managed_thread_handle(CreateThread(NULL, 0, mount_thread,
+                                              (LPVOID) thread_params, 0, NULL));
   if (!thread_handle) {
     delete thread_params;
     quick_alert(owner,
@@ -734,8 +848,6 @@ mount_encrypted_folder_dialog(HWND owner,
                 "Error");
     return opt::nullopt;
   }
-  // TODO: don't only close handle, also stop thread
-  auto _close_thread = lockbox::create_destroyer(thread_handle, CloseHandle);
 
   auto msg_ptr = w32util::modal_until_message(owner,
                                               "Starting Encrypted Container...",
@@ -791,7 +903,12 @@ mount_encrypted_folder_dialog(HWND owner,
     }
   }
 
-  auto md = MountDetails {drive_letter, mount_name};
+  auto md = MountDetails {
+    drive_letter,
+    mount_name,
+    std::move(thread_handle),
+    listen_port,
+  };
 
   // now open up the file system with explorer
   // NB: we try this more than once because it may not be
@@ -814,22 +931,6 @@ mount_encrypted_folder_dialog(HWND owner,
   return std::move(md);
 }
 
-static
-void
-stop_relevant_drive_threads(std::vector<MountDetails> & mounts) {
-  auto drive_bitmask = GetLogicalDrives();
-  if (!drive_bitmask) {
-    throw std::runtime_error("Error while calling GetLogicalDrives");
-  }
-
-  for (const auto & md : mounts) {
-    if (!((drive_bitmask >> (int) md.drive_letter) & 0x1)) {
-      log_debug("Drive %s: is no longer mounted",
-                std::to_string(md.drive_letter).c_str());
-    }
-  }
-}
-
 CALLBACK
 LRESULT
 main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -837,8 +938,12 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
   switch(msg){
   case WM_DEVICECHANGE: {
-    if (wParam == DBT_DEVICEREMOVECOMPLETE) {
+    if (wParam == DBT_DEVICEREMOVECOMPLETE && !wd->is_stopping) {
+      wd->is_stopping = true;
+      // if this throws an exception, our app is going to close
+      // TODO: might have to wait a bit before running this
       stop_relevant_drive_threads(wd->mounts);
+      wd->is_stopping = false;
     }
     break;
   }
@@ -863,7 +968,8 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     auto success = Shell_NotifyIcon(NIM_ADD, &icon_data);
     if (!success) {
       // TODO deal with this?
-      log_error("Error while adding icon: %s", w32util::last_error_message().c_str());
+      log_error("Error while adding icon: %s",
+                w32util::last_error_message().c_str());
     }
     else {
       // now set tray icon version
@@ -1098,6 +1204,8 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   WindowData wd = {
     .native_fs = std::move(native_fs),
     .mounts = std::vector<MountDetails>(),
+    .is_stopping = false,
+    .is_opening = false,
   };
 
   // register our main window class
@@ -1141,6 +1249,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     if (ret_getmsg == -1) break;
     if (Msg.message == MOUNT_OVER_SIGNAL) {
       // TODO: webdav server died, kill mount
+      log_debug("thread died!");
     }
     TranslateMessage(&Msg);
     DispatchMessage(&Msg);

@@ -156,19 +156,16 @@ _modal_call_thread_proc(LPVOID param) {
   return 0;
 }
 
-// calls the input function on a different thread
-// while still running the message loop
-template<class Function, class... Args>
+template<class FunctionB, class FunctionA, class Function, class... Args>
 opt::optional<typename std::result_of<Function(Args...)>::type>
-modal_call(HWND parent, std::string title, std::string msg,
-           Function && f, Args &&... args) {
+run_async_base(FunctionB && loop_stop,
+               FunctionA && loop_wait,
+               Function && f, Args &&... args) {
   // place to store result
   std::exception_ptr eptr;
   opt::optional<typename std::result_of<Function(Args...)>::type> ret_store;
   auto pre_bound_fn = std::bind(f, std::forward<Args>(args)...);
-  const UINT break_msg = WM_APP;
 
-  DWORD cur_tid = GetCurrentThreadId();
   std::function<void()> bound_fn = [&] () {
     try {
       ret_store = pre_bound_fn();
@@ -177,32 +174,58 @@ modal_call(HWND parent, std::string title, std::string msg,
       eptr = std::current_exception();
     }
     // wake up main thread here
-    PostThreadMessage(cur_tid, break_msg, 0, 0);
+    loop_stop();
   };
 
   // start thread with fn
-  DWORD tid;
   auto ret_thread =
     CreateThread(NULL, 0, _modal_call_thread_proc,
-                 (LPVOID) &bound_fn, 0, &tid);
+                 (LPVOID) &bound_fn, 0, NULL);
   if (!ret_thread) {
     throw std::runtime_error("Couldn't create thread");
   }
   auto _close_thread = lockbox::create_destroyer(ret_thread, CloseHandle);
 
-  auto got_msg =
-    modal_until_message(parent, std::move(title), std::move(msg),
-                        break_msg);
+  auto received_stop = (bool) loop_wait();
 
-  // TODO: quit whatever is happening in the other thread
-  if (!got_msg) return opt::nullopt;
-
-  // TODO: JOIN THREAD
+  if (!received_stop) {
+    // the loop failed
+    // we need to ensure the thread is no longer running
+    // (since it has access to our stack variables)
+    WaitForSingleObject(ret_thread, INFINITE);
+    // (Yes terminate thread is a bit hard core
+    // DWORD exit_code;
+    // TerminateThread(ret_thread, &exit_code);
+    return opt::nullopt;
+  }
 
   assert((bool) ret_store == !(bool) eptr);
 
   if (!ret_store) std::rethrow_exception(eptr);
   else return std::move(ret_store);
+}
+
+// calls the input function on a different thread
+// while still running the message loop
+template<class Function, class... Args>
+opt::optional<typename std::result_of<Function(Args...)>::type>
+modal_call(HWND parent, std::string title, std::string msg,
+           Function && f, Args &&... args) {
+  const UINT break_msg = WM_APP;
+
+  DWORD cur_tid = GetCurrentThreadId();
+  auto loop_stop = [&] () {
+    PostThreadMessage(cur_tid, break_msg, 0, 0);
+  };
+
+  auto loop_wait = [&] () {
+    return modal_until_message(parent, title, msg, break_msg);
+  };
+
+  return run_async_base(loop_stop, loop_wait,
+                        std::forward<Function>(f),
+                        std::forward<Args>(args)...);
+
 }
 
 template<class Function, class... Args>
@@ -216,6 +239,50 @@ modal_call_void(HWND parent, std::string title, std::string msg,
 
   auto ret = modal_call(parent, std::move(title), std::move(msg),
                         std::move(new_func), std::forward<Args>(args)...);
+  return (bool) ret;
+}
+
+template<class Function, class... Args>
+bool
+run_async_void(Function && f, Args &&... args) {
+  const UINT break_msg = WM_APP;
+
+  DWORD cur_tid = GetCurrentThreadId();
+  auto loop_stop = [&] () {
+    PostThreadMessage(cur_tid, break_msg, 0, 0);
+  };
+
+  auto loop_wait = [&] () {
+    // loop
+    MSG msg;
+    BOOL ret_getmsg;
+    while ((ret_getmsg = GetMessageW(&msg, NULL, 0, 0))) {
+      if (ret_getmsg == -1) break;
+      if (msg.message == break_msg) break;
+      TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    }
+
+    if (ret_getmsg == -1) return false;
+
+    if (msg.message == WM_QUIT) {
+      PostQuitMessage(msg.wParam);
+      return false;
+    }
+
+    return true;
+  };
+
+  std::function<bool(Args...)> new_func = [&] (Args &&... args2) {
+    f(std::forward<Args>(args2)...);
+    return true;
+  };
+
+  auto ret =
+    run_async_base(loop_stop, loop_wait,
+                   std::move(new_func),
+                   std::forward<Args>(args)...);
+
   return (bool) ret;
 }
 
