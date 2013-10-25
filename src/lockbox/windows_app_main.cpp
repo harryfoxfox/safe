@@ -214,6 +214,10 @@ stop_relevant_drive_threads(std::vector<MountDetails> & mounts) {
         if (!success) return;
 
         // now wait for thread to die
+        // TODO: this is not totally necessary
+        //       to defensively code, we might want to instead wait on
+        //       a finite timeout and quit or throw an exception if it
+        //       runs out
         while (true) {
           auto ptr = md.thread_handle.get();
           auto ret =
@@ -241,6 +245,8 @@ stop_relevant_drive_threads(std::vector<MountDetails> & mounts) {
       }
       else ++it;
     }
+
+    last_bitmask = drive_bitmask;
   }
 }
 
@@ -938,6 +944,10 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
   switch(msg){
   case WM_DEVICECHANGE: {
+    // NB: the device is actually unmounted in the OS after this message
+    //     is finished processing,
+    // TODO: we might want to instead execute the following code in a
+    ///      asynchronous timer to not block the OS
     if (wParam == DBT_DEVICEREMOVECOMPLETE && !wd->is_stopping) {
       wd->is_stopping = true;
       // if this throws an exception, our app is going to close
@@ -945,6 +955,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       stop_relevant_drive_threads(wd->mounts);
       wd->is_stopping = false;
     }
+    return TRUE;
     break;
   }
 
@@ -1249,6 +1260,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     if (ret_getmsg == -1) break;
     if (Msg.message == MOUNT_OVER_SIGNAL) {
       // TODO: webdav server died, kill mount
+      // this doesn't work because we could be in an inner msg loop
       log_debug("thread died!");
     }
     TranslateMessage(&Msg);
