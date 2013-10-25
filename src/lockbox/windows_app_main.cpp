@@ -937,6 +937,30 @@ mount_encrypted_folder_dialog(HWND owner,
   return std::move(md);
 }
 
+append_string_menu_item(HMENU menu_handle, bool is_default, std::string text, UINT id) {
+  auto menu_item_text =
+    w32util::widen(std::move(text)).c_str();
+
+  MENUITEMINFOW mif;
+  lockbox::zero_object(mif);
+
+  mif.cbSize = sizeof(mif);
+  mif.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
+  mif.fState = is_default ? MFS_DEFAULT : 0;
+  mif.wID = id;
+  mif.dwTypeData = const_cast<LPWSTR>(menu_item_text.data());
+  mif.cch = menu_item_text.size();
+
+  auto items_added = GetMenuItemCount(menu_handle);
+  if (items_added == -1) throw std::runtime_error("GetMenuItemCount");
+
+  auto success_menu_item =
+    InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
+  if (!success_menu_item) {
+    throw std::runtime_error("InsertMenuItem elt");
+  }
+}
+
 CALLBACK
 LRESULT
 main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -1035,33 +1059,15 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // -------
         // Open or create a new Lockbox
 
-        unsigned items_added = 0;
-
         // NB: we start at 1 because TrackPopupMenu()
         //     returns 0 if the menu was canceledn
         UINT idx = 1;
         for (const auto & md : wd->mounts) {
-          auto menu_item_text =
-            w32util::widen("Open \"" + md.name + "\" (" +
-                           std::to_string(md.drive_letter) + ":)");
-
-          MENUITEMINFOW mif;
-          lockbox::zero_object(mif);
-
-          mif.cbSize = sizeof(mif);
-          mif.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
-          mif.fState = items_added ? 0 : MFS_DEFAULT;
-          mif.wID = idx;
-          mif.dwTypeData = const_cast<LPWSTR>(menu_item_text.data());
-          mif.cch = menu_item_text.size();
-
-          auto success_menu_item =
-            InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
-          if (!success_menu_item) {
-            throw std::runtime_error("InsertMenuItem elt");
-          }
-          ++items_added;
-
+          append_string_menu_item(menu_handle,
+                                  idx == 1,
+                                  ("Open \"" + md.name + "\" (" +
+                                   std::to_string(md.drive_letter) + ":)"),
+                                  idx);
           ++idx;
         }
 
@@ -1074,52 +1080,40 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           mif.fMask = MIIM_FTYPE;
           mif.fType = MFT_SEPARATOR;
 
+          auto items_added = GetMenuItemCount(menu_handle);
+          if (items_added == -1) throw std::runtime_error("GetMenuItemCount");
           auto success_menu_item =
             InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
           if (!success_menu_item) {
             throw std::runtime_error("InsertMenuItem sep");
           }
-          ++items_added;
         }
+
+        enum {
+          MENU_CREATE_ID = (UINT) -1,
+          MENU_QUIT_ID = (UINT) -2,
+          MENU_DEBUG_ID = (UINT) -3,
+        };
 
         // add create action
-        {
-          MENUITEMINFOW mif;
-          lockbox::zero_object(mif);
-
-          mif.cbSize = sizeof(mif);
-          mif.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
-          mif.fState = wd->mounts.empty() ? MFS_DEFAULT : 0;
-          mif.wID = (UINT) -1;
-          mif.dwTypeData = const_cast<LPWSTR>(L"Open or create a new Lockbox");
-          mif.cch = wcslen(L"Open or create a new Lockbox");
-
-          auto success_menu_item =
-            InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
-          if (!success_menu_item) {
-            throw std::runtime_error("InsertMenuItem create");
-          }
-          ++items_added;
-        }
+        append_string_menu_item(menu_handle,
+                                wd->mounts.empty(),
+                                "Open or create a new Lockbox",
+                                MENU_CREATE_ID);
 
         // add quit action
-        {
-          MENUITEMINFOW mif;
-          lockbox::zero_object(mif);
+        append_string_menu_item(menu_handle,
+                                false,
+                                "Quit",
+                                MENU_QUIT_ID);
 
-          mif.cbSize = sizeof(mif);
-          mif.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
-          mif.wID = (UINT) -2;
-          mif.dwTypeData = const_cast<LPWSTR>(L"Quit");
-          mif.cch = wcslen(L"Quit");
-
-          auto success_menu_item =
-            InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
-          if (!success_menu_item) {
-            throw std::runtime_error("InsertMenuItem quit");
-          }
-          ++items_added;
-        }
+#ifndef NDEBUG
+        // add breakpoint action
+        append_string_menu_item(menu_handle,
+                                false,
+                                "DebugBreak",
+                                MENU_DEBUG_ID);
+#endif
 
         // NB: have to do this so the menu disappears
         // when you click out of it
@@ -1136,17 +1130,30 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           throw std::runtime_error("TrackPopupMenu");
         }
 
-        if (selected == (UINT) -1) {
-          auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
-          if (md) wd->mounts.push_back(std::move(*md));
-        }
-        else if (selected == (UINT) -2) {
-          DestroyWindow(hwnd);
-        }
-        else if (selected) {
+        if (selected > 0) {
           assert(!wd->mounts.empty());
           auto success = open_mount(hwnd, wd->mounts[selected - 1]);
           if (!success) throw std::runtime_error("open_mount");
+        }
+        else {
+          switch (selected) {
+          case MENU_QUIT_ID: {
+            DestroyWindow(hwnd);
+            break;
+          }
+          case MENU_CREATE_ID: {
+            auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
+            if (md) wd->mounts.push_back(std::move(*md));
+            break;
+          }
+          case MENU_DEBUG_ID: {
+            DebugBreak();
+            break;
+          }
+          default:
+            assert(false);
+            break;
+          }
         }
       }
       catch (const std::exception & err) {
