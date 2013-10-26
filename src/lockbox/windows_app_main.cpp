@@ -937,9 +937,12 @@ mount_encrypted_folder_dialog(HWND owner,
   return std::move(md);
 }
 
-append_string_menu_item(HMENU menu_handle, bool is_default, std::string text, UINT id) {
+static
+void
+append_string_menu_item(HMENU menu_handle, bool is_default,
+                        std::string text, UINT id) {
   auto menu_item_text =
-    w32util::widen(std::move(text)).c_str();
+    w32util::widen(std::move(text));
 
   MENUITEMINFOW mif;
   lockbox::zero_object(mif);
@@ -1130,30 +1133,26 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           throw std::runtime_error("TrackPopupMenu");
         }
 
-        if (selected > 0) {
+        switch (selected) {
+        case MENU_QUIT_ID: {
+          DestroyWindow(hwnd);
+          break;
+        }
+        case MENU_CREATE_ID: {
+          auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
+          if (md) wd->mounts.push_back(std::move(*md));
+          break;
+        }
+        case MENU_DEBUG_ID: {
+          DebugBreak();
+          break;
+        }
+        default: {
           assert(!wd->mounts.empty());
           auto success = open_mount(hwnd, wd->mounts[selected - 1]);
           if (!success) throw std::runtime_error("open_mount");
+          break;
         }
-        else {
-          switch (selected) {
-          case MENU_QUIT_ID: {
-            DestroyWindow(hwnd);
-            break;
-          }
-          case MENU_CREATE_ID: {
-            auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
-            if (md) wd->mounts.push_back(std::move(*md));
-            break;
-          }
-          case MENU_DEBUG_ID: {
-            DebugBreak();
-            break;
-          }
-          default:
-            assert(false);
-            break;
-          }
         }
       }
       catch (const std::exception & err) {
