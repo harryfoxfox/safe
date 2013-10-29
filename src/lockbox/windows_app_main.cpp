@@ -52,7 +52,6 @@
 #include <Winhttp.h>
 
 // TODO:
-// 1) Unmount drives from tray
 // 2) Only one instance at a time
 // 3) fix GUI fonts/ok/cancel
 // 4) Icons
@@ -68,33 +67,10 @@ struct CloseHandleDeleter {
 typedef std::unique_ptr<std::remove_pointer<HANDLE>::type,
                         CloseHandleDeleter> ManagedThreadHandle;
 
-ManagedThreadHandle create_managed_thread_handle(HANDLE a) {
-  return ManagedThreadHandle(a);
-}
-
-const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
-const WORD IDC_STATIC = ~0;
-const WORD IDPASSWORD = 200;
-const WORD IDCONFIRMPASSWORD = 201;
-const auto MAX_PASS_LEN = 256;
-const wchar_t TRAY_ICON_TOOLTIP[] = L"Lockbox";
-
 enum class DriveLetter {
-  A, B, C, E, F, G, H, I, J, K, L, M, N, O, P,
-  Q, R, S, T, U, V, W, X, Y, Z,
+  A, B, C, D, E, F, G, H, I, J, K, L, M,
+  N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 };
-
-namespace std {
-  std::string to_string(DriveLetter v) {
-    return std::string(1, (int) v + 'A');
-  }
-}
-
-template<class CharT, class Traits>
-std::basic_ostream<CharT, Traits> &
-operator<<(std::basic_ostream<CharT, Traits> & os, DriveLetter dl) {
-  return os << std::to_string(dl);
-}
 
 struct MountDetails {
   DriveLetter drive_letter;
@@ -108,6 +84,8 @@ struct WindowData {
   std::vector<MountDetails> mounts;
   bool is_stopping;
   bool is_opening;
+  UINT TASKBAR_CREATED_MSG;
+  std::vector<ManagedThreadHandle> threads_to_join;
 };
 
 struct ServerThreadParams {
@@ -118,6 +96,35 @@ struct ServerThreadParams {
   encfs::SecureMem password;
   std::string mount_name;
 };
+
+// constants
+const WORD IDC_STATIC = ~0;
+const WORD IDPASSWORD = 200;
+const WORD IDCONFIRMPASSWORD = 201;
+const auto MAX_PASS_LEN = 256;
+const UINT TRAY_ICON_MSG = WM_USER;
+const wchar_t TRAY_ICON_TOOLTIP[] = L"Lockbox";
+const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
+const UINT_PTR STOP_RELEVANT_DRIVE_THREADS_TIMER_ID = 0;
+const UINT_PTR CHECK_STOPPED_THREADS_TIMER_ID = 1;
+
+// DriveLetter helpers
+namespace std {
+  std::string to_string(DriveLetter v) {
+    return std::string(1, (int) v + 'A');
+  }
+}
+
+template<class CharT, class Traits>
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> & os, DriveLetter dl) {
+  return os << std::to_string(dl);
+}
+
+// ManagedThreadHandle helpers
+ManagedThreadHandle create_managed_thread_handle(HANDLE a) {
+  return ManagedThreadHandle(a);
+}
 
 static
 DriveLetter
@@ -191,8 +198,44 @@ stop_drive_thread(HANDLE thread_handle, port_t listen_port) {
 }
 
 static
+bool
+wait_on_handle_with_message_loop(HANDLE ptr) {
+  while (true) {
+    auto ret =
+      MsgWaitForMultipleObjects(1, &ptr,
+                                FALSE, INFINITE, QS_ALLINPUT);
+    if (ret == WAIT_OBJECT_0) return true;
+    else if (ret == WAIT_OBJECT_0 + 1) {
+      // we have a message - peek and dispatch it
+      MSG msg;
+      while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        if (msg.message == WM_QUIT) {
+          PostQuitMessage(msg.wParam);
+          return false;
+        }
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+      }
+    }
+    // random error
+    else return false;
+  }
+}
+
+static
 void
-stop_relevant_drive_threads(std::vector<MountDetails> & mounts) {
+queue_wait_for_thread_to_die(HWND hwnd, WindowData & wd,
+                             ManagedThreadHandle thread_handle) {
+  wd.threads_to_join.push_back(std::move(thread_handle));
+  auto success =
+    SetTimer(hwnd, CHECK_STOPPED_THREADS_TIMER_ID, 0, NULL);
+  if (!success) throw std::runtime_error("failed to add timer");
+}
+
+static
+void
+stop_relevant_drive_threads(HWND hwnd, WindowData & wd) {
+  auto & mounts = wd.mounts;
   DWORD last_bitmask = 0;
 
   while (true) {
@@ -204,8 +247,12 @@ stop_relevant_drive_threads(std::vector<MountDetails> & mounts) {
     if (drive_bitmask == last_bitmask) return;
 
     for (auto it = mounts.begin(); it != mounts.end();) {
-      const auto & md = *it;
-      if (!((drive_bitmask >> (int) md.drive_letter) & 0x1)) {
+      if (!((drive_bitmask >> (int) it->drive_letter) & 0x1)) {
+        // remove mount from list (even if thread hasn't died)
+        auto md = std::move(*it);
+        it = mounts.erase(it);
+
+        // now signal for thread to die
         log_debug("Drive %s: is no longer mounted, stopping thread",
                   std::to_string(md.drive_letter).c_str());
         auto success =
@@ -215,35 +262,8 @@ stop_relevant_drive_threads(std::vector<MountDetails> & mounts) {
         // if we got a quit message
         if (!success) return;
 
-        // now wait for thread to die
-        // TODO: this is not totally necessary
-        //       to defensively code, we might want to instead wait on
-        //       a finite timeout and quit or throw an exception if it
-        //       runs out
-        while (true) {
-          auto ptr = md.thread_handle.get();
-          auto ret =
-            MsgWaitForMultipleObjects(1, &ptr,
-                                      FALSE, INFINITE, QS_ALLINPUT);
-          if (ret == WAIT_OBJECT_0) break;
-          else if (ret == WAIT_OBJECT_0 + 1) {
-            // we have a message - peek and dispatch it
-            MSG msg;
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-              if (msg.message == WM_QUIT) {
-                PostQuitMessage(msg.wParam);
-                return;
-              }
-              TranslateMessage(&msg);
-              DispatchMessage(&msg);
-            }
-          }
-          // random error
-          else return;
-        }
-
-        // thread has died, now delete this mount
-        it = mounts.erase(it);
+        // set timer to make sure thread has died
+        queue_wait_for_thread_to_die(hwnd, wd, std::move(md.thread_handle));
       }
       else ++it;
     }
@@ -970,7 +990,7 @@ append_string_menu_item(HMENU menu_handle, bool is_default,
 
 WINAPI
 void
-open_create_mount_dialog(WindowData & wd, HWND hwnd) {
+open_create_mount_dialog(HWND hwnd, WindowData & wd) {
   if (wd.is_opening) return;
 
   wd.is_opening = true;
@@ -979,226 +999,295 @@ open_create_mount_dialog(WindowData & wd, HWND hwnd) {
   wd.is_opening = false;
 }
 
+bool
+unmount_drive(HWND hwnd, const MountDetails & mount) {
+  std::ostringstream os;
+  os << "use " << mount.drive_letter <<  ": /delete";
+  auto ret_shell1 = (int) ShellExecuteW(hwnd, L"open",
+                                        L"c:\\windows\\system32\\net.exe",
+                                        w32util::widen(os.str()).c_str(),
+                                        NULL, SW_HIDE);
+  return ret_shell1 > 32;
+}
+
+void
+unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
+  auto mount_p = wd.mounts.begin() + mount_idx;
+
+  // first unmount drive
+  const auto success_unmount = unmount_drive(hwnd, *mount_p);
+  if (!success_unmount) {
+    throw std::runtime_error("Unmount error!");
+  }
+
+  // now remove mount (for consistency with windows ui)
+  auto md = std::move(*mount_p);
+  wd.mounts.erase(mount_p);
+
+  // then stop thread
+  auto success =
+    w32util::run_async_void(stop_drive_thread,
+                            md.thread_handle.get(),
+                            md.listen_port);
+  // if not success, it was a quit message
+  if (!success) return;
+
+  // now wait for thread to stop
+  queue_wait_for_thread_to_die(hwnd, wd, std::move(md.thread_handle));
+}
+
+#define NO_FALLTHROUGH(c) assert(false); case c
+
 CALLBACK
 LRESULT
 main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  const static UINT TRAY_ICON_MSG = WM_USER;
   const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+  const auto TASKBAR_CREATED_MSG = wd ? wd->TASKBAR_CREATED_MSG : 0;
   switch(msg){
-  case WM_DEVICECHANGE: {
-    // NB: the device is actually unmounted in the OS after this message
-    //     is finished processing,
-    // TODO: we might want to instead execute the following code in a
-    ///      asynchronous timer to not block the OS
-    if (wParam == DBT_DEVICEREMOVECOMPLETE && !wd->is_stopping) {
-      wd->is_stopping = true;
-      // if this throws an exception, our app is going to close
-      // TODO: might have to wait a bit before running this
-      stop_relevant_drive_threads(wd->mounts);
-      wd->is_stopping = false;
-    }
-    return TRUE;
-    break;
-  }
-
-  case WM_CREATE: {
-    // set application state (WindowData) in main window
-    const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
-    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
-
-    // add tray icon
-    NOTIFYICONDATA icon_data;
-    lockbox::zero_object(icon_data);
-    icon_data.cbSize = NOTIFYICONDATA_V2_SIZE;
-    icon_data.hWnd = hwnd;
-    icon_data.uID = 0;
-    icon_data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-    icon_data.uCallbackMessage = TRAY_ICON_MSG;
-    icon_data.hIcon = LoadIconW(NULL, IDI_APPLICATION);
-    memcpy(icon_data.szTip, TRAY_ICON_TOOLTIP, sizeof(TRAY_ICON_TOOLTIP));
-    icon_data.uVersion = NOTIFYICON_VERSION;
-
-    auto success = Shell_NotifyIcon(NIM_ADD, &icon_data);
-    if (!success) {
-      // TODO deal with this?
-      log_error("Error while adding icon: %s",
-                w32util::last_error_message().c_str());
-    }
-    else {
-      // now set tray icon version
-      auto success_version = Shell_NotifyIcon(NIM_SETVERSION, &icon_data);
-      if (!success_version) {
-        // TODO: deal with this
-        log_error("Error while setting icon version: %s",
-                  w32util::last_error_message().c_str());
+    NO_FALLTHROUGH(WM_TIMER): {
+      if (wParam == STOP_RELEVANT_DRIVE_THREADS_TIMER_ID) {
+        if (!wd->is_stopping) {
+          wd->is_stopping = true;
+          // if this throws an exception, our app is going to close
+          stop_relevant_drive_threads(hwnd, *wd);
+          wd->is_stopping = false;
+        }
+        return 0;
+      }
+      else if (wParam == CHECK_STOPPED_THREADS_TIMER_ID) {
+        // TODO: implement
+        UNUSED(wait_on_handle_with_message_loop);
+        wd->threads_to_join.clear();
+        return 0;
+      }
+      else {
+        // we didn't process this timer
+        return -1;
       }
     }
 
-    return 0;
-    break;
-  }
+    NO_FALLTHROUGH(WM_DEVICECHANGE): {
+      // NB: stop the thread on a different message
+      //     since the OS blocks on the return from this message dispatch
+      //     to actually unmount the drive
+      if (wParam == DBT_DEVICEREMOVECOMPLETE) {
+        auto success =
+          SetTimer(hwnd, STOP_RELEVANT_DRIVE_THREADS_TIMER_ID, 0, NULL);
+        // TODO: we don't yet handle this gracefully
+        if (!success) throw std::runtime_error("Failed to set timer");
+      }
+      return TRUE;
+    }
 
-  case TRAY_ICON_MSG: {
-    switch (lParam) {
-    case WM_LBUTTONDBLCLK: {
-      // on left click
-      // if there is an active mount, open the folder
-      // otherwise allow the user to make a new mount
-      if (wd->mounts.empty()) open_create_mount_dialog(*wd, hwnd);
+    NO_FALLTHROUGH(WM_CREATE): {
+      // set application state (WindowData) in main window
+      const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
+      SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
+
+      // add tray icon
+      NOTIFYICONDATA icon_data;
+      lockbox::zero_object(icon_data);
+      icon_data.cbSize = NOTIFYICONDATA_V2_SIZE;
+      icon_data.hWnd = hwnd;
+      icon_data.uID = 0;
+      icon_data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+      icon_data.uCallbackMessage = TRAY_ICON_MSG;
+      icon_data.hIcon = LoadIconW(NULL, IDI_APPLICATION);
+      memcpy(icon_data.szTip, TRAY_ICON_TOOLTIP, sizeof(TRAY_ICON_TOOLTIP));
+      icon_data.uVersion = NOTIFYICON_VERSION;
+
+      auto success = Shell_NotifyIcon(NIM_ADD, &icon_data);
+      if (!success) {
+        // TODO deal with this?
+        log_error("Error while adding icon: %s",
+                  w32util::last_error_message().c_str());
+      }
       else {
-        auto success = open_mount(hwnd, wd->mounts.front());
-        if (!success) {
-          log_error("Error while opening mount... %s: %s",
-                    std::to_string(wd->mounts.front().drive_letter).c_str(),
+        // now set tray icon version
+        auto success_version = Shell_NotifyIcon(NIM_SETVERSION, &icon_data);
+        if (!success_version) {
+          // TODO: deal with this
+          log_error("Error while setting icon version: %s",
                     w32util::last_error_message().c_str());
         }
       }
-      break;
+
+      // return -1 on failure, CreateWindow* will return NULL
+      return 0;
     }
 
-    case WM_RBUTTONDOWN: {
-      // get x & y offset
-      try {
-        POINT xypos;
-        auto success_pos = GetCursorPos(&xypos);
-        if (!success_pos) throw std::runtime_error("GetCursorPos");
-
-        auto menu_handle = CreatePopupMenu();
-        if (!menu_handle) throw std::runtime_error("CreatePopupMenu");
-        auto _destroy_menu =
-          lockbox::create_destroyer(menu_handle, DestroyMenu);
-
-        // okay our menu is like this
-        // [ Lockbox A ]
-        // [ Lockbox B ]
-        // ...
-        // -------
-        // Open or create a new Lockbox
-
-        // NB: we start at 1 because TrackPopupMenu()
-        //     returns 0 if the menu was canceledn
-        UINT idx = 1;
-        for (const auto & md : wd->mounts) {
-          append_string_menu_item(menu_handle,
-                                  idx == 1,
-                                  ("Open \"" + md.name + "\" (" +
-                                   std::to_string(md.drive_letter) + ":)"),
-                                  idx);
-          ++idx;
-        }
-
-        // add separator
-        if (!wd->mounts.empty()) {
-          MENUITEMINFOW mif;
-          lockbox::zero_object(mif);
-
-          mif.cbSize = sizeof(mif);
-          mif.fMask = MIIM_FTYPE;
-          mif.fType = MFT_SEPARATOR;
-
-          auto items_added = GetMenuItemCount(menu_handle);
-          if (items_added == -1) throw std::runtime_error("GetMenuItemCount");
-          auto success_menu_item =
-            InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
-          if (!success_menu_item) {
-            throw std::runtime_error("InsertMenuItem sep");
+    NO_FALLTHROUGH(TRAY_ICON_MSG): {
+      switch (lParam) {
+        NO_FALLTHROUGH(WM_LBUTTONDBLCLK): {
+          // on left click
+          // if there is an active mount, open the folder
+          // otherwise allow the user to make a new mount
+          if (wd->mounts.empty()) open_create_mount_dialog(hwnd, *wd);
+          else {
+            auto success = open_mount(hwnd, wd->mounts.front());
+            if (!success) {
+              log_error("Error while opening mount... %s: %s",
+                        std::to_string(wd->mounts.front().drive_letter).c_str(),
+                        w32util::last_error_message().c_str());
+            }
           }
+          break;
         }
 
-        enum {
-          MENU_CREATE_ID = (UINT) -1,
-          MENU_QUIT_ID = (UINT) -2,
-          MENU_DEBUG_ID = (UINT) -3,
-        };
+        NO_FALLTHROUGH(WM_RBUTTONDOWN): {
+          // get x & y offset
+          try {
+            POINT xypos;
+            auto success_pos = GetCursorPos(&xypos);
+            if (!success_pos) throw std::runtime_error("GetCursorPos");
 
-        // add create action
-        append_string_menu_item(menu_handle,
-                                wd->mounts.empty(),
-                                "Open or create a new Lockbox",
-                                MENU_CREATE_ID);
+            auto menu_handle = CreatePopupMenu();
+            if (!menu_handle) throw std::runtime_error("CreatePopupMenu");
+            auto _destroy_menu =
+              lockbox::create_destroyer(menu_handle, DestroyMenu);
 
-        // add quit action
-        append_string_menu_item(menu_handle,
-                                false,
-                                "Quit",
-                                MENU_QUIT_ID);
+            // okay our menu is like this
+            // [ Lockbox A ]
+            // [ Lockbox B ]
+            // ...
+            // -------
+            // Open or create a new Lockbox
+
+            // NB: we start at 1 because TrackPopupMenu()
+            //     returns 0 if the menu was canceledn
+            const auto is_control_pressed = GetKeyState(VK_CONTROL) >> (sizeof(GetKeyState(VK_CONTROL)) * 8 - 1);
+            const auto action = is_control_pressed
+              ? std::string("Unmount")
+              : std::string("Open");
+            UINT idx = 1;
+
+            for (const auto & md : wd->mounts) {
+              append_string_menu_item(menu_handle,
+                                      idx == 1,
+                                      (action + " \"" + md.name + "\" (" +
+                                       std::to_string(md.drive_letter) + ":)"),
+                                      idx);
+              ++idx;
+            }
+
+            // add separator
+            if (!wd->mounts.empty()) {
+              MENUITEMINFOW mif;
+              lockbox::zero_object(mif);
+
+              mif.cbSize = sizeof(mif);
+              mif.fMask = MIIM_FTYPE;
+              mif.fType = MFT_SEPARATOR;
+
+              auto items_added = GetMenuItemCount(menu_handle);
+              if (items_added == -1) throw std::runtime_error("GetMenuItemCount");
+              auto success_menu_item =
+                InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
+              if (!success_menu_item) {
+                throw std::runtime_error("InsertMenuItem sep");
+              }
+            }
+
+            enum {
+              MENU_CREATE_ID = (UINT) -1,
+              MENU_QUIT_ID = (UINT) -2,
+              MENU_DEBUG_ID = (UINT) -3,
+            };
+
+            // add create action
+            append_string_menu_item(menu_handle,
+                                    wd->mounts.empty(),
+                                    "Open or create a new Lockbox",
+                                    MENU_CREATE_ID);
+
+            // add quit action
+            append_string_menu_item(menu_handle,
+                                    false,
+                                    "Quit",
+                                    MENU_QUIT_ID);
 
 #ifndef NDEBUG
-        // add breakpoint action
-        append_string_menu_item(menu_handle,
-                                false,
-                                "DebugBreak",
-                                MENU_DEBUG_ID);
+            // add breakpoint action
+            append_string_menu_item(menu_handle,
+                                    false,
+                                    "DebugBreak",
+                                    MENU_DEBUG_ID);
 #endif
 
-        // NB: have to do this so the menu disappears
-        // when you click out of it
-        SetForegroundWindow(hwnd);
+            // NB: have to do this so the menu disappears
+            // when you click out of it
+            SetForegroundWindow(hwnd);
 
-        SetLastError(0);
-        auto selected =
-          (UINT) TrackPopupMenu(menu_handle,
-                                TPM_LEFTALIGN | TPM_LEFTBUTTON |
-                                TPM_BOTTOMALIGN | TPM_RETURNCMD,
-                                xypos.x, xypos.y,
-                                0, hwnd, NULL);
-        if (!selected && GetLastError()) {
-          throw std::runtime_error("TrackPopupMenu");
+            SetLastError(0);
+            auto selected =
+              (UINT) TrackPopupMenu(menu_handle,
+                                    TPM_LEFTALIGN | TPM_LEFTBUTTON |
+                                    TPM_BOTTOMALIGN | TPM_RETURNCMD,
+                                    xypos.x, xypos.y,
+                                    0, hwnd, NULL);
+            if (!selected && GetLastError()) {
+              throw std::runtime_error("TrackPopupMenu");
+            }
+
+            switch (selected) {
+            case 0:
+              // menu was canceled
+              break;
+            case MENU_QUIT_ID: {
+              DestroyWindow(hwnd);
+              break;
+            }
+            case MENU_CREATE_ID: {
+              open_create_mount_dialog(hwnd, *wd);
+              break;
+            }
+            case MENU_DEBUG_ID: {
+              DebugBreak();
+              break;
+            }
+            default: {
+              assert(!wd->mounts.empty());
+              assert(selected >= 1 && selected <= wd->mounts.size());
+              const auto selected_mount_idx = selected - 1;
+              if (is_control_pressed) unmount_and_stop_drive(hwnd, *wd, selected_mount_idx);
+              else {
+                auto success = open_mount(hwnd, wd->mounts[selected_mount_idx]);
+                if (!success) throw std::runtime_error("open_mount");
+              }
+              break;
+            }
+            }
+          }
+          catch (const std::exception & err) {
+            log_error("Error while doing: \"%s\": %s",
+                      err.what(),
+                      w32util::last_error_message().c_str());
+          }
+
+          break;
         }
 
-        switch (selected) {
-        case 0:
-          // menu was canceled
-          break;
-        case MENU_QUIT_ID: {
-          DestroyWindow(hwnd);
-          break;
-        }
-        case MENU_CREATE_ID: {
-          open_create_mount_dialog(*wd, hwnd);
-          break;
-        }
-        case MENU_DEBUG_ID: {
-          DebugBreak();
-          break;
-        }
-        default: {
-          assert(!wd->mounts.empty());
-          auto success = open_mount(hwnd, wd->mounts[selected - 1]);
-          if (!success) throw std::runtime_error("open_mount");
-          break;
-        }
-        }
+      default: break;
       }
-      catch (const std::exception & err) {
-        log_error("Error while doing: \"%s\": %s",
-                  err.what(),
-                  w32util::last_error_message().c_str());
-      }
 
-      break;
+      // Always return 0 for all tray icon messages
+      return 0;
     }
 
-    default: break;
+    NO_FALLTHROUGH(WM_CLOSE): {
+      DestroyWindow(hwnd);
+      return 0;
     }
 
-    return 0;
-    break;
-  }
-
-  case WM_CLOSE: {
-    DestroyWindow(hwnd);
-    return 0;
-    break;
-  }
-
-  case WM_DESTROY: {
-    PostQuitMessage(0);
-    return 0;
-    break;
-  }
+    NO_FALLTHROUGH(WM_DESTROY): {
+      PostQuitMessage(0);
+      return 0;
+    }
 
   default:
+    if (msg == TASKBAR_CREATED_MSG) {
+      /* TODO */
+    }
     return DefWindowProc(hwnd, msg, wParam, lParam);
   }
 
@@ -1238,12 +1327,19 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   // TODO: de-initialize
   lockbox::global_webdav_init();
 
+  auto TASKBAR_CREATED_MSG = RegisterWindowMessage(L"TaskbarCreated");
+  if (!TASKBAR_CREATED_MSG) {
+    throw std::runtime_error("Couldn't register for TaskbarCreated message");
+  }
+
   auto native_fs = lockbox::create_native_fs();
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
     /*.mounts = */std::vector<MountDetails>(),
     /*.is_stopping = */false,
     /*.is_opening = */false,
+    /*.TASKBAR_CREATED_MSG = */TASKBAR_CREATED_MSG,
+    /*.threads_to_join = */std::vector<ManagedThreadHandle>(),
   };
 
   // register our main window class
@@ -1295,14 +1391,9 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
   // kill all mounts
   for (const auto & mount : wd.mounts) {
-    std::ostringstream os;
-    os << "use " << mount.drive_letter <<  ": /delete";
-    auto ret_shell1 = (int) ShellExecuteW(hwnd, L"open",
-                                          L"c:\\windows\\system32\\net.exe",
-                                          w32util::widen(os.str()).c_str(),
-                                          NULL, SW_HIDE);
-    if (ret_shell1 <= 32) {
-      log_error("Failed to umount %s:",
+    const auto unmount_success = unmount_drive(NULL, mount);
+    if (!unmount_success) {
+      log_error("Failed to unmount %s:",
                 std::to_string(mount.drive_letter).c_str());
     }
   }
