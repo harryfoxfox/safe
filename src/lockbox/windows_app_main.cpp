@@ -51,11 +51,11 @@
 
 // TODO:
 // 1) Unmount drives from tray
+// 2) Only one instance at a time
 // 3) fix GUI fonts/ok/cancel
 // 4) Icons
 // 5) opening dialog
 // 6) Unmount when webdav server unexpectedly stops (defensive coding)
-// 7) Only one instance at a time
 
 struct CloseHandleDeleter {
   void operator()(HANDLE a) {
@@ -1143,6 +1143,9 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
 
         switch (selected) {
+        case 0:
+          // menu was canceled
+          break;
         case MENU_QUIT_ID: {
           DestroyWindow(hwnd);
           break;

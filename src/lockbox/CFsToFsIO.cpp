@@ -361,7 +361,7 @@ void CFsToFsIO::set_times(const encfs::Path &path,
                           const opt::optional<encfs::fs_time_t> &mtime) {
   if(atime &&
      (*atime > std::numeric_limits<::fs_time_t>::max() ||
-      *mtime < std::numeric_limits<::fs_time_t>::lowest())) {
+      *atime < std::numeric_limits<::fs_time_t>::lowest())) {
     throw fs_error(FS_ERROR_INVALID_ARG);
   }
 
