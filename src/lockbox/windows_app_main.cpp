@@ -41,6 +41,8 @@
 #include <sstream>
 
 #include <cstdint>
+#include <cstdlib>
+#include <ctime>
 
 #include <windows.h>
 #include <CommCtrl.h>
@@ -689,6 +691,8 @@ mount_thread(LPVOID params_) {
 
   auto params =
     std::unique_ptr<ServerThreadParams>((ServerThreadParams *) params_);
+
+  std::srand(std::time(nullptr));
 
   auto enc_fs =
     lockbox::create_enc_fs(std::move(params->native_fs),
