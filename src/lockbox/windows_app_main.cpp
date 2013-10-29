@@ -75,7 +75,6 @@ const WORD IDPASSWORD = 200;
 const WORD IDCONFIRMPASSWORD = 201;
 const auto MAX_PASS_LEN = 256;
 const wchar_t TRAY_ICON_TOOLTIP[] = L"Lockbox";
-const ipv4_t LOCALHOST_IP = 0x7f000001;
 
 enum class DriveLetter {
   A, B, C, E, F, G, H, I, J, K, L, M, N, O, P,
@@ -266,7 +265,7 @@ get_folder_dialog(HWND owner) {
   while (true) {
     wchar_t chosen_name[MAX_PATH];
     BROWSEINFOW bi;
-    memset(&bi, 0, sizeof(bi));
+    zero_object(bi);
     bi.hwndOwner = owner;
     bi.lpszTitle = L"Select Encrypted Folder";
     bi.ulFlags = BIF_USENEWUI;
@@ -699,7 +698,7 @@ mount_thread(LPVOID params_) {
   // we only listen on localhost
   auto ip_addr = LOCALHOST_IP;
   auto listen_port =
-    lockbox::find_random_free_listen_port(ip_addr, 49152, MAX_PORT);
+    find_random_free_listen_port(ip_addr, PRIVATE_PORT_START, PRIVATE_PORT_END);
 
   bool sent_signal = false;
 
@@ -964,6 +963,18 @@ append_string_menu_item(HMENU menu_handle, bool is_default,
   }
 }
 
+WINAPI
+void
+open_create_mount_dialog(HWND hwnd, WindowData & wd) {
+  if (wd.is_opening) return;
+
+  wd.is_opening = true;
+  auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
+  if (md) wd->mounts.push_back(std::move(*md));
+  wd.is_opening = false;
+}
+
+
 CALLBACK
 LRESULT
 main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -1019,6 +1030,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       }
     }
 
+    return 0;
     break;
   }
 
@@ -1028,10 +1040,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       // on left click
       // if there is an active mount, open the folder
       // otherwise allow the user to make a new mount
-      if (wd->mounts.empty()) {
-        auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
-        if (md) wd->mounts.push_back(std::move(*md));
-      }
+      if (wd->mounts.empty()) open_create_mount_dialog(hwnd, wd);
       else {
         auto success = open_mount(hwnd, wd->mounts.front());
         if (!success) {
@@ -1139,8 +1148,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           break;
         }
         case MENU_CREATE_ID: {
-          auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
-          if (md) wd->mounts.push_back(std::move(*md));
+          open_create_mount_dialog(hwnd, wd);
           break;
         }
         case MENU_DEBUG_ID: {
@@ -1160,35 +1168,41 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   err.what(),
                   w32util::last_error_message().c_str());
       }
-    }
 
-    default:
       break;
     }
+
+    default: break;
+    }
+
+    return 0;
     break;
   }
 
   case WM_CLOSE: {
     DestroyWindow(hwnd);
+    return 0;
     break;
   }
 
   case WM_DESTROY: {
     PostQuitMessage(0);
+    return 0;
     break;
   }
 
   default:
     return DefWindowProc(hwnd, msg, wParam, lParam);
   }
-  return 0;
+
+  /* not reached, there is no default return code */
+  assert(false);
 }
 
 WINAPI
 int
 WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
-        LPSTR /*lpCmdLine*/, int nCmdShow)
-{
+        LPSTR /*lpCmdLine*/, int nCmdShow) {
   // TODO: catch all exceptions, since this is a top-level
 
   // TODO: de-initialize
@@ -1218,11 +1232,11 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   lockbox::global_webdav_init();
 
   auto native_fs = lockbox::create_native_fs();
-  WindowData wd = {
-    .native_fs = std::move(native_fs),
-    .mounts = std::vector<MountDetails>(),
-    .is_stopping = false,
-    .is_opening = false,
+  auto wd = WindowData {
+    /*.native_fs = */std::move(native_fs),
+    /*.mounts = */std::vector<MountDetails>(),
+    /*.is_stopping = */false,
+    /*.is_opening = */false,
   };
 
   // register our main window class
@@ -1251,7 +1265,6 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
                               NULL, NULL, hInstance, &wd);
   if (!hwnd) {
     throw std::runtime_error("Failure to create main window");
-    return 0;
   }
 
   // update window
@@ -1260,17 +1273,17 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   (void) nCmdShow;
 
   // run message loop
-  MSG Msg;
+  MSG msg;
   BOOL ret_getmsg;
-  while ((ret_getmsg = GetMessageW(&Msg, NULL, 0, 0))) {
+  while ((ret_getmsg = GetMessageW(&msg, NULL, 0, 0))) {
     if (ret_getmsg == -1) break;
-    if (Msg.message == MOUNT_OVER_SIGNAL) {
+    if (msg.message == MOUNT_OVER_SIGNAL) {
       // TODO: webdav server died, kill mount
       // this doesn't work because we could be in an inner msg loop
       log_debug("thread died!");
     }
-    TranslateMessage(&Msg);
-    DispatchMessage(&Msg);
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
   }
 
   // kill all mounts
@@ -1289,5 +1302,5 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
   if (ret_getmsg == -1) throw std::runtime_error("getmessage failed!");
 
-  return Msg.wParam;
+  return msg.wParam;
 }

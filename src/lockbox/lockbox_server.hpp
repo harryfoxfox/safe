@@ -37,10 +37,6 @@
 namespace lockbox {
 
 CXX_STATIC_ATTR
-port_t
-find_random_free_listen_port(ipv4_t ip, port_t low, port_t high);
-
-CXX_STATIC_ATTR
 bool
 global_webdav_init();
 

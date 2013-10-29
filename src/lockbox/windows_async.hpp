@@ -225,7 +225,6 @@ modal_call(HWND parent, std::string title, std::string msg,
   return run_async_base(loop_stop, loop_wait,
                         std::forward<Function>(f),
                         std::forward<Args>(args)...);
-
 }
 
 template<class Function, class... Args>
