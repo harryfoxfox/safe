@@ -24,7 +24,7 @@
 
 #include <encfs/cipher/MemoryPool.h>
 
-#include <davfuse/fdevent.h>
+#include <davfuse/event_loop.h>
 #include <davfuse/util_sockets.h>
 
 #include <functional>
@@ -62,7 +62,7 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                           ipv4_t ipaddr,
                           port_t port,
                           const std::string & mount_name,
-                          std::function<void(fdevent_loop_t)> when_done);
+                          std::function<void(event_loop_handle_t)> when_done);
 
 }
 

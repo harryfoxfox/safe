@@ -11,7 +11,7 @@ PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),1)
 IS_WIN := $(shell uname | grep -i mingw)
 IS_MAC := $(shell test `uname` = Darwin && echo 1)
 
-WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_sockets_fs.a
+WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_fs.a
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 
 # we claim to support windows 2000 and above (to be as simple and tight as possible)
@@ -32,9 +32,9 @@ DEPS_EXTRA_LIBRARIES := $(if $(IS_MAC),$(MAC_EXTRA_LIBRARIES),) $(if $(IS_WIN),$
 
 all: test_encfs_main
 
-libwebdav_server: clean
+libwebdav_server_fs: clean
 	@rm -rf "$(DAVFUSE_ROOT)/out"
-	@cd $(DAVFUSE_ROOT); make -j$(PROCS) USE_DYNAMIC_FS=1 libwebdav_server_sockets_fs.a
+	@cd $(DAVFUSE_ROOT); make -j$(PROCS) USE_DYNAMIC_FS=1 libwebdav_server_fs.a
 	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
 	@cp "$(DAVFUSE_ROOT)/out/targets/$(notdir $(WEBDAV_SERVER_STATIC_LIBRARY))" $(WEBDAV_SERVER_STATIC_LIBRARY)
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/davfuse
@@ -88,7 +88,7 @@ $(WINHTTP_DEP): $(CURDIR)/winhttp.h $(CURDIR)/winhttp.def
 	cp $(CURDIR)/winhttp.h out/deps/include/
 	dlltool -k -d winhttp.def -l $(CURDIR)/out/deps/lib/libwinhttp.a
 
-dependencies: libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server
+dependencies: libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server_fs
 
 clean-deps:
 	rm -rf out
@@ -130,7 +130,7 @@ Lockbox.exe: $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 test_encfs_main:
 	$(CXX) -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
  -o $@ $(TEST_ENCFS_MAIN_OBJS) \
- -lwebdav_server_sockets_fs -lencfs \
+ -lwebdav_server_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
  -lglog  -ltinyxml $(DEPS_EXTRA_LIBRARIES)
 
@@ -140,9 +140,9 @@ WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
 Lockbox.exe:
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
  -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
- -lwebdav_server_sockets_fs -lencfs \
+ -lwebdav_server_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
  -lglog  -ltinyxml -lole32 -lcomctl32 -lwinhttp $(DEPS_EXTRA_LIBRARIES)
 
 .PHONY: dependencies clean libglog libbotan \
-	libprotobuf libtinyxml libencfs libwebdav_server
+	libprotobuf libtinyxml libencfs libwebdav_server_fs

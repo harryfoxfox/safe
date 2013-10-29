@@ -21,8 +21,7 @@
 #include <encfs/fs/FileUtils.h>
 
 #include <davfuse/c_util.h>
-#include <davfuse/http_backend_sockets_fdevent.h>
-#include <davfuse/fdevent.h>
+#include <davfuse/event_loop.h>
 #include <davfuse/iface_util.h>
 #include <davfuse/logging.h>
 #include <davfuse/webdav_backend_fs.h>
@@ -46,7 +45,6 @@
 #include <sstream>
 
 ASSERT_SAME_IMPL(FS_IMPL, FS_DYNAMIC_IMPL);
-ASSERT_SAME_IMPL(HTTP_BACKEND_IMPL, HTTP_BACKEND_SOCKETS_FDEVENT_IMPL);
 ASSERT_SAME_IMPL(WEBDAV_BACKEND_IMPL, WEBDAV_BACKEND_FS_IMPL);
 
 #ifndef _CXX_STATIC_BUILD
@@ -174,10 +172,10 @@ static const FsOperations fsio_ops = {
 };
 
 struct RunningCallbackCtx {
-  fd_t send_sock;
-  fd_t recv_sock;
-  fdevent_loop_t loop;
-  std::function<void(fdevent_loop_t)> fn;
+  socket_t send_sock;
+  socket_t recv_sock;
+  event_loop_handle_t loop;
+  std::function<void(event_loop_handle_t)> fn;
 };
 
 CXX_STATIC_ATTR
@@ -198,23 +196,22 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                           ipv4_t ipaddr,
                           port_t port,
                           const std::string & mount_name,
-                          std::function<void(fdevent_loop_t)> when_done) {
+                          std::function<void(event_loop_handle_t)> when_done) {
   // create event loop (implemented by file descriptors)
-  auto loop = fdevent_default_new();
+  auto loop = event_loop_default_new();
   if (!loop) throw std::runtime_error("Couldn't create event loop");
-  auto _free_loop = create_destroyer(loop, fdevent_destroy);
+  auto _free_loop = create_destroyer(loop, event_loop_destroy);
 
+  // create listen socket
   struct sockaddr_in listen_addr;
   init_sockaddr_in(&listen_addr, ipaddr, port);
-
-  // create network IO backend (implemented by the Socket API)
-  auto network_io =
-    http_backend_sockets_fdevent_new(loop,
-                                     (struct sockaddr *) &listen_addr,
-                                     sizeof(listen_addr));
-  if (!network_io) throw std::runtime_error("Couldn't create network io");
-  auto _destroy_network_io =
-    create_destroyer(network_io, http_backend_sockets_fdevent_destroy);
+  const socket_t sock = create_bound_socket((struct sockaddr *) &listen_addr,
+                                            sizeof(listen_addr));
+  if (sock == INVALID_SOCKET) {
+    throw std::runtime_error("Couldn't create listen socket!");
+  }
+  auto _destroy_listen_socket =
+    create_destroyer(sock, closesocket);
 
   // create cfs for webdav backend
   const bool destroy_fs_on_delete = false;
@@ -237,12 +234,12 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   build_uri_root << "http://localhost:" << port << "/";
   auto public_uri_root = std::move(build_uri_root).str();
   auto internal_root = "/" + mount_name;
-  auto server = webdav_server_start(network_io, public_uri_root.c_str(),
+  auto server = webdav_server_start(loop, sock, public_uri_root.c_str(),
                                     internal_root.c_str(), server_backend);
   if (!server) throw std::runtime_error("Couldn't start webdav server");
 
   // now set up callback
-  fd_t sv[2];
+  socket_t sv[2];
   auto ret_socketpair = localhost_socketpair(sv);
   if (ret_socketpair) throw std::runtime_error("Couldnt create socketpair!");
   auto ret_send = send(sv[0], "1", 1, 0);
@@ -251,15 +248,15 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   }
   auto ctx = RunningCallbackCtx {sv[0], sv[1], loop, std::move(when_done)};
   auto success_add_watch =
-    fdevent_add_watch(loop, sv[1], create_stream_events(true, false),
-                      _when_server_runs, &ctx, NULL);
+    event_loop_socket_watch_add(loop, sv[1], create_stream_events(true, false),
+                                _when_server_runs, &ctx, NULL);
   if (!success_add_watch) {
     throw std::runtime_error("couldn't set up startup callback");
   }
 
   // run server
   log_info("Starting main loop");
-  fdevent_main_loop(loop);
+  event_loop_main_loop(loop);
   log_info("Server stopped");
 }
 

@@ -29,9 +29,10 @@
 
 #include <encfs/base/optional.h>
 
-#include <davfuse/webdav_server.h>
+#include <davfuse/event_loop.h>
 #include <davfuse/log_printer.h>
 #include <davfuse/logging.h>
+#include <davfuse/webdav_server.h>
 
 #include <iostream>
 #include <list>
@@ -265,7 +266,7 @@ get_folder_dialog(HWND owner) {
   while (true) {
     wchar_t chosen_name[MAX_PATH];
     BROWSEINFOW bi;
-    zero_object(bi);
+    lockbox::zero_object(bi);
     bi.hwndOwner = owner;
     bi.lpszTitle = L"Select Encrypted Folder";
     bi.ulFlags = BIF_USENEWUI;
@@ -702,7 +703,7 @@ mount_thread(LPVOID params_) {
 
   bool sent_signal = false;
 
-  auto our_callback = [&] (fdevent_loop_t /*loop*/) {
+  auto our_callback = [&] (event_loop_handle_t /*loop*/) {
     PostThreadMessage(params->main_thread, MOUNT_DONE_SIGNAL, 1, listen_port);
     sent_signal = true;
   };
@@ -965,15 +966,14 @@ append_string_menu_item(HMENU menu_handle, bool is_default,
 
 WINAPI
 void
-open_create_mount_dialog(HWND hwnd, WindowData & wd) {
+open_create_mount_dialog(WindowData & wd, HWND hwnd) {
   if (wd.is_opening) return;
 
   wd.is_opening = true;
-  auto md = mount_encrypted_folder_dialog(hwnd, wd->native_fs);
-  if (md) wd->mounts.push_back(std::move(*md));
+  auto md = mount_encrypted_folder_dialog(hwnd, wd.native_fs);
+  if (md) wd.mounts.push_back(std::move(*md));
   wd.is_opening = false;
 }
-
 
 CALLBACK
 LRESULT
@@ -1040,7 +1040,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       // on left click
       // if there is an active mount, open the folder
       // otherwise allow the user to make a new mount
-      if (wd->mounts.empty()) open_create_mount_dialog(hwnd, wd);
+      if (wd->mounts.empty()) open_create_mount_dialog(*wd, hwnd);
       else {
         auto success = open_mount(hwnd, wd->mounts.front());
         if (!success) {
@@ -1148,7 +1148,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           break;
         }
         case MENU_CREATE_ID: {
-          open_create_mount_dialog(hwnd, wd);
+          open_create_mount_dialog(*wd, hwnd);
           break;
         }
         case MENU_DEBUG_ID: {
