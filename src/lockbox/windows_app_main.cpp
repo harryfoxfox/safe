@@ -52,7 +52,6 @@
 #include <Winhttp.h>
 
 // TODO:
-// 2) Only one instance at a time
 // 3) fix GUI fonts/ok/cancel
 // 4) Icons
 // 5) opening dialog
@@ -86,10 +85,11 @@ struct WindowData {
   bool is_opening;
   UINT TASKBAR_CREATED_MSG;
   std::vector<ManagedThreadHandle> threads_to_join;
+  UINT LOCKBOX_DUPLICATE_INSTANCE_MSG;
 };
 
 struct ServerThreadParams {
-  DWORD main_thread;
+  HWND hwnd;
   std::shared_ptr<encfs::FsIO> native_fs;
   encfs::Path encrypted_directory_path;
   encfs::EncfsConfig encfs_config;
@@ -102,11 +102,21 @@ const WORD IDC_STATIC = ~0;
 const WORD IDPASSWORD = 200;
 const WORD IDCONFIRMPASSWORD = 201;
 const auto MAX_PASS_LEN = 256;
-const UINT TRAY_ICON_MSG = WM_USER;
 const wchar_t TRAY_ICON_TOOLTIP[] = L"Lockbox";
 const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const UINT_PTR STOP_RELEVANT_DRIVE_THREADS_TIMER_ID = 0;
 const UINT_PTR CHECK_STOPPED_THREADS_TIMER_ID = 1;
+const UINT LOCKBOX_TRAY_ICON_MSG = WM_USER;
+const UINT LOCKBOX_MOUNT_DONE_MSG = WM_APP;
+const UINT LOCKBOX_MOUNT_OVER_MSG = WM_APP + 1;
+const wchar_t LOCKBOX_SINGLE_APP_INSTANCE_MUTEX_NAME[] =
+  L"LockboxAppMutex";
+const wchar_t LOCKBOX_SINGLE_APP_INSTANCE_SHARED_MEMORY_NAME[] =
+  L"LockboxAppSharedProcessId";
+const wchar_t LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME[] =
+  L"LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME";
+const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
+  L"TaskbarCreated";
 
 // DriveLetter helpers
 namespace std {
@@ -700,9 +710,6 @@ get_new_password_dialog(HWND owner,
   return toret;
 }
 
-const UINT MOUNT_DONE_SIGNAL = WM_APP;
-const UINT MOUNT_OVER_SIGNAL = WM_APP + 1;
-
 WINAPI
 static
 DWORD
@@ -728,7 +735,8 @@ mount_thread(LPVOID params_) {
   bool sent_signal = false;
 
   auto our_callback = [&] (event_loop_handle_t /*loop*/) {
-    PostThreadMessage(params->main_thread, MOUNT_DONE_SIGNAL, 1, listen_port);
+    PostMessage(params->hwnd, LOCKBOX_MOUNT_DONE_MSG,
+                1, listen_port);
     sent_signal = true;
   };
 
@@ -740,10 +748,10 @@ mount_thread(LPVOID params_) {
                                      our_callback);
 
   auto sig = (sent_signal)
-    ? MOUNT_OVER_SIGNAL
-    : MOUNT_DONE_SIGNAL;
+    ? LOCKBOX_MOUNT_OVER_MSG
+    : LOCKBOX_MOUNT_DONE_MSG;
 
-  PostThreadMessage(params->main_thread, sig, 0, 0);
+  PostMessage(params->hwnd, sig, 0, 0);
 
   // server is done, possible unmount
   return 0;
@@ -860,7 +868,7 @@ mount_encrypted_folder_dialog(HWND owner,
   auto mount_name = encrypted_directory_path.basename();
 
   auto thread_params = new ServerThreadParams {
-    GetCurrentThreadId(),
+    owner,
     native_fs,
     std::move(encrypted_directory_path),
     std::move(*maybe_encfs_config),
@@ -882,11 +890,11 @@ mount_encrypted_folder_dialog(HWND owner,
   auto msg_ptr = w32util::modal_until_message(owner,
                                               "Starting Encrypted Container...",
                                               "Starting encrypted container...",
-                                              MOUNT_DONE_SIGNAL);
+                                              LOCKBOX_MOUNT_DONE_MSG);
   // TODO: kill thread
   if (!msg_ptr) return opt::nullopt;
 
-  assert(msg_ptr->message == MOUNT_DONE_SIGNAL);
+  assert(msg_ptr->message == LOCKBOX_MOUNT_DONE_MSG);
 
   if (!msg_ptr->wParam) {
     quick_alert(owner,
@@ -990,11 +998,17 @@ append_string_menu_item(HMENU menu_handle, bool is_default,
 
 WINAPI
 void
-open_create_mount_dialog(HWND hwnd, WindowData & wd) {
+open_create_mount_dialog(HWND lockbox_main_window, WindowData & wd) {
+  // put us in the foreground
+  auto child = GetWindow(lockbox_main_window, GW_ENABLEDPOPUP);
+  if (!child) child = GetWindow(lockbox_main_window, GW_CHILD);
+  if (!child) child = lockbox_main_window;
+  SetForegroundWindow(child);
+
   if (wd.is_opening) return;
 
   wd.is_opening = true;
-  auto md = mount_encrypted_folder_dialog(hwnd, wd.native_fs);
+  auto md = mount_encrypted_folder_dialog(lockbox_main_window, wd.native_fs);
   if (md) wd.mounts.push_back(std::move(*md));
   wd.is_opening = false;
 }
@@ -1038,12 +1052,35 @@ unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
 
 #define NO_FALLTHROUGH(c) assert(false); case c
 
+static
+void
+perform_default_lockbox_action(HWND lockbox_main_window, WindowData & wd) {
+  // if there is an active mount, open the folder
+  // otherwise allow the user to make a new mount
+  if (wd.mounts.empty()) open_create_mount_dialog(lockbox_main_window, wd);
+  else {
+    auto success = open_mount(lockbox_main_window, wd.mounts.front());
+    if (!success) {
+      log_error("Error while opening mount... %s: %s",
+                std::to_string(wd.mounts.front().drive_letter).c_str(),
+                w32util::last_error_message().c_str());
+    }
+  }
+}
+
 CALLBACK
 LRESULT
 main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
   const auto TASKBAR_CREATED_MSG = wd ? wd->TASKBAR_CREATED_MSG : 0;
+  const auto LOCKBOX_DUPLICATE_INSTANCE_MSG =
+    wd ? wd->LOCKBOX_DUPLICATE_INSTANCE_MSG : 0;
   switch(msg){
+    NO_FALLTHROUGH(LOCKBOX_MOUNT_OVER_MSG): {
+      // TODO: handle this
+      return 0;
+    }
+
     NO_FALLTHROUGH(WM_TIMER): {
       if (wParam == STOP_RELEVANT_DRIVE_THREADS_TIMER_ID) {
         if (!wd->is_stopping) {
@@ -1091,7 +1128,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       icon_data.hWnd = hwnd;
       icon_data.uID = 0;
       icon_data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-      icon_data.uCallbackMessage = TRAY_ICON_MSG;
+      icon_data.uCallbackMessage = LOCKBOX_TRAY_ICON_MSG;
       icon_data.hIcon = LoadIconW(NULL, IDI_APPLICATION);
       memcpy(icon_data.szTip, TRAY_ICON_TOOLTIP, sizeof(TRAY_ICON_TOOLTIP));
       icon_data.uVersion = NOTIFYICON_VERSION;
@@ -1116,21 +1153,10 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       return 0;
     }
 
-    NO_FALLTHROUGH(TRAY_ICON_MSG): {
+    NO_FALLTHROUGH(LOCKBOX_TRAY_ICON_MSG): {
       switch (lParam) {
         NO_FALLTHROUGH(WM_LBUTTONDBLCLK): {
-          // on left click
-          // if there is an active mount, open the folder
-          // otherwise allow the user to make a new mount
-          if (wd->mounts.empty()) open_create_mount_dialog(hwnd, *wd);
-          else {
-            auto success = open_mount(hwnd, wd->mounts.front());
-            if (!success) {
-              log_error("Error while opening mount... %s: %s",
-                        std::to_string(wd->mounts.front().drive_letter).c_str(),
-                        w32util::last_error_message().c_str());
-            }
-          }
+          perform_default_lockbox_action(hwnd, *wd);
           break;
         }
 
@@ -1155,7 +1181,9 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
             // NB: we start at 1 because TrackPopupMenu()
             //     returns 0 if the menu was canceledn
-            const auto is_control_pressed = GetKeyState(VK_CONTROL) >> (sizeof(GetKeyState(VK_CONTROL)) * 8 - 1);
+            const auto is_control_pressed =
+              GetKeyState(VK_CONTROL) >>
+              (sizeof(GetKeyState(VK_CONTROL)) * 8 - 1);
             const auto action = is_control_pressed
               ? std::string("Unmount")
               : std::string("Open");
@@ -1225,6 +1253,13 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                     TPM_BOTTOMALIGN | TPM_RETURNCMD,
                                     xypos.x, xypos.y,
                                     0, hwnd, NULL);
+
+            // according to MSDN, we must force a "task switch"
+            // this is so that if the user attempts to open the
+            // menu while the menu is open, it reopens instead
+            // of disappearing
+            PostMessage(hwnd, WM_NULL, 0, 0);
+
             if (!selected && GetLastError()) {
               throw std::runtime_error("TrackPopupMenu");
             }
@@ -1280,6 +1315,17 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
 
     NO_FALLTHROUGH(WM_DESTROY): {
+      // remove tray icon
+      NOTIFYICONDATA icon_data;
+      lockbox::zero_object(icon_data);
+      icon_data.cbSize = NOTIFYICONDATA_V2_SIZE;
+      icon_data.hWnd = hwnd;
+      icon_data.uID = 0;
+      icon_data.uVersion = NOTIFYICON_VERSION;
+
+      Shell_NotifyIcon(NIM_DELETE, &icon_data);
+
+      // quit application
       PostQuitMessage(0);
       return 0;
     }
@@ -1287,12 +1333,80 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   default:
     if (msg == TASKBAR_CREATED_MSG) {
       /* TODO */
+      return DefWindowProc(hwnd, msg, wParam, lParam);
     }
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    else if (msg == LOCKBOX_DUPLICATE_INSTANCE_MSG){
+      // do the current default action
+      perform_default_lockbox_action(hwnd, *wd);
+      return 0;
+    }
+    else {
+      return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
   }
 
   /* not reached, there is no default return code */
   assert(false);
+}
+
+static
+DWORD
+app_is_running_in_current_session() {
+  // NB: we abort() instead of throwing exceptions in this function
+  //     because it really can't fail,
+  //     if it fails the caller should not continue execution
+  //     otherwise the app could cause inconsistent state
+
+  SetLastError(0);
+  auto mutex_handle =
+    CreateMutexW(NULL, TRUE, LOCKBOX_SINGLE_APP_INSTANCE_MUTEX_NAME);
+  switch (GetLastError()) {
+  case ERROR_SUCCESS: {
+    // write our process id in a shared memory
+    auto handle_map_file =
+      CreateFileMapping(INVALID_HANDLE_VALUE,
+                        NULL, PAGE_READWRITE,
+                        0, sizeof(DWORD),
+                        LOCKBOX_SINGLE_APP_INSTANCE_SHARED_MEMORY_NAME);
+    if (!handle_map_file) abort();
+
+    const auto proc_id_p =
+      (DWORD *) MapViewOfFile(handle_map_file, FILE_MAP_ALL_ACCESS,
+                              0, 0, sizeof(DWORD));
+    if (!proc_id_p) abort();
+
+    auto _destroy_mapping =
+      lockbox::create_destroyer(proc_id_p, UnmapViewOfFile);
+
+    *proc_id_p = GetCurrentProcessId();
+
+    // unlock mutex
+    auto success = ReleaseMutex(mutex_handle);
+    if (!success) abort();
+
+    return 0;
+  }
+  case ERROR_ALREADY_EXISTS: {
+    // read process id from shared memory
+    auto handle_map_file =
+      OpenFileMapping(FILE_MAP_ALL_ACCESS,
+                      FALSE,
+                      LOCKBOX_SINGLE_APP_INSTANCE_SHARED_MEMORY_NAME);
+    if (!handle_map_file) abort();
+    auto _destroy_handle =
+      lockbox::create_destroyer(handle_map_file, CloseHandle);
+
+    const auto proc_id_p =
+      (DWORD *) MapViewOfFile(handle_map_file, FILE_MAP_ALL_ACCESS,
+                              0, 0, sizeof(DWORD));
+    if (!proc_id_p) abort();
+    auto _destroy_mapping =
+      lockbox::create_destroyer(proc_id_p, UnmapViewOfFile);
+
+    return *proc_id_p;
+  }
+  default: abort();
+  }
 }
 
 WINAPI
@@ -1327,7 +1441,21 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   // TODO: de-initialize
   lockbox::global_webdav_init();
 
-  auto TASKBAR_CREATED_MSG = RegisterWindowMessage(L"TaskbarCreated");
+  auto LOCKBOX_DUPLICATE_INSTANCE_MSG =
+    RegisterWindowMessage(LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME);
+  if (!LOCKBOX_DUPLICATE_INSTANCE_MSG) {
+    throw std::runtime_error("Couldn't get duplicate instance message");
+  }
+
+  DWORD proc_id = app_is_running_in_current_session();
+  if (proc_id) {
+    AllowSetForegroundWindow(proc_id);
+    PostMessage(HWND_BROADCAST, LOCKBOX_DUPLICATE_INSTANCE_MSG, 0, 0);
+    return 0;
+  }
+
+  auto TASKBAR_CREATED_MSG =
+    RegisterWindowMessage(TASKBAR_CREATED_MESSAGE_NAME);
   if (!TASKBAR_CREATED_MSG) {
     throw std::runtime_error("Couldn't register for TaskbarCreated message");
   }
@@ -1340,6 +1468,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     /*.is_opening = */false,
     /*.TASKBAR_CREATED_MSG = */TASKBAR_CREATED_MSG,
     /*.threads_to_join = */std::vector<ManagedThreadHandle>(),
+    /*.LOCKBOX_DUPLICATE_INSTANCE_MSG = */LOCKBOX_DUPLICATE_INSTANCE_MSG,
   };
 
   // register our main window class
@@ -1380,11 +1509,6 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   BOOL ret_getmsg;
   while ((ret_getmsg = GetMessageW(&msg, NULL, 0, 0))) {
     if (ret_getmsg == -1) break;
-    if (msg.message == MOUNT_OVER_SIGNAL) {
-      // TODO: webdav server died, kill mount
-      // this doesn't work because we could be in an inner msg loop
-      log_debug("thread died!");
-    }
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
