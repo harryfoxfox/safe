@@ -23,6 +23,7 @@
 
 #include <cstdint>
 
+#include <lockbox/util.hpp>
 #include <lockbox/windows_string.hpp>
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -37,6 +38,9 @@
 
 namespace w32util {
 
+const DWORD DEFAULT_MODAL_DIALOG_STYLE = (DS_MODALFRAME | WS_POPUP |
+                                          WS_SYSMENU | WS_CAPTION);
+
 namespace _int {
   typedef uint8_t byte;
 }
@@ -50,13 +54,13 @@ enum class ControlClass : uint16_t {
   STATIC = 0x0082,
 };
 
-static
+inline
 uint16_t
 serialize_control_class(ControlClass cls_) {
   return (uint16_t) cls_;
 }
 
-static
+inline
 intptr_t
 next_align_boundary(intptr_t cur, size_t unit) {
   if (cur % unit) {
@@ -67,7 +71,7 @@ next_align_boundary(intptr_t cur, size_t unit) {
   }
 }
 
-static
+inline
 void
 ensure_aligned(const std::vector<byte> & v) {
   // TODO: make the vector use an aligned allocator
@@ -77,7 +81,7 @@ ensure_aligned(const std::vector<byte> & v) {
   }
 }
 
-static
+inline
 void
 insert_data(std::vector<byte> & v,
             size_t align,
@@ -91,7 +95,7 @@ insert_data(std::vector<byte> & v,
 }
 
 template<class T>
-static
+inline
 void
 insert_obj(std::vector<byte> & v, size_t align, const T & obj) {
   insert_data(v, align,
@@ -183,6 +187,28 @@ public:
   friend class DialogTemplate;
 };
 
+class FontDescription {
+  uint16_t _pt_size;
+  std::string _name;
+
+  void serialize(std::vector<byte> & v) const {
+    insert_obj(v, sizeof(WORD), _pt_size);
+
+    auto font_name = widen(_name);
+    insert_data(v, 1,
+                (byte *) font_name.c_str(),
+                (byte *) (font_name.c_str() +
+                          font_name.size() + 1));
+  }
+
+public:
+  FontDescription(uint16_t pt_size, std::string name)
+    : _pt_size(pt_size)
+    , _name(std::move(name)) {}
+
+  friend class DialogDesc;
+};
+
 class DialogDesc {
   DWORD _style;
   std::string _title;
@@ -190,10 +216,11 @@ class DialogDesc {
   short _y;
   short _cx;
   short _cy;
+  opt::optional<FontDescription> _font;
 
   void serialize(std::vector<byte> & v, WORD num_items) const {
     const DLGTEMPLATE dialog_header = {
-      .style = _style,
+      .style = _style | (_font ? DS_SETFONT : 0),
       .dwExtendedStyle = 0,
       .cdit = num_items,
       .x = _x,
@@ -213,18 +240,23 @@ class DialogDesc {
     insert_data(v, sizeof(WORD),
                 (byte *) wtitle.c_str(),
                 (byte *) (wtitle.c_str() + wtitle.size() + 1));
+
+    if (_font) _font->serialize(v);
   }
 
 public:
   DialogDesc(DWORD style, std::string title,
              short x, short y,
-             unsigned short cx, unsigned short cy)
+             unsigned short cx, unsigned short cy,
+             opt::optional<FontDescription> font = opt::nullopt)
     : _style(style)
     , _title(std::move(title))
     , _x(x)
     , _y(y)
     , _cx(cx)
-    , _cy(cy) {}
+    , _cy(cy)
+    , _font(std::move(font)) {
+  }
 
   friend class DialogTemplate;
 };
@@ -332,6 +364,98 @@ center_offset(T container_width, T contained_width) {
   return (container_width - contained_width) / 2;
 }
 
+CALLBACK
+inline
+BOOL
+_set_default_dialog_font_enum_windows_callback(HWND hwnd, LPARAM lParam) {
+  auto handle_font = (HFONT) lParam;
+  // NB: there is no meaningful return code for WM_SETFONT
+  SendMessage(hwnd, WM_SETFONT, (WPARAM) handle_font, (LPARAM) TRUE);
+  return TRUE;
+}
+
+inline
+void
+set_default_dialog_font(HWND hwnd) {
+  NONCLIENTMETRICSW metrics;
+  lockbox::zero_object(metrics);
+  metrics.cbSize = sizeof(metrics);
+  auto success = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS,
+                                       sizeof(metrics), &metrics, 0);
+  if (!success) throw std::runtime_error("Error doing SystemParametersInfo()");
+
+  auto handle_font = CreateFontIndirect(&metrics.lfMessageFont);
+  if (!handle_font) {
+    throw std::runtime_error("Error doing CreateFontIndirect()");
+  }
+
+  // set the font on the dialog and all children
+  // NB: there is no meaningful return code for WM_SETFONT
+  SendMessage(hwnd, WM_SETFONT, (WPARAM) handle_font, (LPARAM) TRUE);
+
+  static_assert(sizeof(LPARAM) >= sizeof(handle_font),
+                "LPARAM is too small or handle_font is too large");
+  auto success_enum_child_windows =
+    EnumChildWindows(hwnd, _set_default_dialog_font_enum_windows_callback,
+                     (LPARAM) handle_font);
+  if (!success_enum_child_windows) {
+    throw std::runtime_error("Error doing EnumChildWindows()");
+  }
+}
+
+inline
+void
+cleanup_default_dialog_font(HWND hwnd) {
+  auto hfont = (HFONT) SendMessage(hwnd, WM_GETFONT, 0, 0);
+  if (!hfont) return;
+  auto success_delete_object = DeleteObject(hfont);
+  if (!success_delete_object) {
+    throw std::runtime_error("failed to call DeletedObject()");
+  }
+}
+
+inline
+void
+center_window_in_monitor(HWND hwnd) {
+  auto monitor_handle =
+    MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+  // there doesn't seem to be an error return for this
+
+  // get monitor info
+  MONITORINFO minfo;
+  lockbox::zero_object(minfo);
+  minfo.cbSize = sizeof(minfo);
+  auto success = GetMonitorInfo(monitor_handle, &minfo);
+  if (!success) throw std::runtime_error("Couldn't GetMonitorInfo()");
+
+  // get window info
+  RECT window_rect;
+  auto success_get_window_rect = GetWindowRect(hwnd, &window_rect);
+  if (!success_get_window_rect) {
+    throw std::runtime_error("Couldn't get window rect");
+  }
+
+  auto horiz_center_of_monitor =
+    (minfo.rcMonitor.left + minfo.rcMonitor.right) / 2;
+
+  auto vert_center_of_monitor =
+    (minfo.rcMonitor.top + minfo.rcMonitor.bottom) / 2;
+
+  auto width_of_window = window_rect.right - window_rect.left;
+  auto height_of_window = window_rect.bottom - window_rect.top;
+
+  auto new_left = horiz_center_of_monitor - width_of_window / 2;
+  auto new_top = vert_center_of_monitor - height_of_window / 2;
+
+  // position window
+
+  auto success_set_window_pos =
+    SetWindowPos(hwnd, NULL, new_left, new_top, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+  if (!success_set_window_pos) {
+    throw std::runtime_error("Couldn't set window pos!");
+  }
+}
 
 }
 

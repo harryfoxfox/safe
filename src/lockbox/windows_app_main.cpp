@@ -52,7 +52,6 @@
 #include <Winhttp.h>
 
 // TODO:
-// 3) fix GUI fonts/ok/cancel
 // 4) Icons
 // 5) opening dialog
 // 6) Unmount when webdav server unexpectedly stops (defensive coding)
@@ -368,11 +367,13 @@ open_mount(HWND owner, const MountDetails & md) {
 }
 
 CALLBACK
-BOOL
+INT_PTR
 get_password_dialog_proc(HWND hwnd, UINT Message,
                          WPARAM wParam, LPARAM /*lParam*/) {
   switch (Message) {
   case WM_INITDIALOG:
+    w32util::center_window_in_monitor(hwnd);
+    w32util::set_default_dialog_font(hwnd);
     SendDlgItemMessage(hwnd, IDPASSWORD, EM_LIMITTEXT, MAX_PASS_LEN, 0);
     return TRUE;
   case WM_COMMAND:
@@ -389,6 +390,10 @@ get_password_dialog_proc(HWND hwnd, UINT Message,
     }
     }
     break;
+  case WM_DESTROY:
+    w32util::cleanup_default_dialog_font(hwnd);
+    // we don't actually handle this
+    return FALSE;
   default:
     return FALSE;
   }
@@ -402,13 +407,11 @@ get_password_dialog(HWND hwnd, const encfs::Path & /*path*/) {
   using namespace w32util;
 
   auto dlg =
-    DialogTemplate(DialogDesc(DS_MODALFRAME | WS_POPUP |
-                              WS_SYSMENU | WS_VISIBLE |
-                              WS_CAPTION,
+    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
                               "Enter Your Password",
                               0, 0, 100, 66),
                    {
-                     CText("Enter Your Password", IDC_STATIC,
+                     CText("Enter Your Password:", IDC_STATIC,
                            15, 10, 70, 33),
                      EditText(IDPASSWORD, 10, 20, 80, 12,
                               ES_PASSWORD | ES_LEFT |
@@ -432,12 +435,21 @@ get_password_dialog(HWND hwnd, const encfs::Path & /*path*/) {
 
 CALLBACK
 static
-BOOL
+INT_PTR
 confirm_new_encrypted_container_proc(HWND hwnd, UINT Message,
                                      WPARAM wParam, LPARAM /*lParam*/) {
   switch (Message) {
-  case WM_INITDIALOG:
+  case WM_INITDIALOG: {
+    w32util::center_window_in_monitor(hwnd);
+    w32util::set_default_dialog_font(hwnd);
+
+    // set focus to create button
+    auto ok_button_hwnd = GetDlgItem(hwnd, IDOK);
+    if (!ok_button_hwnd) throw std::runtime_error("Couldn't get create button");
+    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM) ok_button_hwnd, TRUE);
     return TRUE;
+  }
+
   case WM_COMMAND:
     switch (LOWORD(wParam)) {
     case IDOK: {
@@ -450,6 +462,12 @@ confirm_new_encrypted_container_proc(HWND hwnd, UINT Message,
     }
     }
     break;
+
+  case WM_DESTROY:
+    w32util::cleanup_default_dialog_font(hwnd);
+    // we don't actually handle this
+    return FALSE;
+
   default:
     return FALSE;
   }
@@ -464,9 +482,9 @@ confirm_new_encrypted_container(HWND owner,
   using namespace w32util;
 
   std::ostringstream os;
-  os << "The folder you selected:\r\n\r\n\"" <<
+  os << "The folder you selected:\r\n\r\n    \"" <<
     (const std::string &) encrypted_directory_path <<
-    ("\"\r\n\r\ndoes not appear to be an encrypted container.\r\n"
+    ("\"\r\n\r\ndoes not appear to be an encrypted container. "
      "Would you like to create one there?");
   auto dialog_text = os.str();
 
@@ -484,38 +502,42 @@ confirm_new_encrypted_container(HWND owner,
              (20 +
               FONT_WIDTH *
               (((const std::string &) encrypted_directory_path).size() + 2)));
-  const unit_t TOP_MARGIN = FONT_HEIGHT;
-  const unit_t MIDDLE_MARGIN = FONT_HEIGHT;
-  const unit_t BOTTOM_MARGIN = FONT_HEIGHT;
+  const unit_t VERT_MARGIN = 8;
+  const unit_t HORIZ_MARGIN = 8;
+
+  const unit_t TOP_MARGIN = VERT_MARGIN;
+  const unit_t BOTTOM_MARGIN = VERT_MARGIN;
+  const unit_t LEFT_MARGIN = HORIZ_MARGIN;
+  const unit_t RIGHT_MARGIN = HORIZ_MARGIN;
+
+  const unit_t MIDDLE_MARGIN = 4;
+
   const unit_t TEXT_WIDTH = 160;
   const unit_t TEXT_HEIGHT = FONT_HEIGHT * 6;
-  const unit_t BUTTON_WIDTH = 50;
+  const unit_t BUTTON_WIDTH = 44;
   const unit_t BUTTON_HEIGHT = 14;
-  const unit_t BUTTON_SPACING = 12;
+  const unit_t BUTTON_SPACING = 4;
 
   const auto dlg =
-    DialogTemplate(DialogDesc(DS_MODALFRAME | WS_POPUP |
-                              WS_SYSMENU | WS_VISIBLE |
-                              WS_CAPTION,
-                              "No encrypted container found!",
+    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
+                              "No Encrypted Container Found",
                               0, 0, DIALOG_WIDTH,
-                              TOP_MARGIN + MIDDLE_MARGIN + BOTTOM_MARGIN +
-                              TEXT_HEIGHT + BUTTON_HEIGHT),
+                              TOP_MARGIN + TEXT_HEIGHT +
+                              MIDDLE_MARGIN + BUTTON_HEIGHT +
+                              BOTTOM_MARGIN),
                    {
-                     CText(std::move(dialog_text), IDC_STATIC,
-                           center_offset(DIALOG_WIDTH, TEXT_WIDTH),
-                           TOP_MARGIN,
+                     LText(std::move(dialog_text), IDC_STATIC,
+                           LEFT_MARGIN, TOP_MARGIN,
                            TEXT_WIDTH, TEXT_HEIGHT),
                      PushButton("&Cancel", IDCANCEL,
-                                center_offset(DIALOG_WIDTH,
-                                            2 * BUTTON_WIDTH + BUTTON_SPACING),
+                                DIALOG_WIDTH - RIGHT_MARGIN -
+                                BUTTON_WIDTH,
                                 TOP_MARGIN + TEXT_HEIGHT + MIDDLE_MARGIN,
                                 BUTTON_WIDTH, BUTTON_HEIGHT),
-                     DefPushButton("&OK", IDOK,
-                                   center_offset(DIALOG_WIDTH,
-                                               2 * BUTTON_WIDTH +
-                                               BUTTON_SPACING) +
-                                   BUTTON_WIDTH + BUTTON_SPACING,
+                     DefPushButton("C&reate", IDOK,
+                                   DIALOG_WIDTH - RIGHT_MARGIN -
+                                   BUTTON_WIDTH - BUTTON_SPACING -
+                                   BUTTON_WIDTH,
                                    TOP_MARGIN + TEXT_HEIGHT + MIDDLE_MARGIN,
                                    BUTTON_WIDTH, BUTTON_HEIGHT),
                    }
@@ -531,13 +553,15 @@ confirm_new_encrypted_container(HWND owner,
 
 CALLBACK
 static
-BOOL
+INT_PTR
 get_new_password_dialog_proc(HWND hwnd, UINT Message,
                              WPARAM wParam, LPARAM /*lParam*/) {
   switch (Message) {
   case WM_INITDIALOG: {
+    w32util::center_window_in_monitor(hwnd);
     SendDlgItemMessage(hwnd, IDPASSWORD, EM_LIMITTEXT, MAX_PASS_LEN, 0);
     SendDlgItemMessage(hwnd, IDCONFIRMPASSWORD, EM_LIMITTEXT, MAX_PASS_LEN, 0);
+    w32util::set_default_dialog_font(hwnd);
     return TRUE;
   }
   case WM_COMMAND: {
@@ -577,6 +601,10 @@ get_new_password_dialog_proc(HWND hwnd, UINT Message,
     }
     break;
   }
+  case WM_DESTROY:
+    w32util::cleanup_default_dialog_font(hwnd);
+    // we don't actually handle this
+    return FALSE;
   default:
     return FALSE;
   }
@@ -598,9 +626,16 @@ get_new_password_dialog(HWND owner,
   const float FONT_WIDTH = 5.5 * 0.7;
 
   typedef unsigned unit_t;
-  const unit_t TOP_MARGIN = FONT_HEIGHT;
+
+  const unit_t VERT_MARGIN = 8;
+  const unit_t HORIZ_MARGIN = 8;
+
+  const unit_t TOP_MARGIN = VERT_MARGIN;
+  const unit_t BOTTOM_MARGIN = VERT_MARGIN;
+  const unit_t LEFT_MARGIN = HORIZ_MARGIN;
+  const unit_t RIGHT_MARGIN = HORIZ_MARGIN;
+
   const unit_t MIDDLE_MARGIN = FONT_HEIGHT;
-  const unit_t BOTTOM_MARGIN = FONT_HEIGHT;
 
   const unit_t TEXT_WIDTH = 160;
   const unit_t TEXT_HEIGHT = FONT_HEIGHT;
@@ -610,25 +645,24 @@ get_new_password_dialog(HWND owner,
   const unit_t PASS_LABEL_WIDTH = FONT_WIDTH * PASS_LABEL_CHARS;
   const unit_t PASS_LABEL_HEIGHT = FONT_HEIGHT;
 
+  const unit_t DIALOG_WIDTH = PASS_LABEL_WIDTH + 125;
+
   const unit_t PASS_LABEL_SPACE = 0;
   const unit_t PASS_LABEL_VOFFSET = 2;
   const unit_t PASS_MARGIN = FONT_HEIGHT / 2;
 
-  const unit_t PASS_ENTRY_WIDTH = FONT_WIDTH * 16;
+  const unit_t PASS_ENTRY_LEFT_MARGIN =
+    LEFT_MARGIN + PASS_LABEL_WIDTH + PASS_LABEL_SPACE;
+  const unit_t PASS_ENTRY_WIDTH = DIALOG_WIDTH - RIGHT_MARGIN -
+    PASS_ENTRY_LEFT_MARGIN;
   const unit_t PASS_ENTRY_HEIGHT = 12;
 
-  const unit_t BUTTON_WIDTH = 50;
+  const unit_t BUTTON_WIDTH = 44;
   const unit_t BUTTON_HEIGHT = 14;
-  const unit_t BUTTON_SPACING = 12;
-
-  const unit_t DIALOG_WIDTH =
-    std::max((unit_t) 175,
-             PASS_LABEL_WIDTH + PASS_LABEL_SPACE + PASS_ENTRY_WIDTH + 20);
+  const unit_t BUTTON_SPACING = 4;
 
   const auto dlg =
-    DialogTemplate(DialogDesc(DS_MODALFRAME | WS_POPUP |
-                              WS_SYSMENU | WS_VISIBLE |
-                              WS_CAPTION,
+    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
                               "Create Encrypted Container",
                               0, 0, DIALOG_WIDTH,
                               TOP_MARGIN +
@@ -637,40 +671,30 @@ get_new_password_dialog(HWND owner,
                               PASS_ENTRY_HEIGHT + MIDDLE_MARGIN +
                               BUTTON_HEIGHT + BOTTOM_MARGIN),
                    {
-                     CText("Create Encrypted Container", IDC_STATIC,
-                           center_offset(DIALOG_WIDTH, TEXT_WIDTH),
-                           TOP_MARGIN,
+                     LText("Enter a password for your new encrypted container.",
+                           IDC_STATIC,
+                           LEFT_MARGIN, TOP_MARGIN,
                            TEXT_WIDTH, TEXT_HEIGHT),
                      LText("New Password:", IDC_STATIC,
-                           center_offset(DIALOG_WIDTH,
-                                       PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
-                                       PASS_ENTRY_WIDTH),
+                           LEFT_MARGIN,
                            TOP_MARGIN +
                            TEXT_HEIGHT + MIDDLE_MARGIN + PASS_LABEL_VOFFSET,
                            PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
                      EditText(IDPASSWORD,
-                              center_offset(DIALOG_WIDTH,
-                                          PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
-                                          PASS_ENTRY_WIDTH) +
-                              PASS_LABEL_WIDTH + PASS_LABEL_SPACE,
+                              PASS_ENTRY_LEFT_MARGIN,
                               TOP_MARGIN +
                               TEXT_HEIGHT + MIDDLE_MARGIN,
                               PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
                               ES_PASSWORD | ES_LEFT |
                               WS_BORDER | WS_TABSTOP),
                      LText("Confirm Password:", IDC_STATIC,
-                           center_offset(DIALOG_WIDTH,
-                                       PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
-                                       PASS_ENTRY_WIDTH),
+                           LEFT_MARGIN,
                            TOP_MARGIN +
                            TEXT_HEIGHT + MIDDLE_MARGIN +
                            PASS_ENTRY_HEIGHT + PASS_MARGIN + PASS_LABEL_VOFFSET,
                            PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
                      EditText(IDCONFIRMPASSWORD,
-                              center_offset(DIALOG_WIDTH,
-                                          PASS_LABEL_WIDTH + PASS_LABEL_SPACE +
-                                          PASS_ENTRY_WIDTH) +
-                              PASS_LABEL_WIDTH + PASS_LABEL_SPACE,
+                              PASS_ENTRY_LEFT_MARGIN,
                               TOP_MARGIN +
                               TEXT_HEIGHT + MIDDLE_MARGIN +
                               PASS_ENTRY_HEIGHT + PASS_MARGIN,
@@ -678,18 +702,16 @@ get_new_password_dialog(HWND owner,
                               ES_PASSWORD | ES_LEFT |
                               WS_BORDER | WS_TABSTOP),
                      PushButton("&Cancel", IDCANCEL,
-                                center_offset(DIALOG_WIDTH,
-                                            2 * BUTTON_WIDTH + BUTTON_SPACING),
+                                DIALOG_WIDTH - RIGHT_MARGIN - BUTTON_WIDTH,
                                 TOP_MARGIN +
                                 TEXT_HEIGHT + MIDDLE_MARGIN +
                                 PASS_ENTRY_HEIGHT + PASS_MARGIN +
                                 PASS_ENTRY_HEIGHT + MIDDLE_MARGIN,
                                 BUTTON_WIDTH, BUTTON_HEIGHT),
                      DefPushButton("&OK", IDOK,
-                                   center_offset(DIALOG_WIDTH,
-                                               2 * BUTTON_WIDTH +
-                                               BUTTON_SPACING) +
-                                   BUTTON_WIDTH + BUTTON_SPACING,
+                                   DIALOG_WIDTH -
+                                   RIGHT_MARGIN - BUTTON_WIDTH -
+                                   BUTTON_SPACING - BUTTON_WIDTH,
                                    TOP_MARGIN +
                                    TEXT_HEIGHT + MIDDLE_MARGIN +
                                    PASS_ENTRY_HEIGHT + PASS_MARGIN +

@@ -51,11 +51,22 @@ _modal_call_dialog_proc(HWND hwnd, UINT Message,
                         WPARAM /*wParam*/, LPARAM /*lParam*/) {
   switch (Message) {
   case WM_INITDIALOG: {
+    w32util::center_window_in_monitor(hwnd);
+    // disable close button
+    EnableMenuItem(GetSystemMenu(hwnd, FALSE), SC_CLOSE,
+                   MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+
+    w32util::set_default_dialog_font(hwnd);
+
     auto ret = SendDlgItemMessageW(hwnd, IDC_PROGRESS,
                                    PBM_SETMARQUEE, TRUE, 0);
     if (!ret) log_error("Error while setting marquee");
     return TRUE;
   }
+  case WM_DESTROY:
+    w32util::cleanup_default_dialog_font(hwnd);
+    // we don't actually handle this
+    return FALSE;
   default:
     return FALSE;
   }
@@ -80,9 +91,7 @@ create_waiting_modal(HWND parent, std::string title, std::string ui_msg) {
 
   const WORD IDC_IGNORE = ~0;
   auto dlg =
-    DialogTemplate(DialogDesc(DS_MODALFRAME | WS_POPUP |
-                              WS_SYSMENU | WS_VISIBLE |
-                              WS_CAPTION,
+    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
                               std::move(title),
                               0, 0, DIALOG_WIDTH,
                               TOP_MARGIN + TEXT_HEIGHT +
