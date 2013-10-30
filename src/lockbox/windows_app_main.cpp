@@ -1350,12 +1350,14 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 static
-DWORD
-app_is_running_in_current_session() {
-  // NB: we abort() instead of throwing exceptions in this function
-  //     because it really can't fail,
-  //     if it fails the caller should not continue execution
-  //     otherwise the app could cause inconsistent state
+void
+exit_if_not_single_app_instance(std::function<int(DWORD)> on_exit) {
+  // NB: we abort() instead of throwing exceptions
+  //     we exit() instead of returning a boolean
+  //     this function must ensure a single app instance and
+  //     this is the best contract for that, otherwise
+  //     a user could misuse this function and potentially continue
+  //     executing
 
   SetLastError(0);
   auto mutex_handle =
@@ -1363,49 +1365,69 @@ app_is_running_in_current_session() {
   switch (GetLastError()) {
   case ERROR_SUCCESS: {
     // write our process id in a shared memory
-    auto handle_map_file =
+    auto mapping_handle =
       CreateFileMapping(INVALID_HANDLE_VALUE,
                         NULL, PAGE_READWRITE,
                         0, sizeof(DWORD),
                         LOCKBOX_SINGLE_APP_INSTANCE_SHARED_MEMORY_NAME);
-    if (!handle_map_file) abort();
+    if (!mapping_handle) abort();
 
     const auto proc_id_p =
-      (DWORD *) MapViewOfFile(handle_map_file, FILE_MAP_ALL_ACCESS,
+      (DWORD *) MapViewOfFile(mapping_handle, FILE_MAP_ALL_ACCESS,
                               0, 0, sizeof(DWORD));
     if (!proc_id_p) abort();
-
-    auto _destroy_mapping =
-      lockbox::create_destroyer(proc_id_p, UnmapViewOfFile);
 
     *proc_id_p = GetCurrentProcessId();
 
-    // unlock mutex
-    auto success = ReleaseMutex(mutex_handle);
-    if (!success) abort();
+    auto success_unmap = UnmapViewOfFile(proc_id_p);
+    if (!success_unmap) abort();
 
-    return 0;
+    auto success_release = ReleaseMutex(mutex_handle);
+    if (!success_release) abort();
+
+    // NB: we leave the mutex_handle and mapping_handle open
+    return;
   }
   case ERROR_ALREADY_EXISTS: {
+    // acquire mutex to shared memory
+    auto wait_ret = WaitForSingleObject(mutex_handle, INFINITE);
+    if (wait_ret != WAIT_OBJECT_0) abort();
+
     // read process id from shared memory
-    auto handle_map_file =
+    auto mapping_handle =
       OpenFileMapping(FILE_MAP_ALL_ACCESS,
                       FALSE,
                       LOCKBOX_SINGLE_APP_INSTANCE_SHARED_MEMORY_NAME);
-    if (!handle_map_file) abort();
-    auto _destroy_handle =
-      lockbox::create_destroyer(handle_map_file, CloseHandle);
+    if (!mapping_handle) abort();
 
     const auto proc_id_p =
-      (DWORD *) MapViewOfFile(handle_map_file, FILE_MAP_ALL_ACCESS,
+      (DWORD *) MapViewOfFile(mapping_handle, FILE_MAP_ALL_ACCESS,
                               0, 0, sizeof(DWORD));
     if (!proc_id_p) abort();
-    auto _destroy_mapping =
-      lockbox::create_destroyer(proc_id_p, UnmapViewOfFile);
 
-    return *proc_id_p;
+    const auto proc_id = *proc_id_p;
+
+    auto success_unmap = UnmapViewOfFile(proc_id_p);
+    if (!success_unmap) abort();
+
+    auto success_close_mapping = CloseHandle(mapping_handle);
+    if (!success_close_mapping) abort();
+
+    auto success_release = ReleaseMutex(mutex_handle);
+    if (!success_release) abort();
+
+    auto success_close_mutex = CloseHandle(mutex_handle);
+    if (!success_close_mutex) abort();
+
+    if (proc_id != GetCurrentProcessId()) std::exit(on_exit(proc_id));
+
+    return;
   }
-  default: abort();
+  default: {
+    log_error("Error on CreateMutex: %s",
+              w32util::last_error_message().c_str());
+    abort();
+  }
   }
 }
 
@@ -1447,12 +1469,11 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     throw std::runtime_error("Couldn't get duplicate instance message");
   }
 
-  DWORD proc_id = app_is_running_in_current_session();
-  if (proc_id) {
-    AllowSetForegroundWindow(proc_id);
-    PostMessage(HWND_BROADCAST, LOCKBOX_DUPLICATE_INSTANCE_MSG, 0, 0);
-    return 0;
-  }
+  exit_if_not_single_app_instance([&] (DWORD proc_id) {
+      AllowSetForegroundWindow(proc_id);
+      PostMessage(HWND_BROADCAST, LOCKBOX_DUPLICATE_INSTANCE_MSG, 0, 0);
+      return 0;
+    });
 
   auto TASKBAR_CREATED_MSG =
     RegisterWindowMessage(TASKBAR_CREATED_MESSAGE_NAME);

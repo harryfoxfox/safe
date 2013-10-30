@@ -107,14 +107,12 @@ narrow(const std::wstring & s) {
 
 inline
 std::string
-last_error_message() {
+error_message(DWORD err_code) {
   enum {
     MAX_MSG=128,
   };
   wchar_t error_buf_wide[MAX_MSG];
   char error_buf[MAX_MSG];
-
-  auto err_code = GetLastError();
 
   const DWORD num_chars =
     FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
@@ -137,6 +135,12 @@ last_error_message() {
   }
 
   return std::string(error_buf, required_buffer_size);
+}
+
+inline
+std::string
+last_error_message() {
+  return error_message(GetLastError());
 }
 
 }
