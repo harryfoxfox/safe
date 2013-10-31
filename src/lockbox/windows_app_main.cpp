@@ -941,9 +941,12 @@ mount_encrypted_folder_dialog(HWND owner,
     EnableWindow(owner, FALSE);
 
     // just mount the file system using the console command
+
     std::ostringstream os;
     os << "use " << drive_letter <<
-      ": http://localhost:" << listen_port << "/" << mount_name;
+      // we wrap the url in quotes since it could have a space, etc.
+      // we don't urlencode it because windows will do that for us
+      ": \"http://localhost:" << listen_port << "/" << mount_name << "\"";
     auto ret_shell1 = (int) ShellExecuteW(owner, L"open",
                                           L"c:\\windows\\system32\\net.exe",
                                           w32util::widen(os.str()).c_str(),

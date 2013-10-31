@@ -22,13 +22,14 @@
 
 #include <davfuse/c_util.h>
 #include <davfuse/event_loop.h>
+#include <davfuse/http_helpers.h>
 #include <davfuse/iface_util.h>
 #include <davfuse/logging.h>
-#include <davfuse/webdav_backend_fs.h>
 #include <davfuse/fs.h>
 #include <davfuse/fs_dynamic.h>
 #include <davfuse/fs_native.h>
 #include <davfuse/sockets.h>
+#include <davfuse/webdav_backend_fs.h>
 #include <davfuse/webdav_server.h>
 #include <davfuse/webdav_server_xml.h>
 #include <davfuse/uthread.h>
@@ -234,8 +235,15 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   build_uri_root << "http://localhost:" << port << "/";
   auto public_uri_root = std::move(build_uri_root).str();
   auto internal_root = "/" + mount_name;
+  const auto encoded_internal_root =
+    encode_urlpath(internal_root.data(), internal_root.size());
+  if (!encoded_internal_root) {
+    throw std::runtime_error("Couldn't encode path");
+  }
+  auto _destroy_encoded_internal_root =
+    create_destroyer(encoded_internal_root, free);
   auto server = webdav_server_start(loop, sock, public_uri_root.c_str(),
-                                    internal_root.c_str(), server_backend);
+                                    encoded_internal_root, server_backend);
   if (!server) throw std::runtime_error("Couldn't start webdav server");
 
   // now set up callback
