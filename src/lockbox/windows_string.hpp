@@ -143,6 +143,13 @@ last_error_message() {
   return error_message(GetLastError());
 }
 
+// TODO: implement
+inline
+std::runtime_error
+windows_error() {
+  return std::runtime_error("windows error to go here");
+}
+
 }
 
 #endif

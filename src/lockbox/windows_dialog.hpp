@@ -389,10 +389,7 @@ set_default_dialog_font(HWND hwnd) {
     throw std::runtime_error("Error doing CreateFontIndirect()");
   }
 
-  // set the font on the dialog and all children
-  // NB: there is no meaningful return code for WM_SETFONT
-  SendMessage(hwnd, WM_SETFONT, (WPARAM) handle_font, (LPARAM) TRUE);
-
+  // set the font on all the dialog's children
   static_assert(sizeof(LPARAM) >= sizeof(handle_font),
                 "LPARAM is too small or handle_font is too large");
   auto success_enum_child_windows =
@@ -406,12 +403,17 @@ set_default_dialog_font(HWND hwnd) {
 inline
 void
 cleanup_default_dialog_font(HWND hwnd) {
-  auto hfont = (HFONT) SendMessage(hwnd, WM_GETFONT, 0, 0);
-  if (!hfont) return;
-  auto success_delete_object = DeleteObject(hfont);
-  if (!success_delete_object) {
-    throw std::runtime_error("failed to call DeletedObject()");
+  // get it from the child because the parent might be
+  // handling a message
+  auto child = GetWindow(hwnd, GW_CHILD);
+  if (!child) {
+    if (GetLastError()) throw windows_error();
+    else return;
   }
+  auto hfont = (HFONT) SendMessage(child, WM_GETFONT, 0, 0);
+  if (!hfont) throw windows_error();
+  auto success_delete_object = DeleteObject(hfont);
+  if (!success_delete_object) throw windows_error();
 }
 
 inline

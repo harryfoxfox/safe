@@ -52,9 +52,8 @@
 #include <Winhttp.h>
 
 // TODO:
-// 4) Icons
-// 5) opening dialog
-// 6) Unmount when webdav server unexpectedly stops (defensive coding)
+// 2) Icons
+// 3) Unmount when webdav server unexpectedly stops (defensive coding)
 
 struct CloseHandleDeleter {
   void operator()(HANDLE a) {
@@ -116,6 +115,38 @@ const wchar_t LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME[] =
   L"LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME";
 const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
   L"TaskbarCreated";
+const char LOCKBOX_ABOUT_BLURB[] =
+  "Welcome to Lockbox!"
+
+  "\r\n\r\n"
+
+  "Lockbox uses encryption to securely store your files while "
+  "providing you with normal unencrypted access. It protects your files from "
+  "attackers who may obtain unauthorized access to your encrypted storage."
+
+  "\r\n\r\n"
+
+  "Use it to store tax returns, receipts, passwords, or anything else you hold "
+  "the most private. It works well with existing cloud-based storage services."
+  
+  "\r\n\r\n"
+
+  "Lockbox is entirely composed of free software. Not free "
+  "in the \"free beer\" sense but free in the \"freedom\" sense. "
+  "All the code that makes up Lockbox is available "
+  "for you to read, modify, and distribute at your will."
+
+  "\r\n\r\n"
+
+  "This program is distributed in the hope that it will be useful, "
+  "but WITHOUT ANY WARRANTY; without even the implied warranty of "
+  "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. USE AT YOUR OWN RISK."
+
+  "\r\n\r\n"
+    
+  "Thanks for using Lockbox! Hopefully it makes your life just a little "
+  "bit safer."
+  ;
 
 // DriveLetter helpers
 namespace std {
@@ -299,7 +330,7 @@ get_folder_dialog(HWND owner) {
     BROWSEINFOW bi;
     lockbox::zero_object(bi);
     bi.hwndOwner = owner;
-    bi.lpszTitle = L"Select Encrypted Folder";
+    bi.lpszTitle = L"Select Location for new Lockbox";
     bi.ulFlags = BIF_USENEWUI;
     bi.pszDisplayName = chosen_name;
     auto pidllist = SHBrowseForFolderW(&bi);
@@ -327,7 +358,6 @@ clear_field(HWND hwnd, WORD id, size_t num_chars){
   zeroed_bytes[num_chars] = 0;
   SetDlgItemTextW(hwnd, id, zeroed_bytes.get());
 }
-
 
 encfs::SecureMem
 securely_read_password_field(HWND hwnd, WORD id, bool clear = true) {
@@ -362,6 +392,15 @@ open_mount(HWND owner, const MountDetails & md) {
     (int) ShellExecuteW(owner, L"open",
                         w32util::widen(std::to_string(md.drive_letter) +
                                        ":\\").c_str(),
+                        NULL, NULL, SW_SHOWNORMAL);
+  return ret_shell2 > 32;
+}
+
+bool
+open_src_code(HWND owner) {
+  auto ret_shell2 =
+    (int) ShellExecuteW(owner, L"open",
+                        L"http://github.com/rianhunter/lockbox_app",
                         NULL, NULL, SW_SHOWNORMAL);
   return ret_shell2 > 32;
 }
@@ -484,8 +523,8 @@ confirm_new_encrypted_container(HWND owner,
   std::ostringstream os;
   os << "The folder you selected:\r\n\r\n    \"" <<
     (const std::string &) encrypted_directory_path <<
-    ("\"\r\n\r\ndoes not appear to be an encrypted container. "
-     "Would you like to create one there?");
+    ("\"\r\n\r\ndoes not appear to be a Lockbox. "
+     "Would you like to create a Lockbox there?");
   auto dialog_text = os.str();
 
   // TODO: compute this programmatically
@@ -520,7 +559,7 @@ confirm_new_encrypted_container(HWND owner,
 
   const auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "No Encrypted Container Found",
+                              "No Lockbox Found",
                               0, 0, DIALOG_WIDTH,
                               TOP_MARGIN + TEXT_HEIGHT +
                               MIDDLE_MARGIN + BUTTON_HEIGHT +
@@ -663,7 +702,7 @@ get_new_password_dialog(HWND owner,
 
   const auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "Create Encrypted Container",
+                              "Create Lockbox",
                               0, 0, DIALOG_WIDTH,
                               TOP_MARGIN +
                               TEXT_HEIGHT + MIDDLE_MARGIN +
@@ -671,7 +710,7 @@ get_new_password_dialog(HWND owner,
                               PASS_ENTRY_HEIGHT + MIDDLE_MARGIN +
                               BUTTON_HEIGHT + BOTTOM_MARGIN),
                    {
-                     LText("Enter a password for your new encrypted container.",
+                     LText("Enter a password for your new Lockbox.",
                            IDC_STATIC,
                            LEFT_MARGIN, TOP_MARGIN,
                            TEXT_WIDTH, TEXT_HEIGHT),
@@ -910,8 +949,8 @@ mount_encrypted_folder_dialog(HWND owner,
   }
 
   auto msg_ptr = w32util::modal_until_message(owner,
-                                              "Starting Encrypted Container...",
-                                              "Starting encrypted container...",
+                                              "Starting New Lockbox...",
+                                              "Starting new Lockbox...",
                                               LOCKBOX_MOUNT_DONE_MSG);
   // TODO: kill thread
   if (!msg_ptr) return opt::nullopt;
@@ -930,8 +969,8 @@ mount_encrypted_folder_dialog(HWND owner,
   {
     auto dialog_wnd =
       w32util::create_waiting_modal(owner,
-                                    "Mounting Encrypted Container...",
-                                    "Mounting encrypted container...");
+                                    "Mounting New Lockbox...",
+                                    "Mounting new Lockbox...");
     // TODO: kill thread
     if (!dialog_wnd) return opt::nullopt;
     auto _destroy_dialog_wnd =
@@ -1075,7 +1114,226 @@ unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
   queue_wait_for_thread_to_die(hwnd, wd, std::move(md.thread_handle));
 }
 
-#define NO_FALLTHROUGH(c) assert(false); case c
+static
+BOOL
+SetClientSize(HWND hwnd, bool set_pos,
+              int x, int y,
+              int w, int h) {
+  RECT a;
+  a.left = 0;
+  a.top = 0;
+  a.bottom = h;
+  a.right = w;
+  DWORD style = GetWindowLongPtr(hwnd, GWL_STYLE);
+  if (!style) return FALSE;
+  
+  DWORD ex_style = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+  if (!ex_style) return FALSE;
+
+  auto success = AdjustWindowRectEx(&a, style, FALSE, ex_style);
+  if (!success) return FALSE;
+
+  return SetWindowPos(hwnd, NULL, x, y,
+                      a.right - a.left,
+                      a.bottom - a.top,
+                      SWP_NOACTIVATE |
+                      (set_pos ? 0 : SWP_NOMOVE));
+}
+
+static
+BOOL
+SetClientSizeInLogical(HWND hwnd, bool set_pos,
+                       int x, int y,
+                       int w, int h) {
+  auto parent_hwnd = GetParent(hwnd);
+  if (!parent_hwnd) parent_hwnd = GetDesktopWindow();
+  if (!parent_hwnd) return FALSE;
+
+  auto parent_hdc = GetDC(parent_hwnd);
+  if (!parent_hdc) return FALSE;
+  auto _release_dc_1 =
+    lockbox::create_deferred(ReleaseDC, parent_hwnd, parent_hdc);
+
+  POINT p1 = {x, y};
+  auto success_1 = LPtoDP(parent_hdc, &p1, 1);
+  if (!success_1) return FALSE;
+
+  auto dc = GetDC(hwnd);
+  if (!dc) return FALSE;
+  auto _release_dc_2 = lockbox::create_deferred(ReleaseDC, hwnd, dc);
+
+  POINT p2 = {w, h};
+  auto success_2 = LPtoDP(dc, &p1, 1);
+  if (!success_2) return FALSE;
+
+  return SetClientSize(hwnd, set_pos,
+                       p1.x, p1.y,
+                       p2.x, p2.y);
+}
+
+enum {
+  IDCBLURB = 100,
+  IDCGETSOURCECODE,
+  IDCCREATELOCKBOX,
+};
+
+CALLBACK
+INT_PTR
+about_dialog_proc(HWND hwnd, UINT Message,
+                  WPARAM wParam, LPARAM /*lParam*/) {
+
+  switch (Message) {
+  case WM_INITDIALOG: {
+    w32util::set_default_dialog_font(hwnd);
+
+    // position everything
+    typedef unsigned unit_t;
+
+    // compute size of about string
+    auto text_hwnd = GetDlgItem(hwnd, IDCBLURB);
+    if (!text_hwnd) throw w32util::windows_error();
+
+    const unit_t BLURB_TEXT_WIDTH = 350;
+
+    const unit_t BUTTON_WIDTH_SRCCODE_DLG = 55;
+    const unit_t BUTTON_WIDTH_CREATELB_DLG = 62;
+    const unit_t BUTTON_HEIGHT_DLG = 14;
+
+    RECT r;
+    r.left = BUTTON_WIDTH_SRCCODE_DLG;
+    r.right = BUTTON_WIDTH_CREATELB_DLG;
+    r.top = BUTTON_HEIGHT_DLG;
+    auto success_map = MapDialogRect(hwnd, &r);
+    if (!success_map) throw w32util::windows_error();
+
+    const unit_t BUTTON_WIDTH_SRCCODE = r.left;
+    const unit_t BUTTON_WIDTH_CREATELB = r.right;
+    const unit_t BUTTON_HEIGHT = r.top;
+
+    const unit_t BUTTON_SPACING = 8;
+
+    auto blurb_text = w32util::widen(LOCKBOX_ABOUT_BLURB);
+
+    auto dc = GetDC(text_hwnd);
+    if (!dc) throw w32util::windows_error();
+    auto _release_dc_1 = lockbox::create_deferred(ReleaseDC, text_hwnd, dc);
+
+    auto hfont = (HFONT) SendMessage(text_hwnd, WM_GETFONT, 0, 0);
+    if (!hfont) return FALSE;
+    auto font_dc = SelectObject(dc, hfont);
+    if (!font_dc) throw w32util::windows_error();
+
+    auto w = BLURB_TEXT_WIDTH;
+    RECT rect;
+    lockbox::zero_object(rect);
+    rect.right = w;
+    auto h = DrawText(dc, blurb_text.data(), blurb_text.size(), &rect,
+                      DT_CALCRECT | DT_NOCLIP | DT_LEFT | DT_WORDBREAK);
+    if (!h) throw w32util::windows_error();
+    w = rect.right;
+
+    auto margin = 8;
+    const unit_t DIALOG_WIDTH = margin + w + margin;
+    const unit_t DIALOG_HEIGHT =
+      margin + h + margin + BUTTON_HEIGHT + margin;
+
+    // set up text window
+    auto success_set_wtext = SetWindowText(text_hwnd, blurb_text.c_str());
+    if (!success_set_wtext) throw w32util::windows_error();
+    auto set_client_area_1 = SetClientSizeInLogical(text_hwnd, true,
+                                                    margin, margin,
+                                                    w, h);
+    if (!set_client_area_1) throw w32util::windows_error();
+
+    // create "create lockbox" button
+    auto create_lockbox_hwnd = GetDlgItem(hwnd, IDCCREATELOCKBOX);
+    if (!create_lockbox_hwnd) throw w32util::windows_error();
+
+    SetClientSizeInLogical(create_lockbox_hwnd, true,
+                           DIALOG_WIDTH -
+                           margin - BUTTON_WIDTH_SRCCODE -
+                           BUTTON_SPACING - BUTTON_WIDTH_CREATELB,
+                           margin + h + margin,
+                           BUTTON_WIDTH_CREATELB, BUTTON_HEIGHT);
+
+    // set focus on create lockbox button
+    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM) create_lockbox_hwnd, TRUE);
+
+    // create "get source code" button
+    auto get_source_code_hwnd = GetDlgItem(hwnd, IDCGETSOURCECODE);
+    if (!get_source_code_hwnd) throw w32util::windows_error();
+
+    SetClientSizeInLogical(get_source_code_hwnd, true,
+                           DIALOG_WIDTH -
+                           margin - BUTTON_WIDTH_SRCCODE,
+                           margin + h + margin,
+                           BUTTON_WIDTH_SRCCODE, BUTTON_HEIGHT);
+
+    auto set_client_area_2 = SetClientSizeInLogical(hwnd, true, 0, 0,
+                                                    DIALOG_WIDTH,
+                                                    DIALOG_HEIGHT);
+    if (!set_client_area_2) throw w32util::windows_error();
+
+    w32util::center_window_in_monitor(hwnd);
+
+    return TRUE;
+  }
+
+  case WM_COMMAND: {
+    switch (LOWORD(wParam)) {
+    case IDCGETSOURCECODE: {
+      open_src_code(hwnd);
+      return TRUE;
+    }
+    case IDCCREATELOCKBOX: case IDCANCEL: {
+      EndDialog(hwnd, (INT_PTR) LOWORD(wParam));
+      return TRUE;
+    }
+    default: return FALSE;
+    }
+
+    // not reached
+    assert(false);
+  }
+
+  case WM_DESTROY: {
+    w32util::cleanup_default_dialog_font(hwnd);
+    // we don't actually handle this
+    return FALSE;
+  }
+
+  default: return FALSE;
+  }
+
+  // not reached
+  assert(false);
+}
+
+WINAPI
+static
+INT_PTR
+about_dialog(HWND hwnd) {
+  using namespace w32util;
+
+  const auto dlg =
+    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
+                              "Welcome to Lockbox!",
+                              0, 0, 500, 500),
+                   {
+                     LText("", IDCBLURB,
+                           0, 0, 0, 0),
+                     PushButton("&Get Source Code", IDCGETSOURCECODE,
+                                0, 0, 0, 0),
+                     DefPushButton("&Create New Lockbox", IDCCREATELOCKBOX,
+                                   0, 0, 0, 0),
+                   }
+                   );
+
+  return
+    DialogBoxIndirect(GetModuleHandle(NULL),
+                      dlg.get_data(),
+                      hwnd, about_dialog_proc);
+}
 
 static
 void
@@ -1092,6 +1350,8 @@ perform_default_lockbox_action(HWND lockbox_main_window, WindowData & wd) {
     }
   }
 }
+
+#define NO_FALLTHROUGH(c) assert(false); case c
 
 CALLBACK
 LRESULT
@@ -1146,6 +1406,10 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
       SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
 
+
+      // open about dialog
+      auto about_action = about_dialog(hwnd);
+
       // add tray icon
       NOTIFYICONDATA icon_data;
       lockbox::zero_object(icon_data);
@@ -1172,6 +1436,11 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           log_error("Error while setting icon version: %s",
                     w32util::last_error_message().c_str());
         }
+      }
+
+      // okay now do action
+      if (about_action == IDCCREATELOCKBOX) {
+        open_create_mount_dialog(hwnd, *wd);
       }
 
       // return -1 on failure, CreateWindow* will return NULL
@@ -1201,8 +1470,11 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             // [ Lockbox A ]
             // [ Lockbox B ]
             // ...
-            // -------
+            // [ ------- ]
             // Open or create a new Lockbox
+            // Get Source Code
+            // Quit
+            // [ DebugBreak ]
 
             // NB: we start at 1 because TrackPopupMenu()
             //     returns 0 if the menu was canceledn
@@ -1245,6 +1517,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
               MENU_CREATE_ID = (UINT) -1,
               MENU_QUIT_ID = (UINT) -2,
               MENU_DEBUG_ID = (UINT) -3,
+              MENU_GETSRCCODE_ID = (UINT) -4,
             };
 
             // add create action
@@ -1252,6 +1525,12 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                     wd->mounts.empty(),
                                     "Open or create a new Lockbox",
                                     MENU_CREATE_ID);
+
+            // add get source code action
+            append_string_menu_item(menu_handle,
+                                    false,
+                                    "Get source code",
+                                    MENU_GETSRCCODE_ID);
 
             // add quit action
             append_string_menu_item(menu_handle,
@@ -1303,6 +1582,10 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             case MENU_DEBUG_ID: {
               DebugBreak();
+              break;
+            }
+            case MENU_GETSRCCODE_ID: {
+              open_src_code(hwnd);
               break;
             }
             default: {

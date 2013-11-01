@@ -6,21 +6,43 @@
 namespace lockbox {
 
 /* this little class allows us to get C++ RAII with C based data structures */
-template <class T, class Destroyer>
-class CDestroyer {
+template <class FNRET>
+class CDestroyer;
+
+template <class F, class T>
+class CDestroyer<F(T)> {
 private:
-  const T & myt;
-  Destroyer f;
+  F f;
+  T arg;
 public:
-  CDestroyer(const T & var, Destroyer f_) : myt(var), f(f_) {}
-  CDestroyer(const CDestroyer & var) = delete;
-  CDestroyer(CDestroyer && var) = default;
-  ~CDestroyer() { f(myt);};
+  CDestroyer(F f_, T && arg_) : f(f_), arg(std::forward<T>(arg_)) {}
+  ~CDestroyer() { f(arg);};
 };
 
-template <class T, class Destroyer>
-CDestroyer<T, Destroyer> create_destroyer(const T & obj, Destroyer f) {
-  return CDestroyer<T, Destroyer>(obj, f);
+template <class F, class T, class V>
+class CDestroyer<F(T,V)> {
+private:
+  F f;
+  T a1;
+  V a2;
+public:
+  CDestroyer(F f_, T && t, V && v)
+    : f(f_)
+    , a1(std::forward<T>(t))
+    , a2(std::forward<V>(v)) {}
+  ~CDestroyer() {
+    f(a1, a2);
+  }
+};
+
+template <class Destroyer, class T>
+CDestroyer<Destroyer(T)> create_destroyer(T && t, Destroyer f) {
+  return CDestroyer<Destroyer(T)>(f, std::forward<T>(t));
+}
+
+template <class Destroyer, class... Args>
+CDestroyer<Destroyer(Args...)> create_deferred(Destroyer f, Args &&... args) {
+  return CDestroyer<Destroyer(Args...)>(f, std::forward<Args>(args)...);
 }
 
 template <class T>
