@@ -115,11 +115,12 @@ const wchar_t LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME[] =
   L"LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME";
 const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
   L"TaskbarCreated";
+const char LOCKBOX_TRAY_ICON_WELCOME_TITLE[] =
+  "Lockbox is Running";
+const char LOCKBOX_TRAY_ICON_WELCOME_MSG[] =
+  "If you need to use Lockbox, just right-click on this icon.";
+
 const char LOCKBOX_ABOUT_BLURB[] =
-  "Welcome to Lockbox!"
-
-  "\r\n\r\n"
-
   "Lockbox uses encryption to securely store your files while "
   "providing you with normal unencrypted access. It protects your files from "
   "attackers who may obtain unauthorized access to your encrypted storage."
@@ -274,7 +275,12 @@ queue_wait_for_thread_to_die(HWND hwnd, WindowData & wd,
 
 static
 void
-stop_relevant_drive_threads(HWND hwnd, WindowData & wd) {
+bubble_msg(HWND lockbox_main_window,
+           const std::string title, const std::string &msg);
+
+static
+void
+stop_relevant_drive_threads(HWND lockbox_main_window, WindowData & wd) {
   auto & mounts = wd.mounts;
   DWORD last_bitmask = 0;
 
@@ -303,7 +309,15 @@ stop_relevant_drive_threads(HWND hwnd, WindowData & wd) {
         if (!success) return;
 
         // set timer to make sure thread has died
-        queue_wait_for_thread_to_die(hwnd, wd, std::move(md.thread_handle));
+        queue_wait_for_thread_to_die(lockbox_main_window,
+                                     wd, std::move(md.thread_handle));
+
+        // TODO: this might be too spammy if multiple drives have been
+        // unmounted
+        bubble_msg(lockbox_main_window,
+                   "Unmount detected",
+                   "You've unmouned \"" + md.name +
+                   ".\"");
       }
       else ++it;
     }
@@ -1353,6 +1367,37 @@ perform_default_lockbox_action(HWND lockbox_main_window, WindowData & wd) {
   }
 }
 
+static
+void
+bubble_msg(HWND lockbox_main_window,
+           const std::string title, const std::string &msg) {
+  NOTIFYICONDATAW icon_data;
+  lockbox::zero_object(icon_data);
+  icon_data.cbSize = NOTIFYICONDATA_V2_SIZE;
+  icon_data.hWnd = lockbox_main_window;
+  icon_data.uID = 0;
+  icon_data.uFlags = NIF_INFO;
+  icon_data.uVersion = NOTIFYICON_VERSION;
+
+  auto wmsg = w32util::widen(msg);
+  if (wmsg.size() >= sizeof(icon_data.szInfo)) {
+    throw std::runtime_error("msg is too long!");
+  }
+  wmemcpy(icon_data.szInfo, wmsg.c_str(), wmsg.size() + 1);
+  icon_data.uTimeout = 0; // let it be the minimum
+
+  auto wtitle = w32util::widen(title);
+  if (wtitle.size() >= sizeof(icon_data.szInfoTitle)) {
+    throw std::runtime_error("title is too long!");
+  }
+  wmemcpy(icon_data.szInfoTitle, wtitle.c_str(), wtitle.size() + 1);
+
+  icon_data.dwInfoFlags = NIIF_NONE;
+
+  auto success = Shell_NotifyIconW(NIM_MODIFY, &icon_data);
+  if (!success) throw w32util::windows_error();
+}
+
 #define NO_FALLTHROUGH(c) assert(false); case c
 
 CALLBACK
@@ -1408,7 +1453,6 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
       SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
 
-
       // open about dialog
       auto about_action = about_dialog(hwnd);
 
@@ -1432,6 +1476,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       }
       else {
         // now set tray icon version
+        icon_data.uFlags = 0;
         auto success_version = Shell_NotifyIcon(NIM_SETVERSION, &icon_data);
         if (!success_version) {
           // TODO: deal with this
@@ -1445,12 +1490,21 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         open_create_mount_dialog(hwnd, *wd);
       }
 
+      bubble_msg(hwnd,
+                 LOCKBOX_TRAY_ICON_WELCOME_TITLE,
+                 LOCKBOX_TRAY_ICON_WELCOME_MSG);
+
       // return -1 on failure, CreateWindow* will return NULL
       return 0;
     }
 
     NO_FALLTHROUGH(LOCKBOX_TRAY_ICON_MSG): {
       switch (lParam) {
+        NO_FALLTHROUGH(1029): {
+          log_debug("User clicked balloon");
+          break;
+        }
+
         NO_FALLTHROUGH(WM_LBUTTONDBLCLK): {
           perform_default_lockbox_action(hwnd, *wd);
           break;
@@ -1520,6 +1574,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
               MENU_QUIT_ID = (UINT) -2,
               MENU_DEBUG_ID = (UINT) -3,
               MENU_GETSRCCODE_ID = (UINT) -4,
+              MENU_TEST_BUBBLE_ID = (UINT) -5,
             };
 
             // add create action
@@ -1537,7 +1592,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             // add quit action
             append_string_menu_item(menu_handle,
                                     false,
-                                    "Quit",
+                                    "Exit",
                                     MENU_QUIT_ID);
 
 #ifndef NDEBUG
@@ -1546,6 +1601,12 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                     false,
                                     "DebugBreak",
                                     MENU_DEBUG_ID);
+
+            // add breakpoint action
+            append_string_menu_item(menu_handle,
+                                    false,
+                                    "Test Bubble",
+                                    MENU_TEST_BUBBLE_ID);
 #endif
 
             // NB: have to do this so the menu disappears
@@ -1588,6 +1649,13 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             case MENU_GETSRCCODE_ID: {
               open_src_code(hwnd);
+              break;
+            }
+            case MENU_TEST_BUBBLE_ID: {
+              bubble_msg(hwnd, "Short Title",
+                         "Very long message full of meaningful info that you "
+                         "will find very interesting because you love to read "
+                         "tray icon bubbles. Don't you? Don't you?!?!");
               break;
             }
             default: {
