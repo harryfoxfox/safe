@@ -1,0 +1,8 @@
+; c:\MinGW\bin\dlltool.exe -z winhttp.def --export-all-symbols c:/windows/system32/winhttp.dll
+LIBRARY winhttp.dll
+EXPORTS
+WinHttpOpen@20
+WinHttpConnect@16
+WinHttpOpenRequest@28
+WinHttpSendRequest@28
+WinHttpCloseHandle@4

@@ -485,42 +485,16 @@ fs_fsio_destroy(fs_fsio_handle_t /*fs*/) {
 
 bool
 fs_fsio_path_is_root(fs_fsio_handle_t fs, const char *path) {
+  assert(fs_fsio_path_is_valid(fs, path));
   auto fsio = fs_fsio_handle_to_pointer(fs);
-
-  try {
-    return fsio->pathFromString(path).is_root();
-  }
-  catch (...) {
-    return FS_ERROR_INVALID_ARG;
-  }
+  return fsio->pathFromString(path).is_root();
 }
 
 bool
-fs_fsio_path_equals(fs_fsio_handle_t fs, const char *a, const char *b) {
+fs_fsio_path_component_equals(fs_fsio_handle_t fs,
+                              const char *a, const char *b) {
   auto fsio = fs_fsio_handle_to_pointer(fs);
-
-  try {
-    return fsio->pathFromString(a) == fsio->pathFromString(b);
-  }
-  catch (...) {
-    return FS_ERROR_INVALID_ARG;
-  }
-}
-
-bool
-fs_fsio_path_is_parent(fs_fsio_handle_t fs,
-                       const char *potential_parent,
-                       const char *potential_child) {
-  auto fsio = fs_fsio_handle_to_pointer(fs);
-
-  try {
-    auto parent_path = fsio->pathFromString(potential_parent);
-    auto child_path = fsio->pathFromString(potential_child);
-    return path_is_parent(parent_path, child_path);
-  }
-  catch (...) {
-    return FS_ERROR_INVALID_ARG;
-  }
+  return fsio->filename_equal(a, b);
 }
 
 const char *

@@ -18,6 +18,8 @@
 
 #include "CFsToFsIO.hpp"
 
+#include <lockbox/util.hpp>
+
 #include <encfs/fs/FsIO.h>
 #include <encfs/base/Interface.h>
 #include <encfs/base/optional.h>
@@ -124,31 +126,27 @@ protected:
     return std::unique_ptr<CFsToFsIOPath>( new CFsToFsIOPath( _fs, std::move( str ) ) );
   }
 
+  virtual bool _filename_equal(const std::string & a,
+                               const std::string & b) const {
+    return fs_path_component_equals(_fs, a.c_str(), b.c_str());
+  }
+
 public:
   CFsToFsIOPath(fs_handle_t fs, std::string str)
     : StringPathDynamicSep(fs_path_sep(fs), std::move(str))
     , _fs(fs) {
-    // TODO: support this
-    assert(strlen(fs_path_sep(fs)) == 1);
     if (!fs_path_is_valid(fs, this->c_str())) {
       throw std::runtime_error("invalid path: " + (const std::string &) *this);
     }
   }
 
   virtual std::unique_ptr<encfs::PathPoly> dirname() const override {
-    if (fs_path_is_root(_fs, _path.c_str())) return _from_string(_path);
-
-    auto last = _path.rfind(_sep);
-    assert(last != std::string::npos);
-
-    // roots always include the trailing separator
-    // so check if we've got a root already
-    auto potential_root = _path.substr(0, last + 1);
-    if (fs_path_is_root(_fs, potential_root.c_str())) {
-      return _from_string(std::move(potential_root));
+    auto dirpath = util_fs_path_dirname(_fs, _path.c_str());
+    if (!dirpath) {
+      throw std::runtime_error("couldn't create dirname!");
     }
-
-    return _from_string(_path.substr(0, last));
+    auto _free_dispath = lockbox::create_deferred(free, dirpath);
+    return _from_string(dirpath);
   }
 
   virtual bool is_root() const override {
@@ -318,6 +316,11 @@ encfs::Path CFsToFsIO::pathFromString(const std::string &path) const {
   // in the fs C interface, paths are always UTF-8 encoded strings
   // CFsToFsIOPath does validity checking in constructor
   return std::unique_ptr<CFsToFsIOPath>(new CFsToFsIOPath(_fs, path));
+}
+
+bool CFsToFsIO::filename_equal(const std::string &a,
+                               const std::string &b) const {
+  return fs_path_component_equals(_fs, a.c_str(), b.c_str());
 }
 
 encfs::Directory CFsToFsIO::opendir(const encfs::Path &path) const {

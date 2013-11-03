@@ -122,12 +122,7 @@ bool
 fs_fsio_path_is_root(fs_fsio_handle_t fs, const char *path);
 
 bool
-fs_fsio_path_equals(fs_fsio_handle_t fs, const char *a, const char *b);
-
-bool
-fs_fsio_path_is_parent(fs_fsio_handle_t fs,
-                       const char *potential_parent,
-                       const char *potential_child);
+fs_fsio_path_component_equals(fs_fsio_handle_t fs, const char *a, const char *b);
 
 const char *
 fs_fsio_path_sep(fs_fsio_handle_t fs);

@@ -84,11 +84,18 @@ libtinyxml: clean
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
 
 WINHTTP_DEP := $(CURDIR)/out/deps/lib/libwinhttp.a
-$(WINHTTP_DEP): $(CURDIR)/winhttp.h $(CURDIR)/winhttp.def
-	cp $(CURDIR)/winhttp.h out/deps/include/
+$(WINHTTP_DEP): $(CURDIR)/winhttp.def
 	dlltool -k -d winhttp.def -l $(CURDIR)/out/deps/lib/libwinhttp.a
 
-dependencies: libglog libbotan libprotobuf libtinyxml libencfs libwebdav_server_fs
+WINHTTP_DEP2 := $(CURDIR)/out/deps/include/winhttp.h
+$(WINHTTP_DEP2): $(CURDIR)/winhttp.h
+	cp $(CURDIR)/winhttp.h out/deps/include/winhttp.h
+
+winhttp: $(WINHTTP_DEP2) $(WINHTTP_DEP)
+
+dependencies: libglog libbotan libprotobuf libtinyxml libencfs \
+ libwebdav_server_fs \
+ $(if $(IS_WIN),winhttp,)
 
 clean-deps:
 	rm -rf out
@@ -106,9 +113,7 @@ WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 # dependencies
 
-src/lockbox/*.o: Makefile $(if $(IS_WIN),$(WINHTTP_DEP),,)
-
-src/lockbox/windows_app_main.cpp.o: src/lockbox/windows_*.hpp
+src/lockbox/*.o: Makefile src/lockbox/*.hpp src/lockbox/*.h
 
 src/lockbox/windows_app_main.rc.o: src/lockbox/windows_app_main.rc \
 	src/lockbox/windows_app_main.manifest
@@ -145,4 +150,4 @@ Lockbox.exe:
  -lglog  -ltinyxml -lole32 -lcomctl32 -lwinhttp $(DEPS_EXTRA_LIBRARIES)
 
 .PHONY: dependencies clean libglog libbotan \
-	libprotobuf libtinyxml libencfs libwebdav_server_fs
+	libprotobuf libtinyxml libencfs libwebdav_server_fs winhttp

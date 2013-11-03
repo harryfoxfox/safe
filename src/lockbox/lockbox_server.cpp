@@ -110,8 +110,8 @@ static const FsOperations native_ops = {
   .set_times = (fs_dynamic_set_times_fn) fs_native_set_times,
   .path_is_root = (fs_dynamic_path_is_root_fn) fs_native_path_is_root,
   .path_sep = (fs_dynamic_path_sep_fn) fs_native_path_sep,
-  .path_equals = (fs_dynamic_path_equals_fn) fs_native_path_equals,
-  .path_is_parent = (fs_dynamic_path_is_parent_fn) fs_native_path_is_parent,
+  .path_component_equals =
+    (fs_dynamic_path_component_equals_fn) fs_native_path_component_equals,
   .path_is_valid = (fs_dynamic_path_is_valid_fn) fs_native_path_is_valid,
   .destroy = (fs_dynamic_destroy_fn) fs_native_destroy,
 };
@@ -166,8 +166,8 @@ static const FsOperations fsio_ops = {
   .set_times = (fs_dynamic_set_times_fn) fs_fsio_set_times,
   .path_is_root = (fs_dynamic_path_is_root_fn) fs_fsio_path_is_root,
   .path_sep = (fs_dynamic_path_sep_fn) fs_fsio_path_sep,
-  .path_equals = (fs_dynamic_path_equals_fn) fs_fsio_path_equals,
-  .path_is_parent = (fs_dynamic_path_is_parent_fn) fs_fsio_path_is_parent,
+  .path_component_equals =
+    (fs_dynamic_path_component_equals_fn) fs_fsio_path_component_equals,
   .path_is_valid = (fs_dynamic_path_is_valid_fn) fs_fsio_path_is_valid,
   .destroy = (fs_dynamic_destroy_fn) fs_fsio_destroy,
 };

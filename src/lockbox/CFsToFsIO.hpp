@@ -39,6 +39,8 @@ public:
   // generic fs methods
   virtual const std::string &path_sep() const override;
   virtual encfs::Path pathFromString(const std::string &path) const override;
+  virtual bool filename_equal(const std::string &a,
+                              const std::string &b) const override;
 
   virtual encfs::Directory opendir(const encfs::Path &path) const override;
   virtual encfs::File openfile(const encfs::Path &path,

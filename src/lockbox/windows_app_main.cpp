@@ -901,13 +901,14 @@ mount_encrypted_folder_dialog(HWND owner,
       get_new_password_dialog(owner, encrypted_directory_path);
     if (!maybe_password) return opt::nullopt;
 
-    const auto use_case_sensitive_name_encoding = false;
+    const auto use_encoding_for_case_insensitive_file_systems = true;
     maybe_encfs_config =
       w32util::modal_call(owner,
                           "Creating New Configuration...",
                           "Creating new configuration...",
                           encfs::create_paranoid_config,
-                          *maybe_password, use_case_sensitive_name_encoding);
+                          *maybe_password,
+                          use_encoding_for_case_insensitive_file_systems);
     if (!maybe_encfs_config) return opt::nullopt;
 
     auto modal_completed =
