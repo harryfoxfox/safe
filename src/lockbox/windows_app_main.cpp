@@ -121,14 +121,19 @@ const char LOCKBOX_TRAY_ICON_WELCOME_MSG[] =
   "If you need to use Lockbox, just right-click on this icon.";
 
 const char LOCKBOX_ABOUT_BLURB[] =
-  "Lockbox uses encryption to securely store your files while "
-  "providing you with normal unencrypted access. It protects your files from "
-  "attackers who may obtain unauthorized access to your encrypted storage."
+  "Lockbox is an application that makes it easy to encrypt your files. "
+  "Encryption prevents others from reading your "
+  "files without knowing your password."
+
+  "\r\n\r\n"
+
+  "You use Lockbox in the exact same way you would use a normal folder. "
+  "Behind the scenes it's automatically encrypting your files on your behalf."
 
   "\r\n\r\n"
 
   "Use it to store tax returns, receipts, passwords, or anything else you hold "
-  "the most private. It works well with existing cloud-based storage services."
+  "the most private. It also works well with cloud-based storage services."
   
   "\r\n\r\n"
 
@@ -315,8 +320,8 @@ stop_relevant_drive_threads(HWND lockbox_main_window, WindowData & wd) {
         // TODO: this might be too spammy if multiple drives have been
         // unmounted
         bubble_msg(lockbox_main_window,
-                   "Unmount detected",
-                   "You've unmouned \"" + md.name +
+                   "Unmount Detected",
+                   "You've successfully unmounted \"" + md.name +
                    ".\"");
       }
       else ++it;
