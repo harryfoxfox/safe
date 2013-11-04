@@ -16,6 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+#include <lockbox/product_name.h>
 #include <lockbox/lockbox_server.hpp>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
@@ -121,7 +122,7 @@ const WORD IDC_STATIC = ~0;
 const WORD IDPASSWORD = 200;
 const WORD IDCONFIRMPASSWORD = 201;
 const auto MAX_PASS_LEN = 256;
-const wchar_t TRAY_ICON_TOOLTIP[] = L"Lockbox";
+const wchar_t TRAY_ICON_TOOLTIP[] = PRODUCT_NAME_W;
 const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const UINT_PTR STOP_RELEVANT_DRIVE_THREADS_TIMER_ID = 0;
 const UINT_PTR CHECK_STOPPED_THREADS_TIMER_ID = 1;
@@ -151,18 +152,21 @@ const wchar_t LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME[] =
 const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
   L"TaskbarCreated";
 const char LOCKBOX_TRAY_ICON_WELCOME_TITLE[] =
-  "Lockbox is now Running!";
+  PRODUCT_NAME_A " is now Running!";
 const char LOCKBOX_TRAY_ICON_WELCOME_MSG[] =
-  "If you need to use Lockbox, just right-click on this icon.";
+  "If you need to use "
+  PRODUCT_NAME_A
+  ", just right-click on this icon.";
 
 const char LOCKBOX_ABOUT_BLURB[] =
-  "Lockbox is an application that makes it easy to encrypt your files. "
+  PRODUCT_NAME_A " is an application that makes it easy to encrypt your files. "
   "Encryption prevents others from reading your "
   "files without knowing your password."
 
   "\r\n\r\n"
 
-  "You use Lockbox in the exact same way you would use a normal folder. "
+  "You use " PRODUCT_NAME_A
+  " in the exact same way you would use a normal folder. "
   "Behind the scenes it's automatically encrypting your files on your behalf."
 
   "\r\n\r\n"
@@ -172,9 +176,11 @@ const char LOCKBOX_ABOUT_BLURB[] =
   
   "\r\n\r\n"
 
-  "Lockbox is entirely composed of free software. Not free "
+  PRODUCT_NAME_A " is entirely composed of free software. Not free "
   "in the \"free beer\" sense but free in the \"freedom\" sense. "
-  "All the code that makes up Lockbox is available "
+  "All the code that makes up "
+  PRODUCT_NAME_A
+  " is available "
   "for you to read, modify, and distribute at your will."
 
   "\r\n\r\n"
@@ -185,7 +191,8 @@ const char LOCKBOX_ABOUT_BLURB[] =
 
   "\r\n\r\n"
     
-  "Thanks for using Lockbox! Hopefully it makes your life just a little "
+  "Thanks for using " PRODUCT_NAME_A
+  "! Hopefully it makes your life just a little "
   "bit safer."
   ;
 
@@ -405,7 +412,7 @@ get_folder_dialog(HWND owner) {
     BROWSEINFOW bi;
     lockbox::zero_object(bi);
     bi.hwndOwner = owner;
-    bi.lpszTitle = L"Select Location for new Lockbox";
+    bi.lpszTitle = L"Select Location for new " ENCRYPTED_STORAGE_NAME_W;
     bi.ulFlags = BIF_USENEWUI;
     bi.pszDisplayName = chosen_name;
     auto pidllist = SHBrowseForFolderW(&bi);
@@ -598,8 +605,8 @@ confirm_new_encrypted_container(HWND owner,
   std::ostringstream os;
   os << "The folder you selected:\r\n\r\n    \"" <<
     (const std::string &) encrypted_directory_path <<
-    ("\"\r\n\r\ndoes not appear to be a Lockbox. "
-     "Would you like to create a Lockbox there?");
+    ("\"\r\n\r\ndoes not appear to store a " ENCRYPTED_STORAGE_NAME_A ". "
+     "Would you like to create a new one there?");
   auto dialog_text = os.str();
 
   // TODO: compute this programmatically
@@ -634,7 +641,7 @@ confirm_new_encrypted_container(HWND owner,
 
   const auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "No Lockbox Found",
+                              "No " ENCRYPTED_STORAGE_NAME_A " Found",
                               0, 0, DIALOG_WIDTH,
                               TOP_MARGIN + TEXT_HEIGHT +
                               MIDDLE_MARGIN + BUTTON_HEIGHT +
@@ -777,7 +784,7 @@ get_new_password_dialog(HWND owner,
 
   const auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "Create Lockbox",
+                              "Create " ENCRYPTED_STORAGE_NAME_A,
                               0, 0, DIALOG_WIDTH,
                               TOP_MARGIN +
                               TEXT_HEIGHT + MIDDLE_MARGIN +
@@ -785,7 +792,9 @@ get_new_password_dialog(HWND owner,
                               PASS_ENTRY_HEIGHT + MIDDLE_MARGIN +
                               BUTTON_HEIGHT + BOTTOM_MARGIN),
                    {
-                     LText("Enter a password for your new Lockbox.",
+                     LText(("Enter a password for your new "
+                            ENCRYPTED_STORAGE_NAME_A
+                            "."),
                            IDC_STATIC,
                            LEFT_MARGIN, TOP_MARGIN,
                            TEXT_WIDTH, TEXT_HEIGHT),
@@ -1026,8 +1035,12 @@ mount_encrypted_folder_dialog(HWND owner,
   }
 
   auto msg_ptr = w32util::modal_until_message(owner,
-                                              "Starting New Lockbox...",
-                                              "Starting new Lockbox...",
+                                              ("Starting New "
+                                               ENCRYPTED_STORAGE_NAME_A
+                                               "..."),
+                                              ("Starting new "
+                                               ENCRYPTED_STORAGE_NAME_A
+                                               "..."),
                                               LOCKBOX_MOUNT_DONE_MSG);
   // TODO: kill thread
   if (!msg_ptr) return opt::nullopt;
@@ -1046,8 +1059,12 @@ mount_encrypted_folder_dialog(HWND owner,
   {
     auto dialog_wnd =
       w32util::create_waiting_modal(owner,
-                                    "Starting New Lockbox...",
-                                    "Starting new Lockbox...");
+                                    ("Starting New "
+                                     ENCRYPTED_STORAGE_NAME_A
+                                     "..."),
+                                    ("Starting new "
+                                     ENCRYPTED_STORAGE_NAME_A
+                                     "..."));
     // TODO: kill thread
     if (!dialog_wnd) return opt::nullopt;
     auto _destroy_dialog_wnd =
@@ -1418,14 +1435,18 @@ about_dialog(HWND hwnd) {
 
   const auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "Welcome to Lockbox!",
+                              ("Welcome to "
+                               PRODUCT_NAME_A
+                               "!"),
                               0, 0, 500, 500),
                    {
                      LText("", IDCBLURB,
                            0, 0, 0, 0),
                      PushButton("&Get Source Code", IDCGETSOURCECODE,
                                 0, 0, 0, 0),
-                     DefPushButton("&Start or Create a Lockbox", IDCCREATELOCKBOX,
+                     DefPushButton(("&Start or Create a "
+                                    ENCRYPTED_STORAGE_NAME_A),
+                                   IDCCREATELOCKBOX,
                                    0, 0, 0, 0),
                    }
                    );
@@ -1538,7 +1559,7 @@ create_lockbox_menu(const WindowData & wd, bool is_control_pressed) {
   // add create action
   append_string_menu_item(menu_handle,
                           wd.mounts.empty(),
-                          "Start or create a Lockbox",
+                          "Start or create a " ENCRYPTED_STORAGE_NAME_A,
                           MENU_CREATE_ID);
 
   // add get source code action

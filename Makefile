@@ -1,3 +1,5 @@
+EXE_NAME := Bitvault.exe
+
 DAVFUSE_ROOT := $(CURDIR)/../davfuse
 ENCFS_ROOT := $(CURDIR)/../encfs
 BOTAN_ROOT := $(CURDIR)/encfs-dependencies/botan
@@ -121,7 +123,7 @@ src/lockbox/windows_app_main.rc.o: src/lockbox/windows_app_main.rc \
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
 
-Lockbox.exe: $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
+$(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
 
 # build instructions
@@ -130,7 +132,7 @@ Lockbox.exe: $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
 
 %.rc.o: %.rc
-	windres -I.\src\lockbox -i $< -o $@
+	windres -I.\src -i $< -o $@
 
 test_encfs_main:
 	$(CXX) -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
@@ -142,8 +144,8 @@ test_encfs_main:
 ASLR_LINK_FLAGS := -Wl,--dynamicbase=true -Wl,--nxcompat=true
 WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
 
-Lockbox.exe:
-	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
+$(EXE_NAME):
+	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -flto -static \
  -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
