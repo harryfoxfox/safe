@@ -114,7 +114,7 @@ error_message(DWORD err_code) {
   wchar_t error_buf_wide[MAX_MSG];
   char error_buf[MAX_MSG];
 
-  const DWORD num_chars =
+  DWORD num_chars =
     FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
                    FORMAT_MESSAGE_IGNORE_INSERTS, 0, err_code, 0,
                    error_buf_wide,
@@ -123,6 +123,9 @@ error_message(DWORD err_code) {
   if (!num_chars) {
     return "Couldn't get error message, FormatMessageW() failed";
   }
+
+  error_buf_wide[num_chars - 2] = L'\0';
+  num_chars -= 2;
 
   const DWORD flags = 0;
   const int required_buffer_size =
