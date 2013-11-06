@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>output</string>
 	<key>CFBundleIdentifier</key>
-	<string>Dropbox.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>Lockbox${PRODUCT_NAME:rfc1034identifier}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

@@ -15,8 +15,6 @@
 
 #include <stdio.h>
 
-#include "run_encfs.h"
-
 #import "LBXAppDelegate.h"
 
 typedef struct {
@@ -24,7 +22,6 @@ typedef struct {
     char *source;
     char *destination;
     char *password;
-    run_encfs_error_t error_run_encfs;
     bool run_encfs_done;
     bool mounted;
 } StartWebdavEncfsServerArgs;
@@ -93,8 +90,8 @@ run_webdav_server_thread_fn(void *p) {
         abort();
     }
 
-    args->error_run_encfs =
-        run_encfs(args->source, args->password);
+    /*args->error_run_encfs =
+        run_encfs(args->source, args->password); */
     args->run_encfs_done = true;
 
     return NULL;
@@ -103,13 +100,15 @@ run_webdav_server_thread_fn(void *p) {
 @implementation LBXAppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    init_encfs();
+    (void)aNotification;
+    /*init_encfs(); */
     [self.window center];
     [self.srcPathControl setURL:[NSURL fileURLWithPath:NSHomeDirectory()]];
     [self.dstPathControl setURL:[NSURL fileURLWithPath:NSHomeDirectory()]];
 }
 
 - (void)timerFire:(id)p {
+    (void)p;
     /* this is ghetto */
     const char *child = self.dstPathControl.URL.path.UTF8String;
     char *dup = strdup(self.dstPathControl.URL.path.UTF8String);
@@ -157,11 +156,12 @@ done:
         /* okay now when the volume is ummounted kill the program */
         [self performSelector:@selector(timerFire:) withObject:nil afterDelay:CHECK_MOUNT_INTERVAL_IN_SECONDS];
     }
-    else if (args->error_run_encfs) {
+    else if (false /*args->error_run_encfs*/) {
         NSLog(@"Server is done!");
 
         NSString *errorString = nil;
-        switch (args->error_run_encfs) {
+        switch (0 /*args->error_run_encfs*/) {
+                /*
         case RUN_ENCFS_ERROR_IS_NOT_DIRECTORY:
             errorString = @"The specified encrypted directory is not actually a directory, please re-select an encrypted directory.";
             break;
@@ -170,7 +170,7 @@ done:
             break;
         case RUN_ENCFS_ERROR_PASSWORD_INCORRECT:
             errorString = @"The specified password was incorrect";
-            break;
+            break;*/
         default:
             /* this should never happen, so we crash hard */
             abort();
@@ -193,11 +193,14 @@ done:
 }
 
 - (void)didEndSheet:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
+    (void)returnCode;
+    (void)contextInfo;
     [sheet orderOut:self];
 }
 
 - (IBAction)mountEncryptedFS:(id)sender {
     /* TODO: check if input is valid */
+    (void)sender;
 
     [self.mountProgressIndicator startAnimation:self];
 

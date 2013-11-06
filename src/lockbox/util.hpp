@@ -24,17 +24,17 @@ public:
     , data(std::move(arg_))
     , is_valid(true) {}
 
-  CDestroyer(CDestroyer && f)
-    : f(std::move(f.f))
-    , data(std::move(f.data))
-    , is_valid(f.is_valid) {
-    f.is_valid = false;
+  CDestroyer(CDestroyer && cd)
+    : f(std::move(cd.f))
+    , data(std::move(cd.data))
+    , is_valid(cd.is_valid) {
+    cd.is_valid = false;
   }
 
-  CDestroyer &operator=(CDestroyer && f) {
-    if (this != &f) {
+  CDestroyer &operator=(CDestroyer && cd) {
+    if (this != &cd) {
       this->~CDestroyer();
-      new (this) CDestroyer(std::move(f));
+      new (this) CDestroyer(std::move(cd));
     }
     return *this;
   }
@@ -56,18 +56,18 @@ public:
     , a2(std::move(v))
     , is_valid(true) {}
 
-  CDestroyer(CDestroyer && f)
-    : f(std::move(f.f))
-    , a1(std::move(f.a1))
-    , a2(std::move(f.a2))
-    , is_valid(f.is_valid) {
-    f.is_valid = false;
+  CDestroyer(CDestroyer && cd)
+    : f(std::move(cd.f))
+    , a1(std::move(cd.a1))
+    , a2(std::move(cd.a2))
+    , is_valid(cd.is_valid) {
+    cd.is_valid = false;
   }
 
-  CDestroyer &operator=(CDestroyer && f) {
-    if (this != &f) {
+  CDestroyer &operator=(CDestroyer && cd) {
+    if (this != &cd) {
       this->~CDestroyer();
-      new (this) CDestroyer(std::move(f));
+      new (this) CDestroyer(std::move(cd));
     }
     return *this;
   }
