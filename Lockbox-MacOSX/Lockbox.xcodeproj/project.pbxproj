@@ -110,13 +110,7 @@
 		963D099A17A1D89D00AEE673 = {
 			isa = PBXGroup;
 			children = (
-				96358D39182AFE4D00BE18E8 /* Security.framework */,
-				96358D2D182AFE2600BE18E8 /* libbotan-1.10.a */,
-				96358D2E182AFE2600BE18E8 /* libencfs.a */,
-				96358D2F182AFE2600BE18E8 /* libglog.a */,
-				96358D30182AFE2600BE18E8 /* libprotobuf.a */,
-				96358D31182AFE2600BE18E8 /* libtinyxml.a */,
-				96358D32182AFE2600BE18E8 /* libwebdav_server_fs.a */,
+				96E9AE29182B012E00DDBF4E /* static libs */,
 				96101760182A1428001D50E8 /* interface builder */,
 				9610175F182A1407001D50E8 /* src */,
 				963D09AD17A1D89D00AEE673 /* Supporting Files */,
@@ -136,6 +130,7 @@
 		963D09A517A1D89D00AEE673 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				96358D39182AFE4D00BE18E8 /* Security.framework */,
 				963D09A617A1D89D00AEE673 /* Cocoa.framework */,
 				963D09C417A1D89D00AEE673 /* SenTestingKit.framework */,
 				963D09A817A1D89D00AEE673 /* Other Frameworks */,
@@ -165,6 +160,19 @@
 			);
 			name = "Supporting Files";
 			path = Lockbox;
+			sourceTree = "<group>";
+		};
+		96E9AE29182B012E00DDBF4E /* static libs */ = {
+			isa = PBXGroup;
+			children = (
+				96358D2D182AFE2600BE18E8 /* libbotan-1.10.a */,
+				96358D2E182AFE2600BE18E8 /* libencfs.a */,
+				96358D2F182AFE2600BE18E8 /* libglog.a */,
+				96358D30182AFE2600BE18E8 /* libprotobuf.a */,
+				96358D31182AFE2600BE18E8 /* libtinyxml.a */,
+				96358D32182AFE2600BE18E8 /* libwebdav_server_fs.a */,
+			);
+			name = "static libs";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,7 +248,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $SRCROOT/..\n\n# add cmake to path\nPATH=\"/usr/local/bin:$PATH\"\n\n# set up compiler environment\nexport CXX=clang++\nexport CXXFLAGS=-stdlib=$CLANG_CXX_LIBRARY\n\nif ! ./are_dependencies_up_to_date.sh; then\n    make clean-deps\n    env > /Users/rian/env.txt\n    make dependencies > /Users/rian/log.txt 2>/Users/rian/devlog.txt\nfi";
+			shellScript = "cd $SRCROOT/..\n\n# add cmake to path\nPATH=\"/usr/local/bin:$PATH\"\n\n# set up compiler environment\nexport CXX=clang++\nexport CXXFLAGS=-stdlib=$CLANG_CXX_LIBRARY\n\nif ! ./are_dependencies_up_to_date.sh; then\n    make clean-deps\n    make dependencies\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 
