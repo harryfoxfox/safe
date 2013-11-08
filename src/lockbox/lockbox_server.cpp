@@ -113,6 +113,8 @@ static const FsOperations native_ops = {
   .path_component_equals =
     (fs_dynamic_path_component_equals_fn) fs_native_path_component_equals,
   .path_is_valid = (fs_dynamic_path_is_valid_fn) fs_native_path_is_valid,
+  .path_component_is_valid =
+    (fs_dynamic_path_component_is_valid_fn) fs_native_path_component_is_valid,
   .destroy = (fs_dynamic_destroy_fn) fs_native_destroy,
 };
 
@@ -169,6 +171,8 @@ static const FsOperations fsio_ops = {
   .path_component_equals =
     (fs_dynamic_path_component_equals_fn) fs_fsio_path_component_equals,
   .path_is_valid = (fs_dynamic_path_is_valid_fn) fs_fsio_path_is_valid,
+  .path_component_is_valid =
+    (fs_dynamic_path_component_is_valid_fn) fs_fsio_path_component_is_valid,
   .destroy = (fs_dynamic_destroy_fn) fs_fsio_destroy,
 };
 

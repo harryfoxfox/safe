@@ -131,6 +131,10 @@ protected:
     return fs_path_component_equals(_fs, a.c_str(), b.c_str());
   }
 
+  virtual bool _filename_valid(const std::string & a) const {
+      return fs_path_component_is_valid(_fs, a.c_str());
+  }
+
 public:
   CFsToFsIOPath(fs_handle_t fs, std::string str)
     : StringPathDynamicSep(fs_path_sep(fs), std::move(str))

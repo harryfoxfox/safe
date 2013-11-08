@@ -8,16 +8,12 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface LBXAppDelegate : NSObject <NSApplicationDelegate>
+#import <lockbox/LBXCreateLockboxWindowController.h>
 
-@property (assign) IBOutlet NSWindow *window;
-@property (assign) IBOutlet NSPathControl *srcPathControl;
-@property (assign) IBOutlet NSPathControl *dstPathControl;
-@property (assign) IBOutlet NSSecureTextField *passwordTextField;
-@property (assign) IBOutlet NSPanel *sheetPanel;
-@property (assign) IBOutlet NSProgressIndicator *mountProgressIndicator;
+@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate>
 
-- (IBAction)mountEncryptedFS:(id)sender;
-- (void)onMountDone:(id)args;
+@property (assign) std::shared_ptr<encfs::FsIO> native_fs;
+
+@property (retain) LBXCreateLockboxWindowController *wc;
 
 @end

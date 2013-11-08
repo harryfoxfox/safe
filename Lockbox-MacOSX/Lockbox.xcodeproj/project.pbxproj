@@ -9,10 +9,15 @@
 /* Begin PBXBuildFile section */
 		9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101761182A1499001D50E8 /* CFsToFsIO.cpp */; };
 		9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101763182A1499001D50E8 /* fs_fsio.cpp */; };
-		9610176F182A1499001D50E8 /* LBXAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 96101766182A1499001D50E8 /* LBXAppDelegate.m */; };
+		9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96101766182A1499001D50E8 /* LBXAppDelegate.mm */; };
 		96101770182A1499001D50E8 /* lockbox_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101767182A1499001D50E8 /* lockbox_server.cpp */; };
 		96101771182A1499001D50E8 /* mac_app_main.m in Sources */ = {isa = PBXBuildFile; fileRef = 96101769182A1499001D50E8 /* mac_app_main.m */; };
 		96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */; };
+		96230549182B2E5200913551 /* LBXCreateLockboxWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */; };
+		9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */; };
+		9623054C182B391300913551 /* Application.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9623054B182B391300913551 /* Application.xib */; };
+		96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96230551182C708400913551 /* LBXProgressSheetController.mm */; };
+		96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96230552182C708400913551 /* LBXProgressSheetController.xib */; };
 		96358D33182AFE2600BE18E8 /* libbotan-1.10.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2D182AFE2600BE18E8 /* libbotan-1.10.a */; };
 		96358D34182AFE2600BE18E8 /* libencfs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2E182AFE2600BE18E8 /* libencfs.a */; };
 		96358D35182AFE2600BE18E8 /* libglog.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2F182AFE2600BE18E8 /* libglog.a */; };
@@ -22,7 +27,7 @@
 		96358D3A182AFE4D00BE18E8 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D39182AFE4D00BE18E8 /* Security.framework */; };
 		963D09A717A1D89D00AEE673 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 963D09A617A1D89D00AEE673 /* Cocoa.framework */; };
 		963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 963D09AF17A1D89D00AEE673 /* InfoPlist.strings */; };
-		963D09BD17A1D89D00AEE673 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963D09BB17A1D89D00AEE673 /* MainMenu.xib */; };
+		9644DE6A182C8F5A001EEFF0 /* mac_mount.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9644DE68182C8F5A001EEFF0 /* mac_mount.cpp */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
 /* End PBXBuildFile section */
 
@@ -32,13 +37,20 @@
 		96101763182A1499001D50E8 /* fs_fsio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs_fsio.cpp; path = ../src/lockbox/fs_fsio.cpp; sourceTree = "<group>"; };
 		96101764182A1499001D50E8 /* fs_fsio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fs_fsio.h; path = ../src/lockbox/fs_fsio.h; sourceTree = "<group>"; };
 		96101765182A1499001D50E8 /* LBXAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXAppDelegate.h; path = ../src/lockbox/LBXAppDelegate.h; sourceTree = "<group>"; };
-		96101766182A1499001D50E8 /* LBXAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LBXAppDelegate.m; path = ../src/lockbox/LBXAppDelegate.m; sourceTree = "<group>"; };
+		96101766182A1499001D50E8 /* LBXAppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXAppDelegate.mm; path = ../src/lockbox/LBXAppDelegate.mm; sourceTree = "<group>"; };
 		96101767182A1499001D50E8 /* lockbox_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lockbox_server.cpp; path = ../src/lockbox/lockbox_server.cpp; sourceTree = "<group>"; };
 		96101768182A1499001D50E8 /* lockbox_server.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = lockbox_server.hpp; path = ../src/lockbox/lockbox_server.hpp; sourceTree = "<group>"; };
 		96101769182A1499001D50E8 /* mac_app_main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mac_app_main.m; path = ../src/lockbox/mac_app_main.m; sourceTree = "<group>"; };
 		9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SecureMemPasswordReader.cpp; path = ../src/lockbox/SecureMemPasswordReader.cpp; sourceTree = "<group>"; };
 		9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SecureMemPasswordReader.hpp; path = ../src/lockbox/SecureMemPasswordReader.hpp; sourceTree = "<group>"; };
 		9610176C182A1499001D50E8 /* util.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = util.hpp; path = ../src/lockbox/util.hpp; sourceTree = "<group>"; };
+		96230546182B2E5200913551 /* LBXCreateLockboxWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXCreateLockboxWindowController.h; path = ../src/lockbox/LBXCreateLockboxWindowController.h; sourceTree = "<group>"; };
+		96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXCreateLockboxWindowController.mm; path = ../src/lockbox/LBXCreateLockboxWindowController.mm; sourceTree = "<group>"; };
+		96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXCreateLockboxWindowController.xib; path = ../src/lockbox/LBXCreateLockboxWindowController.xib; sourceTree = "<group>"; };
+		9623054B182B391300913551 /* Application.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Application.xib; sourceTree = "<group>"; };
+		96230550182C708400913551 /* LBXProgressSheetController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXProgressSheetController.h; path = ../src/lockbox/LBXProgressSheetController.h; sourceTree = "<group>"; };
+		96230551182C708400913551 /* LBXProgressSheetController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXProgressSheetController.mm; path = ../src/lockbox/LBXProgressSheetController.mm; sourceTree = "<group>"; };
+		96230552182C708400913551 /* LBXProgressSheetController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXProgressSheetController.xib; path = ../src/lockbox/LBXProgressSheetController.xib; sourceTree = "<group>"; };
 		96358D2D182AFE2600BE18E8 /* libbotan-1.10.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libbotan-1.10.a"; path = "../out/deps/lib/libbotan-1.10.a"; sourceTree = "<group>"; };
 		96358D2E182AFE2600BE18E8 /* libencfs.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libencfs.a; path = ../out/deps/lib/libencfs.a; sourceTree = "<group>"; };
 		96358D2F182AFE2600BE18E8 /* libglog.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglog.a; path = ../out/deps/lib/libglog.a; sourceTree = "<group>"; };
@@ -55,8 +67,9 @@
 		963D09B017A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		963D09B417A1D89D00AEE673 /* Lockbox-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Lockbox-Prefix.pch"; sourceTree = "<group>"; };
 		963D09B617A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
-		963D09BC17A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		963D09C417A1D89D00AEE673 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
+		9644DE68182C8F5A001EEFF0 /* mac_mount.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mac_mount.cpp; path = ../src/lockbox/mac_mount.cpp; sourceTree = "<group>"; };
+		9644DE69182C8F5A001EEFF0 /* mac_mount.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mac_mount.hpp; path = ../src/lockbox/mac_mount.hpp; sourceTree = "<group>"; };
 		96E1639217A74F55009BE867 /* Lock-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Lock-icon.png"; path = "../Lock-icon.png"; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -83,35 +96,35 @@
 		9610175F182A1407001D50E8 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				9623054B182B391300913551 /* Application.xib */,
 				96101761182A1499001D50E8 /* CFsToFsIO.cpp */,
 				96101762182A1499001D50E8 /* CFsToFsIO.hpp */,
 				96101763182A1499001D50E8 /* fs_fsio.cpp */,
 				96101764182A1499001D50E8 /* fs_fsio.h */,
 				96101765182A1499001D50E8 /* LBXAppDelegate.h */,
-				96101766182A1499001D50E8 /* LBXAppDelegate.m */,
+				96101766182A1499001D50E8 /* LBXAppDelegate.mm */,
 				96101767182A1499001D50E8 /* lockbox_server.cpp */,
 				96101768182A1499001D50E8 /* lockbox_server.hpp */,
 				96101769182A1499001D50E8 /* mac_app_main.m */,
 				9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */,
 				9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */,
 				9610176C182A1499001D50E8 /* util.hpp */,
+				96230546182B2E5200913551 /* LBXCreateLockboxWindowController.h */,
+				96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */,
+				96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */,
+				96230550182C708400913551 /* LBXProgressSheetController.h */,
+				96230551182C708400913551 /* LBXProgressSheetController.mm */,
+				96230552182C708400913551 /* LBXProgressSheetController.xib */,
+				9644DE68182C8F5A001EEFF0 /* mac_mount.cpp */,
+				9644DE69182C8F5A001EEFF0 /* mac_mount.hpp */,
 			);
 			name = src;
-			sourceTree = "<group>";
-		};
-		96101760182A1428001D50E8 /* interface builder */ = {
-			isa = PBXGroup;
-			children = (
-				963D09BB17A1D89D00AEE673 /* MainMenu.xib */,
-			);
-			name = "interface builder";
 			sourceTree = "<group>";
 		};
 		963D099A17A1D89D00AEE673 = {
 			isa = PBXGroup;
 			children = (
 				96E9AE29182B012E00DDBF4E /* static libs */,
-				96101760182A1428001D50E8 /* interface builder */,
 				9610175F182A1407001D50E8 /* src */,
 				963D09AD17A1D89D00AEE673 /* Supporting Files */,
 				963D09A517A1D89D00AEE673 /* Frameworks */,
@@ -228,8 +241,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9623054C182B391300913551 /* Application.xib in Resources */,
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
-				963D09BD17A1D89D00AEE673 /* MainMenu.xib in Resources */,
+				96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */,
+				9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */,
 				96E1639517A7528D009BE867 /* output.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -257,12 +272,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9644DE6A182C8F5A001EEFF0 /* mac_mount.cpp in Sources */,
 				9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */,
+				96230549182B2E5200913551 /* LBXCreateLockboxWindowController.mm in Sources */,
 				9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */,
-				9610176F182A1499001D50E8 /* LBXAppDelegate.m in Sources */,
+				9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */,
 				96101770182A1499001D50E8 /* lockbox_server.cpp in Sources */,
 				96101771182A1499001D50E8 /* mac_app_main.m in Sources */,
 				96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */,
+				96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -283,15 +301,6 @@
 				963D09B617A1D89D00AEE673 /* en */,
 			);
 			name = Credits.rtf;
-			sourceTree = "<group>";
-		};
-		963D09BB17A1D89D00AEE673 /* MainMenu.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				963D09BC17A1D89D00AEE673 /* en */,
-			);
-			name = MainMenu.xib;
-			path = Lockbox;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -398,6 +407,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../out/deps/lib\"",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -416,6 +426,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../out/deps/lib\"",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
