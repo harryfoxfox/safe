@@ -23,20 +23,26 @@ class MountDetails {
     port_t listen_port;
     std::string name;
     pthread_t thread_handle;
+    std::string mount_point;
 
 public:
     MountDetails(port_t listen_port_,
                  std::string name_,
-                 pthread_t thread_handle_)
+                 pthread_t thread_handle_,
+                 std::string mount_point_)
     : listen_port(listen_port_)
-    , name(name_)
-    , thread_handle(thread_handle_) {}
+    , name(std::move(name_))
+    , thread_handle(thread_handle_)
+    , mount_point(std::move(mount_point_)) {}
     
     void
     send_thread_termination_signal();
     
     void
     wait_for_thread_to_die();
+    
+    void
+    unmount_drive();
 };
     
 MountDetails
