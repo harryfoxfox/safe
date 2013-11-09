@@ -30,42 +30,34 @@
     return self;
 }
 
-
 - (id)initWithDelegate:(NSObject <LBXCreateLockboxWindowControllerDelegate> *) del
-                    fs:(std::shared_ptr<encfs::FsIO>)fs {
+                    fs:(std::shared_ptr<encfs::FsIO>)fs_ {
     NSLog(@"sup");
 
     self = [self initWithWindowNibName:@"LBXCreateLockboxWindowController"];
     if (self) {
         self.delegate = del;
-        self.fs = fs;
+        self->fs = fs_;
+        
+        self.window.canHide = NO;
+        [self.window center];
+        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        [self.window makeKeyAndOrderFront:self];
+        self.window.level = NSModalPanelWindowLevel;
     }
-    
     
     return self;
 }
 
 - (void)inputErrorAlertWithTitle:(NSString *)title message:(NSString *)msg {
-    NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText:title];
-    [alert setInformativeText:msg];
-    [alert addButtonWithTitle:@"OK"];
-    [alert setAlertStyle:NSWarningAlertStyle];
-    
-    [alert beginSheetModalForWindow:self.window
-                      modalDelegate:nil
-                     didEndSelector:nil
-                        contextInfo:nil];
+    inputErrorAlert(self.window, title, msg);
 }
 
 - (opt::optional<std::pair<encfs::Path, encfs::SecureMem>>) verifyFields {
-    // check validity of location
-    NSString *location = self.locationPathControl.URL.path;
-    
     // check if this location is a well-formed path
     opt::optional<encfs::Path> maybeLocationPath;
     try {
-        maybeLocationPath = self.fs->pathFromString([location UTF8String]);
+        maybeLocationPath = self->fs->pathFromString(self.locationPathControl.URL.path.UTF8String);
     }
     catch (...) {
         // location is bad
@@ -77,7 +69,7 @@
     auto locationPath = std::move(*maybeLocationPath);
     
     // check if location exists
-    if (!encfs::file_exists(self.fs, locationPath)) {
+    if (!encfs::file_exists(self->fs, locationPath)) {
         [self inputErrorAlertWithTitle:@"Location does not exist"
                                message:@"The location you have chosen does not exist."];
         return opt::nullopt;
@@ -94,7 +86,7 @@
     
     opt::optional<encfs::Path> maybeContainerPath;
     try {
-        maybeContainerPath = locationPath.join([name UTF8String]);
+        maybeContainerPath = locationPath.join(name.UTF8String);
     }
     catch (...) {
         [self inputErrorAlertWithTitle:@"Bad Name"
@@ -104,7 +96,7 @@
     
     auto containerPath = *maybeContainerPath;
     
-    if (encfs::file_exists(self.fs, containerPath)) {
+    if (encfs::file_exists(self->fs, containerPath)) {
         // path already exists
         [self inputErrorAlertWithTitle:@"File Already Exists"
                                message:@"A file already exists with the name you have chosen, please choose another name."];
@@ -128,8 +120,8 @@
         return opt::nullopt;
     }
     
-    auto mem = encfs::SecureMem([password length] + 1);
-    memcpy(mem.data(), [password UTF8String], mem.size());
+    auto mem = encfs::SecureMem([password lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1);
+    memcpy(mem.data(), password.UTF8String, mem.size());
 
     return std::make_pair(std::move(containerPath), std::move(mem));
 }
@@ -151,30 +143,32 @@
     auto onFail = ^(const std::exception_ptr & eptr) {
         // TODO log eptr
         (void) eptr;
+        
+        // TODO: delete directory and .encfs.txt
+        //       *only* if those are the only files that exist
         try {
-            self.fs->rmdir(encrypted_container_path);
+            self->fs->rmdir(encrypted_container_path);
         }
-        catch (const std::system_error &err) {
-            if (err.code() != std::errc::no_such_file_or_directory) throw;
+        catch (...) {
+            //TODO: log this error
         }
         
         [self inputErrorAlertWithTitle:@"Unknown Error"
                                message:@"Unknown error occurred while creating new Bitvault"];
     };
     
-    auto onMountSuccess = ^(const lockbox::mac::MountDetails & md) {
-        [self.delegate createDone:md];
+    auto onMountSuccess = ^(lockbox::mac::MountDetails md) {
+        [self.delegate createLockboxDone:self mount:std::move(md)];
     };
     
-    auto onSaveCfgSuccess = ^(const encfs::EncfsConfig & cfg_) {
+    auto onSaveCfgSuccess = ^(encfs::EncfsConfig cfg) {
         // success pass values to app
-        auto cfg = cfg_;
         showBlockingSheetMessage(self.window,
                                  @"Starting new Bitvault",
                                  onMountSuccess,
                                  onFail,
                                  lockbox::mac::mount_new_encfs_drive,
-                                 self.fs,
+                                 self->fs,
                                  encrypted_container_path, cfg, password);
     };
     
@@ -185,8 +179,8 @@
                                  onSaveCfgSuccess,
                                  onFail,
                                  ^{
-                                     self.fs->mkdir(encrypted_container_path);
-                                     encfs::write_config(self.fs, encrypted_container_path, cfg);
+                                     self->fs->mkdir(encrypted_container_path);
+                                     encfs::write_config(self->fs, encrypted_container_path, cfg);
                                      return cfg;
                                  });
     };
@@ -200,7 +194,7 @@
 
 - (IBAction)cancelWindow:(id)sender {
     (void)sender;
-    [self.window orderOut:self];
+    [self.delegate createLockboxCanceled:self];
 }
 
 - (void)windowDidLoad

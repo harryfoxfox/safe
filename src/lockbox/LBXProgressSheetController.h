@@ -40,11 +40,12 @@ createAndStartProgressSheet(NSWindow *w, NSString *msg) {
     return progressSheet;
 }
 
-template<class F, class ...Args>
+template<class R, class F, class ...Args>
+// TODO: maybe enable if typename std::result_of<F(Args...)>::type is convertible to R
 void
 showBlockingSheetMessage(NSWindow *w,
                          NSString *msg,
-                         void (^onSuccess)(const typename std::result_of<F(Args...)>::type &),
+                         void (^onSuccess)(R),
                          void (^onException)(const std::exception_ptr &),
                          F f,
                          Args... args) {
@@ -55,10 +56,13 @@ showBlockingSheetMessage(NSWindow *w,
                    ^{
                        try {
                            auto res = f(args...);
+                           auto resp = new decltype(res)(std::move(res));
                            dispatch_async(dispatch_get_main_queue(),
                                           ^{
+                                              auto res2 = std::move(*resp);
+                                              delete resp;
                                               [NSApp endSheet:progressSheet.window];
-                                              onSuccess(res);
+                                              onSuccess(std::move(res2));
                                           });
                        }
                        catch (...) {
@@ -103,3 +107,18 @@ showBlockingSheetMessageNoRet(NSWindow *w,
                        }
                    });
 };
+
+inline
+void
+inputErrorAlert(NSWindow *w, NSString *title, NSString *msg) {
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:title];
+    [alert setInformativeText:msg];
+    [alert addButtonWithTitle:@"OK"];
+    [alert setAlertStyle:NSWarningAlertStyle];
+    
+    [alert beginSheetModalForWindow:w
+                      modalDelegate:nil
+                     didEndSelector:nil
+                        contextInfo:nil];
+}

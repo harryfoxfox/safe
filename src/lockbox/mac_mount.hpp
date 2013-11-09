@@ -34,6 +34,27 @@ public:
     , name(std::move(name_))
     , thread_handle(thread_handle_)
     , mount_point(std::move(mount_point_)) {}
+
+    // copy is not allowed
+    MountDetails(const MountDetails &) {
+        // this should be a compile time error but that
+        // doesn't seem to place nice with clang++/libc++
+        throw std::runtime_error("COPY NOT SUPPORTED");
+    }
+    MountDetails &operator=(const MountDetails &) {
+        // this should be a compile time error but that
+        // doesn't seem to place nice with clang++/libc++
+        throw std::runtime_error("COPY NOT SUPPORTED");
+    }
+    
+    // move is allowed
+    MountDetails(MountDetails &&) = default;
+    MountDetails &operator=(MountDetails &&) = default;
+    
+    const std::string &
+    get_mount_name() const {
+        return name;
+    }
     
     void
     send_thread_termination_signal();
@@ -42,7 +63,10 @@ public:
     wait_for_thread_to_die();
     
     void
-    unmount_drive();
+    unmount();
+
+    void
+    open_mount() const;
 };
     
 MountDetails

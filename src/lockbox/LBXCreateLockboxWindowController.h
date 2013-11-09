@@ -12,18 +12,21 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class LBXCreateLockboxWindowController;
+
 @protocol LBXCreateLockboxWindowControllerDelegate <NSObject>
 
-- (void)userCanceled;
-- (void)createDone:(const lockbox::mac::MountDetails &)a;
+- (void)createLockboxCanceled:(LBXCreateLockboxWindowController *)wc;
+- (void)createLockboxDone:(LBXCreateLockboxWindowController *)wc
+                    mount:(lockbox::mac::MountDetails)a;
 
 @end
 
-@interface LBXCreateLockboxWindowController : NSWindowController
+@interface LBXCreateLockboxWindowController : NSWindowController {
+    std::shared_ptr<encfs::FsIO> fs;
+}
 
 @property (nonatomic, weak) NSObject <LBXCreateLockboxWindowControllerDelegate> *delegate;
-
-@property (assign) std::shared_ptr<encfs::FsIO> fs;
 
 @property (weak) IBOutlet NSPathControl *locationPathControl;
 @property (weak) IBOutlet NSTextField *nameTextField;

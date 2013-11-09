@@ -97,6 +97,19 @@ public:
     }
 };
 
+static
+std::string
+escape_double_quotes(std::string mount_name) {
+    std::vector<char> replaced;
+    for (const auto & c : mount_name) {
+        if (c == '"') {
+            replaced.push_back('\\');
+        }
+        replaced.push_back(c);
+    }
+    return std::string(replaced.begin(), replaced.end());
+}
+    
 void
 MountDetails::send_thread_termination_signal() {
 }
@@ -105,10 +118,22 @@ void
 MountDetails::wait_for_thread_to_die() {
 }
     
+void
+MountDetails::unmount() {
+}
+    
+void
+MountDetails::open_mount() const {
+    std::ostringstream os;
+    os << "open \"" << escape_double_quotes(this->mount_point) << "\"";
+    auto ret = system(os.str().c_str());
+    if (ret) throw std::runtime_error("couldn't open mount");
+}
+    
 static
 void *
 mount_thread_fn(void *p) {
-    // TODO: catch all exceptions, since this is a top-level
+    // TODO: catch all exceptions since this is a top-level
         
     auto params = std::unique_ptr<ServerThreadParams>((ServerThreadParams *) p);
         
@@ -152,6 +177,9 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                       const encfs::Path & encrypted_container_path,
                       const encfs::EncfsConfig & cfg,
                       const encfs::SecureMem & password) {
+    // TODO: catch all exceptions and clean up state if one occurs
+    // (etc. clean up threads, etc.)
+
     MountEvent event;
     
     // TODO: perhaps make this an argument
@@ -177,25 +205,19 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     if (!listen_port) throw std::runtime_error("failed to mount!");
     
     // mount new drive
-    std::vector<char> replaced;
-    for (const auto & c : mount_name) {
-        if (c == '"') {
-            replaced.push_back('\\');
-        }
-        replaced.push_back(c);
-    }
-    mount_name = std::string(replaced.begin(), replaced.end());
-    
     char *mount_point_template = strdup("/Volumes/bvmount.XXXXXXXXXXX");
     if (!mount_point_template) throw std::runtime_error("couldn't dup string");
     auto _free_resource =
         lockbox::create_dynamic_managed_resource(mount_point_template, free);
-    
     char *mount_point = mkdtemp(mount_point_template);
     if (!mount_point) throw std::runtime_error("couldn't mkdtemp()");
+    
+    // TODO: fix mounting of paths with the '"' character in them
+    auto escaped_mount_name = escape_double_quotes(mount_name);
+    
     std::ostringstream os;
-    os << "mount_webdav -S -v \"" << mount_name << "\" \"http://localhost:" <<
-    *listen_port << "/" << mount_name << "/\" \"" << mount_point << "\"";
+    os << "mount_webdav -S -v \"" << escaped_mount_name << "\" \"http://localhost:" <<
+    *listen_port << "/" << escaped_mount_name << "/\" \"" << mount_point << "\"";
     auto mount_command = os.str();
     
     auto ret_system = system(mount_command.c_str());

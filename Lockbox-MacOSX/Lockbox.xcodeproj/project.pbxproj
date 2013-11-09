@@ -18,7 +18,6 @@
 		9623054C182B391300913551 /* Application.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9623054B182B391300913551 /* Application.xib */; };
 		96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96230551182C708400913551 /* LBXProgressSheetController.mm */; };
 		96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96230552182C708400913551 /* LBXProgressSheetController.xib */; };
-		96358D33182AFE2600BE18E8 /* libbotan-1.10.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2D182AFE2600BE18E8 /* libbotan-1.10.a */; };
 		96358D34182AFE2600BE18E8 /* libencfs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2E182AFE2600BE18E8 /* libencfs.a */; };
 		96358D35182AFE2600BE18E8 /* libglog.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2F182AFE2600BE18E8 /* libglog.a */; };
 		96358D36182AFE2600BE18E8 /* libprotobuf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D30182AFE2600BE18E8 /* libprotobuf.a */; };
@@ -29,6 +28,8 @@
 		963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 963D09AF17A1D89D00AEE673 /* InfoPlist.strings */; };
 		9644DE6A182C8F5A001EEFF0 /* mac_mount.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9644DE68182C8F5A001EEFF0 /* mac_mount.cpp */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
+		96EEC9B5182DAE3D00A31087 /* LBXStartLockboxWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96EEC9B3182DAE3D00A31087 /* LBXStartLockboxWindowController.mm */; };
+		96EEC9B6182DAE3D00A31087 /* LBXStartLockboxWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96EEC9B4182DAE3D00A31087 /* LBXStartLockboxWindowController.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,7 +52,6 @@
 		96230550182C708400913551 /* LBXProgressSheetController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXProgressSheetController.h; path = ../src/lockbox/LBXProgressSheetController.h; sourceTree = "<group>"; };
 		96230551182C708400913551 /* LBXProgressSheetController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXProgressSheetController.mm; path = ../src/lockbox/LBXProgressSheetController.mm; sourceTree = "<group>"; };
 		96230552182C708400913551 /* LBXProgressSheetController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXProgressSheetController.xib; path = ../src/lockbox/LBXProgressSheetController.xib; sourceTree = "<group>"; };
-		96358D2D182AFE2600BE18E8 /* libbotan-1.10.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libbotan-1.10.a"; path = "../out/deps/lib/libbotan-1.10.a"; sourceTree = "<group>"; };
 		96358D2E182AFE2600BE18E8 /* libencfs.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libencfs.a; path = ../out/deps/lib/libencfs.a; sourceTree = "<group>"; };
 		96358D2F182AFE2600BE18E8 /* libglog.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglog.a; path = ../out/deps/lib/libglog.a; sourceTree = "<group>"; };
 		96358D30182AFE2600BE18E8 /* libprotobuf.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libprotobuf.a; path = ../out/deps/lib/libprotobuf.a; sourceTree = "<group>"; };
@@ -72,6 +72,9 @@
 		9644DE69182C8F5A001EEFF0 /* mac_mount.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mac_mount.hpp; path = ../src/lockbox/mac_mount.hpp; sourceTree = "<group>"; };
 		96E1639217A74F55009BE867 /* Lock-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Lock-icon.png"; path = "../Lock-icon.png"; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
+		96EEC9B2182DAE3D00A31087 /* LBXStartLockboxWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXStartLockboxWindowController.h; path = ../src/lockbox/LBXStartLockboxWindowController.h; sourceTree = "<group>"; };
+		96EEC9B3182DAE3D00A31087 /* LBXStartLockboxWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXStartLockboxWindowController.mm; path = ../src/lockbox/LBXStartLockboxWindowController.mm; sourceTree = "<group>"; };
+		96EEC9B4182DAE3D00A31087 /* LBXStartLockboxWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXStartLockboxWindowController.xib; path = ../src/lockbox/LBXStartLockboxWindowController.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,7 +83,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				96358D3A182AFE4D00BE18E8 /* Security.framework in Frameworks */,
-				96358D33182AFE2600BE18E8 /* libbotan-1.10.a in Frameworks */,
 				96358D34182AFE2600BE18E8 /* libencfs.a in Frameworks */,
 				96358D35182AFE2600BE18E8 /* libglog.a in Frameworks */,
 				96358D36182AFE2600BE18E8 /* libprotobuf.a in Frameworks */,
@@ -117,6 +119,9 @@
 				96230552182C708400913551 /* LBXProgressSheetController.xib */,
 				9644DE68182C8F5A001EEFF0 /* mac_mount.cpp */,
 				9644DE69182C8F5A001EEFF0 /* mac_mount.hpp */,
+				96EEC9B2182DAE3D00A31087 /* LBXStartLockboxWindowController.h */,
+				96EEC9B3182DAE3D00A31087 /* LBXStartLockboxWindowController.mm */,
+				96EEC9B4182DAE3D00A31087 /* LBXStartLockboxWindowController.xib */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -178,7 +183,6 @@
 		96E9AE29182B012E00DDBF4E /* static libs */ = {
 			isa = PBXGroup;
 			children = (
-				96358D2D182AFE2600BE18E8 /* libbotan-1.10.a */,
 				96358D2E182AFE2600BE18E8 /* libencfs.a */,
 				96358D2F182AFE2600BE18E8 /* libglog.a */,
 				96358D30182AFE2600BE18E8 /* libprotobuf.a */,
@@ -245,6 +249,7 @@
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
 				96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */,
 				9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */,
+				96EEC9B6182DAE3D00A31087 /* LBXStartLockboxWindowController.xib in Resources */,
 				96E1639517A7528D009BE867 /* output.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -278,6 +283,7 @@
 				9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */,
 				9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */,
 				96101770182A1499001D50E8 /* lockbox_server.cpp in Sources */,
+				96EEC9B5182DAE3D00A31087 /* LBXStartLockboxWindowController.mm in Sources */,
 				96101771182A1499001D50E8 /* mac_app_main.m in Sources */,
 				96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */,
 				96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */,
