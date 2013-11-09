@@ -60,6 +60,7 @@ global_webdav_init() {
   /* init sockets */
   bool success_init_sockets = false;
   bool success_init_xml = false;
+  bool success_ignore_sigpipe = false;
 
   success_init_sockets = init_socket_subsystem();
   if (!success_init_sockets) {
@@ -69,6 +70,9 @@ global_webdav_init() {
   /* init xml parser */
   init_xml_parser();
   success_init_xml = true;
+    
+  success_ignore_sigpipe = ignore_sigpipe();
+  if (!success_ignore_sigpipe) goto fail;
 
   return true;
 

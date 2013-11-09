@@ -20,6 +20,10 @@
 
 #include <ctime>
 
+#include <libgen.h>
+
+#include <sys/stat.h>
+
 namespace lockbox { namespace mac {
 
 class MountEvent;
@@ -111,23 +115,61 @@ escape_double_quotes(std::string mount_name) {
 }
     
 void
-MountDetails::send_thread_termination_signal() {
+MountDetails::signal_stop() const {
 }
     
 void
-MountDetails::wait_for_thread_to_die() {
+MountDetails::wait_until_stopped() const {
 }
     
 void
 MountDetails::unmount() {
+    if (!is_mounted) throw std::runtime_error("isn't mounted!");
+    std::ostringstream os;
+    os << "umount \"" << escape_double_quotes(this->mount_point) << "\"";
+    auto ret = system(os.str().c_str());
+    if (ret) throw std::runtime_error("couldn't unmount");
+    is_mounted = false;
 }
     
 void
 MountDetails::open_mount() const {
+    if (!is_mounted) throw std::runtime_error("isn't mounted!");
     std::ostringstream os;
     os << "open \"" << escape_double_quotes(this->mount_point) << "\"";
     auto ret = system(os.str().c_str());
     if (ret) throw std::runtime_error("couldn't open mount");
+}
+
+bool
+MountDetails::is_still_mounted() const {
+    // we compare dev ids of the mount point and its parent
+    // if they are different when we consider it unmounted
+    // NB: this isn't perfect but it's good enough for now
+    //     it would be better to check if the mount point
+    //     is still connected to the right webdav server
+    
+
+    struct stat child_st;
+    auto ret_stat_1 = stat(this->mount_point.c_str(), &child_st);
+    if (ret_stat_1 < 0) {
+        if (errno == ENOENT) return false;
+        throw std::runtime_error("bad stat");
+    }
+    
+    char *mp_copy = strdup(this->mount_point.c_str());
+    if (!mp_copy) throw std::runtime_error("couldn't dup string");
+    auto _free_resource = lockbox::create_destroyer(mp_copy, free);
+    
+    char *parent = dirname(mp_copy);
+    struct stat parent_st;
+    auto ret_stat_2 = lstat(parent, &parent_st);
+    if (ret_stat_2 < 0) {
+        if (errno == ENOENT) return false;
+        throw std::runtime_error("bad stat");
+    }
+    
+    return parent_st.st_dev != child_st.st_dev;
 }
     
 static

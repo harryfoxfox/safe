@@ -24,6 +24,7 @@ class MountDetails {
     std::string name;
     pthread_t thread_handle;
     std::string mount_point;
+    bool is_mounted;
 
 public:
     MountDetails(port_t listen_port_,
@@ -33,7 +34,8 @@ public:
     : listen_port(listen_port_)
     , name(std::move(name_))
     , thread_handle(thread_handle_)
-    , mount_point(std::move(mount_point_)) {}
+    , mount_point(std::move(mount_point_))
+    , is_mounted(true) {}
 
     // copy is not allowed
     MountDetails(const MountDetails &) = delete;
@@ -48,11 +50,14 @@ public:
         return name;
     }
     
-    void
-    send_thread_termination_signal();
+    bool
+    is_still_mounted() const;
     
     void
-    wait_for_thread_to_die();
+    signal_stop() const;
+    
+    void
+    wait_until_stopped() const;
     
     void
     unmount();

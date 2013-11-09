@@ -58,7 +58,7 @@
 		96358D31182AFE2600BE18E8 /* libtinyxml.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtinyxml.a; path = ../out/deps/lib/libtinyxml.a; sourceTree = "<group>"; };
 		96358D32182AFE2600BE18E8 /* libwebdav_server_fs.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwebdav_server_fs.a; path = ../out/deps/lib/libwebdav_server_fs.a; sourceTree = "<group>"; };
 		96358D39182AFE4D00BE18E8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
-		963D09A317A1D89D00AEE673 /* Lockbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lockbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		963D09A317A1D89D00AEE673 /* Bitvault.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bitvault.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		963D09A617A1D89D00AEE673 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		963D09A917A1D89D00AEE673 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		963D09AA17A1D89D00AEE673 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -140,7 +140,7 @@
 		963D09A417A1D89D00AEE673 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				963D09A317A1D89D00AEE673 /* Lockbox.app */,
+				963D09A317A1D89D00AEE673 /* Bitvault.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -210,7 +210,7 @@
 			);
 			name = Lockbox;
 			productName = Lockbox;
-			productReference = 963D09A317A1D89D00AEE673 /* Lockbox.app */;
+			productReference = 963D09A317A1D89D00AEE673 /* Bitvault.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -416,7 +416,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Bitvault;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -435,7 +435,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Bitvault;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

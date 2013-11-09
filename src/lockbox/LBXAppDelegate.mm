@@ -14,10 +14,6 @@
 
 #import <davfuse/logging.h>
 
-#import <libgen.h>
-
-#import <sys/stat.h>
-
 enum {
     CHECK_MOUNT_INTERVAL_IN_SECONDS = 1,
 };
@@ -86,7 +82,7 @@ enum {
 }
 
 - (void)quitBitvault:(id)sender {
-    (void)sender;
+    [NSApp terminate:sender];
 }
 
 - (NSMenuItem *)_addItemToMenu:(NSMenu *)menu
@@ -181,44 +177,40 @@ enum {
     logging_set_global_level(LOG_DEBUG);
     log_debug("Hello world!");
     
+    lockbox::global_webdav_init();
+    
     self->native_fs = lockbox::create_native_fs();
     self.createWindows = [NSMutableArray array];
     self.startWindows = [NSMutableArray array];
 
     [self _setupStatusBar];
+    
+    // kickoff mount watch timer
+    [self timerFire:self];
+}
+
+- (void)applicationWillTerminate:(NSNotification *)notification {
+    (void)notification;
+    
+    for (auto & md : self->mounts) {
+        md.unmount();
+    }
+    
+    lockbox::global_webdav_shutdown();
 }
 
 - (void)timerFire:(id)p {
     (void)p;
-    struct stat parent_st;
-    struct stat child_st;
-    int ret_stat_1;
-    int ret_stat_2;
 
-
-    /* this is ghetto */
-//    const char *child = self.dstPathControl.URL.path.UTF8String;
-//    char *dup = strdup(self.dstPathControl.URL.path.UTF8String);
-    char *child = NULL;
-    char *parent = dirname(NULL);
-
-    NSLog(@"CHILD: %s, PARENT: %s", child, parent);
-
-    ret_stat_1 = stat(child, &child_st);
-    if (ret_stat_1 < 0) {
-        goto done;
+    for (auto it = self->mounts.begin(); it != self->mounts.end();) {
+        if (!it->is_still_mounted()) {
+            it->signal_stop();
+            it = self->mounts.erase(it);
+            [self _updateStatusMenu];
+        }
+        else ++it;
     }
 
-    ret_stat_2 = lstat(parent, &parent_st);
-    if (ret_stat_2 < 0) {
-        goto done;
-    }
-
-    if (parent_st.st_dev == child_st.st_dev) {
-        [[NSApplication sharedApplication] terminate:self];
-    }
-
-done:
     [self performSelector:@selector(timerFire:) withObject:nil afterDelay:CHECK_MOUNT_INTERVAL_IN_SECONDS];
 }
 
