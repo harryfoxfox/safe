@@ -36,16 +36,8 @@ public:
     , mount_point(std::move(mount_point_)) {}
 
     // copy is not allowed
-    MountDetails(const MountDetails &) {
-        // this should be a compile time error but that
-        // doesn't seem to place nice with clang++/libc++
-        throw std::runtime_error("COPY NOT SUPPORTED");
-    }
-    MountDetails &operator=(const MountDetails &) {
-        // this should be a compile time error but that
-        // doesn't seem to place nice with clang++/libc++
-        throw std::runtime_error("COPY NOT SUPPORTED");
-    }
+    MountDetails(const MountDetails &) = delete;
+    MountDetails &operator=(const MountDetails &) = delete;
     
     // move is allowed
     MountDetails(MountDetails &&) = default;
