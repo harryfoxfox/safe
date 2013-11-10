@@ -9,7 +9,7 @@
 #import <lockbox/LBXCreateLockboxWindowController.h>
 #import <lockbox/LBXStartLockboxWindowController.h>
 
-#import <lockbox/mac_mount.hpp>
+#import <lockbox/mount_mac.hpp>
 
 #import <Cocoa/Cocoa.h>
 

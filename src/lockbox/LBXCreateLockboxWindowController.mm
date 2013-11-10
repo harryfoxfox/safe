@@ -9,7 +9,7 @@
 #import <lockbox/LBXCreateLockboxWindowController.h>
 #import <lockbox/LBXProgressSheetController.h>
 
-#include <lockbox/mac_mount.hpp>
+#include <lockbox/mount_mac.hpp>
 
 #include <encfs/fs/FileUtils.h>
 

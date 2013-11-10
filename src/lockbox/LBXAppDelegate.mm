@@ -8,7 +8,7 @@
 
 #import <lockbox/LBXAppDelegate.h>
 
-#import <lockbox/mac_mount.hpp>
+#import <lockbox/mount_mac.hpp>
 
 #import <lockbox/lockbox_server.hpp>
 

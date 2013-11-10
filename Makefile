@@ -110,15 +110,15 @@ SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp SecureMemPasswordReader.cpp
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
 
-WINDOWS_APP_MAIN_SRCS = windows_app_main.cpp windows_app_main.rc $(SRCS)
+WINDOWS_APP_MAIN_SRCS = app_main_windows.cpp app_main_windows.rc $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 # dependencies
 
 src/lockbox/*.o: Makefile src/lockbox/*.hpp src/lockbox/*.h
 
-src/lockbox/windows_app_main.rc.o: src/lockbox/windows_app_main.rc \
-	src/lockbox/windows_app_main.manifest
+src/lockbox/app_main_windows.rc.o: src/lockbox/app_main_windows.rc \
+	src/lockbox/app_main_windows.manifest
 
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile

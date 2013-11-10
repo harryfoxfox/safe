@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Rian Hunter. All rights reserved.
 //
 
-#include <lockbox/mac_mount.hpp>
+#include <lockbox/mount_mac.hpp>
 
 #include <encfs/fs/FsIO.h>
 
