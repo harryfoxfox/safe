@@ -32,7 +32,12 @@ namespace lockbox { namespace mac {
 class MountEvent;
     
 struct ServerThreadParams {
-    MountEvent *event;
+    std::shared_ptr<MountEvent> event;
+    // the control-block of std::shared_ptr is thread-safe
+    // (i.e. multiple threads of control can have a copy of a root shared_ptr)
+    // a single std::shared_ptr is not thread-safe, this use-case doesn't apply to us
+    // for proper operation the encfs::FsIO implementation used
+    // must be thread-safe as well, the mac native fs is thread-safe so that isn't a concern
     std::shared_ptr<encfs::FsIO> native_fs;
     encfs::Path encrypted_container_path;
     encfs::EncfsConfig encfs_config;
@@ -246,14 +251,14 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     // TODO: catch all exceptions and clean up state if one occurs
     // (etc. clean up threads, etc.)
 
-    MountEvent event;
+    auto event = std::make_shared<MountEvent>();
     
     // TODO: perhaps make this an argument
     auto mount_name = encrypted_container_path.basename();
     
     // create thread details
     auto thread_params = new ServerThreadParams {
-        &event,
+        event,
         native_fs,
         encrypted_container_path,
         cfg,
@@ -267,7 +272,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     if (ret) throw std::runtime_error("pthread_create");
     
     // wait for server to run
-    auto listen_port = event.wait_for_mount_msg();
+    auto listen_port = event->wait_for_mount_msg();
     if (!listen_port) throw std::runtime_error("failed to mount!");
     
     // mount new drive
@@ -288,7 +293,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
 
     // return new mount details with thread info
     return MountDetails(*listen_port, std::move(mount_name),
-                        thread, mount_point_template);
+                        thread, mount_point_template, event);
 }
     
 }}

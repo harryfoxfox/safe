@@ -19,23 +19,28 @@
 
 namespace lockbox { namespace mac {
 
+class MountEvent;
+
 class MountDetails {
     port_t listen_port;
     std::string name;
     pthread_t thread_handle;
     std::string mount_point;
     bool is_mounted;
+    std::shared_ptr<MountEvent> mount_event;
 
 public:
     MountDetails(port_t listen_port_,
                  std::string name_,
                  pthread_t thread_handle_,
-                 std::string mount_point_)
+                 std::string mount_point_,
+                 std::shared_ptr<MountEvent> mount_event_)
     : listen_port(listen_port_)
     , name(std::move(name_))
     , thread_handle(thread_handle_)
     , mount_point(std::move(mount_point_))
-    , is_mounted(true) {}
+    , is_mounted(true)
+    , mount_event(std::move(mount_event_)) {}
 
     // copy is not allowed
     MountDetails(const MountDetails &) = delete;
