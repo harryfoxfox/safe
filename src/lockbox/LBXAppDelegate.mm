@@ -116,7 +116,7 @@ enum {
     // TODO: detect when alt is pressed to change Open -> Stop
     NSInteger tag = 0;
     for (const auto & md : self->mounts) {
-        NSString *title = [NSString stringWithFormat:@"Open %s",
+        NSString *title = [NSString stringWithFormat:@"Open \"%s\"",
                            md.get_mount_name().c_str(), nil];
         NSMenuItem *mi = [self _addItemToMenu:menu
                                         title:title
