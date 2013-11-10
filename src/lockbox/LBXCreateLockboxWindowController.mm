@@ -57,6 +57,7 @@
 
 - (void)windowWillClose:(NSNotification *)notification {
     (void) notification;
+    [self.window orderOut:self];
     [self.delegate createLockboxCanceled:self];
 }
 
@@ -165,18 +166,18 @@
         }
         
         [self inputErrorAlertWithTitle:@"Unknown Error"
-                               message:@"Unknown error occurred while creating new Bitvault"];
+                               message:@"Unknown error occurred while creating new Bitvault."];
     };
     
     auto onMountSuccess = ^(lockbox::mac::MountDetails md) {
         [self.delegate createLockboxDone:self mount:std::move(md)];
-        self.delegate = nil;
+        [self.window performClose:self];
     };
     
     auto onSaveCfgSuccess = ^(encfs::EncfsConfig cfg) {
         // success pass values to app
         showBlockingSheetMessage(self.window,
-                                 @"Starting new Bitvault",
+                                 @"Mounting new Bitvault",
                                  onMountSuccess,
                                  onFail,
                                  lockbox::mac::mount_new_encfs_drive,
@@ -205,9 +206,7 @@
 }
 
 - (IBAction)cancelWindow:(id)sender {
-    (void)sender;
-    [self.delegate createLockboxCanceled:self];
-    self.delegate = nil;
+    [self.window performClose:sender];
 }
 
 - (void)windowDidLoad

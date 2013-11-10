@@ -28,13 +28,18 @@ enum {
 }
 
 - (void)restoreLastActive {
-    [self.lastActiveApp activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+    if (!self.createWindows.count && !self.mountWindows.count) {
+        [self.lastActiveApp activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+    }
 }
 
 - (void)_newMount:(lockbox::mac::MountDetails)md {
     self->mounts.push_back(std::move(md));
     [self _updateStatusMenu];
     self->mounts.back().open_mount();
+    [self notifyUserTitle:@"Success"
+                  message:[NSString stringWithFormat:@"You've successfully mounted \"%s.\"",
+                           self->mounts.back().get_mount_name().c_str(), nil]];
 }
 
 - (void)createLockboxCanceled:(LBXCreateLockboxWindowController *)wc {
@@ -44,7 +49,7 @@ enum {
 
 - (void)createLockboxDone:(LBXCreateLockboxWindowController *)wc
                     mount:(lockbox::mac::MountDetails)md {
-    [self.createWindows removeObject:wc];
+    (void) wc;
     [self _newMount:std::move(md)];
 }
 
@@ -55,7 +60,7 @@ enum {
 
 - (void)startLockboxDone:(LBXMountLockboxWindowController *)wc
                    mount:(lockbox::mac::MountDetails)md {
-    [self.mountWindows removeObject:wc];
+    (void)wc;
     [self _newMount:std::move(md)];
 }
 
@@ -96,6 +101,10 @@ enum {
 
 - (void)testBubble:(id)sender {
     (void)sender;
+    [self notifyUserTitle:@"Short Title"
+                  message:(@"Very long message full of meaningful info that you "
+                           @"will find very interesting because you love to read "
+                           @"tray icon bubbles. Don't you? Don't you?!?!")];
 }
 
 - (void)quitBitvault:(id)sender {
@@ -188,7 +197,110 @@ enum {
 }
 
 - (IBAction)aboutWindowOK:(NSButton *)sender {
-    [sender.window close];
+    [sender.window performClose:sender];
+}
+
+void PostMouseEvent(CGMouseButton button, CGEventType type, const CGPoint point)
+{
+    CGEventRef theEvent = CGEventCreateMouseEvent(NULL, type, point, button);
+    CGEventSetType(theEvent, type);
+    CGEventPost(kCGHIDEventTap, theEvent);
+    CFRelease(theEvent);
+}
+
+- (void)clickStatusItem {
+    NSWindow *statusItemWindow;
+    for (NSWindow *w in [NSApplication.sharedApplication windows]) {
+        if (!w.title.length) {
+            // window without a title, assuming this is our status bar window
+            statusItemWindow = w;
+            break;
+        }
+    }
+    NSRect f = statusItemWindow.frame;
+    CGFloat x_to_press = (f.origin.x + f.size.width/2);
+    assert(!NSStatusBar.systemStatusBar.isVertical);
+    CGPoint to_press = {x_to_press, NSStatusBar.systemStatusBar.thickness / 2};
+    PostMouseEvent(kCGMouseButtonLeft, kCGEventLeftMouseDown, to_press);
+}
+
+- (BOOL)haveUserNotifications {
+    return NSClassFromString(@"NSUserNotificationCenter") == nil
+    ? NO
+    : YES;
+}
+
+static NSString *const LBX_ACTION_KEY = @"_lbx_action";
+
+- (void)notifyUserTitle:(NSString *)title
+                message:(NSString *)msg
+                 action:(SEL) sel {
+    if (![self haveUserNotifications]) return;
+    
+    NSUserNotification *user_not = [[NSUserNotification alloc] init];
+    user_not.title = title;
+    user_not.informativeText = msg;
+    user_not.deliveryDate = [NSDate dateWithTimeInterval:0 sinceDate:NSDate.date];
+    user_not.soundName = NSUserNotificationDefaultSoundName;
+    
+    if (sel) {
+        user_not.userInfo = @{LBX_ACTION_KEY: NSStringFromSelector(sel)};
+    }
+
+    [NSUserNotificationCenter.defaultUserNotificationCenter
+     scheduleNotification:user_not];
+}
+
+- (void)notifyUserTitle:(NSString *)title
+                message:(NSString *)msg {
+    [self notifyUserTitle:title message:msg action:nil];
+}
+
+#define SuppressPerformSelectorLeakWarning(Stuff) \
+do { \
+_Pragma("clang diagnostic push") \
+_Pragma("clang diagnostic ignored \"-Warc-performSelector-leaks\"") \
+Stuff; \
+_Pragma("clang diagnostic pop") \
+} while (0)
+
+// always present and remove notifications, to get growl-like functionality
+- (void)userNotificationCenter:(NSUserNotificationCenter *)center
+       didActivateNotification:(NSUserNotification *)notification {
+    (void)center;
+    if (notification.activationType == NSUserNotificationActivationTypeContentsClicked &&
+        notification.userInfo &&
+        notification.userInfo[LBX_ACTION_KEY]) {
+        SuppressPerformSelectorLeakWarning([self performSelector:NSSelectorFromString(notification.userInfo[LBX_ACTION_KEY])]);
+    }
+}
+
+- (void)userNotificationCenter:(NSUserNotificationCenter *)center
+        didDeliverNotification:(NSUserNotification *)notification {
+    [center removeDeliveredNotification:notification];
+}
+
+- (BOOL)userNotificationCenter:(NSUserNotificationCenter *)center
+     shouldPresentNotification:(NSUserNotification *)notification {
+    (void) center;
+    (void) notification;
+    return YES;
+}
+
+- (void)windowWillClose:(NSNotification *)notification {
+    (void) notification;
+    
+    [self.aboutWindow orderOut:self];
+    self.aboutWindow = nil;
+    
+    [self _setupStatusBar];
+    
+    if ([self haveUserNotifications]) {
+        [self notifyUserTitle:@"Bitvault is now Running!"
+                      message:@"If you need to use Bitvault, just click on Bitvault menu bar icon."
+                       action:@selector(clickStatusItem)];
+    }
+    else [self clickStatusItem];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
@@ -203,8 +315,6 @@ enum {
     self->native_fs = lockbox::create_native_fs();
     self.createWindows = [NSMutableArray array];
     self.mountWindows = [NSMutableArray array];
-
-    [self _setupStatusBar];
     
     // get notification whenever active application changes,
     // we preserve this so we can switch back when the user
@@ -221,7 +331,12 @@ enum {
                                                                name:NSWorkspaceDidUnmountNotification
                                                              object:nil];
     
+    if ([self haveUserNotifications]) {
+        NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
+    }
+    
     [NSBundle loadNibNamed:@"LBXAboutWindow" owner:self];
+    self.aboutWindow.delegate = self;
     self.aboutWindow.level = NSModalPanelWindowLevel;
     self.aboutWindowText.stringValue = [NSString stringWithUTF8String:LOCKBOX_ABOUT_BLURB];
 }
@@ -246,8 +361,12 @@ enum {
     for (auto it = self->mounts.begin(); it != self->mounts.end();) {
         if (!it->is_still_mounted()) {
             it->signal_stop();
+            auto mount_name = it->get_mount_name();
             it = self->mounts.erase(it);
             [self _updateStatusMenu];
+            [self notifyUserTitle:@"Success"
+                          message:[NSString stringWithFormat:@"You've successfully unmounted \"%s.\"",
+                                   mount_name.c_str(), nil]];
         }
         else ++it;
     }

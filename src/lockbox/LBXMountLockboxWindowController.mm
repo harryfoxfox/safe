@@ -53,6 +53,7 @@
 
 - (void)windowWillClose:(NSNotification *)notification {
     (void) notification;
+    [self.window orderOut:self];
     [self.delegate startLockboxCanceled:self];
 }
 
@@ -70,7 +71,7 @@
     }
     catch (...) {
         inputErrorAlert(self.window, @"Bad Location",
-                        @"The location you chose is not a valid path");
+                        @"The location you chose is not a valid path.");
         return;
     }
     
@@ -111,20 +112,20 @@
         if (!alerted) {
             inputErrorAlert(self.window,
                             @"Unknown Error",
-                            @"Unknown error occurred while starting the Bitvault");
+                            @"Unknown error occurred while starting the Bitvault.");
         }
     };
     
     auto onMountSuccess = ^(lockbox::mac::MountDetails md) {
         [self.delegate startLockboxDone:self mount:std::move(md)];
-        self.delegate = nil;
+        [self.window performClose:self];
     };
     
     auto onVerifySuccess = ^(opt::optional<encfs::EncfsConfig> maybeConfig) {
         if (maybeConfig) {
             // success pass values to app
             showBlockingSheetMessage(self.window,
-                                     @"Starting Existing Bitvault",
+                                     @"Mounting Existing Bitvault...",
                                      onMountSuccess,
                                      onFail,
                                      lockbox::mac::mount_new_encfs_drive,
@@ -134,7 +135,7 @@
         else {
             inputErrorAlert(self.window,
                             @"Password is Incorrect",
-                            @"The password you have entered is incorrect");
+                            @"The password you have entered is incorrect.");
         }
     };
     
@@ -159,9 +160,7 @@
 }
 
 - (IBAction)cancelStart:(id)sender {
-    (void)sender;
-    [self.delegate startLockboxCanceled:self];
-    self.delegate = nil;
+    [self.window performClose:sender];
 }
 
 - (void)windowDidLoad
