@@ -21,7 +21,7 @@
 @end
 
 
-@interface LBXMountLockboxWindowController : NSWindowController {
+@interface LBXMountLockboxWindowController : NSWindowController <NSWindowDelegate> {
     std::shared_ptr<encfs::FsIO> fs;
 }
 

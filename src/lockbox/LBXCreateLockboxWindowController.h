@@ -22,7 +22,7 @@
 
 @end
 
-@interface LBXCreateLockboxWindowController : NSWindowController {
+@interface LBXCreateLockboxWindowController : NSWindowController <NSWindowDelegate> {
     std::shared_ptr<encfs::FsIO> fs;
 }
 

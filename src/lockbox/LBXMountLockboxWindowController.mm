@@ -45,9 +45,15 @@
         [self.window center];
         [self.window makeKeyAndOrderFront:self];
         self.window.level = NSModalPanelWindowLevel;
+        self.window.delegate = self;
     }
     
     return self;
+}
+
+- (void)windowWillClose:(NSNotification *)notification {
+    (void) notification;
+    [self.delegate startLockboxCanceled:self];
 }
 
 - (IBAction)confirmStart:(id)sender {
@@ -111,6 +117,7 @@
     
     auto onMountSuccess = ^(lockbox::mac::MountDetails md) {
         [self.delegate startLockboxDone:self mount:std::move(md)];
+        self.delegate = nil;
     };
     
     auto onVerifySuccess = ^(opt::optional<encfs::EncfsConfig> maybeConfig) {
@@ -154,6 +161,7 @@
 - (IBAction)cancelStart:(id)sender {
     (void)sender;
     [self.delegate startLockboxCanceled:self];
+    self.delegate = nil;
 }
 
 - (void)windowDidLoad
