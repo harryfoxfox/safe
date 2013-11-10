@@ -15,9 +15,9 @@
 		96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */; };
 		96230549182B2E5200913551 /* LBXCreateLockboxWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */; };
 		9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */; };
-		9623054C182B391300913551 /* Application.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9623054B182B391300913551 /* Application.xib */; };
 		96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96230551182C708400913551 /* LBXProgressSheetController.mm */; };
 		96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96230552182C708400913551 /* LBXProgressSheetController.xib */; };
+		9632FB72182F107F003C3F2E /* LBXAppMain.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9632FB71182F107F003C3F2E /* LBXAppMain.xib */; };
 		96358D34182AFE2600BE18E8 /* libencfs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2E182AFE2600BE18E8 /* libencfs.a */; };
 		96358D35182AFE2600BE18E8 /* libglog.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2F182AFE2600BE18E8 /* libglog.a */; };
 		96358D36182AFE2600BE18E8 /* libprotobuf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D30182AFE2600BE18E8 /* libprotobuf.a */; };
@@ -48,10 +48,10 @@
 		96230546182B2E5200913551 /* LBXCreateLockboxWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXCreateLockboxWindowController.h; path = ../src/lockbox/LBXCreateLockboxWindowController.h; sourceTree = "<group>"; };
 		96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXCreateLockboxWindowController.mm; path = ../src/lockbox/LBXCreateLockboxWindowController.mm; sourceTree = "<group>"; };
 		96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXCreateLockboxWindowController.xib; path = ../src/lockbox/LBXCreateLockboxWindowController.xib; sourceTree = "<group>"; };
-		9623054B182B391300913551 /* Application.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = Application.xib; sourceTree = "<group>"; };
 		96230550182C708400913551 /* LBXProgressSheetController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXProgressSheetController.h; path = ../src/lockbox/LBXProgressSheetController.h; sourceTree = "<group>"; };
 		96230551182C708400913551 /* LBXProgressSheetController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXProgressSheetController.mm; path = ../src/lockbox/LBXProgressSheetController.mm; sourceTree = "<group>"; };
 		96230552182C708400913551 /* LBXProgressSheetController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXProgressSheetController.xib; path = ../src/lockbox/LBXProgressSheetController.xib; sourceTree = "<group>"; };
+		9632FB71182F107F003C3F2E /* LBXAppMain.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXAppMain.xib; path = ../src/lockbox/LBXAppMain.xib; sourceTree = "<group>"; };
 		96358D2E182AFE2600BE18E8 /* libencfs.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libencfs.a; path = ../out/deps/lib/libencfs.a; sourceTree = "<group>"; };
 		96358D2F182AFE2600BE18E8 /* libglog.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglog.a; path = ../out/deps/lib/libglog.a; sourceTree = "<group>"; };
 		96358D30182AFE2600BE18E8 /* libprotobuf.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libprotobuf.a; path = ../out/deps/lib/libprotobuf.a; sourceTree = "<group>"; };
@@ -98,7 +98,7 @@
 		9610175F182A1407001D50E8 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				9623054B182B391300913551 /* Application.xib */,
+				9632FB71182F107F003C3F2E /* LBXAppMain.xib */,
 				96101761182A1499001D50E8 /* CFsToFsIO.cpp */,
 				96101762182A1499001D50E8 /* CFsToFsIO.hpp */,
 				96101763182A1499001D50E8 /* fs_fsio.cpp */,
@@ -245,12 +245,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9623054C182B391300913551 /* Application.xib in Resources */,
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
 				96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */,
 				9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */,
 				96EEC9B6182DAE3D00A31087 /* LBXStartLockboxWindowController.xib in Resources */,
 				96E1639517A7528D009BE867 /* output.icns in Resources */,
+				9632FB72182F107F003C3F2E /* LBXAppMain.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
