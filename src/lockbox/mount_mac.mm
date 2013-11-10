@@ -1,28 +1,31 @@
 //
-//  mac_mount.cpp
+//  mac_mount.mm
 //  Lockbox
 //
 //  Created by Rian Hunter on 11/7/13.
 //  Copyright (c) 2013 Rian Hunter. All rights reserved.
 //
 
-#include <lockbox/mount_mac.hpp>
+#import <lockbox/mount_mac.hpp>
 
-#include <lockbox/util.hpp>
-#include <lockbox/lockbox_server.hpp>
+#import <lockbox/util.hpp>
+#import <lockbox/lockbox_server.hpp>
 
-#include <encfs/fs/FsIO.h>
+#import <encfs/fs/FsIO.h>
 
-#include <davfuse/util_sockets.h>
+#import <davfuse/util_sockets.h>
+#import <davfuse/webdav_server.h>
 
-#include <random>
-#include <sstream>
+#import <Cocoa/Cocoa.h>
 
-#include <ctime>
+#import <random>
+#import <sstream>
 
-#include <libgen.h>
+#import <ctime>
 
-#include <sys/stat.h>
+#import <libgen.h>
+
+#import <sys/stat.h>
 
 namespace lockbox { namespace mac {
 
@@ -113,9 +116,30 @@ escape_double_quotes(std::string mount_name) {
     }
     return std::string(replaced.begin(), replaced.end());
 }
+
+static
+std::string
+webdav_mount_quit_url(port_t listen_port, std::string name) {
+    (void) name;
+    return std::string("http://localhost:") + std::to_string(listen_port) + WEBDAV_SERVER_QUIT_URL;
+}
+
+static
+std::string
+webdav_mount_url(port_t listen_port, std::string name) {
+    return std::string("http://localhost:") + std::to_string(listen_port) + "/" + name + "/";
+}
     
 void
 MountDetails::signal_stop() const {
+    auto quit_url = webdav_mount_quit_url(listen_port, name);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+                   ^{
+                       NSString *requestUrl = [NSString stringWithUTF8String:quit_url.c_str()];
+                       NSMutableURLRequest *postRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:requestUrl]];
+                       [postRequest setHTTPMethod:@"POST"];
+                       [NSURLConnection sendSynchronousRequest:postRequest returningResponse:nil error:nil];
+                   });
 }
     
 void
@@ -254,12 +278,9 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     char *mount_point = mkdtemp(mount_point_template);
     if (!mount_point) throw std::runtime_error("couldn't mkdtemp()");
     
-    // TODO: fix mounting of paths with the '"' character in them
-    auto escaped_mount_name = escape_double_quotes(mount_name);
-    
     std::ostringstream os;
-    os << "mount_webdav -S -v \"" << escaped_mount_name << "\" \"http://localhost:" <<
-    *listen_port << "/" << escaped_mount_name << "/\" \"" << mount_point << "\"";
+    os << "mount_webdav -S -v \"" << escape_double_quotes(mount_name) << "\" \"" <<
+    escape_double_quotes(webdav_mount_url(*listen_port, mount_name)) << "\" \"" << mount_point << "\"";
     auto mount_command = os.str();
     
     auto ret_system = system(mount_command.c_str());
