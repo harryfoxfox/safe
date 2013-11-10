@@ -210,7 +210,12 @@ enum {
                                                                name:NSWorkspaceDidActivateApplicationNotification
                                                              object:nil];
     // kickoff mount watch timer
-    [self timerFire:self];
+    // get notifaction whenever device is unmounted
+    // so we can update our internal structures
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(driveWasUnmounted:)
+                                                               name:NSWorkspaceDidUnmountNotification
+                                                             object:nil];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
@@ -223,9 +228,13 @@ enum {
     lockbox::global_webdav_shutdown();
 }
 
-- (void)timerFire:(id)p {
+- (void)driveWasUnmounted:(NSNotification *)p {
     (void)p;
 
+    // check all devices and if any of them were no longer unmount
+    // then stop and update status
+    // TODO: maybe just unmount them based on the notification
+    //       are notifications reliable? guessing yes
     for (auto it = self->mounts.begin(); it != self->mounts.end();) {
         if (!it->is_still_mounted()) {
             it->signal_stop();
@@ -234,8 +243,6 @@ enum {
         }
         else ++it;
     }
-
-    [self performSelector:@selector(timerFire:) withObject:nil afterDelay:CHECK_MOUNT_INTERVAL_IN_SECONDS];
 }
 
 @end
