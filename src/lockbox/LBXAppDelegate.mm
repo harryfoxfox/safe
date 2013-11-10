@@ -54,6 +54,7 @@ enum {
     
     if ((NSUInteger) mount_idx >= self->mounts.size()) {
         // this mount index is invalid now
+        return;
     }
     
     self->mounts[mount_idx].open_mount();
