@@ -12,7 +12,7 @@
 #import <lockbox/lockbox_server.hpp>
 #import <lockbox/lockbox_strings.h>
 
-#import <davfuse/logging.h>
+#import <lockbox/logging.h>
 
 enum {
     CHECK_MOUNT_INTERVAL_IN_SECONDS = 1,
@@ -64,18 +64,34 @@ enum {
     [self _newMount:std::move(md)];
 }
 
-- (void)openMount:(id)sender {
-    NSMenuItem *mi = sender;
-    
+static
+unsigned
+mount_idx_from_menu_item(NSMenuItem *mi) {
     NSInteger mount_idx = mi.tag;
     assert(mount_idx >= 0);
+    return (unsigned) mount_idx;
+}
+
+- (void)openMount:(id)sender {
+    unsigned mount_idx = mount_idx_from_menu_item(sender);
     
-    if ((NSUInteger) mount_idx >= self->mounts.size()) {
+    if (mount_idx >= self->mounts.size()) {
         // this mount index is invalid now
         return;
     }
     
     self->mounts[mount_idx].open_mount();
+}
+
+- (void)unmountMount:(id)sender {
+    unsigned mount_idx = mount_idx_from_menu_item(sender);
+
+    if (mount_idx >= self->mounts.size()) {
+        // this mount index is invalid now
+        return;
+    }
+    
+    self->mounts[mount_idx].unmount();
 }
 
 - (void)mountBitvault:(id)sender {
@@ -137,14 +153,26 @@ enum {
     // [ Test Bubble ]
     // Quit Bitvault
     
-    // TODO: detect when alt is pressed to change Open -> Stop
+
+    bool showUnmount = self->lastModifierFlags & NSAlternateKeyMask;
+    NSString *verbString;
+    SEL sel;
+    if (showUnmount) {
+        verbString = @"Unmount";
+        sel = @selector(unmountMount:);
+    }
+    else {
+        verbString = @"Open";
+        sel = @selector(openMount:);
+    }
+    
     NSInteger tag = 0;
     for (const auto & md : self->mounts) {
-        NSString *title = [NSString stringWithFormat:@"Open \"%s\"",
-                           md.get_mount_name().c_str(), nil];
+        NSString *title = [NSString stringWithFormat:@"%@ \"%s\"",
+                           verbString, md.get_mount_name().c_str(), nil];
         NSMenuItem *mi = [self _addItemToMenu:menu
                                         title:title
-                                       action:@selector(openMount:)];
+                                       action:sel];
         static_assert(sizeof(&md) <= sizeof(NSInteger),
                       "NSInteger is not large enough to hold a pointer");
         [mi setTag:tag];
@@ -183,8 +211,17 @@ enum {
                   action:@selector(quitBitvault:)];
 }
 
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    (void)menu;
+    assert(menu = self.statusItem.menu);
+    self->lastModifierFlags = NSEvent.modifierFlags;
+    // update menu based on modifier key
+    [self _updateStatusMenu];
+}
+
 - (void)_setupStatusBar {
     NSMenu *statusMenu = [[NSMenu alloc] init];
+    statusMenu.delegate = self;
     
     NSStatusBar *sb = [NSStatusBar systemStatusBar];
     self.statusItem = [sb statusItemWithLength:NSVariableStatusItemLength];
@@ -330,7 +367,7 @@ _Pragma("clang diagnostic pop") \
                                                            selector:@selector(driveWasUnmounted:)
                                                                name:NSWorkspaceDidUnmountNotification
                                                              object:nil];
-    
+
     if ([self haveUserNotifications]) {
         NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
     }

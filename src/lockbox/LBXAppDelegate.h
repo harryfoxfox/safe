@@ -14,10 +14,11 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate, LBXMountLockboxWindowControllerDelegate, NSWindowDelegate, NSUserNotificationCenterDelegate>
+@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate, LBXMountLockboxWindowControllerDelegate, NSWindowDelegate, NSUserNotificationCenterDelegate, NSMenuDelegate>
 {
     std::vector<lockbox::mac::MountDetails> mounts;
     std::shared_ptr<encfs::FsIO> native_fs;
+    NSInteger lastModifierFlags;
 }
 
 @property (retain) NSStatusItem *statusItem;
