@@ -139,6 +139,7 @@ fs_fsio_open(fs_fsio_handle_t fs,
     std::unique_ptr<encfs::FileIO> fio;
     try {
       fio = fsio->openfile(std::move( *path ), NEED_WRITE, DONT_CREATE);
+      if (created) *created = false;
     }
     catch (const std::system_error & err) {
       if (!should_create ||
@@ -146,7 +147,7 @@ fs_fsio_open(fs_fsio_handle_t fs,
       fio = fsio->openfile(std::move( *path ), NEED_WRITE, SHOULD_CREATE);
       // slight race condition here, we may not have created the file
       // (it could have been created between the two `openfile()` calls
-      if (*created) *created = true;
+      if (created) *created = true;
     }
     *handle = pointer_to_file_handle(fio.release());
     return FS_ERROR_SUCCESS;
