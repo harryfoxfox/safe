@@ -162,13 +162,21 @@ fs_fsio_open(fs_fsio_handle_t fs,
 
 static void
 fill_attrs(encfs::FsFileAttrs *fs_attrs, OUT_VAR FsAttrs *attrs) {
-  *attrs = FsAttrs {
-    .modified_time = fs_attrs->mtime,
-    .created_time = FS_INVALID_TIME,
-    .is_directory = fs_attrs->type == encfs::FsFileType::DIRECTORY,
-    .size = fs_attrs->size,
-    .file_id = fs_attrs->file_id,
-  };
+  *attrs = fs_attrs->type == encfs::FsFileType::DIRECTORY
+    ? FsAttrs {
+        .modified_time = FS_INVALID_TIME,
+        .created_time = FS_INVALID_TIME,
+        .is_directory = true,
+        .size = 0,
+        .file_id = fs_attrs->file_id,
+    }
+    : FsAttrs {
+        .modified_time = fs_attrs->mtime,
+        .created_time = FS_INVALID_TIME,
+        .is_directory = false,
+        .size = fs_attrs->size,
+        .file_id = fs_attrs->file_id,
+    };
 }
 
 fs_error_t
@@ -382,24 +390,14 @@ fs_fsio_getattr(fs_fsio_handle_t fs, const char *path,
   assert(maybePath);
 
   try {
-    auto attrs_ = fsio->openfile(*maybePath).get_attrs();
+    auto attrs_ = get_attrs(fsio, *maybePath);
     fill_attrs(&attrs_, attrs);
     return FS_ERROR_SUCCESS;
   }
   catch (const std::system_error & err) {
-    if (err.code() == std::errc::is_a_directory) {
-      // this is okay but not ideal
-      attrs->modified_time = FS_INVALID_TIME;
-      attrs->created_time = FS_INVALID_TIME;
-      attrs->is_directory = true;
-      attrs->file_id = 0;
-      return FS_ERROR_SUCCESS;
-    }
-
     return get_FsIO_error_or_default(err);
   }
-  catch (const std::exception & err) {
-    log_error("WHAT! %s", err.what());
+  catch (...) {
     return FS_ERROR_IO;
   }
 }
@@ -513,6 +511,14 @@ fs_fsio_path_is_valid(fs_fsio_handle_t fs, const char *p) {
   catch (...) {
     return false;
   }
+}
+    
+bool
+fs_fsio_path_component_is_valid(fs_fsio_handle_t /*fs*/,
+                                const char */*p*/) {
+  // TODO: keep unimplemented, this method is getting removed from the
+  //       C fs interface
+  throw std::runtime_error("not implemented");
 }
 
 

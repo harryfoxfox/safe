@@ -8,10 +8,11 @@ GLOG_ROOT := $(CURDIR)/../google-glog
 PROTOBUF_ROOT := $(CURDIR)/../protobuf
 HEADERS_ROOT := $(CURDIR)/out/headers
 DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
-PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),1)
 
 IS_WIN := $(shell uname | grep -i mingw)
 IS_MAC := $(shell test `uname` = Darwin && echo 1)
+
+PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),$(if $(IS_MAC),$(shell sysctl hw.ncpu | awk '{print $$2}'),1))
 
 WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_fs.a
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
@@ -110,15 +111,15 @@ SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp SecureMemPasswordReader.cpp
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
 
-WINDOWS_APP_MAIN_SRCS = windows_app_main.cpp windows_app_main.rc $(SRCS)
+WINDOWS_APP_MAIN_SRCS = app_main_windows.cpp app_main_windows.rc $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 # dependencies
 
 src/lockbox/*.o: Makefile src/lockbox/*.hpp src/lockbox/*.h
 
-src/lockbox/windows_app_main.rc.o: src/lockbox/windows_app_main.rc \
-	src/lockbox/windows_app_main.manifest
+src/lockbox/app_main_windows.rc.o: src/lockbox/app_main_windows.rc \
+	src/lockbox/app_main_windows.manifest
 
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile

@@ -5,11 +5,11 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>${EXECUTABLE_NAME}</string>
+	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleIconFile</key>
 	<string>output</string>
 	<key>CFBundleIdentifier</key>
-	<string>Dropbox.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>${PRODUCT_NAME:rfc1034identifier}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -26,10 +26,12 @@
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
+	<key>LSUIElement</key>
+	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2013 Rian Hunter. All rights reserved.</string>
 	<key>NSMainNibFile</key>
-	<string>MainMenu</string>
+	<string>LBXAppMain</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

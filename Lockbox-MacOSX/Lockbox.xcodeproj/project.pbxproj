@@ -7,213 +7,75 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101761182A1499001D50E8 /* CFsToFsIO.cpp */; };
+		9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101763182A1499001D50E8 /* fs_fsio.cpp */; };
+		9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96101766182A1499001D50E8 /* LBXAppDelegate.mm */; };
+		96101770182A1499001D50E8 /* lockbox_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101767182A1499001D50E8 /* lockbox_server.cpp */; };
+		96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */; };
+		96230549182B2E5200913551 /* LBXCreateLockboxWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */; };
+		9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */; };
+		96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96230551182C708400913551 /* LBXProgressSheetController.mm */; };
+		96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96230552182C708400913551 /* LBXProgressSheetController.xib */; };
+		9632FB72182F107F003C3F2E /* LBXAppMain.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9632FB71182F107F003C3F2E /* LBXAppMain.xib */; };
+		9632FB76182F1160003C3F2E /* app_main_mac.m in Sources */ = {isa = PBXBuildFile; fileRef = 9632FB73182F1160003C3F2E /* app_main_mac.m */; };
+		9632FB7B182F13BD003C3F2E /* LBXMountLockboxWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9632FB79182F13BD003C3F2E /* LBXMountLockboxWindowController.mm */; };
+		9632FB7C182F13BD003C3F2E /* LBXMountLockboxWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9632FB7A182F13BD003C3F2E /* LBXMountLockboxWindowController.xib */; };
+		96358D34182AFE2600BE18E8 /* libencfs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2E182AFE2600BE18E8 /* libencfs.a */; };
+		96358D35182AFE2600BE18E8 /* libglog.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D2F182AFE2600BE18E8 /* libglog.a */; };
+		96358D36182AFE2600BE18E8 /* libprotobuf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D30182AFE2600BE18E8 /* libprotobuf.a */; };
+		96358D37182AFE2600BE18E8 /* libtinyxml.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D31182AFE2600BE18E8 /* libtinyxml.a */; };
+		96358D38182AFE2600BE18E8 /* libwebdav_server_fs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D32182AFE2600BE18E8 /* libwebdav_server_fs.a */; };
+		96358D3A182AFE4D00BE18E8 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D39182AFE4D00BE18E8 /* Security.framework */; };
 		963D09A717A1D89D00AEE673 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 963D09A617A1D89D00AEE673 /* Cocoa.framework */; };
 		963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 963D09AF17A1D89D00AEE673 /* InfoPlist.strings */; };
-		963D09B317A1D89D00AEE673 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 963D09B217A1D89D00AEE673 /* main.m */; };
-		963D09BA17A1D89D00AEE673 /* LBXAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 963D09B917A1D89D00AEE673 /* LBXAppDelegate.m */; };
-		963D09BD17A1D89D00AEE673 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963D09BB17A1D89D00AEE673 /* MainMenu.xib */; };
+		9644D029182F251600ED4911 /* mount_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9644D028182F251600ED4911 /* mount_mac.mm */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
-		96E3E65F17A257DB0071439F /* autosprintf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65117A257DB0071439F /* autosprintf.cpp */; };
-		96E3E66017A257DB0071439F /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65317A257DB0071439F /* base64.cpp */; };
-		96E3E66117A257DB0071439F /* ConfigReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65517A257DB0071439F /* ConfigReader.cpp */; };
-		96E3E66217A257DB0071439F /* ConfigVar.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65717A257DB0071439F /* ConfigVar.cpp */; };
-		96E3E66317A257DB0071439F /* Error.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65917A257DB0071439F /* Error.cpp */; };
-		96E3E66417A257DB0071439F /* Interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65B17A257DB0071439F /* Interface.cpp */; };
-		96E3E66517A257DB0071439F /* XmlReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E65D17A257DB0071439F /* XmlReader.cpp */; };
-		96E3E68417A2585D0071439F /* BlockFileIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E66817A2585D0071439F /* BlockFileIO.cpp */; };
-		96E3E68517A2585D0071439F /* BlockNameIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E66A17A2585D0071439F /* BlockNameIO.cpp */; };
-		96E3E68617A2585D0071439F /* CipherFileIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E66C17A2585D0071439F /* CipherFileIO.cpp */; };
-		96E3E68717A2585D0071439F /* Context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E66E17A2585D0071439F /* Context.cpp */; };
-		96E3E68817A2585D0071439F /* DirNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E67017A2585D0071439F /* DirNode.cpp */; };
-		96E3E68917A2585D0071439F /* encfs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E67217A2585D0071439F /* encfs.cpp */; };
-		96E3E68A17A2585D0071439F /* FileIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E67417A2585D0071439F /* FileIO.cpp */; };
-		96E3E68B17A2585D0071439F /* FileNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E67617A2585D0071439F /* FileNode.cpp */; };
-		96E3E68C17A2585D0071439F /* FileUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E67817A2585D0071439F /* FileUtils.cpp */; };
-		96E3E68D17A2585D0071439F /* MACFileIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E67A17A2585D0071439F /* MACFileIO.cpp */; };
-		96E3E68E17A2585D0071439F /* NameIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E67C17A2585D0071439F /* NameIO.cpp */; };
-		96E3E68F17A2585D0071439F /* NullNameIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E67E17A2585D0071439F /* NullNameIO.cpp */; };
-		96E3E69017A2585D0071439F /* RawFileIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E68017A2585D0071439F /* RawFileIO.cpp */; };
-		96E3E69117A2585D0071439F /* StreamNameIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E68217A2585D0071439F /* StreamNameIO.cpp */; };
-		96E3E6A517A258990071439F /* BlockCipher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E69317A258990071439F /* BlockCipher.cpp */; };
-		96E3E6A617A258990071439F /* botan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E69517A258990071439F /* botan.cpp */; };
-		96E3E6A717A258990071439F /* CipherKey.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E69717A258990071439F /* CipherKey.cpp */; };
-		96E3E6A817A258990071439F /* CipherV1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E69917A258990071439F /* CipherV1.cpp */; };
-		96E3E6A917A258990071439F /* MAC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E69B17A258990071439F /* MAC.cpp */; };
-		96E3E6AA17A258990071439F /* MemoryPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E69D17A258990071439F /* MemoryPool.cpp */; };
-		96E3E6AB17A258990071439F /* NullCiphers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E69F17A258990071439F /* NullCiphers.cpp */; };
-		96E3E6AC17A258990071439F /* PBKDF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6A117A258990071439F /* PBKDF.cpp */; };
-		96E3E6AD17A258990071439F /* StreamCipher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6A317A258990071439F /* StreamCipher.cpp */; };
-		96E3E6D417A259E30071439F /* async_fuse_fs_helpers.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6B017A259E30071439F /* async_fuse_fs_helpers.c */; };
-		96E3E6D517A259E30071439F /* async_fuse_fs.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6B217A259E30071439F /* async_fuse_fs.c */; };
-		96E3E6D617A259E30071439F /* async_rdwr_lock.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6B417A259E30071439F /* async_rdwr_lock.c */; };
-		96E3E6D717A259E30071439F /* async_tree.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6B617A259E30071439F /* async_tree.c */; };
-		96E3E6D817A259E30071439F /* coroutine_io.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6B917A259E30071439F /* coroutine_io.c */; };
-		96E3E6D917A259E30071439F /* dfs.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6BC17A259E30071439F /* dfs.c */; };
-		96E3E6DA17A259E30071439F /* fd_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6BF17A259E30071439F /* fd_utils.c */; };
-		96E3E6DB17A259E30071439F /* fdevent_select.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6C117A259E30071439F /* fdevent_select.c */; };
-		96E3E6DC17A259E30071439F /* fstatat_emu.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6C317A259E30071439F /* fstatat_emu.c */; };
-		96E3E6DD17A259E30071439F /* http_helpers.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6C817A259E30071439F /* http_helpers.c */; };
-		96E3E6DE17A259E30071439F /* http_server.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6CA17A259E30071439F /* http_server.c */; };
-		96E3E6DF17A259E30071439F /* libdavfuse.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6CC17A259E30071439F /* libdavfuse.c */; };
-		96E3E6E017A259E30071439F /* logging.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6CD17A259E30071439F /* logging.c */; };
-		96E3E6E117A259E30071439F /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6D017A259E30071439F /* util.c */; };
-		96E3E6E217A259E30071439F /* webdav_server.c in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6D217A259E30071439F /* webdav_server.c */; };
-		96E3E6E817A25A1A0071439F /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6E317A25A1A0071439F /* tinyxml.cpp */; };
-		96E3E6E917A25A1A0071439F /* tinyxmlerror.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6E517A25A1A0071439F /* tinyxmlerror.cpp */; };
-		96E3E6EA17A25A1A0071439F /* tinyxmlparser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6E617A25A1A0071439F /* tinyxmlparser.cpp */; };
-		96E3E6FE17A2ED4F0071439F /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 96E3E6FD17A2ED4F0071439F /* libxml2.dylib */; };
-		96E3E70017A2EE680071439F /* fsconfig.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E6FF17A2EE670071439F /* fsconfig.pb.cc */; };
-		96E3E70217A2EE730071439F /* interface.pb.cc in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E70117A2EE730071439F /* interface.pb.cc */; };
-		96E3E70817A332800071439F /* run_encfs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96E3E70717A332800071439F /* run_encfs.cpp */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		9676F35517A70B54004BF276 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 963D099B17A1D89D00AEE673 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 9676F35117A705DB004BF276;
-			remoteInfo = protobuf;
-		};
-		969321D317A5EBFA002B0C9A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 963D099B17A1D89D00AEE673 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 969321CF17A5EB95002B0C9A;
-			remoteInfo = Botan;
-		};
-		969321D917A5F912002B0C9A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 963D099B17A1D89D00AEE673 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 969321D517A5F7AE002B0C9A;
-			remoteInfo = "google-glog";
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
-		963D09A317A1D89D00AEE673 /* Lockbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lockbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		96101761182A1499001D50E8 /* CFsToFsIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFsToFsIO.cpp; path = ../src/lockbox/CFsToFsIO.cpp; sourceTree = "<group>"; };
+		96101762182A1499001D50E8 /* CFsToFsIO.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = CFsToFsIO.hpp; path = ../src/lockbox/CFsToFsIO.hpp; sourceTree = "<group>"; };
+		96101763182A1499001D50E8 /* fs_fsio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs_fsio.cpp; path = ../src/lockbox/fs_fsio.cpp; sourceTree = "<group>"; };
+		96101764182A1499001D50E8 /* fs_fsio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fs_fsio.h; path = ../src/lockbox/fs_fsio.h; sourceTree = "<group>"; };
+		96101765182A1499001D50E8 /* LBXAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXAppDelegate.h; path = ../src/lockbox/LBXAppDelegate.h; sourceTree = "<group>"; };
+		96101766182A1499001D50E8 /* LBXAppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXAppDelegate.mm; path = ../src/lockbox/LBXAppDelegate.mm; sourceTree = "<group>"; };
+		96101767182A1499001D50E8 /* lockbox_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lockbox_server.cpp; path = ../src/lockbox/lockbox_server.cpp; sourceTree = "<group>"; };
+		96101768182A1499001D50E8 /* lockbox_server.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = lockbox_server.hpp; path = ../src/lockbox/lockbox_server.hpp; sourceTree = "<group>"; };
+		9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SecureMemPasswordReader.cpp; path = ../src/lockbox/SecureMemPasswordReader.cpp; sourceTree = "<group>"; };
+		9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SecureMemPasswordReader.hpp; path = ../src/lockbox/SecureMemPasswordReader.hpp; sourceTree = "<group>"; };
+		9610176C182A1499001D50E8 /* util.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = util.hpp; path = ../src/lockbox/util.hpp; sourceTree = "<group>"; };
+		96230546182B2E5200913551 /* LBXCreateLockboxWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXCreateLockboxWindowController.h; path = ../src/lockbox/LBXCreateLockboxWindowController.h; sourceTree = "<group>"; };
+		96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXCreateLockboxWindowController.mm; path = ../src/lockbox/LBXCreateLockboxWindowController.mm; sourceTree = "<group>"; };
+		96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXCreateLockboxWindowController.xib; path = ../src/lockbox/LBXCreateLockboxWindowController.xib; sourceTree = "<group>"; };
+		96230550182C708400913551 /* LBXProgressSheetController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXProgressSheetController.h; path = ../src/lockbox/LBXProgressSheetController.h; sourceTree = "<group>"; };
+		96230551182C708400913551 /* LBXProgressSheetController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXProgressSheetController.mm; path = ../src/lockbox/LBXProgressSheetController.mm; sourceTree = "<group>"; };
+		96230552182C708400913551 /* LBXProgressSheetController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXProgressSheetController.xib; path = ../src/lockbox/LBXProgressSheetController.xib; sourceTree = "<group>"; };
+		9632FB71182F107F003C3F2E /* LBXAppMain.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXAppMain.xib; path = ../src/lockbox/LBXAppMain.xib; sourceTree = "<group>"; };
+		9632FB73182F1160003C3F2E /* app_main_mac.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = app_main_mac.m; path = ../src/lockbox/app_main_mac.m; sourceTree = "<group>"; };
+		9632FB75182F1160003C3F2E /* mount_mac.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mount_mac.hpp; path = ../src/lockbox/mount_mac.hpp; sourceTree = "<group>"; };
+		9632FB78182F13BD003C3F2E /* LBXMountLockboxWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXMountLockboxWindowController.h; path = ../src/lockbox/LBXMountLockboxWindowController.h; sourceTree = "<group>"; };
+		9632FB79182F13BD003C3F2E /* LBXMountLockboxWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXMountLockboxWindowController.mm; path = ../src/lockbox/LBXMountLockboxWindowController.mm; sourceTree = "<group>"; };
+		9632FB7A182F13BD003C3F2E /* LBXMountLockboxWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXMountLockboxWindowController.xib; path = ../src/lockbox/LBXMountLockboxWindowController.xib; sourceTree = "<group>"; };
+		96358D2E182AFE2600BE18E8 /* libencfs.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libencfs.a; path = ../out/deps/lib/libencfs.a; sourceTree = "<group>"; };
+		96358D2F182AFE2600BE18E8 /* libglog.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libglog.a; path = ../out/deps/lib/libglog.a; sourceTree = "<group>"; };
+		96358D30182AFE2600BE18E8 /* libprotobuf.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libprotobuf.a; path = ../out/deps/lib/libprotobuf.a; sourceTree = "<group>"; };
+		96358D31182AFE2600BE18E8 /* libtinyxml.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtinyxml.a; path = ../out/deps/lib/libtinyxml.a; sourceTree = "<group>"; };
+		96358D32182AFE2600BE18E8 /* libwebdav_server_fs.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwebdav_server_fs.a; path = ../out/deps/lib/libwebdav_server_fs.a; sourceTree = "<group>"; };
+		96358D39182AFE4D00BE18E8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		963D09A317A1D89D00AEE673 /* Bitvault.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bitvault.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		963D09A617A1D89D00AEE673 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		963D09A917A1D89D00AEE673 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		963D09AA17A1D89D00AEE673 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		963D09AB17A1D89D00AEE673 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		963D09AE17A1D89D00AEE673 /* Lockbox-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Lockbox-Info.plist"; sourceTree = "<group>"; };
 		963D09B017A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		963D09B217A1D89D00AEE673 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		963D09B417A1D89D00AEE673 /* Lockbox-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Lockbox-Prefix.pch"; sourceTree = "<group>"; };
 		963D09B617A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
-		963D09B817A1D89D00AEE673 /* LBXAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LBXAppDelegate.h; sourceTree = "<group>"; };
-		963D09B917A1D89D00AEE673 /* LBXAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LBXAppDelegate.m; sourceTree = "<group>"; };
-		963D09BC17A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		963D09C417A1D89D00AEE673 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
-		96E1639217A74F55009BE867 /* Lock-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Lock-icon.png"; sourceTree = "<group>"; };
-		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = output.icns; sourceTree = "<group>"; };
-		96E3E65117A257DB0071439F /* autosprintf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = autosprintf.cpp; path = encfs/base/autosprintf.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E65217A257DB0071439F /* autosprintf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = autosprintf.h; path = encfs/base/autosprintf.h; sourceTree = SOURCE_ROOT; };
-		96E3E65317A257DB0071439F /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = base64.cpp; path = encfs/base/base64.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E65417A257DB0071439F /* base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = base64.h; path = encfs/base/base64.h; sourceTree = SOURCE_ROOT; };
-		96E3E65517A257DB0071439F /* ConfigReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConfigReader.cpp; path = encfs/base/ConfigReader.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E65617A257DB0071439F /* ConfigReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigReader.h; path = encfs/base/ConfigReader.h; sourceTree = SOURCE_ROOT; };
-		96E3E65717A257DB0071439F /* ConfigVar.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConfigVar.cpp; path = encfs/base/ConfigVar.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E65817A257DB0071439F /* ConfigVar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConfigVar.h; path = encfs/base/ConfigVar.h; sourceTree = SOURCE_ROOT; };
-		96E3E65917A257DB0071439F /* Error.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Error.cpp; path = encfs/base/Error.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E65A17A257DB0071439F /* Error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Error.h; path = encfs/base/Error.h; sourceTree = SOURCE_ROOT; };
-		96E3E65B17A257DB0071439F /* Interface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Interface.cpp; path = encfs/base/Interface.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E65C17A257DB0071439F /* Interface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Interface.h; path = encfs/base/Interface.h; sourceTree = SOURCE_ROOT; };
-		96E3E65D17A257DB0071439F /* XmlReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = XmlReader.cpp; path = encfs/base/XmlReader.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E65E17A257DB0071439F /* XmlReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = XmlReader.h; path = encfs/base/XmlReader.h; sourceTree = SOURCE_ROOT; };
-		96E3E66817A2585D0071439F /* BlockFileIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BlockFileIO.cpp; path = encfs/fs/BlockFileIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E66917A2585D0071439F /* BlockFileIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BlockFileIO.h; path = encfs/fs/BlockFileIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E66A17A2585D0071439F /* BlockNameIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BlockNameIO.cpp; path = encfs/fs/BlockNameIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E66B17A2585D0071439F /* BlockNameIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BlockNameIO.h; path = encfs/fs/BlockNameIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E66C17A2585D0071439F /* CipherFileIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CipherFileIO.cpp; path = encfs/fs/CipherFileIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E66D17A2585D0071439F /* CipherFileIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CipherFileIO.h; path = encfs/fs/CipherFileIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E66E17A2585D0071439F /* Context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Context.cpp; path = encfs/fs/Context.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E66F17A2585D0071439F /* Context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Context.h; path = encfs/fs/Context.h; sourceTree = SOURCE_ROOT; };
-		96E3E67017A2585D0071439F /* DirNode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DirNode.cpp; path = encfs/fs/DirNode.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E67117A2585D0071439F /* DirNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DirNode.h; path = encfs/fs/DirNode.h; sourceTree = SOURCE_ROOT; };
-		96E3E67217A2585D0071439F /* encfs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = encfs.cpp; path = encfs/fs/encfs.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E67317A2585D0071439F /* encfs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = encfs.h; path = encfs/fs/encfs.h; sourceTree = SOURCE_ROOT; };
-		96E3E67417A2585D0071439F /* FileIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileIO.cpp; path = encfs/fs/FileIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E67517A2585D0071439F /* FileIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileIO.h; path = encfs/fs/FileIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E67617A2585D0071439F /* FileNode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileNode.cpp; path = encfs/fs/FileNode.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E67717A2585D0071439F /* FileNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileNode.h; path = encfs/fs/FileNode.h; sourceTree = SOURCE_ROOT; };
-		96E3E67817A2585D0071439F /* FileUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileUtils.cpp; path = encfs/fs/FileUtils.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E67917A2585D0071439F /* FileUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileUtils.h; path = encfs/fs/FileUtils.h; sourceTree = SOURCE_ROOT; };
-		96E3E67A17A2585D0071439F /* MACFileIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MACFileIO.cpp; path = encfs/fs/MACFileIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E67B17A2585D0071439F /* MACFileIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MACFileIO.h; path = encfs/fs/MACFileIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E67C17A2585D0071439F /* NameIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NameIO.cpp; path = encfs/fs/NameIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E67D17A2585D0071439F /* NameIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NameIO.h; path = encfs/fs/NameIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E67E17A2585D0071439F /* NullNameIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NullNameIO.cpp; path = encfs/fs/NullNameIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E67F17A2585D0071439F /* NullNameIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NullNameIO.h; path = encfs/fs/NullNameIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E68017A2585D0071439F /* RawFileIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RawFileIO.cpp; path = encfs/fs/RawFileIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E68117A2585D0071439F /* RawFileIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RawFileIO.h; path = encfs/fs/RawFileIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E68217A2585D0071439F /* StreamNameIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StreamNameIO.cpp; path = encfs/fs/StreamNameIO.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E68317A2585D0071439F /* StreamNameIO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamNameIO.h; path = encfs/fs/StreamNameIO.h; sourceTree = SOURCE_ROOT; };
-		96E3E69317A258990071439F /* BlockCipher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BlockCipher.cpp; path = encfs/cipher/BlockCipher.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E69417A258990071439F /* BlockCipher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BlockCipher.h; path = encfs/cipher/BlockCipher.h; sourceTree = SOURCE_ROOT; };
-		96E3E69517A258990071439F /* botan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = botan.cpp; path = encfs/cipher/botan.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E69617A258990071439F /* botan.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = botan.h; path = encfs/cipher/botan.h; sourceTree = SOURCE_ROOT; };
-		96E3E69717A258990071439F /* CipherKey.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CipherKey.cpp; path = encfs/cipher/CipherKey.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E69817A258990071439F /* CipherKey.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CipherKey.h; path = encfs/cipher/CipherKey.h; sourceTree = SOURCE_ROOT; };
-		96E3E69917A258990071439F /* CipherV1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CipherV1.cpp; path = encfs/cipher/CipherV1.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E69A17A258990071439F /* CipherV1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CipherV1.h; path = encfs/cipher/CipherV1.h; sourceTree = SOURCE_ROOT; };
-		96E3E69B17A258990071439F /* MAC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MAC.cpp; path = encfs/cipher/MAC.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E69C17A258990071439F /* MAC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MAC.h; path = encfs/cipher/MAC.h; sourceTree = SOURCE_ROOT; };
-		96E3E69D17A258990071439F /* MemoryPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemoryPool.cpp; path = encfs/cipher/MemoryPool.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E69E17A258990071439F /* MemoryPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryPool.h; path = encfs/cipher/MemoryPool.h; sourceTree = SOURCE_ROOT; };
-		96E3E69F17A258990071439F /* NullCiphers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NullCiphers.cpp; path = encfs/cipher/NullCiphers.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E6A017A258990071439F /* NullCiphers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NullCiphers.h; path = encfs/cipher/NullCiphers.h; sourceTree = SOURCE_ROOT; };
-		96E3E6A117A258990071439F /* PBKDF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PBKDF.cpp; path = encfs/cipher/PBKDF.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E6A217A258990071439F /* PBKDF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PBKDF.h; path = encfs/cipher/PBKDF.h; sourceTree = SOURCE_ROOT; };
-		96E3E6A317A258990071439F /* StreamCipher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StreamCipher.cpp; path = encfs/cipher/StreamCipher.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E6A417A258990071439F /* StreamCipher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamCipher.h; path = encfs/cipher/StreamCipher.h; sourceTree = SOURCE_ROOT; };
-		96E3E6AF17A259E30071439F /* _fdevent_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = _fdevent_common.h; path = "../../../webdav-fuse/src/_fdevent_common.h"; sourceTree = "<group>"; };
-		96E3E6B017A259E30071439F /* async_fuse_fs_helpers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = async_fuse_fs_helpers.c; path = "../../../webdav-fuse/src/async_fuse_fs_helpers.c"; sourceTree = "<group>"; };
-		96E3E6B117A259E30071439F /* async_fuse_fs_helpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = async_fuse_fs_helpers.h; path = "../../../webdav-fuse/src/async_fuse_fs_helpers.h"; sourceTree = "<group>"; };
-		96E3E6B217A259E30071439F /* async_fuse_fs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = async_fuse_fs.c; path = "../../../webdav-fuse/src/async_fuse_fs.c"; sourceTree = "<group>"; };
-		96E3E6B317A259E30071439F /* async_fuse_fs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = async_fuse_fs.h; path = "../../../webdav-fuse/src/async_fuse_fs.h"; sourceTree = "<group>"; };
-		96E3E6B417A259E30071439F /* async_rdwr_lock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = async_rdwr_lock.c; path = "../../../webdav-fuse/src/async_rdwr_lock.c"; sourceTree = "<group>"; };
-		96E3E6B517A259E30071439F /* async_rdwr_lock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = async_rdwr_lock.h; path = "../../../webdav-fuse/src/async_rdwr_lock.h"; sourceTree = "<group>"; };
-		96E3E6B617A259E30071439F /* async_tree.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = async_tree.c; path = "../../../webdav-fuse/src/async_tree.c"; sourceTree = "<group>"; };
-		96E3E6B717A259E30071439F /* async_tree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = async_tree.h; path = "../../../webdav-fuse/src/async_tree.h"; sourceTree = "<group>"; };
-		96E3E6B817A259E30071439F /* c_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = c_util.h; path = "../../../webdav-fuse/src/c_util.h"; sourceTree = "<group>"; };
-		96E3E6B917A259E30071439F /* coroutine_io.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = coroutine_io.c; path = "../../../webdav-fuse/src/coroutine_io.c"; sourceTree = "<group>"; };
-		96E3E6BA17A259E30071439F /* coroutine_io.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = coroutine_io.h; path = "../../../webdav-fuse/src/coroutine_io.h"; sourceTree = "<group>"; };
-		96E3E6BB17A259E30071439F /* coroutine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = coroutine.h; path = "../../../webdav-fuse/src/coroutine.h"; sourceTree = "<group>"; };
-		96E3E6BC17A259E30071439F /* dfs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dfs.c; path = "../../../webdav-fuse/src/dfs.c"; sourceTree = "<group>"; };
-		96E3E6BD17A259E30071439F /* dfs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dfs.h; path = "../../../webdav-fuse/src/dfs.h"; sourceTree = "<group>"; };
-		96E3E6BE17A259E30071439F /* events.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = events.h; path = "../../../webdav-fuse/src/events.h"; sourceTree = "<group>"; };
-		96E3E6BF17A259E30071439F /* fd_utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fd_utils.c; path = "../../../webdav-fuse/src/fd_utils.c"; sourceTree = "<group>"; };
-		96E3E6C017A259E30071439F /* fd_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fd_utils.h; path = "../../../webdav-fuse/src/fd_utils.h"; sourceTree = "<group>"; };
-		96E3E6C117A259E30071439F /* fdevent_select.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fdevent_select.c; path = "../../../webdav-fuse/src/fdevent_select.c"; sourceTree = "<group>"; };
-		96E3E6C217A259E30071439F /* fdevent_select.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fdevent_select.h; path = "../../../webdav-fuse/src/fdevent_select.h"; sourceTree = "<group>"; };
-		96E3E6C317A259E30071439F /* fstatat_emu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fstatat_emu.c; path = "../../../webdav-fuse/src/fstatat_emu.c"; sourceTree = "<group>"; };
-		96E3E6C417A259E30071439F /* fstatat_emu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fstatat_emu.h; path = "../../../webdav-fuse/src/fstatat_emu.h"; sourceTree = "<group>"; };
-		96E3E6C517A259E30071439F /* fuse_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fuse_common.h; path = "../../../webdav-fuse/src/fuse_common.h"; sourceTree = "<group>"; };
-		96E3E6C617A259E30071439F /* fuse_opt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fuse_opt.h; path = "../../../webdav-fuse/src/fuse_opt.h"; sourceTree = "<group>"; };
-		96E3E6C717A259E30071439F /* fuse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fuse.h; path = "../../../webdav-fuse/src/fuse.h"; sourceTree = "<group>"; };
-		96E3E6C817A259E30071439F /* http_helpers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = http_helpers.c; path = "../../../webdav-fuse/src/http_helpers.c"; sourceTree = "<group>"; };
-		96E3E6C917A259E30071439F /* http_helpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = http_helpers.h; path = "../../../webdav-fuse/src/http_helpers.h"; sourceTree = "<group>"; };
-		96E3E6CA17A259E30071439F /* http_server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = http_server.c; path = "../../../webdav-fuse/src/http_server.c"; sourceTree = "<group>"; };
-		96E3E6CB17A259E30071439F /* http_server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = http_server.h; path = "../../../webdav-fuse/src/http_server.h"; sourceTree = "<group>"; };
-		96E3E6CC17A259E30071439F /* libdavfuse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libdavfuse.c; path = "../../../webdav-fuse/src/libdavfuse.c"; sourceTree = "<group>"; };
-		96E3E6CD17A259E30071439F /* logging.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = logging.c; path = "../../../webdav-fuse/src/logging.c"; sourceTree = "<group>"; };
-		96E3E6CE17A259E30071439F /* logging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logging.h; path = "../../../webdav-fuse/src/logging.h"; sourceTree = "<group>"; };
-		96E3E6CF17A259E30071439F /* uthread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = uthread.h; path = "../../../webdav-fuse/src/uthread.h"; sourceTree = "<group>"; };
-		96E3E6D017A259E30071439F /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = util.c; path = "../../../webdav-fuse/src/util.c"; sourceTree = "<group>"; };
-		96E3E6D117A259E30071439F /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = "../../../webdav-fuse/src/util.h"; sourceTree = "<group>"; };
-		96E3E6D217A259E30071439F /* webdav_server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = webdav_server.c; path = "../../../webdav-fuse/src/webdav_server.c"; sourceTree = "<group>"; };
-		96E3E6D317A259E30071439F /* webdav_server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = webdav_server.h; path = "../../../webdav-fuse/src/webdav_server.h"; sourceTree = "<group>"; };
-		96E3E6E317A25A1A0071439F /* tinyxml.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxml.cpp; path = tinyxml/tinyxml.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E6E517A25A1A0071439F /* tinyxmlerror.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxmlerror.cpp; path = tinyxml/tinyxmlerror.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E6E617A25A1A0071439F /* tinyxmlparser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tinyxmlparser.cpp; path = tinyxml/tinyxmlparser.cpp; sourceTree = SOURCE_ROOT; };
-		96E3E6FB17A2E8AA0071439F /* tinyxml.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinyxml.h; path = tinyxml/tinyxml.h; sourceTree = SOURCE_ROOT; };
-		96E3E6FD17A2ED4F0071439F /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = usr/lib/libxml2.dylib; sourceTree = SDKROOT; };
-		96E3E6FF17A2EE670071439F /* fsconfig.pb.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fsconfig.pb.cc; path = encfs/fs/fsconfig.pb.cc; sourceTree = SOURCE_ROOT; };
-		96E3E70117A2EE730071439F /* interface.pb.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = interface.pb.cc; path = encfs/base/interface.pb.cc; sourceTree = SOURCE_ROOT; };
-		96E3E70717A332800071439F /* run_encfs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = run_encfs.cpp; sourceTree = "<group>"; };
-		96E3E70917A332A30071439F /* run_encfs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = run_encfs.h; sourceTree = "<group>"; };
+		9644D028182F251600ED4911 /* mount_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mount_mac.mm; path = ../src/lockbox/mount_mac.mm; sourceTree = "<group>"; };
+		9644D02A182F3E4100ED4911 /* logging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logging.h; path = ../src/lockbox/logging.h; sourceTree = "<group>"; };
+		96E1639217A74F55009BE867 /* Lock-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Lock-icon.png"; path = "../Lock-icon.png"; sourceTree = "<group>"; };
+		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -221,7 +83,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				96E3E6FE17A2ED4F0071439F /* libxml2.dylib in Frameworks */,
+				96358D3A182AFE4D00BE18E8 /* Security.framework in Frameworks */,
+				96358D34182AFE2600BE18E8 /* libencfs.a in Frameworks */,
+				96358D35182AFE2600BE18E8 /* libglog.a in Frameworks */,
+				96358D36182AFE2600BE18E8 /* libprotobuf.a in Frameworks */,
+				96358D37182AFE2600BE18E8 /* libtinyxml.a in Frameworks */,
+				96358D38182AFE2600BE18E8 /* libwebdav_server_fs.a in Frameworks */,
 				963D09A717A1D89D00AEE673 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -229,13 +96,44 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9610175F182A1407001D50E8 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				9644D02A182F3E4100ED4911 /* logging.h */,
+				9632FB78182F13BD003C3F2E /* LBXMountLockboxWindowController.h */,
+				9632FB79182F13BD003C3F2E /* LBXMountLockboxWindowController.mm */,
+				9632FB7A182F13BD003C3F2E /* LBXMountLockboxWindowController.xib */,
+				9632FB73182F1160003C3F2E /* app_main_mac.m */,
+				9632FB75182F1160003C3F2E /* mount_mac.hpp */,
+				9644D028182F251600ED4911 /* mount_mac.mm */,
+				9632FB71182F107F003C3F2E /* LBXAppMain.xib */,
+				96101761182A1499001D50E8 /* CFsToFsIO.cpp */,
+				96101762182A1499001D50E8 /* CFsToFsIO.hpp */,
+				96101763182A1499001D50E8 /* fs_fsio.cpp */,
+				96101764182A1499001D50E8 /* fs_fsio.h */,
+				96101765182A1499001D50E8 /* LBXAppDelegate.h */,
+				96101766182A1499001D50E8 /* LBXAppDelegate.mm */,
+				96101767182A1499001D50E8 /* lockbox_server.cpp */,
+				96101768182A1499001D50E8 /* lockbox_server.hpp */,
+				9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */,
+				9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */,
+				9610176C182A1499001D50E8 /* util.hpp */,
+				96230546182B2E5200913551 /* LBXCreateLockboxWindowController.h */,
+				96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */,
+				96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */,
+				96230550182C708400913551 /* LBXProgressSheetController.h */,
+				96230551182C708400913551 /* LBXProgressSheetController.mm */,
+				96230552182C708400913551 /* LBXProgressSheetController.xib */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
 		963D099A17A1D89D00AEE673 = {
 			isa = PBXGroup;
 			children = (
-				96E1639417A7528D009BE867 /* output.icns */,
-				96E1639217A74F55009BE867 /* Lock-icon.png */,
-				96E3E6FD17A2ED4F0071439F /* libxml2.dylib */,
-				963D09AC17A1D89D00AEE673 /* Lockbox */,
+				96E9AE29182B012E00DDBF4E /* static libs */,
+				9610175F182A1407001D50E8 /* src */,
+				963D09AD17A1D89D00AEE673 /* Supporting Files */,
 				963D09A517A1D89D00AEE673 /* Frameworks */,
 				963D09A417A1D89D00AEE673 /* Products */,
 			);
@@ -244,7 +142,7 @@
 		963D09A417A1D89D00AEE673 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				963D09A317A1D89D00AEE673 /* Lockbox.app */,
+				963D09A317A1D89D00AEE673 /* Bitvault.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -252,6 +150,7 @@
 		963D09A517A1D89D00AEE673 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				96358D39182AFE4D00BE18E8 /* Security.framework */,
 				963D09A617A1D89D00AEE673 /* Cocoa.framework */,
 				963D09C417A1D89D00AEE673 /* SenTestingKit.framework */,
 				963D09A817A1D89D00AEE673 /* Other Frameworks */,
@@ -269,238 +168,40 @@
 			name = "Other Frameworks";
 			sourceTree = "<group>";
 		};
-		963D09AC17A1D89D00AEE673 /* Lockbox */ = {
-			isa = PBXGroup;
-			children = (
-				96E3E70917A332A30071439F /* run_encfs.h */,
-				96E3E70717A332800071439F /* run_encfs.cpp */,
-				96E3E6AE17A259750071439F /* webdav-fuse */,
-				96E3E5FE17A2540E0071439F /* tinyxml */,
-				96E3E5FB17A2521A0071439F /* encfs */,
-				963D09B817A1D89D00AEE673 /* LBXAppDelegate.h */,
-				963D09B917A1D89D00AEE673 /* LBXAppDelegate.m */,
-				963D09BB17A1D89D00AEE673 /* MainMenu.xib */,
-				963D09AD17A1D89D00AEE673 /* Supporting Files */,
-			);
-			path = Lockbox;
-			sourceTree = "<group>";
-		};
 		963D09AD17A1D89D00AEE673 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				96E1639417A7528D009BE867 /* output.icns */,
+				96E1639217A74F55009BE867 /* Lock-icon.png */,
 				963D09AE17A1D89D00AEE673 /* Lockbox-Info.plist */,
 				963D09AF17A1D89D00AEE673 /* InfoPlist.strings */,
-				963D09B217A1D89D00AEE673 /* main.m */,
 				963D09B417A1D89D00AEE673 /* Lockbox-Prefix.pch */,
 				963D09B517A1D89D00AEE673 /* Credits.rtf */,
 			);
 			name = "Supporting Files";
+			path = Lockbox;
 			sourceTree = "<group>";
 		};
-		96E3E5FB17A2521A0071439F /* encfs */ = {
+		96E9AE29182B012E00DDBF4E /* static libs */ = {
 			isa = PBXGroup;
 			children = (
-				96E3E69217A258610071439F /* cipher */,
-				96E3E66717A257F90071439F /* fs */,
-				96E3E66617A257E80071439F /* base */,
+				96358D2E182AFE2600BE18E8 /* libencfs.a */,
+				96358D2F182AFE2600BE18E8 /* libglog.a */,
+				96358D30182AFE2600BE18E8 /* libprotobuf.a */,
+				96358D31182AFE2600BE18E8 /* libtinyxml.a */,
+				96358D32182AFE2600BE18E8 /* libwebdav_server_fs.a */,
 			);
-			name = encfs;
-			sourceTree = "<group>";
-		};
-		96E3E5FE17A2540E0071439F /* tinyxml */ = {
-			isa = PBXGroup;
-			children = (
-				96E3E6FB17A2E8AA0071439F /* tinyxml.h */,
-				96E3E6E317A25A1A0071439F /* tinyxml.cpp */,
-				96E3E6E517A25A1A0071439F /* tinyxmlerror.cpp */,
-				96E3E6E617A25A1A0071439F /* tinyxmlparser.cpp */,
-			);
-			name = tinyxml;
-			sourceTree = "<group>";
-		};
-		96E3E66617A257E80071439F /* base */ = {
-			isa = PBXGroup;
-			children = (
-				96E3E70117A2EE730071439F /* interface.pb.cc */,
-				96E3E65117A257DB0071439F /* autosprintf.cpp */,
-				96E3E65217A257DB0071439F /* autosprintf.h */,
-				96E3E65317A257DB0071439F /* base64.cpp */,
-				96E3E65417A257DB0071439F /* base64.h */,
-				96E3E65517A257DB0071439F /* ConfigReader.cpp */,
-				96E3E65617A257DB0071439F /* ConfigReader.h */,
-				96E3E65717A257DB0071439F /* ConfigVar.cpp */,
-				96E3E65817A257DB0071439F /* ConfigVar.h */,
-				96E3E65917A257DB0071439F /* Error.cpp */,
-				96E3E65A17A257DB0071439F /* Error.h */,
-				96E3E65B17A257DB0071439F /* Interface.cpp */,
-				96E3E65C17A257DB0071439F /* Interface.h */,
-				96E3E65D17A257DB0071439F /* XmlReader.cpp */,
-				96E3E65E17A257DB0071439F /* XmlReader.h */,
-			);
-			name = base;
-			sourceTree = "<group>";
-		};
-		96E3E66717A257F90071439F /* fs */ = {
-			isa = PBXGroup;
-			children = (
-				96E3E6FF17A2EE670071439F /* fsconfig.pb.cc */,
-				96E3E66817A2585D0071439F /* BlockFileIO.cpp */,
-				96E3E66917A2585D0071439F /* BlockFileIO.h */,
-				96E3E66A17A2585D0071439F /* BlockNameIO.cpp */,
-				96E3E66B17A2585D0071439F /* BlockNameIO.h */,
-				96E3E66C17A2585D0071439F /* CipherFileIO.cpp */,
-				96E3E66D17A2585D0071439F /* CipherFileIO.h */,
-				96E3E66E17A2585D0071439F /* Context.cpp */,
-				96E3E66F17A2585D0071439F /* Context.h */,
-				96E3E67017A2585D0071439F /* DirNode.cpp */,
-				96E3E67117A2585D0071439F /* DirNode.h */,
-				96E3E67217A2585D0071439F /* encfs.cpp */,
-				96E3E67317A2585D0071439F /* encfs.h */,
-				96E3E67417A2585D0071439F /* FileIO.cpp */,
-				96E3E67517A2585D0071439F /* FileIO.h */,
-				96E3E67617A2585D0071439F /* FileNode.cpp */,
-				96E3E67717A2585D0071439F /* FileNode.h */,
-				96E3E67817A2585D0071439F /* FileUtils.cpp */,
-				96E3E67917A2585D0071439F /* FileUtils.h */,
-				96E3E67A17A2585D0071439F /* MACFileIO.cpp */,
-				96E3E67B17A2585D0071439F /* MACFileIO.h */,
-				96E3E67C17A2585D0071439F /* NameIO.cpp */,
-				96E3E67D17A2585D0071439F /* NameIO.h */,
-				96E3E67E17A2585D0071439F /* NullNameIO.cpp */,
-				96E3E67F17A2585D0071439F /* NullNameIO.h */,
-				96E3E68017A2585D0071439F /* RawFileIO.cpp */,
-				96E3E68117A2585D0071439F /* RawFileIO.h */,
-				96E3E68217A2585D0071439F /* StreamNameIO.cpp */,
-				96E3E68317A2585D0071439F /* StreamNameIO.h */,
-			);
-			name = fs;
-			sourceTree = "<group>";
-		};
-		96E3E69217A258610071439F /* cipher */ = {
-			isa = PBXGroup;
-			children = (
-				96E3E69317A258990071439F /* BlockCipher.cpp */,
-				96E3E69417A258990071439F /* BlockCipher.h */,
-				96E3E69517A258990071439F /* botan.cpp */,
-				96E3E69617A258990071439F /* botan.h */,
-				96E3E69717A258990071439F /* CipherKey.cpp */,
-				96E3E69817A258990071439F /* CipherKey.h */,
-				96E3E69917A258990071439F /* CipherV1.cpp */,
-				96E3E69A17A258990071439F /* CipherV1.h */,
-				96E3E69B17A258990071439F /* MAC.cpp */,
-				96E3E69C17A258990071439F /* MAC.h */,
-				96E3E69D17A258990071439F /* MemoryPool.cpp */,
-				96E3E69E17A258990071439F /* MemoryPool.h */,
-				96E3E69F17A258990071439F /* NullCiphers.cpp */,
-				96E3E6A017A258990071439F /* NullCiphers.h */,
-				96E3E6A117A258990071439F /* PBKDF.cpp */,
-				96E3E6A217A258990071439F /* PBKDF.h */,
-				96E3E6A317A258990071439F /* StreamCipher.cpp */,
-				96E3E6A417A258990071439F /* StreamCipher.h */,
-			);
-			name = cipher;
-			sourceTree = "<group>";
-		};
-		96E3E6AE17A259750071439F /* webdav-fuse */ = {
-			isa = PBXGroup;
-			children = (
-				96E3E6AF17A259E30071439F /* _fdevent_common.h */,
-				96E3E6B017A259E30071439F /* async_fuse_fs_helpers.c */,
-				96E3E6B117A259E30071439F /* async_fuse_fs_helpers.h */,
-				96E3E6B217A259E30071439F /* async_fuse_fs.c */,
-				96E3E6B317A259E30071439F /* async_fuse_fs.h */,
-				96E3E6B417A259E30071439F /* async_rdwr_lock.c */,
-				96E3E6B517A259E30071439F /* async_rdwr_lock.h */,
-				96E3E6B617A259E30071439F /* async_tree.c */,
-				96E3E6B717A259E30071439F /* async_tree.h */,
-				96E3E6B817A259E30071439F /* c_util.h */,
-				96E3E6B917A259E30071439F /* coroutine_io.c */,
-				96E3E6BA17A259E30071439F /* coroutine_io.h */,
-				96E3E6BB17A259E30071439F /* coroutine.h */,
-				96E3E6BC17A259E30071439F /* dfs.c */,
-				96E3E6BD17A259E30071439F /* dfs.h */,
-				96E3E6BE17A259E30071439F /* events.h */,
-				96E3E6BF17A259E30071439F /* fd_utils.c */,
-				96E3E6C017A259E30071439F /* fd_utils.h */,
-				96E3E6C117A259E30071439F /* fdevent_select.c */,
-				96E3E6C217A259E30071439F /* fdevent_select.h */,
-				96E3E6C317A259E30071439F /* fstatat_emu.c */,
-				96E3E6C417A259E30071439F /* fstatat_emu.h */,
-				96E3E6C517A259E30071439F /* fuse_common.h */,
-				96E3E6C617A259E30071439F /* fuse_opt.h */,
-				96E3E6C717A259E30071439F /* fuse.h */,
-				96E3E6C817A259E30071439F /* http_helpers.c */,
-				96E3E6C917A259E30071439F /* http_helpers.h */,
-				96E3E6CA17A259E30071439F /* http_server.c */,
-				96E3E6CB17A259E30071439F /* http_server.h */,
-				96E3E6CC17A259E30071439F /* libdavfuse.c */,
-				96E3E6CD17A259E30071439F /* logging.c */,
-				96E3E6CE17A259E30071439F /* logging.h */,
-				96E3E6CF17A259E30071439F /* uthread.h */,
-				96E3E6D017A259E30071439F /* util.c */,
-				96E3E6D117A259E30071439F /* util.h */,
-				96E3E6D217A259E30071439F /* webdav_server.c */,
-				96E3E6D317A259E30071439F /* webdav_server.h */,
-			);
-			name = "webdav-fuse";
+			name = "static libs";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
-
-/* Begin PBXLegacyTarget section */
-		9676F35117A705DB004BF276 /* protobuf */ = {
-			isa = PBXLegacyTarget;
-			buildArgumentsString = "-j4 $(ACTION)";
-			buildConfigurationList = 9676F35417A705DB004BF276 /* Build configuration list for PBXLegacyTarget "protobuf" */;
-			buildPhases = (
-			);
-			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = "$(SRCROOT)/protobuf";
-			dependencies = (
-			);
-			name = protobuf;
-			passBuildSettingsInEnvironment = 1;
-			productName = protobuf;
-		};
-		969321CF17A5EB95002B0C9A /* Botan */ = {
-			isa = PBXLegacyTarget;
-			buildArgumentsString = "-j4 $(ACTION)";
-			buildConfigurationList = 969321D017A5EB96002B0C9A /* Build configuration list for PBXLegacyTarget "Botan" */;
-			buildPhases = (
-			);
-			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = "$(SRCROOT)/botan";
-			dependencies = (
-			);
-			name = Botan;
-			passBuildSettingsInEnvironment = 1;
-			productName = Botan;
-		};
-		969321D517A5F7AE002B0C9A /* google-glog */ = {
-			isa = PBXLegacyTarget;
-			buildArgumentsString = "-j4 $(ACTION)";
-			buildConfigurationList = 969321D617A5F7AF002B0C9A /* Build configuration list for PBXLegacyTarget "google-glog" */;
-			buildPhases = (
-			);
-			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = "$(SRCROOT)/google-glog";
-			dependencies = (
-			);
-			name = "google-glog";
-			passBuildSettingsInEnvironment = 1;
-			productName = "google-glog";
-		};
-/* End PBXLegacyTarget section */
 
 /* Begin PBXNativeTarget section */
 		963D09A217A1D89D00AEE673 /* Lockbox */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 963D09D417A1D89D00AEE673 /* Build configuration list for PBXNativeTarget "Lockbox" */;
 			buildPhases = (
-				96E3E6EF17A2D4540071439F /* Copy fdevent.h & fuse.h */,
-				96E3E6FC17A2E8BB0071439F /* Copy tinyxml.h to system */,
-				96E3E6F417A2DBBE0071439F /* Create encfs config.h */,
-				96E3E6F517A2DEC90071439F /* Create encfs protobuf code */,
+				96358D2C182A19D500BE18E8 /* ShellScript */,
 				963D099F17A1D89D00AEE673 /* Sources */,
 				963D09A017A1D89D00AEE673 /* Frameworks */,
 				963D09A117A1D89D00AEE673 /* Resources */,
@@ -508,13 +209,10 @@
 			buildRules = (
 			);
 			dependencies = (
-				9676F35617A70B54004BF276 /* PBXTargetDependency */,
-				969321DA17A5F912002B0C9A /* PBXTargetDependency */,
-				969321D417A5EBFA002B0C9A /* PBXTargetDependency */,
 			);
 			name = Lockbox;
 			productName = Lockbox;
-			productReference = 963D09A317A1D89D00AEE673 /* Lockbox.app */;
+			productReference = 963D09A317A1D89D00AEE673 /* Bitvault.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -540,9 +238,6 @@
 			projectRoot = "";
 			targets = (
 				963D09A217A1D89D00AEE673 /* Lockbox */,
-				969321CF17A5EB95002B0C9A /* Botan */,
-				969321D517A5F7AE002B0C9A /* google-glog */,
-				9676F35117A705DB004BF276 /* protobuf */,
 			);
 		};
 /* End PBXProject section */
@@ -553,88 +248,29 @@
 			buildActionMask = 2147483647;
 			files = (
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
-				963D09BD17A1D89D00AEE673 /* MainMenu.xib in Resources */,
+				9632FB7C182F13BD003C3F2E /* LBXMountLockboxWindowController.xib in Resources */,
+				96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */,
+				9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */,
 				96E1639517A7528D009BE867 /* output.icns in Resources */,
+				9632FB72182F107F003C3F2E /* LBXAppMain.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		96E3E6EF17A2D4540071439F /* Copy fdevent.h & fuse.h */ = {
+		96358D2C182A19D500BE18E8 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 12;
+			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/../../webdav-fuse/src/fdevent_select.h",
-				"$(SRCROOT)/../../webdav-fuse/src/fuse.h",
-				"$(SRCROOT)/../../webdav-fuse/src/fuse_common.h",
-				"$(SRCROOT)/../../webdav-fuse/src/fuse_opt.h",
 			);
-			name = "Copy fdevent.h & fuse.h";
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/user_headers/fdevent.h",
-				"$(DERIVED_FILE_DIR)/system_headers/fuse.h",
-				"$(DERIVED_FILE_DIR)/system_headers/fuse_common.h",
-				"$(DERIVED_FILE_DIR)/system_headers/fuse_opt.h",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "echo \"Generating fdevent.h & fuse.h\" `date`\nmkdir -p \"${DERIVED_FILE_DIR}/user_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fdevent_select.h\" \"${DERIVED_FILE_DIR}/user_headers/fdevent.h\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse.h\" \"${DERIVED_FILE_DIR}/system_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse_common.h\" \"${DERIVED_FILE_DIR}/system_headers\"\ncp \"${SRCROOT}/../../webdav-fuse/src/fuse_opt.h\" \"${DERIVED_FILE_DIR}/system_headers\"";
-		};
-		96E3E6F417A2DBBE0071439F /* Create encfs config.h */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 12;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/Lockbox/encfs-config.h",
-			);
-			name = "Create encfs config.h";
-			outputPaths = (
-				"$(SRCROOT)/encfs/base/config.h",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "echo \"Generating encfs/base/config.h\" `date`\ncp \"${SRCROOT}/Lockbox/encfs-config.h\" \"${SRCROOT}/encfs/base/config.h\"";
-		};
-		96E3E6F517A2DEC90071439F /* Create encfs protobuf code */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 12;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/encfs/protos/interface.proto",
-				"$(SRCROOT)/encfs/protos/fsconfig.proto",
-			);
-			name = "Create encfs protobuf code";
-			outputPaths = (
-				"$(SRCROOT)/encfs/base/interface.pb.cc",
-				"$(SRCROOT)/encfs/base/interface.pb.h",
-				"$(SRCROOT)/encfs/fs/fsconfig.pb.h",
-				"$(SRCROOT)/encfs/fs/fsconfig.pb.cc",
-				"$(SRCROOT)/encfs/fs/interface.pb.h",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "echo \"Generating protobuf code\" `date`\ncd \"${SRCROOT}/encfs/protos\"\n\"${BUILT_PRODUCTS_DIR}/prefix/bin/protoc\" --cpp_out=../base interface.proto\n\"${BUILT_PRODUCTS_DIR}/prefix/bin/protoc\" --cpp_out=../fs fsconfig.proto\n# because fsconfig.pb.h imports interface\ncp ../base/interface.pb.h ../fs";
-		};
-		96E3E6FC17A2E8BB0071439F /* Copy tinyxml.h to system */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 12;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/tinyxml/tinyxml.h",
-			);
-			name = "Copy tinyxml.h to system";
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/system_headers/tinyxml.h",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "echo \"Generating tinyxml.h\" `date`\nmkdir -p \"${DERIVED_FILE_DIR}/prefix/include\"\ncp \"${SRCROOT}/tinyxml/tinyxml.h\" \"${DERIVED_FILE_DIR}/system_headers/tinyxml.h\"";
+			shellScript = "cd $SRCROOT/..\n\n# add cmake to path\nPATH=\"/usr/local/bin:$PATH\"\n\n# set up compiler environment\nexport CXX=clang++\nexport CXXFLAGS=-stdlib=$CLANG_CXX_LIBRARY\n\nif ! ./are_dependencies_up_to_date.sh; then\n    make clean-deps\n    make dependencies\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -643,81 +279,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				963D09B317A1D89D00AEE673 /* main.m in Sources */,
-				963D09BA17A1D89D00AEE673 /* LBXAppDelegate.m in Sources */,
-				96E3E65F17A257DB0071439F /* autosprintf.cpp in Sources */,
-				96E3E66017A257DB0071439F /* base64.cpp in Sources */,
-				96E3E66117A257DB0071439F /* ConfigReader.cpp in Sources */,
-				96E3E66217A257DB0071439F /* ConfigVar.cpp in Sources */,
-				96E3E66317A257DB0071439F /* Error.cpp in Sources */,
-				96E3E66417A257DB0071439F /* Interface.cpp in Sources */,
-				96E3E66517A257DB0071439F /* XmlReader.cpp in Sources */,
-				96E3E68417A2585D0071439F /* BlockFileIO.cpp in Sources */,
-				96E3E68517A2585D0071439F /* BlockNameIO.cpp in Sources */,
-				96E3E68617A2585D0071439F /* CipherFileIO.cpp in Sources */,
-				96E3E68717A2585D0071439F /* Context.cpp in Sources */,
-				96E3E68817A2585D0071439F /* DirNode.cpp in Sources */,
-				96E3E68917A2585D0071439F /* encfs.cpp in Sources */,
-				96E3E68A17A2585D0071439F /* FileIO.cpp in Sources */,
-				96E3E68B17A2585D0071439F /* FileNode.cpp in Sources */,
-				96E3E68C17A2585D0071439F /* FileUtils.cpp in Sources */,
-				96E3E68D17A2585D0071439F /* MACFileIO.cpp in Sources */,
-				96E3E68E17A2585D0071439F /* NameIO.cpp in Sources */,
-				96E3E68F17A2585D0071439F /* NullNameIO.cpp in Sources */,
-				96E3E69017A2585D0071439F /* RawFileIO.cpp in Sources */,
-				96E3E69117A2585D0071439F /* StreamNameIO.cpp in Sources */,
-				96E3E6A517A258990071439F /* BlockCipher.cpp in Sources */,
-				96E3E6A617A258990071439F /* botan.cpp in Sources */,
-				96E3E6A717A258990071439F /* CipherKey.cpp in Sources */,
-				96E3E6A817A258990071439F /* CipherV1.cpp in Sources */,
-				96E3E6A917A258990071439F /* MAC.cpp in Sources */,
-				96E3E6AA17A258990071439F /* MemoryPool.cpp in Sources */,
-				96E3E6AB17A258990071439F /* NullCiphers.cpp in Sources */,
-				96E3E6AC17A258990071439F /* PBKDF.cpp in Sources */,
-				96E3E6AD17A258990071439F /* StreamCipher.cpp in Sources */,
-				96E3E6D417A259E30071439F /* async_fuse_fs_helpers.c in Sources */,
-				96E3E6D517A259E30071439F /* async_fuse_fs.c in Sources */,
-				96E3E6D617A259E30071439F /* async_rdwr_lock.c in Sources */,
-				96E3E6D717A259E30071439F /* async_tree.c in Sources */,
-				96E3E6D817A259E30071439F /* coroutine_io.c in Sources */,
-				96E3E6D917A259E30071439F /* dfs.c in Sources */,
-				96E3E6DA17A259E30071439F /* fd_utils.c in Sources */,
-				96E3E6DB17A259E30071439F /* fdevent_select.c in Sources */,
-				96E3E6DC17A259E30071439F /* fstatat_emu.c in Sources */,
-				96E3E6DD17A259E30071439F /* http_helpers.c in Sources */,
-				96E3E6DE17A259E30071439F /* http_server.c in Sources */,
-				96E3E6DF17A259E30071439F /* libdavfuse.c in Sources */,
-				96E3E6E017A259E30071439F /* logging.c in Sources */,
-				96E3E6E117A259E30071439F /* util.c in Sources */,
-				96E3E6E217A259E30071439F /* webdav_server.c in Sources */,
-				96E3E6E817A25A1A0071439F /* tinyxml.cpp in Sources */,
-				96E3E6E917A25A1A0071439F /* tinyxmlerror.cpp in Sources */,
-				96E3E6EA17A25A1A0071439F /* tinyxmlparser.cpp in Sources */,
-				96E3E70017A2EE680071439F /* fsconfig.pb.cc in Sources */,
-				96E3E70217A2EE730071439F /* interface.pb.cc in Sources */,
-				96E3E70817A332800071439F /* run_encfs.cpp in Sources */,
+				9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */,
+				96230549182B2E5200913551 /* LBXCreateLockboxWindowController.mm in Sources */,
+				9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */,
+				9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */,
+				96101770182A1499001D50E8 /* lockbox_server.cpp in Sources */,
+				9632FB7B182F13BD003C3F2E /* LBXMountLockboxWindowController.mm in Sources */,
+				96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */,
+				96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */,
+				9632FB76182F1160003C3F2E /* app_main_mac.m in Sources */,
+				9644D029182F251600ED4911 /* mount_mac.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		9676F35617A70B54004BF276 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 9676F35117A705DB004BF276 /* protobuf */;
-			targetProxy = 9676F35517A70B54004BF276 /* PBXContainerItemProxy */;
-		};
-		969321D417A5EBFA002B0C9A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 969321CF17A5EB95002B0C9A /* Botan */;
-			targetProxy = 969321D317A5EBFA002B0C9A /* PBXContainerItemProxy */;
-		};
-		969321DA17A5F912002B0C9A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 969321D517A5F7AE002B0C9A /* google-glog */;
-			targetProxy = 969321D917A5F912002B0C9A /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		963D09AF17A1D89D00AEE673 /* InfoPlist.strings */ = {
@@ -736,107 +311,117 @@
 			name = Credits.rtf;
 			sourceTree = "<group>";
 		};
-		963D09BB17A1D89D00AEE673 /* MainMenu.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				963D09BC17A1D89D00AEE673 /* en */,
-			);
-			name = MainMenu.xib;
-			sourceTree = "<group>";
-		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		963D09D217A1D89D00AEE673 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
+				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
-				ONLY_ACTIVE_ARCH = YES;
+				HEADER_SEARCH_PATHS = (
+					$SRCROOT/../out/deps/include,
+					$SRCROOT/../src,
+				);
+				LIBRARY_SEARCH_PATHS = $SRCROOT/../out/deps/lib;
+				LLVM_LTO = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$SRCROOT/../out/deps/include/encfs $SRCROOT/../out/deps/include/davfuse";
 			};
 			name = Debug;
 		};
 		963D09D317A1D89D00AEE673 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
+				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				HEADER_SEARCH_PATHS = (
+					$SRCROOT/../out/deps/include,
+					$SRCROOT/../src,
+				);
+				LIBRARY_SEARCH_PATHS = $SRCROOT/../out/deps/lib;
+				LLVM_LTO = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "$SRCROOT/../out/deps/include/encfs $SRCROOT/../out/deps/include/davfuse";
 			};
 			name = Release;
 		};
 		963D09D517A1D89D00AEE673 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
-				CLANG_CXX_LIBRARY = "libstdc++";
 				COMBINE_HIDPI_IMAGES = YES;
-				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Lockbox/Lockbox-Prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = "FUSE_USE_VERSION=26";
-				HEADER_SEARCH_PATHS = (
-					$DERIVED_FILE_DIR/system_headers,
-					/usr/include/libxml2,
-					$BUILT_PRODUCTS_DIR/prefix/include,
-					"$BUILT_PRODUCTS_DIR/prefix/include/botan-1.10",
-				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "Lockbox/Lockbox-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$BUILT_PRODUCTS_DIR/prefix/lib\"",
+					"\"$(SRCROOT)/../out/deps/lib\"",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
-				OTHER_LDFLAGS = (
-					"$(PROTOBUF_LDFLAGS)",
-					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libglog.a",
-					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libbotan-1.10.a",
-					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libprotobuf.a",
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/encfs $(DERIVED_FILE_DIR)/user_headers";
+				PRODUCT_NAME = Bitvault;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -844,98 +429,21 @@
 		963D09D617A1D89D00AEE673 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
-				CLANG_CXX_LIBRARY = "libstdc++";
 				COMBINE_HIDPI_IMAGES = YES;
-				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Lockbox/Lockbox-Prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = "FUSE_USE_VERSION=26";
-				HEADER_SEARCH_PATHS = (
-					$DERIVED_FILE_DIR/system_headers,
-					/usr/include/libxml2,
-					$BUILT_PRODUCTS_DIR/prefix/include,
-					"$BUILT_PRODUCTS_DIR/prefix/include/botan-1.10",
-				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "Lockbox/Lockbox-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$BUILT_PRODUCTS_DIR/prefix/lib\"",
+					"\"$(SRCROOT)/../out/deps/lib\"",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
-				OTHER_LDFLAGS = (
-					"$(PROTOBUF_LDFLAGS)",
-					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libglog.a",
-					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libbotan-1.10.a",
-					"$(BUILT_PRODUCTS_DIR)/prefix/lib/libprotobuf.a",
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/encfs $(DERIVED_FILE_DIR)/user_headers";
+				PRODUCT_NAME = Bitvault;
 				WRAPPER_EXTENSION = app;
-			};
-			name = Release;
-		};
-		9676F35217A705DB004BF276 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				DEBUGGING_SYMBOLS = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		9676F35317A705DB004BF276 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
-		969321D117A5EB96002B0C9A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				DEBUGGING_SYMBOLS = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		969321D217A5EB96002B0C9A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
-		969321D717A5F7AF002B0C9A /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				DEBUGGING_SYMBOLS = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		969321D817A5F7AF002B0C9A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -956,33 +464,6 @@
 			buildConfigurations = (
 				963D09D517A1D89D00AEE673 /* Debug */,
 				963D09D617A1D89D00AEE673 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		9676F35417A705DB004BF276 /* Build configuration list for PBXLegacyTarget "protobuf" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				9676F35217A705DB004BF276 /* Debug */,
-				9676F35317A705DB004BF276 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		969321D017A5EB96002B0C9A /* Build configuration list for PBXLegacyTarget "Botan" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				969321D117A5EB96002B0C9A /* Debug */,
-				969321D217A5EB96002B0C9A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		969321D617A5F7AF002B0C9A /* Build configuration list for PBXLegacyTarget "google-glog" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				969321D717A5F7AF002B0C9A /* Debug */,
-				969321D817A5F7AF002B0C9A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

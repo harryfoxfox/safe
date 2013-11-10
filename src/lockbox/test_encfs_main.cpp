@@ -45,7 +45,10 @@ read_password_from_console(const std::string & prompt) {
 
 int
 main(int argc, char *argv[]) {
-  if (argc < 2) return MAIN_RETURN_CODE_BAD_ARGS;
+  if (argc < 2) {
+    std::cerr << "Require folder name as the first argument" << std::endl;
+    return MAIN_RETURN_CODE_BAD_ARGS;
+  }
 
   auto native_fs = lockbox::create_native_fs();
 

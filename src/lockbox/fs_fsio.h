@@ -130,6 +130,9 @@ fs_fsio_path_sep(fs_fsio_handle_t fs);
 bool
 fs_fsio_path_is_valid(fs_fsio_handle_t fs, const char *p);
 
+bool
+fs_fsio_path_component_is_valid(fs_fsio_handle_t fs, const char *p);
+
 CREATE_IMPL_TAG(FS_FSIO_IMPL);
 
 #ifdef __cplusplus
