@@ -14,7 +14,7 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate, LBXMountLockboxWindowControllerDelegate>
+@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate, LBXMountLockboxWindowControllerDelegate, NSWindowDelegate>
 {
     std::vector<lockbox::mac::MountDetails> mounts;
     std::shared_ptr<encfs::FsIO> native_fs;
@@ -24,6 +24,9 @@
 @property (retain) NSMutableArray *createWindows;
 @property (retain) NSMutableArray *mountWindows;
 @property (retain) NSRunningApplication *lastActiveApp;
+@property (unsafe_unretained) IBOutlet NSWindow *aboutWindow;
+@property (weak) IBOutlet NSTextField *aboutWindowText;
 
+- (IBAction)aboutWindowOK:(NSButton *)sender;
 
 @end

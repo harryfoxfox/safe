@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9602BF2E182F5F83003291A9 /* LBXAboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9602BF2D182F5F83003291A9 /* LBXAboutWindow.xib */; };
 		9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101761182A1499001D50E8 /* CFsToFsIO.cpp */; };
 		9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101763182A1499001D50E8 /* fs_fsio.cpp */; };
 		9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96101766182A1499001D50E8 /* LBXAppDelegate.mm */; };
@@ -33,6 +34,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		9602BF2D182F5F83003291A9 /* LBXAboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXAboutWindow.xib; path = ../src/lockbox/LBXAboutWindow.xib; sourceTree = "<group>"; };
 		96101761182A1499001D50E8 /* CFsToFsIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFsToFsIO.cpp; path = ../src/lockbox/CFsToFsIO.cpp; sourceTree = "<group>"; };
 		96101762182A1499001D50E8 /* CFsToFsIO.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = CFsToFsIO.hpp; path = ../src/lockbox/CFsToFsIO.hpp; sourceTree = "<group>"; };
 		96101763182A1499001D50E8 /* fs_fsio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs_fsio.cpp; path = ../src/lockbox/fs_fsio.cpp; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 				96230550182C708400913551 /* LBXProgressSheetController.h */,
 				96230551182C708400913551 /* LBXProgressSheetController.mm */,
 				96230552182C708400913551 /* LBXProgressSheetController.xib */,
+				9602BF2D182F5F83003291A9 /* LBXAboutWindow.xib */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -249,6 +252,7 @@
 			files = (
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
 				9632FB7C182F13BD003C3F2E /* LBXMountLockboxWindowController.xib in Resources */,
+				9602BF2E182F5F83003291A9 /* LBXAboutWindow.xib in Resources */,
 				96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */,
 				9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */,
 				96E1639517A7528D009BE867 /* output.icns in Resources */,

@@ -9,8 +9,8 @@
 #import <lockbox/LBXAppDelegate.h>
 
 #import <lockbox/mount_mac.hpp>
-
 #import <lockbox/lockbox_server.hpp>
+#import <lockbox/lockbox_strings.h>
 
 #import <davfuse/logging.h>
 
@@ -187,6 +187,10 @@ enum {
     [self _updateStatusMenu];
 }
 
+- (IBAction)aboutWindowOK:(NSButton *)sender {
+    [sender.window close];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     (void)aNotification;
     
@@ -216,6 +220,10 @@ enum {
                                                            selector:@selector(driveWasUnmounted:)
                                                                name:NSWorkspaceDidUnmountNotification
                                                              object:nil];
+    
+    [NSBundle loadNibNamed:@"LBXAboutWindow" owner:self];
+    self.aboutWindow.level = NSModalPanelWindowLevel;
+    self.aboutWindowText.stringValue = [NSString stringWithUTF8String:LOCKBOX_ABOUT_BLURB];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
