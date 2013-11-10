@@ -10,6 +10,8 @@
 
 #import <lockbox/LBXProgressSheetController.h>
 
+#import <lockbox/logging.h>
+
 @interface LBXMountLockboxWindowController ()
 
 @end
@@ -33,6 +35,11 @@
     if (self) {
         self.delegate = del;
         self->fs = fs_;
+        
+        // load window
+        (void) self.window;
+        
+        self.locationPathControl.URL = [NSURL fileURLWithPath:NSHomeDirectory()];
         
         self.window.canHide = NO;
         [self.window center];
@@ -78,11 +85,28 @@
     }
     
     auto onFail = ^(const std::exception_ptr & eptr) {
-        // TODO log eptr
-        (void) eptr;
-        inputErrorAlert(self.window,
-                        @"Unknown Error",
-                        @"Unknown error occurred while starting the Bitvault");
+        bool alerted = false;
+        if (eptr != std::exception_ptr()) {
+            try {
+                std::rethrow_exception(eptr);
+            }
+            catch (const encfs::ConfigurationFileDoesNotExist & /*err*/) {
+                inputErrorAlert(self.window,
+                                @"Not a Bitvault",
+                                [NSString stringWithFormat:@"The location you selected, \"%s\", is not a Bitvault.",
+                                 encrypted_container_path.c_str(), nil]);
+                alerted = true;
+            }
+            catch (const std::exception &err) {
+                lbx_log_error("Error while mounting: %s", err.what());
+            }
+        }
+        
+        if (!alerted) {
+            inputErrorAlert(self.window,
+                            @"Unknown Error",
+                            @"Unknown error occurred while starting the Bitvault");
+        }
     };
     
     auto onMountSuccess = ^(lockbox::mac::MountDetails md) {

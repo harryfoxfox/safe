@@ -39,6 +39,11 @@
         self.delegate = del;
         self->fs = fs_;
         
+        // load window
+        (void) self.window;
+        
+        self.locationPathControl.URL = [NSURL fileURLWithPath:NSHomeDirectory()];
+        
         self.window.canHide = NO;
         [self.window center];
         [self.window makeKeyAndOrderFront:self];
@@ -56,7 +61,7 @@
     // check if this location is a well-formed path
     opt::optional<encfs::Path> maybeLocationPath;
     try {
-        maybeLocationPath = self->fs->pathFromString(self.locationPathControl.URL.path.UTF8String);
+        maybeLocationPath = self->fs->pathFromString(self.locationPathControl.URL.path.fileSystemRepresentation);
     }
     catch (...) {
         // location is bad
@@ -85,7 +90,7 @@
     
     opt::optional<encfs::Path> maybeContainerPath;
     try {
-        maybeContainerPath = locationPath.join(name.UTF8String);
+        maybeContainerPath = locationPath.join(name.fileSystemRepresentation);
     }
     catch (...) {
         [self inputErrorAlertWithTitle:@"Bad Name"

@@ -73,6 +73,7 @@
 		963D09B617A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		963D09C417A1D89D00AEE673 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
 		9644D028182F251600ED4911 /* mount_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mount_mac.mm; path = ../src/lockbox/mount_mac.mm; sourceTree = "<group>"; };
+		9644D02A182F3E4100ED4911 /* logging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logging.h; path = ../src/lockbox/logging.h; sourceTree = "<group>"; };
 		96E1639217A74F55009BE867 /* Lock-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Lock-icon.png"; path = "../Lock-icon.png"; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -98,6 +99,7 @@
 		9610175F182A1407001D50E8 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				9644D02A182F3E4100ED4911 /* logging.h */,
 				9632FB78182F13BD003C3F2E /* LBXMountLockboxWindowController.h */,
 				9632FB79182F13BD003C3F2E /* LBXMountLockboxWindowController.mm */,
 				9632FB7A182F13BD003C3F2E /* LBXMountLockboxWindowController.xib */,
