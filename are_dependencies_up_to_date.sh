@@ -62,7 +62,7 @@ fi
 ANYWEBDAV_SERVER_FS_FILE=$(find "$APPDIR/../davfuse" \
     -type f -and \
     -newer "$APPDIR/out/deps/lib/libwebdav_server_fs.a" | \
-    grep -v "^$APPDIR/../encfs/.hg/" | \
+    grep -v "^$APPDIR/../davfuse/.hg/" | \
     head -n 1 2>/dev/null)
 if [ ! -e "$APPDIR/out/deps/lib/libwebdav_server_fs.a" ] || [ "$ANYWEBDAV_SERVER_FS_FILE" ]; then
     echo "davfuse is out of date" >> /dev/stderr
