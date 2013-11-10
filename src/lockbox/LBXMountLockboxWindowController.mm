@@ -36,7 +36,6 @@
         
         self.window.canHide = NO;
         [self.window center];
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         [self.window makeKeyAndOrderFront:self];
         self.window.level = NSModalPanelWindowLevel;
     }

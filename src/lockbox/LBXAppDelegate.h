@@ -23,5 +23,7 @@
 @property (retain) NSStatusItem *statusItem;
 @property (retain) NSMutableArray *createWindows;
 @property (retain) NSMutableArray *mountWindows;
+@property (retain) NSRunningApplication *lastActiveApp;
+
 
 @end

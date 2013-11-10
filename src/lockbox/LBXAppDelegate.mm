@@ -20,6 +20,17 @@ enum {
 
 @implementation LBXAppDelegate
 
+- (void)saveCurrentlyActive:(NSNotification *)notification {
+    NSRunningApplication *app = [notification.userInfo objectForKey:NSWorkspaceApplicationKey];
+    if (![app isEqual:NSRunningApplication.currentApplication]) {
+        self.lastActiveApp = app;
+    }
+}
+
+- (void)restoreLastActive {
+    [self.lastActiveApp activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+}
+
 - (void)_newMount:(lockbox::mac::MountDetails)md {
     self->mounts.push_back(std::move(md));
     [self _updateStatusMenu];
@@ -28,6 +39,7 @@ enum {
 
 - (void)createLockboxCanceled:(LBXCreateLockboxWindowController *)wc {
     [self.createWindows removeObject:wc];
+    [self restoreLastActive];
 }
 
 - (void)createLockboxDone:(LBXCreateLockboxWindowController *)wc
@@ -38,6 +50,7 @@ enum {
 
 - (void)startLockboxCanceled:(LBXMountLockboxWindowController *)wc {
     [self.mountWindows removeObject:wc];
+    [self restoreLastActive];
 }
 
 - (void)startLockboxDone:(LBXMountLockboxWindowController *)wc
@@ -62,6 +75,7 @@ enum {
 
 - (void)mountBitvault:(id)sender {
     (void)sender;
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     LBXMountLockboxWindowController *wc = [[LBXMountLockboxWindowController alloc]
                                             initWithDelegate:self fs:self->native_fs];
     [self.mountWindows addObject:wc];
@@ -69,6 +83,7 @@ enum {
 
 - (void)createBitvault:(id)sender {
     (void)sender;
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     LBXCreateLockboxWindowController *wc = [[LBXCreateLockboxWindowController alloc]
                                             initWithDelegate:self fs:self->native_fs];
     [self.createWindows addObject:wc];
@@ -187,6 +202,13 @@ enum {
 
     [self _setupStatusBar];
     
+    // get notification whenever active application changes,
+    // we preserve this so we can switch back when the user
+    // selects "cancel" on our dialogs
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(saveCurrentlyActive:)
+                                                               name:NSWorkspaceDidActivateApplicationNotification
+                                                             object:nil];
     // kickoff mount watch timer
     [self timerFire:self];
 }
