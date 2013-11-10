@@ -371,7 +371,8 @@ _Pragma("clang diagnostic pop") \
     if ([self haveUserNotifications]) {
         NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
     }
-    
+
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     [NSBundle loadNibNamed:@"LBXAboutWindow" owner:self];
     self.aboutWindow.delegate = self;
     self.aboutWindow.level = NSModalPanelWindowLevel;
