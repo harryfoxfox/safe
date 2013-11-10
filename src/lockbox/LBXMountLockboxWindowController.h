@@ -1,5 +1,5 @@
 //
-//  LBXStartLockboxWindowController.h
+//  LBXMountLockboxWindowController.h
 //  Lockbox
 //
 //  Created by Rian Hunter on 11/8/13.
@@ -10,28 +10,28 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class LBXStartLockboxWindowController;
+@class LBXMountLockboxWindowController;
 
-@protocol LBXStartLockboxWindowControllerDelegate <NSObject>
+@protocol LBXMountLockboxWindowControllerDelegate <NSObject>
 
-- (void)startLockboxCanceled:(LBXStartLockboxWindowController *)wc;
-- (void)startLockboxDone:(LBXStartLockboxWindowController *)wc
+- (void)startLockboxCanceled:(LBXMountLockboxWindowController *)wc;
+- (void)startLockboxDone:(LBXMountLockboxWindowController *)wc
                     mount:(lockbox::mac::MountDetails)a;
 
 @end
 
 
-@interface LBXStartLockboxWindowController : NSWindowController {
+@interface LBXMountLockboxWindowController : NSWindowController {
     std::shared_ptr<encfs::FsIO> fs;
 }
 
-@property (nonatomic, weak) NSObject <LBXStartLockboxWindowControllerDelegate> *delegate;
+@property (nonatomic, weak) NSObject <LBXMountLockboxWindowControllerDelegate> *delegate;
 
 
 @property (weak) IBOutlet NSPathControl *locationPathControl;
 @property (weak) IBOutlet NSSecureTextField *passwordSecureTextField;
 
-- (id)initWithDelegate:(NSObject <LBXStartLockboxWindowControllerDelegate> *) del
+- (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
                     fs:(std::shared_ptr<encfs::FsIO>)fs;
 
 - (IBAction)confirmStart:(id)sender;

@@ -7,14 +7,14 @@
 //
 
 #import <lockbox/LBXCreateLockboxWindowController.h>
-#import <lockbox/LBXStartLockboxWindowController.h>
+#import <lockbox/LBXMountLockboxWindowController.h>
 
 #import <lockbox/mount_mac.hpp>
 
 #import <Cocoa/Cocoa.h>
 
 
-@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate, LBXStartLockboxWindowControllerDelegate>
+@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate, LBXMountLockboxWindowControllerDelegate>
 {
     std::vector<lockbox::mac::MountDetails> mounts;
     std::shared_ptr<encfs::FsIO> native_fs;
@@ -22,6 +22,6 @@
 
 @property (retain) NSStatusItem *statusItem;
 @property (retain) NSMutableArray *createWindows;
-@property (retain) NSMutableArray *startWindows;
+@property (retain) NSMutableArray *mountWindows;
 
 @end

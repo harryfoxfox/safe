@@ -1,20 +1,20 @@
 //
-//  LBXStartLockboxWindowController.m
+//  LBXMountLockboxWindowController.m
 //  Lockbox
 //
 //  Created by Rian Hunter on 11/8/13.
 //  Copyright (c) 2013 Rian Hunter. All rights reserved.
 //
 
-#import <lockbox/LBXStartLockboxWindowController.h>
+#import <lockbox/LBXMountLockboxWindowController.h>
 
 #import <lockbox/LBXProgressSheetController.h>
 
-@interface LBXStartLockboxWindowController ()
+@interface LBXMountLockboxWindowController ()
 
 @end
 
-@implementation LBXStartLockboxWindowController
+@implementation LBXMountLockboxWindowController
 
 - (id)initWithWindow:(NSWindow *)window
 {
@@ -25,11 +25,11 @@
     return self;
 }
 
-- (id)initWithDelegate:(NSObject <LBXStartLockboxWindowControllerDelegate> *) del
+- (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
                     fs:(std::shared_ptr<encfs::FsIO>)fs_ {
     NSLog(@"sup start");
     
-    self = [self initWithWindowNibName:@"LBXStartLockboxWindowController"];
+    self = [self initWithWindowNibName:@"LBXMountLockboxWindowController"];
     if (self) {
         self.delegate = del;
         self->fs = fs_;

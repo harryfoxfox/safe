@@ -36,13 +36,13 @@ enum {
     [self _newMount:std::move(md)];
 }
 
-- (void)startLockboxCanceled:(LBXStartLockboxWindowController *)wc {
-    [self.startWindows removeObject:wc];
+- (void)startLockboxCanceled:(LBXMountLockboxWindowController *)wc {
+    [self.mountWindows removeObject:wc];
 }
 
-- (void)startLockboxDone:(LBXStartLockboxWindowController *)wc
+- (void)startLockboxDone:(LBXMountLockboxWindowController *)wc
                    mount:(lockbox::mac::MountDetails)md {
-    [self.startWindows removeObject:wc];
+    [self.mountWindows removeObject:wc];
     [self _newMount:std::move(md)];
 }
 
@@ -59,11 +59,11 @@ enum {
     self->mounts[mount_idx].open_mount();
 }
 
-- (void)startABitvault:(id)sender {
+- (void)mountABitvault:(id)sender {
     (void)sender;
-    LBXStartLockboxWindowController *wc = [[LBXStartLockboxWindowController alloc]
+    LBXMountLockboxWindowController *wc = [[LBXMountLockboxWindowController alloc]
                                             initWithDelegate:self fs:self->native_fs];
-    [self.startWindows addObject:wc];
+    [self.mountWindows addObject:wc];
 }
 
 - (void)createABitvault:(id)sender {
@@ -129,10 +129,10 @@ enum {
         [menu addItem:[NSMenuItem separatorItem]];
     }
   
-    // Start an Existing Bitvault
+    // Mount an Existing Bitvault
     [self _addItemToMenu:menu
-                   title:@"Start an Existing Bitvault"
-                  action:@selector(startABitvault:)];
+                   title:@"Mount an Existing Bitvault"
+                  action:@selector(mountABitvault:)];
     
     // Create a New Bitvault
    [self _addItemToMenu:menu
@@ -181,7 +181,7 @@ enum {
     
     self->native_fs = lockbox::create_native_fs();
     self.createWindows = [NSMutableArray array];
-    self.startWindows = [NSMutableArray array];
+    self.mountWindows = [NSMutableArray array];
 
     [self _setupStatusBar];
     
