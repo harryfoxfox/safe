@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>Bitvault</string>
+	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleIconFile</key>
 	<string>output</string>
 	<key>CFBundleIdentifier</key>
