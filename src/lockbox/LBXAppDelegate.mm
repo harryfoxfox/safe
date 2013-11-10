@@ -75,6 +75,7 @@ enum {
 
 - (void)getBitvaultSource:(id)sender {
     (void)sender;
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://github.com/rianhunter/bitvault"]];
 }
 
 - (void)testBubble:(id)sender {
