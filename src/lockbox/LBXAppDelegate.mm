@@ -59,14 +59,14 @@ enum {
     self->mounts[mount_idx].open_mount();
 }
 
-- (void)mountABitvault:(id)sender {
+- (void)mountBitvault:(id)sender {
     (void)sender;
     LBXMountLockboxWindowController *wc = [[LBXMountLockboxWindowController alloc]
                                             initWithDelegate:self fs:self->native_fs];
     [self.mountWindows addObject:wc];
 }
 
-- (void)createABitvault:(id)sender {
+- (void)createBitvault:(id)sender {
     (void)sender;
     LBXCreateLockboxWindowController *wc = [[LBXCreateLockboxWindowController alloc]
                                             initWithDelegate:self fs:self->native_fs];
@@ -131,13 +131,13 @@ enum {
   
     // Mount an Existing Bitvault
     [self _addItemToMenu:menu
-                   title:@"Mount an Existing Bitvault"
-                  action:@selector(mountABitvault:)];
+                   title:@"Mount Existing Bitvault"
+                  action:@selector(mountBitvault:)];
     
     // Create a New Bitvault
    [self _addItemToMenu:menu
-                  title:@"Create a New Bitvault"
-                 action:@selector(createABitvault:)];
+                  title:@"Create New Bitvault"
+                 action:@selector(createBitvault:)];
     
     // Get Bitvault Source Code
     [self _addItemToMenu:menu
