@@ -250,9 +250,14 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   }
   auto _destroy_encoded_internal_root =
     create_destroyer(encoded_internal_root, free);
-  auto server = webdav_server_start(loop, sock, public_uri_root.c_str(),
-                                    encoded_internal_root, server_backend);
-  if (!server) throw std::runtime_error("Couldn't start webdav server");
+  auto server = webdav_server_new(loop, sock, public_uri_root.c_str(),
+                                  encoded_internal_root, server_backend);
+  if (!server) throw std::runtime_error("Couldn't create webdav server");
+  auto _destroy_server = create_destroyer(server, webdav_server_destroy);
+
+  // start server
+  auto success_server_start = webdav_server_start(server);
+  if (!success_server_start) throw std::runtime_error("Couldn't create webdav server");
 
   // now set up callback
   socket_t sv[2];
@@ -272,7 +277,9 @@ run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
 
   // run server
   log_info("Starting main loop");
-  event_loop_main_loop(loop);
+  auto success_loop = event_loop_main_loop(loop);
+  if (!success_loop) throw std::runtime_error("Loop failed");
+
   log_info("Server stopped");
 }
 
