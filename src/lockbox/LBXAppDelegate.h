@@ -10,6 +10,7 @@
 #import <lockbox/LBXMountLockboxWindowController.h>
 
 #import <lockbox/mount_mac.hpp>
+#import <lockbox/recent_paths_storage.hpp>
 
 #import <Cocoa/Cocoa.h>
 
@@ -19,6 +20,7 @@
     std::vector<lockbox::mac::MountDetails> mounts;
     std::shared_ptr<encfs::FsIO> native_fs;
     NSInteger lastModifierFlags;
+    std::unique_ptr<lockbox::RecentlyUsedPathStoreV1> path_store;
 }
 
 @property (retain) NSStatusItem *statusItem;

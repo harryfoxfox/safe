@@ -20,19 +20,21 @@
 
 @end
 
-
 @interface LBXMountLockboxWindowController : NSWindowController <NSWindowDelegate> {
     std::shared_ptr<encfs::FsIO> fs;
 }
 
 @property (nonatomic, weak) NSObject <LBXMountLockboxWindowControllerDelegate> *delegate;
 
-
 @property (weak) IBOutlet NSPathControl *locationPathControl;
 @property (weak) IBOutlet NSSecureTextField *passwordSecureTextField;
 
 - (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
                     fs:(std::shared_ptr<encfs::FsIO>)fs;
+
+- (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
+                    fs:(std::shared_ptr<encfs::FsIO>)fs
+                  path:(encfs::Path)p;
 
 - (IBAction)confirmStart:(id)sender;
 - (IBAction)cancelStart:(id)sender;

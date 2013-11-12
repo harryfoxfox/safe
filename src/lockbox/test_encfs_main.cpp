@@ -43,6 +43,18 @@ read_password_from_console(const std::string & prompt) {
   return std::move(secure_password);
 }
 
+static std::string
+readstring(File &f, fs_off_t offset, size_t amt) {
+  auto data = std::unique_ptr<byte[]>(new byte[amt]);
+  auto amt_read = f.read(offset, data.get(), amt);
+  return std::string((char *) data.get(), amt_read);
+}
+
+static void
+writestring(File &f, fs_off_t offset, const std::string &data) {
+  return f.write(offset, (byte *)data.data(), data.size());
+}
+
 int
 main(int argc, char *argv[]) {
   if (argc < 2) {
@@ -163,9 +175,9 @@ main(int argc, char *argv[]) {
   // reading the same file
   {
     auto f = enc_fs->openfile(path, true, true);
-    f.write(0, test_string);
+    writestring(f, 0, test_string);
 
-    auto data = f.read(0, 3);
+    auto data = readstring(f, 0, 3);
     if (data != test_string) {
       std::cerr << "DATA WAS NOT EQUAL: \"" << data <<
         "\" VS \"" << test_string << "\"" << std::endl;
@@ -176,7 +188,7 @@ main(int argc, char *argv[]) {
   // okay now this tests reading the file again
   {
     auto f = enc_fs->openfile(path, false, false);
-    auto data = f.read(0, 3);
+    auto data = readstring(f, 0, 3);
     if (data != test_string) {
       std::cerr << "DATA WAS NOT EQUAL after rename: \"" << data <<
         "\" VS \"" << test_string << "\"" << std::endl;
@@ -191,7 +203,7 @@ main(int argc, char *argv[]) {
   // okay now this tests reading the file again
   {
     auto f = enc_fs->openfile(path2, false, false);
-    auto data = f.read(0, 3);
+    auto data = readstring(f, 0, 3);
     if (data != test_string) {
       std::cerr << "DATA WAS NOT EQUAL after rename: \"" << data <<
         "\" VS \"" << test_string << "\"" << std::endl;

@@ -11,6 +11,8 @@
 #import <lockbox/mount_mac.hpp>
 #import <lockbox/lockbox_server.hpp>
 #import <lockbox/lockbox_strings.h>
+#import <lockbox/recent_paths_storage.hpp>
+#import <lockbox/util.hpp>
 
 #import <lockbox/logging.h>
 
@@ -18,7 +20,42 @@ enum {
     CHECK_MOUNT_INTERVAL_IN_SECONDS = 1,
 };
 
+// 10 to model after system mac recent menus
+const lockbox::RecentlyUsedPathStoreV1::max_ent_t RECENTLY_USED_PATHS_MENU_NUM_ITEMS = 10;
+static NSString *const LBX_ACTION_KEY = @"_lbx_action";
+
+
 @implementation LBXAppDelegate
+
+- (NSURL *)applicationSupportDirectoryError:(NSError **)err {
+    NSURL *p = [NSFileManager.defaultManager
+                URLForDirectory:NSApplicationSupportDirectory
+                inDomain:NSUserDomainMask
+                appropriateForURL:nil
+                create:YES error:err];
+    if (!p) return nil;
+    
+    NSString *executableName = NSBundle.mainBundle.infoDictionary[@"CFBundleExecutable"];
+    
+    NSURL *ourAppDirectory = [p URLByAppendingPathComponent:executableName];
+
+    NSError *createErr;
+    BOOL created = [NSFileManager.defaultManager
+                    createDirectoryAtURL:ourAppDirectory
+                    withIntermediateDirectories:NO
+                    attributes:@{NSFilePosixPermissions: @0700}
+                    error:&createErr];
+    if (!created &&
+        (![createErr.domain isEqualToString:NSPOSIXErrorDomain] ||
+         createErr.code != EEXIST) &&
+        (![createErr.domain isEqualToString:NSCocoaErrorDomain] ||
+         createErr.code != NSFileWriteFileExistsError)) {
+        if (err) *err = createErr;
+        return nil;
+    }
+    
+    return ourAppDirectory;
+}
 
 - (void)saveCurrentlyActive:(NSNotification *)notification {
     NSRunningApplication *app = [notification.userInfo objectForKey:NSWorkspaceApplicationKey];
@@ -34,6 +71,7 @@ enum {
 }
 
 - (void)_newMount:(lockbox::mac::MountDetails)md {
+    self->path_store->use_path(md.get_source_path());
     self->mounts.push_back(std::move(md));
     [self _updateStatusMenu];
     self->mounts.back().open_mount();
@@ -73,7 +111,7 @@ mount_idx_from_menu_item(NSMenuItem *mi) {
 }
 
 - (void)openMount:(id)sender {
-    unsigned mount_idx = mount_idx_from_menu_item(sender);
+    auto mount_idx = mount_idx_from_menu_item(sender);
     
     if (mount_idx >= self->mounts.size()) {
         // this mount index is invalid now
@@ -84,7 +122,7 @@ mount_idx_from_menu_item(NSMenuItem *mi) {
 }
 
 - (void)unmountMount:(id)sender {
-    unsigned mount_idx = mount_idx_from_menu_item(sender);
+    auto mount_idx = mount_idx_from_menu_item(sender);
 
     if (mount_idx >= self->mounts.size()) {
         // this mount index is invalid now
@@ -92,6 +130,14 @@ mount_idx_from_menu_item(NSMenuItem *mi) {
     }
     
     self->mounts[mount_idx].unmount();
+}
+
+- (void)createBitvault:(id)sender {
+    (void)sender;
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    LBXCreateLockboxWindowController *wc = [[LBXCreateLockboxWindowController alloc]
+                                            initWithDelegate:self fs:self->native_fs];
+    [self.createWindows addObject:wc];
 }
 
 - (void)mountBitvault:(id)sender {
@@ -102,12 +148,37 @@ mount_idx_from_menu_item(NSMenuItem *mi) {
     [self.mountWindows addObject:wc];
 }
 
-- (void)createBitvault:(id)sender {
-    (void)sender;
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-    LBXCreateLockboxWindowController *wc = [[LBXCreateLockboxWindowController alloc]
-                                            initWithDelegate:self fs:self->native_fs];
-    [self.createWindows addObject:wc];
+static
+lockbox::RecentlyUsedPathStoreV1::max_ent_t
+recent_idx_from_menu_item(NSMenuItem *mi) {
+    NSInteger mount_idx = mi.tag;
+    assert(mount_idx >= 0);
+    return (lockbox::RecentlyUsedPathStoreV1::max_ent_t) mount_idx;
+}
+
+- (void)mountRecentBitvault:(id)sender {
+    auto recent_idx = recent_idx_from_menu_item(sender);
+
+    const auto & recent_paths = self->path_store->recently_used_paths();
+    
+    if (recent_idx >= recent_paths.size()) {
+        // somehow this mount idx became invalid
+        return;
+    }
+    
+    [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+    LBXMountLockboxWindowController *wc = [LBXMountLockboxWindowController.alloc
+                                           initWithDelegate:self
+                                           fs:self->native_fs
+                                           path:recent_paths[recent_idx]];
+                                           
+    [self.mountWindows addObject:wc];
+}
+
+- (void)clearRecentBitvaultMenu:(id)sender {
+    (void) sender;
+    self->path_store->clear();
+    [self _updateStatusMenu];
 }
 
 - (void)getBitvaultSource:(id)sender {
@@ -144,15 +215,21 @@ mount_idx_from_menu_item(NSMenuItem *mi) {
     [menu removeAllItems];
     
     // Menu is:
-    // [ (Open | Stop) <mount name> ]
+    // [ (Open | Unmount) "<mount name>" ]
     // ...
     // [ <separator> ]
-    // Start an Existing Bitvault
-    // Create a New Bitvault
-    // Get Bitvault Source Code
-    // [ Test Bubble ]
+    // Create New...
+    // Mount Existing...
+    // Mount Recent >
+    //   [ <folder icon> <mount name> ]
+    //   ...
+    //   [ <separator> ]
+    //   Clear Menu
+    // <separator>
+    // Get Source Code
     // Quit Bitvault
-    
+    // [ <separator> ]
+    // [ Test Bubble ]
 
     bool showUnmount = self->lastModifierFlags & NSAlternateKeyMask;
     NSString *verbString;
@@ -173,29 +250,53 @@ mount_idx_from_menu_item(NSMenuItem *mi) {
         NSMenuItem *mi = [self _addItemToMenu:menu
                                         title:title
                                        action:sel];
-        static_assert(sizeof(&md) <= sizeof(NSInteger),
-                      "NSInteger is not large enough to hold a pointer");
-        [mi setTag:tag];
-        ++tag;
+        mi.tag = tag++;
     }
 
-    if (!self->mounts.empty()) {
-        [menu addItem:[NSMenuItem separatorItem]];
+    if (tag) {
+        [menu addItem:NSMenuItem.separatorItem];
     }
+    
+    // Create a New Bitvault
+    [self _addItemToMenu:menu
+                   title:@"Create New..."
+                  action:@selector(createBitvault:)];
   
     // Mount an Existing Bitvault
     [self _addItemToMenu:menu
-                   title:@"Mount Existing Bitvault"
+                   title:@"Mount Existing..."
                   action:@selector(mountBitvault:)];
     
-    // Create a New Bitvault
-   [self _addItemToMenu:menu
-                  title:@"Create New Bitvault"
-                 action:@selector(createBitvault:)];
+    // create Submenu
+    if (self->path_store) {
+        NSMenu *recentSubmenu = NSMenu.alloc.init;
     
-    // Get Bitvault Source Code
+        NSInteger sub_tag = 0;
+        for (const auto & p : self->path_store->recently_used_paths()) {
+            NSMenuItem *mi = [self _addItemToMenu:recentSubmenu
+                                            title:[NSString stringWithUTF8String:p.basename().c_str()]
+                                           action:@selector(mountRecentBitvault:)];
+            mi.image = [NSWorkspace.sharedWorkspace iconForFileType:@"public.folder"];
+            mi.tag = sub_tag++;
+        }
+        
+        if (sub_tag) [recentSubmenu addItem:NSMenuItem.separatorItem];
+        
+        [self _addItemToMenu:recentSubmenu
+                       title:@"Clear Menu"
+                      action:(sub_tag ? @selector(clearRecentBitvaultMenu:) : nil)];
+        
+        NSMenuItem *mi = [self _addItemToMenu:menu
+                                        title:@"Mount Recent"
+                                       action:nil];
+        mi.submenu = recentSubmenu;
+    }
+    
+    [menu addItem:NSMenuItem.separatorItem];
+    
+    // Get Source Code
     [self _addItemToMenu:menu
-                   title:@"Get Bitvault Source Code"
+                   title:@"Get Source Code"
                   action:@selector(getBitvaultSource:)];
     
 #ifndef NDEBUG
@@ -205,10 +306,13 @@ mount_idx_from_menu_item(NSMenuItem *mi) {
                   action:@selector(testBubble:)];
 #endif
     
+    [menu addItem:NSMenuItem.separatorItem];
+
     // Quit Bitvault
     [self _addItemToMenu:menu
                    title:@"Quit Bitvault"
                   action:@selector(quitBitvault:)];
+    
 }
 
 - (void)menuNeedsUpdate:(NSMenu *)menu {
@@ -262,12 +366,8 @@ void PostMouseEvent(CGMouseButton button, CGEventType type, const CGPoint point)
 }
 
 - (BOOL)haveUserNotifications {
-    return NSClassFromString(@"NSUserNotificationCenter") == nil
-    ? NO
-    : YES;
+    return NSClassFromString(@"NSUserNotificationCenter") ? YES : NO;
 }
-
-static NSString *const LBX_ACTION_KEY = @"_lbx_action";
 
 - (void)notifyUserTitle:(NSString *)title
                 message:(NSString *)msg
@@ -347,9 +447,42 @@ _Pragma("clang diagnostic pop") \
     logging_set_global_level(LOG_DEBUG);
     log_debug("Hello world!");
     
+    NSError *err;
+    NSURL *appSupportDir = [self applicationSupportDirectoryError:&err];
+    if (!appSupportDir) {
+        lbx_log_critical("Error while getting application support directory: (%s:%ld) %s",
+                         err.domain.UTF8String,
+                         (long) err.code,
+                         err.localizedDescription.UTF8String);
+        [NSApp presentError:err];
+        [NSApp terminate:self];
+        return;
+    }
+    
     lockbox::global_webdav_init();
     
     self->native_fs = lockbox::create_native_fs();
+    
+    auto recently_used_paths_storage_path =
+    self->native_fs->pathFromString(appSupportDir.path.fileSystemRepresentation).join(lockbox::RECENTLY_USED_PATHS_V1_FILE_NAME);
+    
+    try {
+        try {
+            self->path_store = lockbox::make_unique<lockbox::RecentlyUsedPathStoreV1>(self->native_fs, recently_used_paths_storage_path, RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+        }
+        catch (const lockbox::RecentlyUsedPathsParseError & err) {
+            lbx_log_error("Parse error on recently used path store: %s", err.what());
+            // delete path and try again
+            self->native_fs->unlink(recently_used_paths_storage_path);
+            self->path_store = lockbox::make_unique<lockbox::RecentlyUsedPathStoreV1>(self->native_fs, recently_used_paths_storage_path, RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+        }
+    }
+    catch (const std::exception & err) {
+        // error while creating recently used path storee
+        // not a huge deal, but log error
+        lbx_log_error("Couldn't create recently used path store: %s", err.what());
+    }
+    
     self.createWindows = [NSMutableArray array];
     self.mountWindows = [NSMutableArray array];
     

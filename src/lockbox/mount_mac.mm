@@ -293,7 +293,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
 
     // return new mount details with thread info
     return MountDetails(*listen_port, std::move(mount_name),
-                        thread, mount_point_template, event);
+                        thread, mount_point_template, event, encrypted_container_path);
 }
     
 }}

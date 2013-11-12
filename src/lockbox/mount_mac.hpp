@@ -28,19 +28,22 @@ class MountDetails {
     std::string mount_point;
     bool is_mounted;
     std::shared_ptr<MountEvent> mount_event;
+    encfs::Path source_path;
 
 public:
     MountDetails(port_t listen_port_,
                  std::string name_,
                  pthread_t thread_handle_,
                  std::string mount_point_,
-                 std::shared_ptr<MountEvent> mount_event_)
+                 std::shared_ptr<MountEvent> mount_event_,
+                 encfs::Path source_path_)
     : listen_port(listen_port_)
     , name(std::move(name_))
     , thread_handle(thread_handle_)
     , mount_point(std::move(mount_point_))
     , is_mounted(true)
-    , mount_event(std::move(mount_event_)) {}
+    , mount_event(std::move(mount_event_))
+    , source_path(std::move(source_path_)) {}
 
     // copy is not allowed
     MountDetails(const MountDetails &) = delete;
@@ -51,9 +54,10 @@ public:
     MountDetails &operator=(MountDetails &&) = default;
     
     const std::string &
-    get_mount_name() const {
-        return name;
-    }
+    get_mount_name() const { return name; }
+    
+    const encfs::Path &
+    get_source_path() const { return source_path; }
     
     bool
     is_still_mounted() const;

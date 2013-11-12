@@ -28,7 +28,8 @@
 }
 
 - (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
-                    fs:(std::shared_ptr<encfs::FsIO>)fs_ {
+                    fs:(std::shared_ptr<encfs::FsIO>)fs_
+               fileURL:(NSURL *)fileURL {
     NSLog(@"sup start");
     
     self = [self initWithWindowNibName:@"LBXMountLockboxWindowController"];
@@ -39,7 +40,8 @@
         // load window
         (void) self.window;
         
-        self.locationPathControl.URL = [NSURL fileURLWithPath:NSHomeDirectory()];
+        if (!fileURL) fileURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+        self.locationPathControl.URL = fileURL;
         
         self.window.canHide = NO;
         [self.window center];
@@ -49,6 +51,22 @@
     }
     
     return self;
+}
+
+- (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
+                    fs:(std::shared_ptr<encfs::FsIO>)fs_ {
+    return [self initWithDelegate:del
+                               fs:fs_
+                          fileURL:nil];
+    
+}
+
+- (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
+                    fs:(std::shared_ptr<encfs::FsIO>)fs_
+                  path:(encfs::Path)p {
+    return [self initWithDelegate:del
+                               fs:fs_
+                          fileURL:[NSURL fileURLWithPath:[NSString stringWithUTF8String:p.c_str()]]];
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
