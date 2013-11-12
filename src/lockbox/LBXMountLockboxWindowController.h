@@ -17,6 +17,8 @@
 - (void)mountLockboxDone:(LBXMountLockboxWindowController *)wc
                    mount:(opt::optional<lockbox::mac::MountDetails>)a;
 
+- (opt::optional<lockbox::mac::MountDetails>)takeMount:(const encfs::Path &)p;
+
 @end
 
 @interface LBXMountLockboxWindowController : NSWindowController <NSWindowDelegate> {

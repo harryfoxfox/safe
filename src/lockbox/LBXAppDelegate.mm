@@ -27,6 +27,18 @@ static NSString *const LBX_ACTION_KEY = @"_lbx_action";
 
 @implementation LBXAppDelegate
 
+- (opt::optional<lockbox::mac::MountDetails>)takeMount:(const encfs::Path &)p {
+    auto it = std::find_if(self->mounts.begin(), self->mounts.end(),
+                           [&] (const lockbox::mac::MountDetails & md) {
+                               return md.get_source_path() == p;
+                           });
+    if (it == self->mounts.end()) return opt::nullopt;
+
+    auto md = std::move(*it);
+    self->mounts.erase(it);
+    return std::move(md);
+}
+
 - (NSURL *)applicationSupportDirectoryError:(NSError **)err {
     NSURL *p = [NSFileManager.defaultManager
                 URLForDirectory:NSApplicationSupportDirectory

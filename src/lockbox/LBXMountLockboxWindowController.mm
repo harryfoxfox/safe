@@ -146,6 +146,12 @@
     
     auto onVerifySuccess = ^(opt::optional<encfs::EncfsConfig> maybeConfig) {
         if (maybeConfig) {
+            self->maybeMount = [self.delegate takeMount:encrypted_container_path];
+            if (self->maybeMount) {
+                [self.window performClose:self];
+                return;
+            }
+            
             // success pass values to app
             showBlockingSheetMessage(self.window,
                                      @"Mounting Existing Bitvault...",
