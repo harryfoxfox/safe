@@ -269,6 +269,8 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
                                             title:[NSString stringWithUTF8String:p.basename().c_str()]
                                            action:@selector(mountRecentBitvault:)];
             mi.image = [NSWorkspace.sharedWorkspace iconForFileType:@"public.folder"];
+            mi.image.size = NSMakeSize(16,16);
+            mi.toolTip = [NSString stringWithUTF8String:p.c_str()];
             mi.tag = sub_tag++;
         }
         
@@ -325,6 +327,7 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
     self.statusItem.title = @"Bitvault";
     self.statusItem.highlightMode = YES;
     self.statusItem.menu = statusMenu;
+    self.statusItem.toolTip = @"Bitvault";
     
     [self _updateStatusMenu];
 }
