@@ -196,6 +196,8 @@ private:
       off = _rps_int::writestringterm(f, off, pstring, '\n');
     }
 
+    f.truncate(off);
+
     return new_rev;
   }
 
