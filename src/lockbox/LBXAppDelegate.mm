@@ -23,7 +23,7 @@ enum {
 // 10 to model after system mac recent menus
 const lockbox::RecentlyUsedPathStoreV1::max_ent_t RECENTLY_USED_PATHS_MENU_NUM_ITEMS = 10;
 static NSString *const LBX_ACTION_KEY = @"_lbx_action";
-
+static NSString *const APP_STARTED_COOKIE_FILENAME = @"AppStarted";
 
 @implementation LBXAppDelegate
 
@@ -84,7 +84,7 @@ static NSString *const LBX_ACTION_KEY = @"_lbx_action";
 
 - (void)_newMount:(lockbox::mac::MountDetails)md {
     self->path_store->use_path(md.get_source_path());
-    self->mounts.push_back(std::move(md));
+    self->mounts.insert(self->mounts.begin(), std::move(md));
     [self _updateStatusMenu];
     self->mounts.back().open_mount();
     [self notifyUserTitle:@"Success"
@@ -160,6 +160,16 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
     return (lockbox::RecentlyUsedPathStoreV1::max_ent_t) mount_idx;
 }
 
+- (void)openMountDialogForPath:(encfs::Path)p {
+    [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+    LBXMountLockboxWindowController *wc = [LBXMountLockboxWindowController.alloc
+                                           initWithDelegate:self
+                                           fs:self->native_fs
+                                           path:std::move(p)];
+    
+    [self.mountWindows addObject:wc];
+}
+
 - (void)mountRecentBitvault:(id)sender {
     auto recent_idx = recent_idx_from_menu_item(sender);
 
@@ -170,13 +180,7 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
         return;
     }
     
-    [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
-    LBXMountLockboxWindowController *wc = [LBXMountLockboxWindowController.alloc
-                                           initWithDelegate:self
-                                           fs:self->native_fs
-                                           path:recent_paths[recent_idx]];
-                                           
-    [self.mountWindows addObject:wc];
+    [self openMountDialogForPath:recent_paths[recent_idx]];
 }
 
 - (void)clearRecentBitvaultMenu:(id)sender {
@@ -450,6 +454,44 @@ _Pragma("clang diagnostic pop") \
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://github.com/rianhunter/bitvault"]];
 }
 
+- (BOOL)haveStartedAppBefore:(NSURL *)appSupportDir {
+    NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:APP_STARTED_COOKIE_FILENAME];
+    // NB: assuming the following operation is quick
+    return [NSFileManager.defaultManager fileExistsAtPath:cookieURL.path];
+}
+
+- (void)recordAppStart {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+                   ^{
+                       NSError *err;
+                       NSURL *appSupportDir = [self applicationSupportDirectoryError:&err];
+                       if (!appSupportDir) {
+                           lbx_log_critical("Error while getting application support directory: (%s:%ld) %s",
+                                            err.domain.UTF8String,
+                                            (long) err.code,
+                                            err.localizedDescription.UTF8String);
+                           return;
+                       }
+                       
+                       NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:APP_STARTED_COOKIE_FILENAME];
+                       [NSFileManager.defaultManager createFileAtPath:cookieURL.path
+                                                             contents:NSData.data
+                                                           attributes:nil];
+                   });
+}
+
+- (void)startAppUI {
+    [self _setupStatusBar];
+    [self recordAppStart];
+    
+    if ([self haveUserNotifications]) {
+        [self notifyUserTitle:@"Bitvault is now Running!"
+                      message:@"If you need to use Bitvault, just click on Bitvault menu bar icon."
+                       action:@selector(clickStatusItem)];
+    }
+    else [self clickStatusItem];
+}
+
 - (void)windowWillClose:(NSNotification *)notification {
     (void) notification;
     
@@ -460,14 +502,7 @@ _Pragma("clang diagnostic pop") \
     // only do the following if this is first launch (i.e. self.statusItem has not been set)
     if (self.statusItem) return;
     
-    [self _setupStatusBar];
-    
-    if ([self haveUserNotifications]) {
-        [self notifyUserTitle:@"Bitvault is now Running!"
-                      message:@"If you need to use Bitvault, just click on Bitvault menu bar icon."
-                       action:@selector(clickStatusItem)];
-    }
-    else [self clickStatusItem];
+    [self startAppUI];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
@@ -535,7 +570,16 @@ _Pragma("clang diagnostic pop") \
         NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
     }
 
-    [self _loadAboutWindowTitle:@"Welcome to Bitvault!"];
+    if (self->path_store && !self->path_store->recently_used_paths().empty()) {
+        [self _setupStatusBar];
+        [self openMountDialogForPath:self->path_store->recently_used_paths()[0]];
+    }
+    else if ([self haveStartedAppBefore:appSupportDir]) {
+        [self startAppUI];
+    }
+    else {
+        [self _loadAboutWindowTitle:@"Welcome to Bitvault!"];
+    }
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
