@@ -72,7 +72,8 @@
 - (void)windowWillClose:(NSNotification *)notification {
     (void) notification;
     [self.window orderOut:self];
-    [self.delegate startLockboxCanceled:self];
+    [self.delegate mountLockboxDone:self
+                              mount:std::move(self->maybeMount)];
 }
 
 - (IBAction)confirmStart:(id)sender {
@@ -135,7 +136,7 @@
     };
     
     auto onMountSuccess = ^(lockbox::mac::MountDetails md) {
-        [self.delegate startLockboxDone:self mount:std::move(md)];
+        self->maybeMount = std::move(md);
         [self.window performClose:self];
     };
     

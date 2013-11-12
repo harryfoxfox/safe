@@ -80,26 +80,18 @@ static NSString *const LBX_ACTION_KEY = @"_lbx_action";
                            self->mounts.back().get_mount_name().c_str(), nil]];
 }
 
-- (void)createLockboxCanceled:(LBXCreateLockboxWindowController *)wc {
-    [self.createWindows removeObject:wc];
-    [self restoreLastActive];
-}
-
 - (void)createLockboxDone:(LBXCreateLockboxWindowController *)wc
-                    mount:(lockbox::mac::MountDetails)md {
-    (void) wc;
-    [self _newMount:std::move(md)];
+                    mount:(opt::optional<lockbox::mac::MountDetails>)maybeMount {
+    [self.createWindows removeObject:wc];
+    if (maybeMount) [self _newMount:std::move(*maybeMount)];
+    else [self restoreLastActive];
 }
 
-- (void)startLockboxCanceled:(LBXMountLockboxWindowController *)wc {
+- (void)mountLockboxDone:(LBXMountLockboxWindowController *)wc
+                   mount:(opt::optional<lockbox::mac::MountDetails>)maybeMount {
     [self.mountWindows removeObject:wc];
-    [self restoreLastActive];
-}
-
-- (void)startLockboxDone:(LBXMountLockboxWindowController *)wc
-                   mount:(lockbox::mac::MountDetails)md {
-    (void)wc;
-    [self _newMount:std::move(md)];
+    if (maybeMount) [self _newMount:std::move(*maybeMount)];
+    else [self restoreLastActive];
 }
 
 static

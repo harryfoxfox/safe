@@ -14,14 +14,14 @@
 
 @protocol LBXMountLockboxWindowControllerDelegate <NSObject>
 
-- (void)startLockboxCanceled:(LBXMountLockboxWindowController *)wc;
-- (void)startLockboxDone:(LBXMountLockboxWindowController *)wc
-                    mount:(lockbox::mac::MountDetails)a;
+- (void)mountLockboxDone:(LBXMountLockboxWindowController *)wc
+                   mount:(opt::optional<lockbox::mac::MountDetails>)a;
 
 @end
 
 @interface LBXMountLockboxWindowController : NSWindowController <NSWindowDelegate> {
     std::shared_ptr<encfs::FsIO> fs;
+    opt::optional<lockbox::mac::MountDetails> maybeMount;
 }
 
 @property (nonatomic, weak) NSObject <LBXMountLockboxWindowControllerDelegate> *delegate;

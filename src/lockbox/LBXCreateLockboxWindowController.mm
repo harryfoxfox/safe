@@ -58,7 +58,8 @@
 - (void)windowWillClose:(NSNotification *)notification {
     (void) notification;
     [self.window orderOut:self];
-    [self.delegate createLockboxCanceled:self];
+    [self.delegate createLockboxDone:self
+                               mount:std::move(self->maybeMount)];
 }
 
 - (void)inputErrorAlertWithTitle:(NSString *)title message:(NSString *)msg {
@@ -170,7 +171,7 @@
     };
     
     auto onMountSuccess = ^(lockbox::mac::MountDetails md) {
-        [self.delegate createLockboxDone:self mount:std::move(md)];
+        self->maybeMount = std::move(md);
         [self.window performClose:self];
     };
     
