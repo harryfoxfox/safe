@@ -173,9 +173,9 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
     [self _updateStatusMenu];
 }
 
-- (void)getBitvaultSource:(id)sender {
+- (void)aboutBitvault:(id)sender {
     (void)sender;
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://github.com/rianhunter/bitvault"]];
+    [self _loadAboutWindowTitle:@"About Bitvault"];
 }
 
 - (void)testBubble:(id)sender {
@@ -288,10 +288,10 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
     
     [menu addItem:NSMenuItem.separatorItem];
     
-    // Get Source Code
+    // About Bitvault
     [self _addItemToMenu:menu
-                   title:@"Get Source Code"
-                  action:@selector(getBitvaultSource:)];
+                   title:@"About Bitvault"
+                  action:@selector(aboutBitvault:)];
     
 #ifndef NDEBUG
     // Test Bubble
@@ -330,10 +330,6 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
     self.statusItem.toolTip = @"Bitvault";
     
     [self _updateStatusMenu];
-}
-
-- (IBAction)aboutWindowOK:(NSButton *)sender {
-    [sender.window performClose:sender];
 }
 
 void PostMouseEvent(CGMouseButton button, CGEventType type, const CGPoint point)
@@ -419,11 +415,38 @@ _Pragma("clang diagnostic pop") \
     return YES;
 }
 
+- (void)_loadAboutWindowTitle:(NSString *)title {
+    [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+
+    if (!self.aboutWindow) {
+        [NSBundle loadNibNamed:@"LBXAboutWindow" owner:self];
+        self.aboutWindow.delegate = self;
+        self.aboutWindow.level = NSModalPanelWindowLevel;
+        self.aboutWindowText.stringValue = [NSString stringWithUTF8String:LOCKBOX_ABOUT_BLURB];
+        self.aboutWindow.title = title;
+    }
+    
+    [self.aboutWindow makeKeyAndOrderFront:self];
+}
+
+- (IBAction)aboutWindowOK:(NSButton *)sender {
+    [sender.window performClose:sender];
+}
+
+- (IBAction)aboutWindowGetSourceCode:(NSButton *)sender {
+    (void) sender;
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://github.com/rianhunter/bitvault"]];
+}
+
 - (void)windowWillClose:(NSNotification *)notification {
     (void) notification;
     
     [self.aboutWindow orderOut:self];
     self.aboutWindow = nil;
+    [self restoreLastActive];
+
+    // only do the following if this is first launch (i.e. self.statusItem has not been set)
+    if (self.statusItem) return;
     
     [self _setupStatusBar];
     
@@ -500,11 +523,7 @@ _Pragma("clang diagnostic pop") \
         NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
     }
 
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-    [NSBundle loadNibNamed:@"LBXAboutWindow" owner:self];
-    self.aboutWindow.delegate = self;
-    self.aboutWindow.level = NSModalPanelWindowLevel;
-    self.aboutWindowText.stringValue = [NSString stringWithUTF8String:LOCKBOX_ABOUT_BLURB];
+    [self _loadAboutWindowTitle:@"Welcome to Bitvault!"];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {

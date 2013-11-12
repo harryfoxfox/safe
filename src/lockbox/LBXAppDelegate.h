@@ -31,5 +31,6 @@
 @property (weak) IBOutlet NSTextField *aboutWindowText;
 
 - (IBAction)aboutWindowOK:(NSButton *)sender;
+- (IBAction)aboutWindowGetSourceCode:(NSButton *)sender;
 
 @end
