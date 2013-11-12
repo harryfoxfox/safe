@@ -41,6 +41,10 @@
         (void) self.window;
         
         if (!fileURL) fileURL = [NSURL fileURLWithPath:NSHomeDirectory()];
+        else {
+            // move focus to password
+            [self.window makeFirstResponder:self.passwordSecureTextField];
+        }
         self.locationPathControl.URL = fileURL;
         
         self.window.canHide = NO;
