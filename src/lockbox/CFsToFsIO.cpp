@@ -117,44 +117,57 @@ std::system_error fs_error(fs_error_t err) {
   return std::system_error(make_error_code(err));
 }
 
-class CFsToFsIOPath final : public encfs::StringPathDynamicSep<CFsToFsIOPath> {
+class CFsToFsIOPath final : public encfs::PathPoly {
 protected:
   fs_handle_t _fs;
-
-  virtual std::unique_ptr<encfs::PathPoly> _from_string(std::string str) const
-  {
-    return std::unique_ptr<CFsToFsIOPath>( new CFsToFsIOPath( _fs, std::move( str ) ) );
-  }
-
-  virtual bool _filename_equal(const std::string & a,
-                               const std::string & b) const {
-    return fs_path_component_equals(_fs, a.c_str(), b.c_str());
-  }
-
-  virtual bool _filename_valid(const std::string & a) const {
-      return fs_path_component_is_valid(_fs, a.c_str());
-  }
+  std::string _str;
 
 public:
   CFsToFsIOPath(fs_handle_t fs, std::string str)
-    : StringPathDynamicSep(fs_path_sep(fs), std::move(str))
-    , _fs(fs) {
+    : _fs(fs)
+    , _str(std::move(str)) {
     if (!fs_path_is_valid(fs, this->c_str())) {
       throw std::runtime_error("invalid path: " + (const std::string &) *this);
     }
   }
 
+  virtual operator const std::string&() const {
+    return _str;
+  }
+
+  virtual std::unique_ptr<PathPoly> join(std::string name) const override {
+    auto new_cstr = fs_path_join(_fs, this->c_str(), name.c_str());
+    if (!new_cstr) throw std::runtime_error("couldn't join");
+    auto _defer_free = lockbox::create_deferred(free, new_cstr);
+    return lockbox::make_unique<CFsToFsIOPath>(_fs, new_cstr);
+  }
+
+  virtual std::string basename() const override {
+    auto new_cstr = fs_path_basename(_fs, this->c_str());
+    if (!new_cstr) throw std::runtime_error("couldn't create basename");
+    auto _defer_free = lockbox::create_deferred(free, new_cstr);
+    return std::string(new_cstr);
+  }
+
   virtual std::unique_ptr<encfs::PathPoly> dirname() const override {
-    auto dirpath = util_fs_path_dirname(_fs, _path.c_str());
-    if (!dirpath) {
-      throw std::runtime_error("couldn't create dirname!");
-    }
+    auto dirpath = fs_path_dirname(_fs, this->c_str());
+    if (!dirpath) throw std::runtime_error("couldn't create dirname!");
     auto _free_dispath = lockbox::create_deferred(free, dirpath);
-    return _from_string(dirpath);
+    return lockbox::make_unique<CFsToFsIOPath>(_fs, dirpath);
   }
 
   virtual bool is_root() const override {
-    return fs_path_is_root(_fs, _path.c_str());
+    return fs_path_is_root(_fs, this->c_str());
+  }
+
+  bool operator==(const PathPoly &p) const override {
+    auto p2 = dynamic_cast<const CFsToFsIOPath *>(&p);
+    if (!p2) return false;
+    return (const std::string &)*this == (const std::string &)*p2;
+  }
+
+  virtual std::unique_ptr<encfs::PathPoly> copy() const override {
+    return lockbox::make_unique<CFsToFsIOPath>(_fs, _str);
   }
 };
 
@@ -311,20 +324,10 @@ CFsToFsIO::~CFsToFsIO() {
   }
 }
 
-const std::string &CFsToFsIO::path_sep() const {
-  static const std::string _path_sep = fs_path_sep(_fs);
-  return _path_sep;
-}
-
 encfs::Path CFsToFsIO::pathFromString(const std::string &path) const {
   // in the fs C interface, paths are always UTF-8 encoded strings
   // CFsToFsIOPath does validity checking in constructor
   return std::unique_ptr<CFsToFsIOPath>(new CFsToFsIOPath(_fs, path));
-}
-
-bool CFsToFsIO::filename_equal(const std::string &a,
-                               const std::string &b) const {
-  return fs_path_component_equals(_fs, a.c_str(), b.c_str());
 }
 
 encfs::Directory CFsToFsIO::opendir(const encfs::Path &path) const {

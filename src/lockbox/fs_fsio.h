@@ -122,16 +122,16 @@ bool
 fs_fsio_path_is_root(fs_fsio_handle_t fs, const char *path);
 
 bool
-fs_fsio_path_component_equals(fs_fsio_handle_t fs, const char *a, const char *b);
-
-const char *
-fs_fsio_path_sep(fs_fsio_handle_t fs);
-
-bool
 fs_fsio_path_is_valid(fs_fsio_handle_t fs, const char *p);
 
-bool
-fs_fsio_path_component_is_valid(fs_fsio_handle_t fs, const char *p);
+char *
+fs_fsio_path_dirname(fs_fsio_handle_t fs, const char *p);
+
+char *
+fs_fsio_path_basename(fs_fsio_handle_t fs, const char *p);
+
+char *
+fs_fsio_path_join(fs_fsio_handle_t fs, const char *p, const char *n);
 
 CREATE_IMPL_TAG(FS_FSIO_IMPL);
 

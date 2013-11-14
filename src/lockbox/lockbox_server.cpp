@@ -70,7 +70,7 @@ global_webdav_init() {
   /* init xml parser */
   init_xml_parser();
   success_init_xml = true;
-    
+
   success_ignore_sigpipe = ignore_sigpipe();
   if (!success_ignore_sigpipe) goto fail;
 
@@ -113,12 +113,10 @@ static const FsOperations native_ops = {
   .rename = (fs_dynamic_rename_fn) fs_native_rename,
   .set_times = (fs_dynamic_set_times_fn) fs_native_set_times,
   .path_is_root = (fs_dynamic_path_is_root_fn) fs_native_path_is_root,
-  .path_sep = (fs_dynamic_path_sep_fn) fs_native_path_sep,
-  .path_component_equals =
-    (fs_dynamic_path_component_equals_fn) fs_native_path_component_equals,
   .path_is_valid = (fs_dynamic_path_is_valid_fn) fs_native_path_is_valid,
-  .path_component_is_valid =
-    (fs_dynamic_path_component_is_valid_fn) fs_native_path_component_is_valid,
+  .path_dirname = (fs_dynamic_path_dirname_fn) fs_native_path_dirname,
+  .path_basename = (fs_dynamic_path_basename_fn) fs_native_path_basename,
+  .path_join = (fs_dynamic_path_join_fn) fs_native_path_join,
   .destroy = (fs_dynamic_destroy_fn) fs_native_destroy,
 };
 
@@ -171,12 +169,10 @@ static const FsOperations fsio_ops = {
   .rename = (fs_dynamic_rename_fn) fs_fsio_rename,
   .set_times = (fs_dynamic_set_times_fn) fs_fsio_set_times,
   .path_is_root = (fs_dynamic_path_is_root_fn) fs_fsio_path_is_root,
-  .path_sep = (fs_dynamic_path_sep_fn) fs_fsio_path_sep,
-  .path_component_equals =
-    (fs_dynamic_path_component_equals_fn) fs_fsio_path_component_equals,
   .path_is_valid = (fs_dynamic_path_is_valid_fn) fs_fsio_path_is_valid,
-  .path_component_is_valid =
-    (fs_dynamic_path_component_is_valid_fn) fs_fsio_path_component_is_valid,
+  .path_dirname = (fs_dynamic_path_dirname_fn) fs_fsio_path_dirname,
+  .path_basename = (fs_dynamic_path_basename_fn) fs_fsio_path_basename,
+  .path_join = (fs_dynamic_path_join_fn) fs_fsio_path_join,
   .destroy = (fs_dynamic_destroy_fn) fs_fsio_destroy,
 };
 

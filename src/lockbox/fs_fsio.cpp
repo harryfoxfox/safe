@@ -484,22 +484,8 @@ fs_fsio_destroy(fs_fsio_handle_t /*fs*/) {
 
 bool
 fs_fsio_path_is_root(fs_fsio_handle_t fs, const char *path) {
-  assert(fs_fsio_path_is_valid(fs, path));
   auto fsio = fs_fsio_handle_to_pointer(fs);
   return fsio->pathFromString(path).is_root();
-}
-
-bool
-fs_fsio_path_component_equals(fs_fsio_handle_t fs,
-                              const char *a, const char *b) {
-  auto fsio = fs_fsio_handle_to_pointer(fs);
-  return fsio->filename_equal(a, b);
-}
-
-const char *
-fs_fsio_path_sep(fs_fsio_handle_t fs) {
-  // not totally sold on exposing path sep as part of this API
-  return fs_fsio_handle_to_pointer(fs)->path_sep().c_str();
 }
 
 bool
@@ -513,14 +499,29 @@ fs_fsio_path_is_valid(fs_fsio_handle_t fs, const char *p) {
     return false;
   }
 }
-    
-bool
-fs_fsio_path_component_is_valid(fs_fsio_handle_t /*fs*/,
-                                const char */*p*/) {
-  // TODO: keep unimplemented, this method is getting removed from the
-  //       C fs interface
-  throw std::runtime_error("not implemented");
+
+char *
+fs_fsio_path_dirname(fs_fsio_handle_t fs, const char *p) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
+  return strdup_x(fsio->pathFromString(p).dirname());
 }
 
+char *
+fs_fsio_path_basename(fs_fsio_handle_t fs, const char *p) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
+  return strdup_x(fsio->pathFromString(p).basename());
+}
+
+char *
+fs_fsio_path_join(fs_fsio_handle_t fs, const char *p, const char *n) {
+  auto fsio = fs_fsio_handle_to_pointer(fs);
+  auto path = fsio->pathFromString(p);
+  try {
+    return strdup_x(path.join(n));
+  }
+  catch (...) {
+    return NULL;
+  }
+}
 
 }
