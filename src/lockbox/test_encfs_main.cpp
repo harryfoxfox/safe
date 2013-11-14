@@ -44,15 +44,15 @@ read_password_from_console(const std::string & prompt) {
 }
 
 static std::string
-readstring(File &f, fs_off_t offset, size_t amt) {
-  auto data = std::unique_ptr<byte[]>(new byte[amt]);
+readstring(encfs::File &f, encfs::fs_off_t offset, size_t amt) {
+  auto data = std::unique_ptr<encfs::byte[]>(new encfs::byte[amt]);
   auto amt_read = f.read(offset, data.get(), amt);
   return std::string((char *) data.get(), amt_read);
 }
 
 static void
-writestring(File &f, fs_off_t offset, const std::string &data) {
-  return f.write(offset, (byte *)data.data(), data.size());
+writestring(encfs::File &f, encfs::fs_off_t offset, const std::string &data) {
+  return f.write(offset, (encfs::byte *)data.data(), data.size());
 }
 
 int
