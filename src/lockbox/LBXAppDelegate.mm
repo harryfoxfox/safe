@@ -85,11 +85,12 @@ static NSString *const APP_STARTED_COOKIE_FILENAME = @"AppStarted";
 - (void)_newMount:(lockbox::mac::MountDetails)md {
     self->path_store->use_path(md.get_source_path());
     self->mounts.insert(self->mounts.begin(), std::move(md));
+    const auto & new_mount = self->mounts.front();
     [self _updateStatusMenu];
-    self->mounts.back().open_mount();
+    new_mount.open_mount();
     [self notifyUserTitle:@"Success"
                   message:[NSString stringWithFormat:@"You've successfully mounted \"%s.\"",
-                           self->mounts.back().get_mount_name().c_str(), nil]];
+                           new_mount.get_mount_name().c_str(), nil]];
 }
 
 - (void)createLockboxDone:(LBXCreateLockboxWindowController *)wc
@@ -203,7 +204,17 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
 }
 
 - (void)quitBitvault:(id)sender {
-    [NSApp terminate:sender];
+    bool actually_quit = true;
+    if (!self->mounts.empty()) {
+        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+        NSAlert *alert = [NSAlert alertWithMessageText:@"Are you sure you want to quit?"
+                                         defaultButton:@"Quit"
+                                       alternateButton:@"Cancel"
+                                           otherButton:nil
+                             informativeTextWithFormat:@"You currently have Bitvaults mounted, if you quit they will not be accessible until you run Bitvault again.", nil];
+        actually_quit = [alert runModal] == NSAlertDefaultReturn;
+    }
+    if (actually_quit) [NSApp terminate:sender];
 }
 
 - (NSMenuItem *)_addItemToMenu:(NSMenu *)menu
