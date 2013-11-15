@@ -268,7 +268,22 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     
     // start thread
     pthread_t thread;
-    auto ret = pthread_create(&thread, NULL, mount_thread_fn, thread_params);
+    pthread_attr_t 	stackSizeAttribute;
+    auto ret_attr_init = pthread_attr_init (&stackSizeAttribute);
+    if (ret_attr_init) throw std::runtime_error("couldn't init attr");
+    
+    /* Get the default value */
+    size_t stackSize = 0;
+    auto ret_attr_getstacksize = pthread_attr_getstacksize(&stackSizeAttribute, &stackSize);
+    if (ret_attr_getstacksize) throw std::runtime_error("couldn't get stack size");
+    
+    /* If the default size does not fit our needs, set the attribute with our required value */
+    const size_t REQUIRED_STACK_SIZE = 8192 * 1024;
+    if (stackSize < REQUIRED_STACK_SIZE) {
+        auto err = pthread_attr_setstacksize (&stackSizeAttribute, REQUIRED_STACK_SIZE);
+        if (err) throw std::runtime_error("couldn't get stack size");
+    }
+    auto ret = pthread_create(&thread, &stackSizeAttribute, mount_thread_fn, thread_params);
     if (ret) throw std::runtime_error("pthread_create");
     
     // wait for server to run
