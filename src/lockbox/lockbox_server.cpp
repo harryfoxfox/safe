@@ -40,6 +40,7 @@
 #include <lockbox/SecureMemPasswordReader.hpp>
 #include <lockbox/fs_fsio.h>
 #include <lockbox/util.hpp>
+#include <lockbox/UnicodeWrapperFsIO.hpp>
 
 #include <lockbox/lockbox_server.hpp>
 
@@ -143,14 +144,14 @@ create_enc_fs(std::shared_ptr<encfs::FsIO> base_fs_io,
   // encfs options
   auto encfs_opts = std::make_shared<encfs::EncFS_Opts>();
   encfs_opts->fs_io = std::move(base_fs_io);
-  encfs_opts->rootDir = std::move(encrypted_folder_path);
+  encfs_opts->rootDir = encrypted_folder_path;
   encfs_opts->passwordReader = std::make_shared<SecureMemPasswordReader>(std::move(password));
 
   // encfs
   auto encfs_io = std::make_shared<encfs::EncfsFsIO>();
   encfs_io->initFS(std::move(encfs_opts), cfg);
 
-  return encfs_io;
+  return std::make_shared<UnicodeWrapperFsIO>(encfs_io, std::move(encrypted_folder_path));
 }
 
 static const FsOperations fsio_ops = {

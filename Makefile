@@ -29,7 +29,7 @@ MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) \
 MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11
 
 # encfs on mac makes use of the Security framework
-MAC_EXTRA_LIBRARIES := -framework Security
+MAC_EXTRA_LIBRARIES := -framework Security -framework Foundation
 WIN_EXTRA_LIBRARIES := -lws2_32
 DEPS_EXTRA_LIBRARIES := $(if $(IS_MAC),$(MAC_EXTRA_LIBRARIES),) $(if $(IS_WIN),$(WIN_EXTRA_LIBRARIES),)
 
@@ -106,7 +106,9 @@ clean-deps:
 clean:
 	rm -f src/lockbox/*.o
 
-SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp SecureMemPasswordReader.cpp
+SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp \
+	SecureMemPasswordReader.cpp UnicodeWrapperFsIO.cpp \
+	$(if $(IS_MAC),unicode_fs_mac.mm,)
 
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
@@ -130,6 +132,9 @@ $(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 # build instructions
 
 %.cpp.o: %.cpp
+	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
+
+%.mm.o: %.mm
 	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
 
 %.rc.o: %.rc

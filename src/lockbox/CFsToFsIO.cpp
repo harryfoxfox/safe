@@ -112,9 +112,22 @@ std::error_condition make_error_condition(fs_error_t e) {
   return std::error_condition(static_cast<int>(e), fs_error_category());
 }
 
-std::system_error fs_error(fs_error_t err) {
+static std::system_error fs_error(fs_error_t err) {
   assert(err);
   return std::system_error(make_error_code(err));
+}
+
+static encfs::FsFileAttrs c_fs_attrs_to_encfs_file_attrs(const FsAttrs & attrs) {
+  return (encfs::FsFileAttrs) {
+    .type = (attrs.is_directory ?
+             encfs::FsFileType::DIRECTORY :
+             encfs::FsFileType::REGULAR),
+    .mtime = attrs.modified_time,
+    .size = attrs.size,
+    .file_id = attrs.file_id,
+    .volume_id = attrs.volume_id,
+    .posix = opt::nullopt
+  };
 }
 
 class CFsToFsIOPath final : public encfs::PathPoly {
@@ -260,16 +273,7 @@ encfs::FsFileAttrs CFsToFsIOFileIO::get_attrs() const {
   FsAttrs attrs;
   auto err = fs_fgetattr(_fs, _fh, &attrs);
   if (err) throw fs_error(err);
-
-  return (encfs::FsFileAttrs) {
-    .type = (attrs.is_directory ?
-             encfs::FsFileType::DIRECTORY :
-             encfs::FsFileType::REGULAR),
-    .mtime = attrs.modified_time,
-    .size = attrs.size,
-    .file_id = attrs.file_id,
-    .posix = opt::nullopt
-   };
+  return c_fs_attrs_to_encfs_file_attrs(attrs);
 }
 
 size_t CFsToFsIOFileIO::read(const encfs::IORequest & req) const {
@@ -364,6 +368,13 @@ void CFsToFsIO::unlink(const encfs::Path &path) {
 void CFsToFsIO::rmdir(const encfs::Path &path) {
   auto err = fs_remove( _fs, path.c_str() );
   if (err) throw fs_error(err);
+}
+
+encfs::FsFileAttrs CFsToFsIO::get_attrs(const encfs::Path &path) const {
+  FsAttrs attrs;
+  auto err = fs_getattr(_fs, path.c_str(), &attrs);
+  if (err) throw fs_error(err);
+  return c_fs_attrs_to_encfs_file_attrs(attrs);
 }
 
 void CFsToFsIO::set_times(const encfs::Path &path,

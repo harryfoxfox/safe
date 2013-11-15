@@ -51,6 +51,7 @@ public:
   virtual void unlink(const encfs::Path &path) override;
   virtual void rmdir(const encfs::Path &path) override;
 
+  virtual encfs::FsFileAttrs get_attrs(const encfs::Path &path) const override;
   virtual void set_times(const encfs::Path &path,
                          const opt::optional<encfs::fs_time_t> &atime,
                          const opt::optional<encfs::fs_time_t> &mtime) override;
