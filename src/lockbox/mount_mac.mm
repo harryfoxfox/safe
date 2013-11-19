@@ -291,13 +291,26 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     if (!listen_port) throw std::runtime_error("failed to mount!");
     
     // mount new drive
-    char *mount_point_template = strdup("/Volumes/bvmount.XXXXXXXXXXX");
-    if (!mount_point_template) throw std::runtime_error("couldn't dup string");
-    auto _free_resource =
-        lockbox::create_dynamic_managed_resource(mount_point_template, free);
-    char *mount_point = mkdtemp(mount_point_template);
-    if (!mount_point) throw std::runtime_error("couldn't mkdtemp()");
     
+    // first attempt to use preferred name
+    std::string mount_point;
+    auto preferred_mount_point_name = "/Volumes/bv-mount-" + mount_name;
+    int ret_mkdir = mkdir(preferred_mount_point_name.c_str(), 0700);
+    if (ret_mkdir) {
+        if (errno != EEXIST) throw std::runtime_error("couldn't mkdir");
+        
+        char *mount_point_template = strdup((preferred_mount_point_name + "-XXXXXXXXX").c_str());
+        if (!mount_point_template) throw std::runtime_error("couldn't dup string");
+        auto _free_resource =
+        lockbox::create_dynamic_managed_resource(mount_point_template, free);
+        char *mount_point_cstr = mkdtemp(mount_point_template);
+        if (!mount_point_cstr) throw std::runtime_error("couldn't mkdtemp()");
+        mount_point = std::string(mount_point_cstr);
+    }
+    else {
+        mount_point = preferred_mount_point_name;
+    }
+
     std::ostringstream os;
     os << "mount_webdav -S -v \"" << escape_double_quotes(mount_name) << "\" \"" <<
     escape_double_quotes(webdav_mount_url(*listen_port, mount_name)) << "\" \"" << mount_point << "\"";
@@ -308,7 +321,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
 
     // return new mount details with thread info
     return MountDetails(*listen_port, std::move(mount_name),
-                        thread, mount_point_template, event, encrypted_container_path);
+                        thread, mount_point, event, encrypted_container_path);
 }
     
 }}
