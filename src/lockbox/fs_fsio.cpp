@@ -163,21 +163,14 @@ fs_fsio_open(fs_fsio_handle_t fs,
 
 static void
 fill_attrs(encfs::FsFileAttrs *fs_attrs, OUT_VAR FsAttrs *attrs) {
-  *attrs = fs_attrs->type == encfs::FsFileType::DIRECTORY
-    ? FsAttrs {
-        .modified_time = FS_INVALID_TIME,
-        .created_time = FS_INVALID_TIME,
-        .is_directory = true,
-        .size = 0,
-        .file_id = fs_attrs->file_id,
-    }
-    : FsAttrs {
-        .modified_time = fs_attrs->mtime,
-        .created_time = FS_INVALID_TIME,
-        .is_directory = false,
-        .size = fs_attrs->size,
-        .file_id = fs_attrs->file_id,
-    };
+  *attrs = FsAttrs {
+    .modified_time = fs_attrs->mtime,
+    .created_time = FS_INVALID_TIME,
+    .is_directory = fs_attrs->type == encfs::FsFileType::DIRECTORY,
+    .size = fs_attrs->size,
+    .file_id = fs_attrs->file_id,
+    .volume_id = fs_attrs->volume_id,
+  };
 }
 
 fs_error_t
