@@ -16,26 +16,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef _unicode_fs_hpp
-#define _unicode_fs_hpp
+// provides the necessary fs operations to make the file system
+// behavor like a native win fs (e.g. case-insensitive compare)
 
-// yes i know defines are suboptimal, but it's mostly contained
-#ifdef __APPLE__
-#include <lockbox/unicode_fs_mac.hpp>
-#define __NS mac;
-#elif _WIN32
-#include <lockbox/unicode_fs_win.hpp>
-#define __NS win
-#else
-#error unicode_fs not supported on this platform
-#endif
+#ifndef _unicode_fs_mac_hpp
+#define _unicode_fs_mac_hpp
 
-namespace lockbox { namespace unicode_fs {
+#include <string>
 
-using namespace lockbox::unicode_fs::__NS;
+namespace lockbox { namespace unicode_fs { namespace win {
 
-}}
+std::string
+normalize_path_component_for_fs(const std::string & comp);
 
-#undef __NS
+std::string
+normalize_path_component_for_user(const std::string & comp);
+
+bool
+is_normalized_path_component(const std::string & comp);
+
+bool
+normalized_path_components_equal(const std::string & comp_a,
+                                 const std::string & comp_b);
+
+}}}
 
 #endif

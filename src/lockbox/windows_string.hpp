@@ -19,6 +19,7 @@
 #ifndef __lockbox_windows_string_hpp
 #define __lockbox_windows_string_hpp
 
+#include <memory>
 #include <stdexcept>
 #include <string>
 

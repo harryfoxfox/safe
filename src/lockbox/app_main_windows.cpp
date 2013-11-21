@@ -18,7 +18,7 @@
 
 #include <lockbox/product_name.h>
 #include <lockbox/lockbox_server.hpp>
-#incldue <lockbox/lockbox_strings.h>
+#include <lockbox/lockbox_strings.h>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_string.hpp>

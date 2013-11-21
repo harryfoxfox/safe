@@ -88,17 +88,23 @@ libtinyxml: clean
 
 WINHTTP_DEP := $(CURDIR)/out/deps/lib/libwinhttp.a
 $(WINHTTP_DEP): $(CURDIR)/winhttp.def
-	dlltool -k -d winhttp.def -l $(CURDIR)/out/deps/lib/libwinhttp.a
+	dlltool -k -d $^ -l $@
 
 WINHTTP_DEP2 := $(CURDIR)/out/deps/include/winhttp.h
 $(WINHTTP_DEP2): $(CURDIR)/winhttp.h
-	cp $(CURDIR)/winhttp.h out/deps/include/winhttp.h
+	cp $^ $@
 
 winhttp: $(WINHTTP_DEP2) $(WINHTTP_DEP)
 
+NORMALIZ_DEP := $(CURDIR)/out/deps/lib/libnormaliz.a
+$(NORMALIZ_DEP): $(CURDIR)/normaliz.dep
+	dlltool -k -d $^ -l $@
+
+normaliz: $(NORMALIZ_DEP)
+
 dependencies: libglog libbotan libprotobuf libtinyxml libencfs \
  libwebdav_server_fs \
- $(if $(IS_WIN),winhttp,)
+ $(if $(IS_WIN),winhttp normaliz,)
 
 clean-deps:
 	rm -rf out
@@ -108,20 +114,21 @@ clean:
 
 SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp \
 	SecureMemPasswordReader.cpp UnicodeWrapperFsIO.cpp \
+	$(if $(IS_WIN),unicode_fs_win.cpp,) \
 	$(if $(IS_MAC),unicode_fs_mac.mm,)
 
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
 
-WINDOWS_APP_MAIN_SRCS = app_main_windows.cpp app_main_windows.rc $(SRCS)
+WINDOWS_APP_MAIN_SRCS = app_main_windows.cpp windows_app.rc $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 # dependencies
 
 src/lockbox/*.o: Makefile src/lockbox/*.hpp src/lockbox/*.h
 
-src/lockbox/app_main_windows.rc.o: src/lockbox/app_main_windows.rc \
-	src/lockbox/app_main_windows.manifest
+src/lockbox/windows_app.rc.o: src/lockbox/windows_app.rc \
+	src/lockbox/windows_app.manifest
 
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
@@ -155,7 +162,7 @@ $(EXE_NAME):
  -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  -lwebdav_server_fs -lencfs \
  `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
- -lglog  -ltinyxml -lole32 -lcomctl32 -lwinhttp $(DEPS_EXTRA_LIBRARIES)
+ -lglog  -ltinyxml -lole32 -lcomctl32 -lwinhttp -lnormaliz $(DEPS_EXTRA_LIBRARIES)
 
 .PHONY: dependencies clean libglog libbotan \
 	libprotobuf libtinyxml libencfs libwebdav_server_fs winhttp

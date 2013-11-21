@@ -1,0 +1,4 @@
+LIBRARY normaliz.dll
+EXPORTS
+IsNormalizedString@12
+NormalizeString@20
