@@ -122,8 +122,12 @@ mount_idx_from_menu_item(NSMenuItem *mi) {
         // this mount index is invalid now
         return;
     }
-    
-    self->mounts[mount_idx].open_mount();
+    try {
+        self->mounts[mount_idx].open_mount();
+    }
+    catch (const std::exception & err) {
+        lbx_log_error("Error while opening mount: %s", err.what());
+    }
 }
 
 - (void)unmountMount:(id)sender {
