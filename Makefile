@@ -102,8 +102,9 @@ $(NORMALIZ_DEP): $(CURDIR)/normaliz.dep
 
 normaliz: $(NORMALIZ_DEP)
 
-dependencies: libglog libbotan libprotobuf libtinyxml libencfs \
+dependencies: libglog libprotobuf libtinyxml libencfs \
  libwebdav_server_fs \
+ $(if $(IS_MAC),,libbotan) \
  $(if $(IS_WIN),winhttp normaliz,)
 
 clean-deps:
