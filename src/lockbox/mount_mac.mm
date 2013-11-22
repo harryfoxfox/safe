@@ -128,6 +128,13 @@ webdav_mount_quit_url(port_t listen_port, std::string name) {
     (void) name;
     return std::string("http://localhost:") + std::to_string(listen_port) + WEBDAV_SERVER_QUIT_URL;
 }
+    
+static
+std::string
+webdav_mount_disconnect_url(port_t listen_port, std::string name) {
+    (void) name;
+    return std::string("http://localhost:") + std::to_string(listen_port) + WEBDAV_SERVER_DISCONNECT_URL;
+}
 
 static
 std::string
@@ -147,6 +154,18 @@ MountDetails::signal_stop() const {
                    });
 }
     
+void
+MountDetails::disconnect_clients() const {
+    auto disconnect_url = webdav_mount_disconnect_url(listen_port, name);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+                   ^{
+                       NSString *requestUrl = [NSString stringWithUTF8String:disconnect_url.c_str()];
+                       NSMutableURLRequest *postRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:requestUrl]];
+                       [postRequest setHTTPMethod:@"POST"];
+                       [NSURLConnection sendSynchronousRequest:postRequest returningResponse:nil error:nil];
+                   });
+}
+   
 void
 MountDetails::wait_until_stopped() const {
 }

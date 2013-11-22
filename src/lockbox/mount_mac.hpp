@@ -73,6 +73,9 @@ public:
 
     void
     open_mount() const;
+    
+    void
+    disconnect_clients() const;
 };
     
 MountDetails

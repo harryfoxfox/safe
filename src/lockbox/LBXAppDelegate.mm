@@ -520,6 +520,13 @@ _Pragma("clang diagnostic pop") \
     [self startAppUI];
 }
 
+- (void)computerWokeUp:(NSNotification *)notification {
+    (void) notification;
+    for (const auto & md : self->mounts) {
+        md.disconnect_clients();
+    }
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     (void)aNotification;
     
@@ -579,6 +586,14 @@ _Pragma("clang diagnostic pop") \
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                            selector:@selector(driveWasUnmounted:)
                                                                name:NSWorkspaceDidUnmountNotification
+                                                             object:nil];
+    
+    // receive events when computer wakes up to disconnect all connected clients
+    // (this is a workaround to a bug in the mac os x webdav client, where it would
+    //  sometimes hang on a connection that was open before sleep)
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(computerWokeUp:)
+                                                               name:NSWorkspaceDidWakeNotification
                                                              object:nil];
 
     if ([self haveUserNotifications]) {
