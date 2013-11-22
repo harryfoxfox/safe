@@ -520,7 +520,7 @@ _Pragma("clang diagnostic pop") \
     [self startAppUI];
 }
 
-- (void)computerWokeUp:(NSNotification *)notification {
+- (void)computerSleepStateChanged:(NSNotification *)notification {
     (void) notification;
     for (const auto & md : self->mounts) {
         md.disconnect_clients();
@@ -592,7 +592,12 @@ _Pragma("clang diagnostic pop") \
     // (this is a workaround to a bug in the mac os x webdav client, where it would
     //  sometimes hang on a connection that was open before sleep)
     [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-                                                           selector:@selector(computerWokeUp:)
+                                                           selector:@selector(computerSleepStateChanged:)
+                                                               name:NSWorkspaceWillSleepNotification
+                                                             object:NULL];
+    
+    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                           selector:@selector(computerSleepStateChanged:)
                                                                name:NSWorkspaceDidWakeNotification
                                                              object:nil];
 
