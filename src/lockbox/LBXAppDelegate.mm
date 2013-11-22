@@ -596,10 +596,10 @@ _Pragma("clang diagnostic pop") \
                                                                name:NSWorkspaceWillSleepNotification
                                                              object:NULL];
     
-    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-                                                           selector:@selector(computerSleepStateChanged:)
-                                                               name:NSWorkspaceDidWakeNotification
-                                                             object:nil];
+//    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+//                                                           selector:@selector(computerSleepStateChanged:)
+//                                                               name:NSWorkspaceDidWakeNotification
+//                                                             object:nil];
 
     if ([self haveUserNotifications]) {
         NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
