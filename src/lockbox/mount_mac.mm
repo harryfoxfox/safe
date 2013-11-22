@@ -169,24 +169,48 @@ MountDetails::disconnect_clients() const {
 void
 MountDetails::wait_until_stopped() const {
 }
+
+static
+NSURL *
+url_from_string_path(const std::string & path) {
+    NSString *path2 = [NSFileManager.defaultManager
+                       stringWithFileSystemRepresentation:path.data()
+                       length:path.size()];
+    return [NSURL fileURLWithPath:path2];
+}
     
 void
 MountDetails::unmount() {
     if (!is_mounted) throw std::runtime_error("isn't mounted!");
-    std::ostringstream os;
-    os << "umount \"" << escape_double_quotes(this->mount_point) << "\"";
-    auto ret = system(os.str().c_str());
-    if (ret) throw std::runtime_error("couldn't unmount");
+
+    bool USE_COMMAND_LINE = true;
+    if (USE_COMMAND_LINE) {
+        std::ostringstream os;
+        os << "umount \"" << escape_double_quotes(this->mount_point) << "\"";
+        auto ret = system(os.str().c_str());
+        if (ret) throw std::runtime_error("couldn't unmount");
+    }
+    else {
+        // NB: for some reason this is much slower
+        NSURL *path_url = url_from_string_path(this->mount_point);
+        NSError *err;
+        BOOL unmounted =
+        [NSWorkspace.sharedWorkspace unmountAndEjectDeviceAtURL:path_url error:&err];
+        if (!unmounted) {
+            throw std::runtime_error(std::string("couldn't unmount: ") + err.localizedDescription.UTF8String);
+        }
+    }
+    
     is_mounted = false;
 }
     
 void
 MountDetails::open_mount() const {
     if (!is_mounted) throw std::runtime_error("isn't mounted!");
-    std::ostringstream os;
-    os << "open \"" << escape_double_quotes(this->mount_point) << "\"";
-    auto ret = system(os.str().c_str());
-    if (ret) throw std::runtime_error("couldn't open mount");
+    NSURL *path_url = url_from_string_path(this->mount_point);
+    BOOL opened =
+    [NSWorkspace.sharedWorkspace openURL:path_url];
+    if (!opened) throw std::runtime_error("couldn't open mount");
 }
 
 bool
