@@ -27,7 +27,8 @@
 @property (retain) NSMutableArray *createWindows;
 @property (retain) NSMutableArray *mountWindows;
 @property (retain) NSRunningApplication *lastActiveApp;
-@property (weak) IBOutlet NSWindow *aboutWindow;
+// NSWindow cannot be a weak reference, have to use assign
+@property (assign) IBOutlet NSWindow *aboutWindow;
 @property (weak) IBOutlet NSTextField *aboutWindowText;
 
 - (IBAction)aboutWindowOK:(NSButton *)sender;
