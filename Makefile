@@ -97,7 +97,7 @@ $(WINHTTP_DEP2): $(CURDIR)/winhttp.h
 winhttp: $(WINHTTP_DEP2) $(WINHTTP_DEP)
 
 NORMALIZ_DEP := $(CURDIR)/out/deps/lib/libnormaliz.a
-$(NORMALIZ_DEP): $(CURDIR)/normaliz.dep
+$(NORMALIZ_DEP): $(CURDIR)/normaliz.def
 	dlltool -k -d $^ -l $@
 
 normaliz: $(NORMALIZ_DEP)

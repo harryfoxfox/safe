@@ -19,6 +19,7 @@
 #include <lockbox/product_name.h>
 #include <lockbox/lockbox_server.hpp>
 #include <lockbox/lockbox_strings.h>
+#include <lockbox/mount_win.hpp>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_string.hpp>
@@ -52,34 +53,10 @@
 #include <Shellapi.h>
 #include <Shlobj.h>
 #include <dbt.h>
-#include <Winhttp.h>
 
 // TODO:
 // 2) Icons
 // 3) Unmount when webdav server unexpectedly stops (defensive coding)
-
-enum class DriveLetter {
-  A, B, C, D, E, F, G, H, I, J, K, L, M,
-  N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-};
-
-struct CloseHandleDeleter {
-  void operator()(HANDLE a) {
-    auto ret = CloseHandle(a);
-    if (!ret) throw std::runtime_error("couldn't free!");
-  }
-};
-
-class ManagedThreadHandle :
-  public lockbox::ManagedResource<HANDLE, CloseHandleDeleter> {
-public:
-  ManagedThreadHandle(HANDLE a) :
-    lockbox::ManagedResource<HANDLE, CloseHandleDeleter>(std::move(a)) {}
-
-  operator bool() const {
-    return (bool) get();
-  }
-};
 
 struct DestroyMenuDeleter {
   void operator()(HMENU a) {
@@ -90,31 +67,14 @@ struct DestroyMenuDeleter {
 
 typedef lockbox::ManagedResource<HMENU, DestroyMenuDeleter> ManagedMenuHandle;
 
-struct MountDetails {
-  DriveLetter drive_letter;
-  std::string name;
-  ManagedThreadHandle thread_handle;
-  port_t listen_port;
-};
-
 struct WindowData {
   std::shared_ptr<encfs::FsIO> native_fs;
-  std::vector<MountDetails> mounts;
+  std::vector<lockbox::win::MountDetails> mounts;
   bool is_stopping;
   UINT TASKBAR_CREATED_MSG;
-  std::vector<ManagedThreadHandle> threads_to_join;
   UINT LOCKBOX_DUPLICATE_INSTANCE_MSG;
   HWND last_foreground_window;
   bool popup_menu_is_open;
-};
-
-struct ServerThreadParams {
-  HWND hwnd;
-  std::shared_ptr<encfs::FsIO> native_fs;
-  encfs::Path encrypted_directory_path;
-  encfs::EncfsConfig encfs_config;
-  encfs::SecureMem password;
-  std::string mount_name;
 };
 
 // constants
@@ -126,7 +86,6 @@ const auto MAX_PASS_LEN = 256;
 const wchar_t TRAY_ICON_TOOLTIP[] = PRODUCT_NAME_W;
 const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const UINT_PTR STOP_RELEVANT_DRIVE_THREADS_TIMER_ID = 0;
-const UINT_PTR CHECK_STOPPED_THREADS_TIMER_ID = 1;
 
 const auto APP_BASE = (UINT) (6 + WM_APP);
 const auto LOCKBOX_MOUNT_DONE_MSG = APP_BASE;
@@ -159,43 +118,6 @@ const char LOCKBOX_TRAY_ICON_WELCOME_MSG[] =
   PRODUCT_NAME_A
   ", just right-click on this icon.";
 
-// DriveLetter helpers
-namespace std {
-  std::string to_string(DriveLetter v) {
-    return std::string(1, (int) v + 'A');
-  }
-}
-
-template<class CharT, class Traits>
-std::basic_ostream<CharT, Traits> &
-operator<<(std::basic_ostream<CharT, Traits> & os, DriveLetter dl) {
-  return os << std::to_string(dl);
-}
-
-// ManagedThreadHandle helpers
-ManagedThreadHandle create_managed_thread_handle(HANDLE a) {
-  return ManagedThreadHandle(a);
-}
-
-static
-DriveLetter
-find_free_drive_letter() {
-  // first get all used drive letters
-  auto drive_bitmask = GetLogicalDrives();
-  if (!drive_bitmask) {
-    throw std::runtime_error("Error while calling GetLogicalDrives");
-  }
-
-  // then iterate from A->Z until we find one
-  for (unsigned i = 0; i < 26; ++i) {
-    // is this bit not set => is this drive not in use?
-    if (!((drive_bitmask >> i) & 0x1)) {
-      return (DriveLetter) i;
-    }
-  }
-
-  throw std::runtime_error("No drive letter available!");
-}
 
 UINT
 mount_idx_to_menu_id(unsigned idx) {
@@ -210,115 +132,29 @@ menu_id_to_mount_idx(UINT id) {
 
 static
 void
-stop_drive_thread(HANDLE thread_handle, port_t listen_port) {
-  // check if the thread is already dead
-  DWORD exit_code;
-  auto success_getexitcode =
-    GetExitCodeThread(thread_handle, &exit_code);
-  if (!success_getexitcode) {
-    throw std::runtime_error("Couldn't get exit code");
-  }
-
-  // thread is done, we out
-  if (exit_code != STILL_ACTIVE) return;
-
-  // have to send http signal to stop
-  // Use WinHttpOpen to obtain a session handle.
-  auto session =
-    WinHttpOpen(L"WinHTTP Example/1.0",
-                WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-                WINHTTP_NO_PROXY_NAME,
-                WINHTTP_NO_PROXY_BYPASS, 0);
-  if (!session) throw std::runtime_error("Couldn't create session");
-  auto _destroy_session =
-    lockbox::create_destroyer(session, WinHttpCloseHandle);
-
-  // Specify an HTTP server.
-  auto connect =
-    WinHttpConnect(session, L"localhost", listen_port, 0);
-  if (!connect) throw std::runtime_error("Couldn't create connection");
-  auto _destroy_connect =
-    lockbox::create_destroyer(connect, WinHttpCloseHandle);
-
-  // Create an HTTP request handle.
-  auto request =
-    WinHttpOpenRequest(connect, L"POST",
-                       w32util::widen(WEBDAV_SERVER_QUIT_URL).c_str(),
-                       NULL, WINHTTP_NO_REFERER,
-                       WINHTTP_DEFAULT_ACCEPT_TYPES,
-                       0);
-  if (!request) throw std::runtime_error("Couldn't create requestr");
-  auto _destroy_request =
-    lockbox::create_destroyer(request, WinHttpCloseHandle);
-
-  // Send a request.
-  auto result = WinHttpSendRequest(request,
-                                   WINHTTP_NO_ADDITIONAL_HEADERS, 0,
-                                   WINHTTP_NO_REQUEST_DATA, 0,
-                                   0, 0);
-  if (!result) throw std::runtime_error("failure to send request!");
-}
-
-static
-bool
-wait_on_handle_with_message_loop(HANDLE ptr) {
-  while (true) {
-    auto ret =
-      MsgWaitForMultipleObjects(1, &ptr,
-                                FALSE, INFINITE, QS_ALLINPUT);
-    if (ret == WAIT_OBJECT_0) return true;
-    else if (ret == WAIT_OBJECT_0 + 1) {
-      // we have a message - peek and dispatch it
-      MSG msg;
-      while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-        if (msg.message == WM_QUIT) {
-          PostQuitMessage(msg.wParam);
-          return false;
-        }
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-      }
-    }
-    // random error
-    else return false;
-  }
-}
-
-static
-void
-queue_wait_for_thread_to_die(HWND hwnd, WindowData & wd,
-                             ManagedThreadHandle thread_handle) {
-  wd.threads_to_join.push_back(std::move(thread_handle));
-  auto success =
-    SetTimer(hwnd, CHECK_STOPPED_THREADS_TIMER_ID, 0, NULL);
-  if (!success) throw std::runtime_error("failed to add timer");
-}
-
-static
-void
 bubble_msg(HWND lockbox_main_window,
            const std::string title, const std::string &msg);
 
 static
-std::vector<MountDetails>::iterator
+void
+stop_drive_thread(lockbox::win::MountDetails & md) {
+  md.signal_stop();
+}
+
+static
+std::vector<lockbox::win::MountDetails>::iterator
 stop_drive(HWND lockbox_main_window,
            WindowData & wd,
-           std::vector<MountDetails>::iterator it) {
+           std::vector<lockbox::win::MountDetails>::iterator it) {
   // remove mount from list (even if thread hasn't died)
   auto md = std::move(*it);
   it = wd.mounts.erase(it);
 
   // then stop thread
   auto success =
-    w32util::run_async_void(stop_drive_thread,
-                            md.thread_handle.get(),
-                            md.listen_port);
+    w32util::run_async_void(stop_drive_thread, md);
   // if not success, it was a quit message
   if (!success) return it;
-
-  // asynchronously wait for thread to stop
-  queue_wait_for_thread_to_die(lockbox_main_window, wd,
-                               std::move(md.thread_handle));
 
   // TODO: this might be too spammy if multiple drives have been
   // unmounted
@@ -335,36 +171,12 @@ void
 stop_relevant_drive_threads(HWND lockbox_main_window, WindowData & wd) {
   assert(!wd.popup_menu_is_open);
 
-  auto & mounts = wd.mounts;
-  DWORD last_bitmask = 0;
-
-  while (true) {
-    auto drive_bitmask = GetLogicalDrives();
-    if (!drive_bitmask) {
-      throw std::runtime_error("Error while calling GetLogicalDrives");
+  for (auto it = wd.mounts.begin(); it != wd.mounts.end();) {
+    if (!it->is_still_mounted()) {
+      it = stop_drive(lockbox_main_window, wd, it);
     }
-
-    if (drive_bitmask == last_bitmask) return;
-
-    for (auto it = mounts.begin(); it != mounts.end();) {
-      if (!((drive_bitmask >> (int) it->drive_letter) & 0x1)) {
-        it = stop_drive(lockbox_main_window, wd, it);
-      }
-      else ++it;
-    }
-
-    last_bitmask = drive_bitmask;
+    else ++it;
   }
-}
-
-void
-quick_alert(HWND owner,
-            const std::string &msg,
-            const std::string &title) {
-  MessageBoxW(owner,
-              w32util::widen(msg).c_str(),
-              w32util::widen(title).c_str(),
-              MB_ICONEXCLAMATION | MB_OK);
 }
 
 WINAPI
@@ -432,13 +244,15 @@ securely_read_password_field(HWND hwnd, WORD id, bool clear = true) {
 }
 
 bool
-open_mount(HWND owner, const MountDetails & md) {
-  auto ret_shell2 =
-    (int) ShellExecuteW(owner, L"open",
-                        w32util::widen(std::to_string(md.drive_letter) +
-                                       ":\\").c_str(),
-                        NULL, NULL, SW_SHOWNORMAL);
-  return ret_shell2 > 32;
+open_mount(HWND owner, const lockbox::win::MountDetails & md) {
+  try {
+    md.open_mount();
+    return true;
+  }
+  catch (const std::exception & err) {
+    lbx_log_error("Error opening mount: %s", err.what());
+    return false;
+  }
 }
 
 bool
@@ -450,423 +264,8 @@ open_src_code(HWND owner) {
   return ret_shell2 > 32;
 }
 
-CALLBACK
-INT_PTR
-get_password_dialog_proc(HWND hwnd, UINT Message,
-                         WPARAM wParam, LPARAM /*lParam*/) {
-  switch (Message) {
-  case WM_INITDIALOG:
-    w32util::center_window_in_monitor(hwnd);
-    w32util::set_default_dialog_font(hwnd);
-    SendDlgItemMessage(hwnd, IDPASSWORD, EM_LIMITTEXT, MAX_PASS_LEN, 0);
-    return TRUE;
-  case WM_COMMAND:
-    switch (LOWORD(wParam)) {
-    case IDOK: {
-      auto secure_pass = securely_read_password_field(hwnd, IDPASSWORD);
-      auto st2 = new encfs::SecureMem(std::move(secure_pass));
-      EndDialog(hwnd, (INT_PTR) st2);
-      break;
-    }
-    case IDCANCEL: {
-      EndDialog(hwnd, (INT_PTR) 0);
-      break;
-    }
-    }
-    break;
-  case WM_DESTROY:
-    w32util::cleanup_default_dialog_font(hwnd);
-    // we don't actually handle this
-    return FALSE;
-  default:
-    return FALSE;
-  }
-  return TRUE;
-}
-
 WINAPI
-static
-opt::optional<encfs::SecureMem>
-get_password_dialog(HWND hwnd, const encfs::Path & /*path*/) {
-  using namespace w32util;
-
-  auto dlg =
-    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "Enter Your Password",
-                              0, 0, 100, 66),
-                   {
-                     CText("Enter Your Password:", IDC_STATIC,
-                           15, 10, 70, 33),
-                     EditText(IDPASSWORD, 10, 20, 80, 12,
-                              ES_PASSWORD | ES_LEFT |
-                              WS_BORDER | WS_TABSTOP),
-                     DefPushButton("&OK", IDOK,
-                                   25, 40, 50, 14),
-                   }
-                   );
-
-  auto ret_ptr =
-    DialogBoxIndirect(GetModuleHandle(NULL),
-                      dlg.get_data(),
-                      hwnd, get_password_dialog_proc);
-  if (!ret_ptr) return opt::nullopt;
-
-  auto ret = (encfs::SecureMem *) ret_ptr;
-  auto toret = std::move(*ret);
-  delete ret;
-  return toret;
-}
-
-CALLBACK
-static
-INT_PTR
-confirm_new_encrypted_container_proc(HWND hwnd, UINT Message,
-                                     WPARAM wParam, LPARAM /*lParam*/) {
-  switch (Message) {
-  case WM_INITDIALOG: {
-    w32util::center_window_in_monitor(hwnd);
-    w32util::set_default_dialog_font(hwnd);
-
-    // set focus to create button
-    auto ok_button_hwnd = GetDlgItem(hwnd, IDOK);
-    if (!ok_button_hwnd) throw std::runtime_error("Couldn't get create button");
-    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM) ok_button_hwnd, TRUE);
-    return TRUE;
-  }
-
-  case WM_COMMAND:
-    switch (LOWORD(wParam)) {
-    case IDOK: {
-      EndDialog(hwnd, (INT_PTR) IDOK);
-      break;
-    }
-    case IDCANCEL: {
-      EndDialog(hwnd, (INT_PTR) IDCANCEL);
-      break;
-    }
-    }
-    break;
-
-  case WM_DESTROY:
-    w32util::cleanup_default_dialog_font(hwnd);
-    // we don't actually handle this
-    return FALSE;
-
-  default:
-    return FALSE;
-  }
-  return TRUE;
-}
-
-WINAPI
-static
-bool
-confirm_new_encrypted_container(HWND owner,
-                                const encfs::Path & encrypted_directory_path) {
-  using namespace w32util;
-
-  std::ostringstream os;
-  os << "The folder you selected:\r\n\r\n    \"" <<
-    (const std::string &) encrypted_directory_path <<
-    ("\"\r\n\r\ndoes not appear to store a " ENCRYPTED_STORAGE_NAME_A ". "
-     "Would you like to create a new one there?");
-  auto dialog_text = os.str();
-
-  // TODO: compute this programmatically
-  const auto FONT_HEIGHT = 8;
-  // 5.5 is the width of the 'm' char  with the default font
-  // since it's the widest character we just multiply it by 3/4
-  // to get the 'average' width (crude i know)
-  const auto FONT_WIDTH = 5.5 / 2;
-
-  typedef unsigned unit_t;
-  const unit_t DIALOG_WIDTH =
-    std::max((unit_t) 175,
-             (unit_t)
-             (20 +
-              FONT_WIDTH *
-              (((const std::string &) encrypted_directory_path).size() + 2)));
-  const unit_t VERT_MARGIN = 8;
-  const unit_t HORIZ_MARGIN = 8;
-
-  const unit_t TOP_MARGIN = VERT_MARGIN;
-  const unit_t BOTTOM_MARGIN = VERT_MARGIN;
-  const unit_t LEFT_MARGIN = HORIZ_MARGIN;
-  const unit_t RIGHT_MARGIN = HORIZ_MARGIN;
-
-  const unit_t MIDDLE_MARGIN = 4;
-
-  const unit_t TEXT_WIDTH = 160;
-  const unit_t TEXT_HEIGHT = FONT_HEIGHT * 6;
-  const unit_t BUTTON_WIDTH = 44;
-  const unit_t BUTTON_HEIGHT = 14;
-  const unit_t BUTTON_SPACING = 4;
-
-  const auto dlg =
-    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "No " ENCRYPTED_STORAGE_NAME_A " Found",
-                              0, 0, DIALOG_WIDTH,
-                              TOP_MARGIN + TEXT_HEIGHT +
-                              MIDDLE_MARGIN + BUTTON_HEIGHT +
-                              BOTTOM_MARGIN),
-                   {
-                     LText(std::move(dialog_text), IDC_STATIC,
-                           LEFT_MARGIN, TOP_MARGIN,
-                           TEXT_WIDTH, TEXT_HEIGHT),
-                     PushButton("&Cancel", IDCANCEL,
-                                DIALOG_WIDTH - RIGHT_MARGIN -
-                                BUTTON_WIDTH,
-                                TOP_MARGIN + TEXT_HEIGHT + MIDDLE_MARGIN,
-                                BUTTON_WIDTH, BUTTON_HEIGHT),
-                     DefPushButton("C&reate", IDOK,
-                                   DIALOG_WIDTH - RIGHT_MARGIN -
-                                   BUTTON_WIDTH - BUTTON_SPACING -
-                                   BUTTON_WIDTH,
-                                   TOP_MARGIN + TEXT_HEIGHT + MIDDLE_MARGIN,
-                                   BUTTON_WIDTH, BUTTON_HEIGHT),
-                   }
-                   );
-
-  auto ret_ptr =
-    DialogBoxIndirect(GetModuleHandle(NULL),
-                      dlg.get_data(),
-                      owner, confirm_new_encrypted_container_proc);
-  return ((int) ret_ptr == IDOK);
-}
-
-
-CALLBACK
-static
-INT_PTR
-get_new_password_dialog_proc(HWND hwnd, UINT Message,
-                             WPARAM wParam, LPARAM /*lParam*/) {
-  switch (Message) {
-  case WM_INITDIALOG: {
-    w32util::center_window_in_monitor(hwnd);
-    SendDlgItemMessage(hwnd, IDPASSWORD, EM_LIMITTEXT, MAX_PASS_LEN, 0);
-    SendDlgItemMessage(hwnd, IDCONFIRMPASSWORD, EM_LIMITTEXT, MAX_PASS_LEN, 0);
-    w32util::set_default_dialog_font(hwnd);
-    return TRUE;
-  }
-  case WM_COMMAND: {
-    switch (LOWORD(wParam)) {
-    case IDOK: {
-      auto secure_pass_1 =
-        securely_read_password_field(hwnd, IDPASSWORD, false);
-      auto secure_pass_2 =
-        securely_read_password_field(hwnd, IDCONFIRMPASSWORD, false);
-
-      auto num_chars_1 = strlen((char *) secure_pass_1.data());
-      auto num_chars_2 = strlen((char *) secure_pass_2.data());
-      if (num_chars_1 != num_chars_2 ||
-          memcmp(secure_pass_1.data(), secure_pass_2.data(), num_chars_1)) {
-        quick_alert(hwnd, "The Passwords do not match!",
-                    "Passwords don't match");
-        return TRUE;
-      }
-
-      if (!num_chars_1) {
-        quick_alert(hwnd, "Empty password is not allowed!",
-                    "Invalid Password");
-        return TRUE;
-      }
-
-      clear_field(hwnd, IDPASSWORD, num_chars_1);
-      clear_field(hwnd, IDCONFIRMPASSWORD, num_chars_2);
-
-      auto st2 = new encfs::SecureMem(std::move(secure_pass_1));
-      EndDialog(hwnd, (INT_PTR) st2);
-      break;
-    }
-    case IDCANCEL: {
-      EndDialog(hwnd, (INT_PTR) 0);
-      break;
-    }
-    }
-    break;
-  }
-  case WM_DESTROY:
-    w32util::cleanup_default_dialog_font(hwnd);
-    // we don't actually handle this
-    return FALSE;
-  default:
-    return FALSE;
-  }
-  return TRUE;
-}
-
-WINAPI
-static
-opt::optional<encfs::SecureMem>
-get_new_password_dialog(HWND owner,
-                        const encfs::Path & /*encrypted_directory_path*/) {
-  using namespace w32util;
-
-  // TODO: compute this programmatically
-  const float FONT_HEIGHT = 8;
-  // 5.5 is the width of the 'm' char  with the default font
-  // since it's the widest character we just divide it by 2
-  // to get the 'average' width (crude i know)
-  const float FONT_WIDTH = 5.5 * 0.7;
-
-  typedef unsigned unit_t;
-
-  const unit_t VERT_MARGIN = 8;
-  const unit_t HORIZ_MARGIN = 8;
-
-  const unit_t TOP_MARGIN = VERT_MARGIN;
-  const unit_t BOTTOM_MARGIN = VERT_MARGIN;
-  const unit_t LEFT_MARGIN = HORIZ_MARGIN;
-  const unit_t RIGHT_MARGIN = HORIZ_MARGIN;
-
-  const unit_t MIDDLE_MARGIN = FONT_HEIGHT;
-
-  const unit_t TEXT_WIDTH = 160;
-  const unit_t TEXT_HEIGHT = FONT_HEIGHT;
-
-  const unit_t PASS_LABEL_CHARS = strlen("Confirm Password:");
-
-  const unit_t PASS_LABEL_WIDTH = FONT_WIDTH * PASS_LABEL_CHARS;
-  const unit_t PASS_LABEL_HEIGHT = FONT_HEIGHT;
-
-  const unit_t DIALOG_WIDTH = PASS_LABEL_WIDTH + 125;
-
-  const unit_t PASS_LABEL_SPACE = 0;
-  const unit_t PASS_LABEL_VOFFSET = 2;
-  const unit_t PASS_MARGIN = FONT_HEIGHT / 2;
-
-  const unit_t PASS_ENTRY_LEFT_MARGIN =
-    LEFT_MARGIN + PASS_LABEL_WIDTH + PASS_LABEL_SPACE;
-  const unit_t PASS_ENTRY_WIDTH = DIALOG_WIDTH - RIGHT_MARGIN -
-    PASS_ENTRY_LEFT_MARGIN;
-  const unit_t PASS_ENTRY_HEIGHT = 12;
-
-  const unit_t BUTTON_WIDTH = 44;
-  const unit_t BUTTON_HEIGHT = 14;
-  const unit_t BUTTON_SPACING = 4;
-
-  const auto dlg =
-    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "Create " ENCRYPTED_STORAGE_NAME_A,
-                              0, 0, DIALOG_WIDTH,
-                              TOP_MARGIN +
-                              TEXT_HEIGHT + MIDDLE_MARGIN +
-                              PASS_ENTRY_HEIGHT + PASS_MARGIN +
-                              PASS_ENTRY_HEIGHT + MIDDLE_MARGIN +
-                              BUTTON_HEIGHT + BOTTOM_MARGIN),
-                   {
-                     LText(("Enter a password for your new "
-                            ENCRYPTED_STORAGE_NAME_A
-                            "."),
-                           IDC_STATIC,
-                           LEFT_MARGIN, TOP_MARGIN,
-                           TEXT_WIDTH, TEXT_HEIGHT),
-                     LText("New Password:", IDC_STATIC,
-                           LEFT_MARGIN,
-                           TOP_MARGIN +
-                           TEXT_HEIGHT + MIDDLE_MARGIN + PASS_LABEL_VOFFSET,
-                           PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
-                     EditText(IDPASSWORD,
-                              PASS_ENTRY_LEFT_MARGIN,
-                              TOP_MARGIN +
-                              TEXT_HEIGHT + MIDDLE_MARGIN,
-                              PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
-                              ES_PASSWORD | ES_LEFT |
-                              WS_BORDER | WS_TABSTOP),
-                     LText("Confirm Password:", IDC_STATIC,
-                           LEFT_MARGIN,
-                           TOP_MARGIN +
-                           TEXT_HEIGHT + MIDDLE_MARGIN +
-                           PASS_ENTRY_HEIGHT + PASS_MARGIN + PASS_LABEL_VOFFSET,
-                           PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
-                     EditText(IDCONFIRMPASSWORD,
-                              PASS_ENTRY_LEFT_MARGIN,
-                              TOP_MARGIN +
-                              TEXT_HEIGHT + MIDDLE_MARGIN +
-                              PASS_ENTRY_HEIGHT + PASS_MARGIN,
-                              PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
-                              ES_PASSWORD | ES_LEFT |
-                              WS_BORDER | WS_TABSTOP),
-                     PushButton("&Cancel", IDCANCEL,
-                                DIALOG_WIDTH - RIGHT_MARGIN - BUTTON_WIDTH,
-                                TOP_MARGIN +
-                                TEXT_HEIGHT + MIDDLE_MARGIN +
-                                PASS_ENTRY_HEIGHT + PASS_MARGIN +
-                                PASS_ENTRY_HEIGHT + MIDDLE_MARGIN,
-                                BUTTON_WIDTH, BUTTON_HEIGHT),
-                     DefPushButton("&OK", IDOK,
-                                   DIALOG_WIDTH -
-                                   RIGHT_MARGIN - BUTTON_WIDTH -
-                                   BUTTON_SPACING - BUTTON_WIDTH,
-                                   TOP_MARGIN +
-                                   TEXT_HEIGHT + MIDDLE_MARGIN +
-                                   PASS_ENTRY_HEIGHT + PASS_MARGIN +
-                                   PASS_ENTRY_HEIGHT + MIDDLE_MARGIN,
-                                   BUTTON_WIDTH, BUTTON_HEIGHT),
-                   }
-                   );
-
-  auto ret_ptr =
-    DialogBoxIndirect(GetModuleHandle(NULL),
-                      dlg.get_data(),
-                      owner, get_new_password_dialog_proc);
-  if (!ret_ptr) return opt::nullopt;
-
-  auto ret = (encfs::SecureMem *) ret_ptr;
-  auto toret = std::move(*ret);
-  delete ret;
-  return toret;
-}
-
-WINAPI
-static
-DWORD
-mount_thread(LPVOID params_) {
-  // TODO: catch all exceptions, since this is a top-level
-
-  auto params =
-    std::unique_ptr<ServerThreadParams>((ServerThreadParams *) params_);
-
-  std::srand(std::time(nullptr));
-
-  auto enc_fs =
-    lockbox::create_enc_fs(std::move(params->native_fs),
-                           params->encrypted_directory_path,
-                           std::move(params->encfs_config),
-                           std::move(params->password));
-
-  // we only listen on localhost
-  auto ip_addr = LOCALHOST_IP;
-  auto listen_port =
-    find_random_free_listen_port(ip_addr, PRIVATE_PORT_START, PRIVATE_PORT_END);
-
-  bool sent_signal = false;
-
-  auto our_callback = [&] (event_loop_handle_t /*loop*/) {
-    PostMessage(params->hwnd, LOCKBOX_MOUNT_DONE_MSG,
-                1, listen_port);
-    sent_signal = true;
-  };
-
-  lockbox::run_lockbox_webdav_server(std::move(enc_fs),
-                                     std::move(params->encrypted_directory_path),
-                                     ip_addr,
-                                     listen_port,
-                                     std::move(params->mount_name),
-                                     our_callback);
-
-  auto sig = (sent_signal)
-    ? LOCKBOX_MOUNT_OVER_MSG
-    : LOCKBOX_MOUNT_DONE_MSG;
-
-  PostMessage(params->hwnd, sig, 0, 0);
-
-  // server is done, possible unmount
-  return 0;
-}
-
-WINAPI
-opt::optional<MountDetails>
+opt::optional<lockbox::win::MountDetails>
 mount_encrypted_folder_dialog(HWND owner,
                               std::shared_ptr<encfs::FsIO> native_fs) {
   auto maybe_chosen_folder = get_folder_dialog(owner);
@@ -974,129 +373,31 @@ mount_encrypted_folder_dialog(HWND owner,
   // * a valid password
   // we're ready to mount the drive
 
-  auto drive_letter = find_free_drive_letter();
-  auto mount_name = encrypted_directory_path.basename();
+  auto maybe_mount_details =
+    w32util::modal_call(owner,
+                        ("Starting New "
+                         ENCRYPTED_STORAGE_NAME_A
+                         "..."),
+                        ("Starting new "
+                         ENCRYPTED_STORAGE_NAME_A
+                         "..."),
+                        lockbox::win::mount_new_encfs_drive,
+                        native_fs,
+                        encrypted_directory_path,
+                        *maybe_encfs_config,
+                        *maybe_password);
 
-  auto thread_params = new ServerThreadParams {
-    owner,
-    native_fs,
-    std::move(encrypted_directory_path),
-    std::move(*maybe_encfs_config),
-    std::move(*maybe_password),
-    mount_name,
-  };
+  if (!maybe_mount_details) return opt::nullopt;
 
-  auto thread_handle =
-    create_managed_thread_handle(CreateThread(NULL, 0, mount_thread,
-                                              (LPVOID) thread_params, 0, NULL));
-  if (!thread_handle) {
-    delete thread_params;
-    quick_alert(owner,
-                "Unable to start encrypted file system!",
-                "Error");
-    return opt::nullopt;
-  }
+  maybe_mount_details->open_mount();
 
-  auto msg_ptr = w32util::modal_until_message(owner,
-                                              ("Starting New "
-                                               ENCRYPTED_STORAGE_NAME_A
-                                               "..."),
-                                              ("Starting new "
-                                               ENCRYPTED_STORAGE_NAME_A
-                                               "..."),
-                                              LOCKBOX_MOUNT_DONE_MSG);
-  // TODO: kill thread
-  if (!msg_ptr) return opt::nullopt;
+  bubble_msg(owner,
+             "Success",
+             "You've successfully started \"" +
+             maybe_mount_details->get_mount_name() +
+             ".\"");
 
-  assert(msg_ptr->message == LOCKBOX_MOUNT_DONE_MSG);
-
-  if (!msg_ptr->wParam) {
-    quick_alert(owner,
-                "Unable to start encrypted file system!",
-                "Error");
-    return opt::nullopt;
-  }
-
-  auto listen_port = (port_t) msg_ptr->lParam;
-
-  {
-    auto dialog_wnd =
-      w32util::create_waiting_modal(owner,
-                                    ("Starting New "
-                                     ENCRYPTED_STORAGE_NAME_A
-                                     "..."),
-                                    ("Starting new "
-                                     ENCRYPTED_STORAGE_NAME_A
-                                     "..."));
-    // TODO: kill thread
-    if (!dialog_wnd) return opt::nullopt;
-    auto _destroy_dialog_wnd =
-      lockbox::create_destroyer(dialog_wnd, DestroyWindow);
-
-    // disable window
-    EnableWindow(owner, FALSE);
-
-    // just mount the file system using the console command
-
-    std::ostringstream os;
-    os << "use " << drive_letter <<
-      // we wrap the url in quotes since it could have a space, etc.
-      // we don't urlencode it because windows will do that for us
-      ": \"http://localhost:" << listen_port << "/" << mount_name << "\"";
-    auto ret_shell1 = (int) ShellExecuteW(owner, L"open",
-                                          L"c:\\windows\\system32\\net.exe",
-                                          w32util::widen(os.str()).c_str(),
-                                          NULL, SW_HIDE);
-
-    // disable window
-    EnableWindow(owner, TRUE);
-
-    // abort if it fails
-    if (ret_shell1 <= 32) {
-      // TODO kill thread
-      log_error("ShellExecuteW error: Ret was: %d", ret_shell1);
-      quick_alert(owner,
-                  "Unable to start encrypted file system!",
-                  "Error");
-      return opt::nullopt;
-    }
-  }
-
-  auto md = MountDetails {
-    drive_letter,
-    mount_name,
-    std::move(thread_handle),
-    listen_port,
-  };
-
-  // now open up the file system with explorer
-  // NB: we try this more than once because it may not be
-  //     fully mounted after the previous command
-  unsigned i;
-  for (i = 0; i < MOUNT_RETRY_ATTEMPTS; ++i) {
-    // this is not that bad, we were just opening the windows
-    if (!open_mount(owner, md)) {
-      log_error("opening mount failed, trying again...: %s",
-                w32util::last_error_message().c_str());
-      Sleep(0);
-    }
-    else break;
-  }
-
-  if (i == MOUNT_RETRY_ATTEMPTS) {
-    bubble_msg(owner,
-               "Success",
-               "You've successfully started \"" + md.name +
-               ".\" Right-click here to open it.");
-  }
-  else {
-    bubble_msg(owner,
-               "Success",
-               "You've successfully started \"" + md.name +
-               ".\"");
-  }
-
-  return std::move(md);
+  return std::move(*maybe_mount_details);
 }
 
 static
@@ -1149,9 +450,9 @@ alert_of_popup_if_we_have_one(HWND lockbox_main_window, const WindowData & wd,
       finfo.dwFlags = FLASHW_ALL;
       finfo.uCount = flash_count;
       finfo.dwTimeout = 66;
-    
+
       FlashWindowEx(&finfo);
-      MessageBeep(MB_OK); 
+      MessageBeep(MB_OK);
     }
   }
 
@@ -1169,14 +470,16 @@ open_create_mount_dialog(HWND lockbox_main_window, WindowData & wd) {
 }
 
 bool
-unmount_drive(HWND hwnd, const MountDetails & mount) {
-  std::ostringstream os;
-  os << "use " << mount.drive_letter <<  ": /delete";
-  auto ret_shell1 = (int) ShellExecuteW(hwnd, L"open",
-                                        L"c:\\windows\\system32\\net.exe",
-                                        w32util::widen(os.str()).c_str(),
-                                        NULL, SW_HIDE);
-  return ret_shell1 > 32;
+unmount_drive(HWND hwnd, const lockbox::win::MountDetails & mount) {
+  (void) hwnd;
+  try {
+    mount.unmount();
+    return true;
+  }
+  catch (const std::exception & err) {
+    lbx_log_error("Error unmounting drive: %s", err.what());
+    return false;
+  }
 }
 
 void
@@ -1193,231 +496,6 @@ unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
 
   // now remove mount from list
   stop_drive(hwnd, wd, mount_p);
-}
-
-static
-BOOL
-SetClientSize(HWND hwnd, bool set_pos,
-              int x, int y,
-              int w, int h) {
-  RECT a;
-  a.left = 0;
-  a.top = 0;
-  a.bottom = h;
-  a.right = w;
-  DWORD style = GetWindowLongPtr(hwnd, GWL_STYLE);
-  if (!style) return FALSE;
-  
-  DWORD ex_style = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
-  if (!ex_style) return FALSE;
-
-  auto success = AdjustWindowRectEx(&a, style, FALSE, ex_style);
-  if (!success) return FALSE;
-
-  return SetWindowPos(hwnd, NULL, x, y,
-                      a.right - a.left,
-                      a.bottom - a.top,
-                      SWP_NOACTIVATE |
-                      (set_pos ? 0 : SWP_NOMOVE));
-}
-
-static
-BOOL
-SetClientSizeInLogical(HWND hwnd, bool set_pos,
-                       int x, int y,
-                       int w, int h) {
-  auto parent_hwnd = GetParent(hwnd);
-  if (!parent_hwnd) parent_hwnd = GetDesktopWindow();
-  if (!parent_hwnd) return FALSE;
-
-  auto parent_hdc = GetDC(parent_hwnd);
-  if (!parent_hdc) return FALSE;
-  auto _release_dc_1 =
-    lockbox::create_deferred(ReleaseDC, parent_hwnd, parent_hdc);
-
-  POINT p1 = {x, y};
-  auto success_1 = LPtoDP(parent_hdc, &p1, 1);
-  if (!success_1) return FALSE;
-
-  auto dc = GetDC(hwnd);
-  if (!dc) return FALSE;
-  auto _release_dc_2 = lockbox::create_deferred(ReleaseDC, hwnd, dc);
-
-  POINT p2 = {w, h};
-  auto success_2 = LPtoDP(dc, &p1, 1);
-  if (!success_2) return FALSE;
-
-  return SetClientSize(hwnd, set_pos,
-                       p1.x, p1.y,
-                       p2.x, p2.y);
-}
-
-enum {
-  IDCBLURB = 100,
-  IDCGETSOURCECODE,
-  IDCCREATELOCKBOX,
-};
-
-CALLBACK
-INT_PTR
-about_dialog_proc(HWND hwnd, UINT Message,
-                  WPARAM wParam, LPARAM /*lParam*/) {
-
-  switch (Message) {
-  case WM_INITDIALOG: {
-    w32util::set_default_dialog_font(hwnd);
-
-    // position everything
-    typedef unsigned unit_t;
-
-    // compute size of about string
-    auto text_hwnd = GetDlgItem(hwnd, IDCBLURB);
-    if (!text_hwnd) throw w32util::windows_error();
-
-    const unit_t BLURB_TEXT_WIDTH = 350;
-
-    const unit_t BUTTON_WIDTH_SRCCODE_DLG = 55;
-    const unit_t BUTTON_WIDTH_CREATELB_DLG = 100;
-    const unit_t BUTTON_HEIGHT_DLG = 14;
-
-    RECT r;
-    r.left = BUTTON_WIDTH_SRCCODE_DLG;
-    r.right = BUTTON_WIDTH_CREATELB_DLG;
-    r.top = BUTTON_HEIGHT_DLG;
-    auto success_map = MapDialogRect(hwnd, &r);
-    if (!success_map) throw w32util::windows_error();
-
-    const unit_t BUTTON_WIDTH_SRCCODE = r.left;
-    const unit_t BUTTON_WIDTH_CREATELB = r.right;
-    const unit_t BUTTON_HEIGHT = r.top;
-
-    const unit_t BUTTON_SPACING = 8;
-
-    auto blurb_text = w32util::widen(LOCKBOX_ABOUT_BLURB);
-
-    auto dc = GetDC(text_hwnd);
-    if (!dc) throw w32util::windows_error();
-    auto _release_dc_1 = lockbox::create_deferred(ReleaseDC, text_hwnd, dc);
-
-    auto hfont = (HFONT) SendMessage(text_hwnd, WM_GETFONT, 0, 0);
-    if (!hfont) return FALSE;
-    auto font_dc = SelectObject(dc, hfont);
-    if (!font_dc) throw w32util::windows_error();
-
-    auto w = BLURB_TEXT_WIDTH;
-    RECT rect;
-    lockbox::zero_object(rect);
-    rect.right = w;
-    auto h = DrawText(dc, blurb_text.data(), blurb_text.size(), &rect,
-                      DT_CALCRECT | DT_NOCLIP | DT_LEFT | DT_WORDBREAK);
-    if (!h) throw w32util::windows_error();
-    w = rect.right;
-
-    auto margin = 8;
-    const unit_t DIALOG_WIDTH = margin + w + margin;
-    const unit_t DIALOG_HEIGHT =
-      margin + h + margin + BUTTON_HEIGHT + margin;
-
-    // set up text window
-    auto success_set_wtext = SetWindowText(text_hwnd, blurb_text.c_str());
-    if (!success_set_wtext) throw w32util::windows_error();
-    auto set_client_area_1 = SetClientSizeInLogical(text_hwnd, true,
-                                                    margin, margin,
-                                                    w, h);
-    if (!set_client_area_1) throw w32util::windows_error();
-
-    // create "create lockbox" button
-    auto create_lockbox_hwnd = GetDlgItem(hwnd, IDCCREATELOCKBOX);
-    if (!create_lockbox_hwnd) throw w32util::windows_error();
-
-    SetClientSizeInLogical(create_lockbox_hwnd, true,
-                           DIALOG_WIDTH -
-                           margin - BUTTON_WIDTH_SRCCODE -
-                           BUTTON_SPACING - BUTTON_WIDTH_CREATELB,
-                           margin + h + margin,
-                           BUTTON_WIDTH_CREATELB, BUTTON_HEIGHT);
-
-    // set focus on create lockbox button
-    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM) create_lockbox_hwnd, TRUE);
-
-    // create "get source code" button
-    auto get_source_code_hwnd = GetDlgItem(hwnd, IDCGETSOURCECODE);
-    if (!get_source_code_hwnd) throw w32util::windows_error();
-
-    SetClientSizeInLogical(get_source_code_hwnd, true,
-                           DIALOG_WIDTH -
-                           margin - BUTTON_WIDTH_SRCCODE,
-                           margin + h + margin,
-                           BUTTON_WIDTH_SRCCODE, BUTTON_HEIGHT);
-
-    auto set_client_area_2 = SetClientSizeInLogical(hwnd, true, 0, 0,
-                                                    DIALOG_WIDTH,
-                                                    DIALOG_HEIGHT);
-    if (!set_client_area_2) throw w32util::windows_error();
-
-    w32util::center_window_in_monitor(hwnd);
-
-    return TRUE;
-  }
-
-  case WM_COMMAND: {
-    switch (LOWORD(wParam)) {
-    case IDCGETSOURCECODE: {
-      open_src_code(hwnd);
-      return TRUE;
-    }
-    case IDCCREATELOCKBOX: case IDCANCEL: {
-      EndDialog(hwnd, (INT_PTR) LOWORD(wParam));
-      return TRUE;
-    }
-    default: return FALSE;
-    }
-
-    // not reached
-    assert(false);
-  }
-
-  case WM_DESTROY: {
-    w32util::cleanup_default_dialog_font(hwnd);
-    // we don't actually handle this
-    return FALSE;
-  }
-
-  default: return FALSE;
-  }
-
-  // not reached
-  assert(false);
-}
-
-WINAPI
-static
-INT_PTR
-about_dialog(HWND hwnd) {
-  using namespace w32util;
-
-  const auto dlg =
-    DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              ("Welcome to "
-                               PRODUCT_NAME_A
-                               "!"),
-                              0, 0, 500, 500),
-                   {
-                     LText("", IDCBLURB,
-                           0, 0, 0, 0),
-                     PushButton("&Get Source Code", IDCGETSOURCECODE,
-                                0, 0, 0, 0),
-                     DefPushButton(("&Start or Create a "
-                                    ENCRYPTED_STORAGE_NAME_A),
-                                   IDCCREATELOCKBOX,
-                                   0, 0, 0, 0),
-                   }
-                   );
-
-  return
-    DialogBoxIndirect(GetModuleHandle(NULL),
-                      dlg.get_data(),
-                      hwnd, about_dialog_proc);
 }
 
 static
@@ -1477,11 +555,19 @@ create_lockbox_menu(const WindowData & wd, bool is_control_pressed) {
   // [ Lockbox B ]
   // ...
   // [ ------- ]
-  // Open or create a new Lockbox
-  // Get Source Code
-  // Quit
+  // Create New...
+  // Mount Existing...
+  // Mount Recent >
+  //   Lockbox A
+  //   Lockbox B
+  //   ---------
+  //   Clear
+  // -----------
+  // About
   // [ DebugBreak ]
   // [ Test Bubble ]
+  // -----------
+  // Quit
 
   auto menu_handle = CreatePopupMenu();
   if (!menu_handle) throw std::runtime_error("CreatePopupMenu");
@@ -1613,12 +699,6 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           stop_relevant_drive_threads(hwnd, *wd);
           wd->is_stopping = false;
         }
-        return 0;
-      }
-      else if (wParam == CHECK_STOPPED_THREADS_TIMER_ID) {
-        // TODO: implement
-        UNUSED(wait_on_handle_with_message_loop);
-        wd->threads_to_join.clear();
         return 0;
       }
       else {
@@ -1976,10 +1056,9 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   auto native_fs = lockbox::create_native_fs();
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
-    /*.mounts = */std::vector<MountDetails>(),
+    /*.mounts = */std::vector<lockbox::win::MountDetails>(),
     /*.is_stopping = */false,
     /*.TASKBAR_CREATED_MSG = */TASKBAR_CREATED_MSG,
-    /*.threads_to_join = */std::vector<ManagedThreadHandle>(),
     /*.LOCKBOX_DUPLICATE_INSTANCE_MSG = */LOCKBOX_DUPLICATE_INSTANCE_MSG,
     /*.last_foreground_window = */NULL,
     /*.popup_menu_is_open = */false,

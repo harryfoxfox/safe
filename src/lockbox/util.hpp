@@ -106,6 +106,9 @@ public:
     : data(std::move(arg_))
     , is_valid(true) {}
 
+  ManagedResource()
+    : is_valid(false) {}
+
   ManagedResource(ManagedResource && f)
     : data(std::move(f.data))
     , is_valid(f.is_valid) {
@@ -126,6 +129,14 @@ public:
     if (!is_valid) throw std::runtime_error("invalid resource!");
     return data;
   }
+
+  void reset(T arg_) {
+    auto old_data = data;
+    auto old_is_valid = is_valid;
+    data = std::move(arg_);
+    is_valid = true;
+    if (old_is_valid) F()(old_data);
+  }
 };
 
 template <class T>
@@ -140,6 +151,20 @@ std::unique_ptr<T>
 make_unique(Args &&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
+
+inline
+std::string
+escape_double_quotes(std::string mount_name) {
+    std::vector<char> replaced;
+    for (const auto & c : mount_name) {
+        if (c == '"') {
+            replaced.push_back('\\');
+        }
+        replaced.push_back(c);
+    }
+    return std::string(replaced.begin(), replaced.end());
+}
+
 
 }
 
