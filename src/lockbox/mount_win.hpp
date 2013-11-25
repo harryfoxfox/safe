@@ -19,15 +19,20 @@
 #ifndef __Lockbox__mount_win
 #define __Lockbox__mount_win
 
+#include <lockbox/util.hpp>
+
 #include <encfs/fs/FileUtils.h>
 #include <encfs/fs/FsIO.h>
 #include <encfs/cipher/MemoryPool.h>
 
 #include <davfuse/util_sockets.h>
 
+#include <iostream>
+#include <string>
+
 #include <windows.h>
 
-namespace lockbox { namespace mac {
+namespace lockbox { namespace win {
 
 struct CloseHandleDeleter {
   void operator()(HANDLE a) {
@@ -58,21 +63,6 @@ enum class DriveLetter {
   N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
 };
 
-// DriveLetter helpers
-namespace std {
-  inlinen
-  std::string
-  to_string(DriveLetter v) {
-    return std::string(1, (int) v + 'A');
-  }
-}
-
-template<class CharT, class Traits>
-std::basic_ostream<CharT, Traits> &
-operator<<(std::basic_ostream<CharT, Traits> & os, DriveLetter dl) {
-  return os << std::to_string(dl);
-}
-
 class MountDetails {
 private:
   DriveLetter _drive_letter;
@@ -94,10 +84,13 @@ public:
     , _source_path(std::move(source_path)) {}
 
   const std::string &
-  get_mount_name() const { return name; }
+  get_mount_name() const { return _name; }
 
   const encfs::Path &
-  get_source_path() const { return source_path; }
+  get_source_path() const { return _source_path; }
+
+  const DriveLetter &
+  get_drive_letter() const { return _drive_letter; }
 
   bool
   is_still_mounted() const;
@@ -122,3 +115,22 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                       const encfs::SecureMem & password);
 
 }}
+
+// DriveLetter helpers
+namespace std {
+  inline
+  std::string
+  to_string(lockbox::win::DriveLetter v) {
+    return std::string(1, (int) v + 'A');
+  }
+}
+
+template<class CharT, class Traits>
+std::basic_ostream<CharT, Traits> &
+operator<<(std::basic_ostream<CharT, Traits> & os,
+           lockbox::win::DriveLetter dl) {
+  return os << std::to_string(dl);
+}
+
+
+#endif

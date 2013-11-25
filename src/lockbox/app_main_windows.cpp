@@ -19,10 +19,12 @@
 #include <lockbox/product_name.h>
 #include <lockbox/lockbox_server.hpp>
 #include <lockbox/lockbox_strings.h>
+#include <lockbox/logging.h>
 #include <lockbox/mount_win.hpp>
+#include <lockbox/windows_about_dialog.hpp>
 #include <lockbox/windows_async.hpp>
-#include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_string.hpp>
+#include <lockbox/windows_gui_util.hpp>
 #include <lockbox/util.hpp>
 
 #include <encfs/fs/FsIO.h>
@@ -34,7 +36,6 @@
 
 #include <davfuse/event_loop.h>
 #include <davfuse/log_printer.h>
-#include <davfuse/logging.h>
 #include <davfuse/webdav_server.h>
 
 #include <iostream>
@@ -137,8 +138,8 @@ bubble_msg(HWND lockbox_main_window,
 
 static
 void
-stop_drive_thread(lockbox::win::MountDetails & md) {
-  md.signal_stop();
+stop_drive_thread(lockbox::win::MountDetails *md) {
+  md->signal_stop();
 }
 
 static
@@ -152,7 +153,7 @@ stop_drive(HWND lockbox_main_window,
 
   // then stop thread
   auto success =
-    w32util::run_async_void(stop_drive_thread, md);
+    w32util::run_async_void(stop_drive_thread, &md);
   // if not success, it was a quit message
   if (!success) return it;
 
@@ -160,7 +161,7 @@ stop_drive(HWND lockbox_main_window,
   // unmounted
   bubble_msg(lockbox_main_window,
              "Success",
-             "You've successfully stopped \"" + md.name +
+             "You've successfully stopped \"" + md.get_mount_name() +
              ".\"");
 
   return it;
@@ -200,7 +201,7 @@ get_folder_dialog(HWND owner) {
         std::ostringstream os;
         os << "Your selection \"" << w32util::narrow(bi.pszDisplayName) <<
           "\" is not a valid folder!";
-        quick_alert(owner, os.str(), "Bad Selection!");
+        w32util::quick_alert(owner, os.str(), "Bad Selection!");
       }
     }
     else return opt::nullopt;
@@ -244,160 +245,12 @@ securely_read_password_field(HWND hwnd, WORD id, bool clear = true) {
 }
 
 bool
-open_mount(HWND owner, const lockbox::win::MountDetails & md) {
-  try {
-    md.open_mount();
-    return true;
-  }
-  catch (const std::exception & err) {
-    lbx_log_error("Error opening mount: %s", err.what());
-    return false;
-  }
-}
-
-bool
 open_src_code(HWND owner) {
   auto ret_shell2 =
     (int) ShellExecuteW(owner, L"open",
                         L"http://github.com/rianhunter/lockbox_app",
                         NULL, NULL, SW_SHOWNORMAL);
   return ret_shell2 > 32;
-}
-
-WINAPI
-opt::optional<lockbox::win::MountDetails>
-mount_encrypted_folder_dialog(HWND owner,
-                              std::shared_ptr<encfs::FsIO> native_fs) {
-  auto maybe_chosen_folder = get_folder_dialog(owner);
-  // they pressed cancel
-  if (!maybe_chosen_folder) return opt::nullopt;
-  auto chosen_folder = std::move(*maybe_chosen_folder);
-
-  opt::optional<encfs::Path> maybe_encrypted_directory_path;
-  try {
-    maybe_encrypted_directory_path =
-      native_fs->pathFromString(chosen_folder);
-  }
-  catch (const std::exception & err) {
-    std::ostringstream os;
-    os << "Bad path for encrypted directory: " <<
-      chosen_folder;
-    quick_alert(owner, os.str(), "Bad Path!");
-    return opt::nullopt;
-  }
-
-  auto encrypted_directory_path =
-    std::move(*maybe_encrypted_directory_path);
-
-  // attempt to read configuration
-  opt::optional<encfs::EncfsConfig> maybe_encfs_config;
-  try {
-    maybe_encfs_config =
-      w32util::modal_call(owner, "Reading configuration...",
-                          "Reading configuration...",
-                          encfs::read_config,
-                          native_fs, encrypted_directory_path);
-    // it was canceled
-    if (!maybe_encfs_config) return opt::nullopt;
-  }
-  catch (const encfs::ConfigurationFileDoesNotExist &) {
-    // this is fine, we'll just attempt to create it
-  }
-  catch (const encfs::ConfigurationFileIsCorrupted &) {
-    // this is not okay right now, let the user know and exit
-    std::ostringstream os;
-    os << "The configuration file in folder \"" <<
-      chosen_folder << "\" is corrupted";
-    quick_alert(owner, os.str(), "Bad Folder");
-    return opt::nullopt;
-  }
-
-  opt::optional<encfs::SecureMem> maybe_password;
-  if (maybe_encfs_config) {
-    // ask for password
-    while (!maybe_password) {
-      maybe_password =
-        get_password_dialog(owner, encrypted_directory_path);
-      if (!maybe_password) return opt::nullopt;
-
-      log_debug("verifying password...");
-      const auto correct_password =
-        w32util::modal_call(owner, "Verifying Password...",
-                            "Verifying password...",
-                            encfs::verify_password,
-                            *maybe_encfs_config, *maybe_password);
-      log_debug("verifying done!");
-      if (!correct_password) return opt::nullopt;
-
-      if (!*correct_password) {
-        quick_alert(owner, "Incorrect password! Try again",
-                    "Incorrect Password");
-        maybe_password = opt::nullopt;
-      }
-    }
-  }
-  else {
-    // check if the user wants to create an encrypted container
-    auto create =
-      confirm_new_encrypted_container(owner, encrypted_directory_path);
-    if (!create) return opt::nullopt;
-
-    // create new password
-    maybe_password =
-      get_new_password_dialog(owner, encrypted_directory_path);
-    if (!maybe_password) return opt::nullopt;
-
-    const auto use_case_safe_filename_encoding = true;
-    maybe_encfs_config =
-      w32util::modal_call(owner,
-                          "Creating New Configuration...",
-                          "Creating new configuration...",
-                          encfs::create_paranoid_config,
-                          *maybe_password,
-                          use_case_safe_filename_encoding);
-    if (!maybe_encfs_config) return opt::nullopt;
-
-    auto modal_completed =
-      w32util::modal_call_void(owner,
-                               "Saving New Configuration...",
-                               "Saving new configuration...",
-                               encfs::write_config,
-                               native_fs, encrypted_directory_path,
-                               *maybe_encfs_config);
-    if (!modal_completed) return opt::nullopt;
-  }
-
-  // okay now we have:
-  // * a valid path
-  // * a valid config
-  // * a valid password
-  // we're ready to mount the drive
-
-  auto maybe_mount_details =
-    w32util::modal_call(owner,
-                        ("Starting New "
-                         ENCRYPTED_STORAGE_NAME_A
-                         "..."),
-                        ("Starting new "
-                         ENCRYPTED_STORAGE_NAME_A
-                         "..."),
-                        lockbox::win::mount_new_encfs_drive,
-                        native_fs,
-                        encrypted_directory_path,
-                        *maybe_encfs_config,
-                        *maybe_password);
-
-  if (!maybe_mount_details) return opt::nullopt;
-
-  maybe_mount_details->open_mount();
-
-  bubble_msg(owner,
-             "Success",
-             "You've successfully started \"" +
-             maybe_mount_details->get_mount_name() +
-             ".\"");
-
-  return std::move(*maybe_mount_details);
 }
 
 static
@@ -463,23 +316,11 @@ WINAPI
 bool
 open_create_mount_dialog(HWND lockbox_main_window, WindowData & wd) {
   // only run this dialog if we don't already have a dialog
+  (void) lockbox_main_window;
+  (void) wd;
   assert(!GetWindow(lockbox_main_window, GW_ENABLEDPOPUP));
-  auto md = mount_encrypted_folder_dialog(lockbox_main_window, wd.native_fs);
-  if (md) wd.mounts.push_back(std::move(*md));
-  return (bool) md;
-}
-
-bool
-unmount_drive(HWND hwnd, const lockbox::win::MountDetails & mount) {
-  (void) hwnd;
-  try {
-    mount.unmount();
-    return true;
-  }
-  catch (const std::exception & err) {
-    lbx_log_error("Error unmounting drive: %s", err.what());
-    return false;
-  }
+  // TODO: implement
+  return false;
 }
 
 void
@@ -489,10 +330,7 @@ unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
   auto mount_p = wd.mounts.begin() + mount_idx;
 
   // first unmount drive
-  const auto success_unmount = unmount_drive(hwnd, *mount_p);
-  if (!success_unmount) {
-    throw std::runtime_error("Unmount error!");
-  }
+  mount_p->unmount();
 
   // now remove mount from list
   stop_drive(hwnd, wd, mount_p);
@@ -508,11 +346,13 @@ perform_default_lockbox_action(HWND lockbox_main_window, WindowData & wd) {
   // otherwise allow the user to make a new mount
   if (wd.mounts.empty()) open_create_mount_dialog(lockbox_main_window, wd);
   else {
-    auto success = open_mount(lockbox_main_window, wd.mounts.front());
-    if (!success) {
-      log_error("Error while opening mount... %s: %s",
-                std::to_string(wd.mounts.front().drive_letter).c_str(),
-                w32util::last_error_message().c_str());
+    try {
+      wd.mounts.front().open_mount();
+    }
+    catch (const std::exception & err) {
+      lbx_log_error("Error while opening mount \"%s\": %s",
+                    wd.mounts.front().get_mount_name().c_str(),
+                    err.what());
     }
   }
 }
@@ -581,8 +421,8 @@ create_lockbox_menu(const WindowData & wd, bool is_control_pressed) {
   for (const auto & md : wd.mounts) {
     append_string_menu_item(menu_handle,
                             idx == 0,
-                            (action + " \"" + md.name + "\" (" +
-                             std::to_string(md.drive_letter) + ":)"),
+                            (action + " \"" + md.get_mount_name() + "\" (" +
+                             std::to_string(md.get_drive_letter()) + ":)"),
                             mount_idx_to_menu_id(idx));
     ++idx;
   }
@@ -657,16 +497,16 @@ add_tray_icon(HWND lockbox_main_window) {
   auto success = Shell_NotifyIconW(NIM_ADD, &icon_data);
   if (!success) {
     // TODO deal with this?
-    log_error("Error while adding icon: %s",
-              w32util::last_error_message().c_str());
+    lbx_log_error("Error while adding icon: %s",
+                  w32util::last_error_message().c_str());
   }
   else {
     // now set tray icon version
     auto success_version = Shell_NotifyIcon(NIM_SETVERSION, &icon_data);
     if (!success_version) {
       // TODO: deal with this
-      log_error("Error while setting icon version: %s",
-                w32util::last_error_message().c_str());
+      lbx_log_error("Error while setting icon version: %s",
+                    w32util::last_error_message().c_str());
     }
   }
 }
@@ -729,19 +569,12 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       add_tray_icon(hwnd);
 
       // open about dialog
-      auto about_action = about_dialog(hwnd);
+      // TODO: only do this if we've never done this before
+      lockbox::win::about_dialog(hwnd);
 
-      // okay now do action
-      bool show_bubble = true;
-      if (about_action == IDCCREATELOCKBOX) {
-        show_bubble = !open_create_mount_dialog(hwnd, *wd);
-      }
-
-      if (show_bubble) {
-        bubble_msg(hwnd,
-                   LOCKBOX_TRAY_ICON_WELCOME_TITLE,
-                   LOCKBOX_TRAY_ICON_WELCOME_MSG);
-      }
+      bubble_msg(hwnd,
+                 LOCKBOX_TRAY_ICON_WELCOME_TITLE,
+                 LOCKBOX_TRAY_ICON_WELCOME_MSG);
 
       // return -1 on failure, CreateWindow* will return NULL
       return 0;
@@ -750,7 +583,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     NO_FALLTHROUGH(LOCKBOX_TRAY_ICON_MSG): {
       switch (lParam) {
         NO_FALLTHROUGH(1029): {
-          log_debug("User clicked balloon");
+          lbx_log_debug("User clicked balloon");
           break;
         }
 
@@ -867,18 +700,17 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             unmount_and_stop_drive(hwnd, *wd, selected_mount_idx);
           }
           else {
-            auto success = open_mount(hwnd, wd->mounts[selected_mount_idx]);
-            if (!success) throw std::runtime_error("open_mount");
+            wd->mounts[selected_mount_idx].open_mount();
           }
           break;
         }
         }
       }
       catch (const std::exception & err) {
-        log_error("Error while doing: \"%s\": %s (%lu)",
-                  err.what(),
-                  w32util::last_error_message().c_str(),
-                  GetLastError());
+        lbx_log_error("Error while doing: \"%s\": %s (%lu)",
+                      err.what(),
+                      w32util::last_error_message().c_str(),
+                      GetLastError());
       }
 
       return 0;
@@ -996,8 +828,8 @@ exit_if_not_single_app_instance(std::function<int(DWORD)> on_exit) {
     return;
   }
   default: {
-    log_error("Error on CreateMutex: %s",
-              w32util::last_error_message().c_str());
+    lbx_log_error("Error on CreateMutex: %s",
+                  w32util::last_error_message().c_str());
     abort();
   }
   }
@@ -1012,7 +844,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   // TODO: de-initialize
   log_printer_default_init();
   logging_set_global_level(LOG_DEBUG);
-  log_debug("Hello world!");
+  lbx_log_debug("Hello world!");
 
   // TODO: de-initialize
   auto ret_ole = OleInitialize(NULL);
@@ -1105,11 +937,14 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   }
 
   // kill all mounts
-  for (const auto & mount : wd.mounts) {
-    const auto unmount_success = unmount_drive(NULL, mount);
-    if (!unmount_success) {
-      log_error("Failed to unmount %s:",
-                std::to_string(mount.drive_letter).c_str());
+  for (auto & mount : wd.mounts) {
+    try {
+      mount.unmount();
+    }
+    catch (const std::exception & err) {
+      lbx_log_error("Failed to unmount \"%s\": %s",
+                    mount.get_mount_name().c_str(),
+                    err.what());
     }
   }
 

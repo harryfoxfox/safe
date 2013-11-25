@@ -137,7 +137,6 @@ about_dialog_proc(HWND hwnd, UINT Message,
 }
 
 WINAPI
-static
 INT_PTR
 about_dialog(HWND hwnd) {
   using namespace w32util;

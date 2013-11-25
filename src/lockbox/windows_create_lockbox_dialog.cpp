@@ -1,5 +1,138 @@
 #include <windows.h>
 
+#if 0
+  auto maybe_chosen_folder = get_folder_dialog(owner);
+  // they pressed cancel
+  if (!maybe_chosen_folder) return opt::nullopt;
+  auto chosen_folder = std::move(*maybe_chosen_folder);
+
+  opt::optional<encfs::Path> maybe_encrypted_directory_path;
+  try {
+    maybe_encrypted_directory_path =
+      native_fs->pathFromString(chosen_folder);
+  }
+  catch (const std::exception & err) {
+    std::ostringstream os;
+    os << "Bad path for encrypted directory: " <<
+      chosen_folder;
+    w32util::quick_alert(owner, os.str(), "Bad Path!");
+    return opt::nullopt;
+  }
+
+  auto encrypted_directory_path =
+    std::move(*maybe_encrypted_directory_path);
+
+  // attempt to read configuration
+  opt::optional<encfs::EncfsConfig> maybe_encfs_config;
+  try {
+    maybe_encfs_config =
+      w32util::modal_call(owner, "Reading configuration...",
+                          "Reading configuration...",
+                          encfs::read_config,
+                          native_fs, encrypted_directory_path);
+    // it was canceled
+    if (!maybe_encfs_config) return opt::nullopt;
+  }
+  catch (const encfs::ConfigurationFileDoesNotExist &) {
+    // this is fine, we'll just attempt to create it
+  }
+  catch (const encfs::ConfigurationFileIsCorrupted &) {
+    // this is not okay right now, let the user know and exit
+    std::ostringstream os;
+    os << "The configuration file in folder \"" <<
+      chosen_folder << "\" is corrupted";
+    w32util::quick_alert(owner, os.str(), "Bad Folder");
+    return opt::nullopt;
+  }
+
+  opt::optional<encfs::SecureMem> maybe_password;
+  if (maybe_encfs_config) {
+    // ask for password
+    while (!maybe_password) {
+      maybe_password =
+        get_password_dialog(owner, encrypted_directory_path);
+      if (!maybe_password) return opt::nullopt;
+
+      lbx_log_debug("verifying password...");
+      const auto correct_password =
+        w32util::modal_call(owner, "Verifying Password...",
+                            "Verifying password...",
+                            encfs::verify_password,
+                            *maybe_encfs_config, *maybe_password);
+      lbx_log_debug("verifying done!");
+      if (!correct_password) return opt::nullopt;
+
+      if (!*correct_password) {
+        w32util::quick_alert(owner, "Incorrect password! Try again",
+                    "Incorrect Password");
+        maybe_password = opt::nullopt;
+      }
+    }
+  }
+  else {
+    // check if the user wants to create an encrypted container
+    auto create =
+      confirm_new_encrypted_container(owner, encrypted_directory_path);
+    if (!create) return opt::nullopt;
+
+    // create new password
+    maybe_password =
+      get_new_password_dialog(owner, encrypted_directory_path);
+    if (!maybe_password) return opt::nullopt;
+
+    const auto use_case_safe_filename_encoding = true;
+    maybe_encfs_config =
+      w32util::modal_call(owner,
+                          "Creating New Configuration...",
+                          "Creating new configuration...",
+                          encfs::create_paranoid_config,
+                          *maybe_password,
+                          use_case_safe_filename_encoding);
+    if (!maybe_encfs_config) return opt::nullopt;
+
+    auto modal_completed =
+      w32util::modal_call_void(owner,
+                               "Saving New Configuration...",
+                               "Saving new configuration...",
+                               encfs::write_config,
+                               native_fs, encrypted_directory_path,
+                               *maybe_encfs_config);
+    if (!modal_completed) return opt::nullopt;
+  }
+
+  // okay now we have:
+  // * a valid path
+  // * a valid config
+  // * a valid password
+  // we're ready to mount the drive
+
+  auto maybe_mount_details =
+    w32util::modal_call(owner,
+                        ("Starting New "
+                         ENCRYPTED_STORAGE_NAME_A
+                         "..."),
+                        ("Starting new "
+                         ENCRYPTED_STORAGE_NAME_A
+                         "..."),
+                        lockbox::win::mount_new_encfs_drive,
+                        native_fs,
+                        encrypted_directory_path,
+                        *maybe_encfs_config,
+                        *maybe_password);
+
+  if (!maybe_mount_details) return opt::nullopt;
+
+  maybe_mount_details->open_mount();
+
+  bubble_msg(owner,
+             "Success",
+             "You've successfully started \"" +
+             maybe_mount_details->get_mount_name() +
+             ".\"");
+
+  return std::move(*maybe_mount_details);
+#endif
+
 CALLBACK
 static
 INT_PTR
