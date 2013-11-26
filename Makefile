@@ -80,6 +80,8 @@ libprotobuf: clean
 	@cd $(PROTOBUF_ROOT); make install
 
 libtinyxml: clean
+	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
+	@mkdir -p $(DEPS_INSTALL_ROOT)/include
 	@cd $(TINYXML_ROOT); rm -f libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o
 	@cd $(TINYXML_ROOT); $(CXX) $(CXXFLAGS) -c tinystr.cpp  tinyxml.cpp  tinyxmlerror.cpp  tinyxmlparser.cpp
 	@cd $(TINYXML_ROOT); ar rcs libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o
