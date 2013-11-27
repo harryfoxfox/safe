@@ -1,7 +1,11 @@
-#ifndef _lockbox_util_H
-#define _lockbox_util_H
+#ifndef _lockbox_util_hpp
+#define _lockbox_util_hpp
 
 #include <encfs/base/optional.h>
+
+#include <functional>
+#include <memory>
+#include <vector>
 
 #include <cstring>
 

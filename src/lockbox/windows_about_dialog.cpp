@@ -1,3 +1,35 @@
+/*
+  Lockbox: Encrypted File System
+  Copyright (C) 2013 Rian Hunter <rian@alum.mit.edu>
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation, either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+
+#include <lockbox/windows_about_dialog.hpp>
+
+#include <lockbox/lockbox_strings.h>
+#include <lockbox/windows_app_actions.hpp>
+#include <lockbox/windows_dialog.hpp>
+#include <lockbox/windows_gui_util.hpp>
+#include <lockbox/windows_string.hpp>
+
+#include <cassert>
+
+#include <windows.h>
+
+namespace lockbox { namespace win {
+
 enum {
   IDCBLURB = 100,
   IDCGETSOURCECODE,
@@ -67,21 +99,21 @@ about_dialog_proc(HWND hwnd, UINT Message,
     // set up text window
     auto success_set_wtext = SetWindowText(text_hwnd, blurb_text.c_str());
     if (!success_set_wtext) throw w32util::windows_error();
-    auto set_client_area_1 = SetClientSizeInLogical(text_hwnd, true,
-                                                    margin, margin,
-                                                    w, h);
+    auto set_client_area_1 = w32util::SetClientSizeInLogical(text_hwnd, true,
+                                                             margin, margin,
+                                                             w, h);
     if (!set_client_area_1) throw w32util::windows_error();
 
     // create "create lockbox" button
     auto create_lockbox_hwnd = GetDlgItem(hwnd, IDCCREATELOCKBOX);
     if (!create_lockbox_hwnd) throw w32util::windows_error();
 
-    SetClientSizeInLogical(create_lockbox_hwnd, true,
-                           DIALOG_WIDTH -
-                           margin - BUTTON_WIDTH_SRCCODE -
-                           BUTTON_SPACING - BUTTON_WIDTH_CREATELB,
-                           margin + h + margin,
-                           BUTTON_WIDTH_CREATELB, BUTTON_HEIGHT);
+    w32util::SetClientSizeInLogical(create_lockbox_hwnd, true,
+                                    DIALOG_WIDTH -
+                                    margin - BUTTON_WIDTH_SRCCODE -
+                                    BUTTON_SPACING - BUTTON_WIDTH_CREATELB,
+                                    margin + h + margin,
+                                    BUTTON_WIDTH_CREATELB, BUTTON_HEIGHT);
 
     // set focus on create lockbox button
     PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM) create_lockbox_hwnd, TRUE);
@@ -90,15 +122,15 @@ about_dialog_proc(HWND hwnd, UINT Message,
     auto get_source_code_hwnd = GetDlgItem(hwnd, IDCGETSOURCECODE);
     if (!get_source_code_hwnd) throw w32util::windows_error();
 
-    SetClientSizeInLogical(get_source_code_hwnd, true,
-                           DIALOG_WIDTH -
-                           margin - BUTTON_WIDTH_SRCCODE,
-                           margin + h + margin,
-                           BUTTON_WIDTH_SRCCODE, BUTTON_HEIGHT);
+    w32util::SetClientSizeInLogical(get_source_code_hwnd, true,
+                                    DIALOG_WIDTH -
+                                    margin - BUTTON_WIDTH_SRCCODE,
+                                    margin + h + margin,
+                                    BUTTON_WIDTH_SRCCODE, BUTTON_HEIGHT);
 
-    auto set_client_area_2 = SetClientSizeInLogical(hwnd, true, 0, 0,
-                                                    DIALOG_WIDTH,
-                                                    DIALOG_HEIGHT);
+    auto set_client_area_2 = w32util::SetClientSizeInLogical(hwnd, true, 0, 0,
+                                                             DIALOG_WIDTH,
+                                                             DIALOG_HEIGHT);
     if (!set_client_area_2) throw w32util::windows_error();
 
     w32util::center_window_in_monitor(hwnd);
@@ -109,7 +141,7 @@ about_dialog_proc(HWND hwnd, UINT Message,
   case WM_COMMAND: {
     switch (LOWORD(wParam)) {
     case IDCGETSOURCECODE: {
-      open_src_code(hwnd);
+      lockbox::win::open_src_code(hwnd);
       return TRUE;
     }
     case IDCCREATELOCKBOX: case IDCANCEL: {
@@ -137,7 +169,7 @@ about_dialog_proc(HWND hwnd, UINT Message,
 }
 
 WINAPI
-INT_PTR
+void
 about_dialog(HWND hwnd) {
   using namespace w32util;
 
@@ -159,9 +191,9 @@ about_dialog(HWND hwnd) {
                    }
                    );
 
-  return
-    DialogBoxIndirect(GetModuleHandle(NULL),
-                      dlg.get_data(),
-                      hwnd, about_dialog_proc);
+  DialogBoxIndirect(GetModuleHandle(NULL),
+                    dlg.get_data(),
+                    hwnd, about_dialog_proc);
 }
 
+}}

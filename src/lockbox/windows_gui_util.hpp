@@ -19,12 +19,21 @@
 #ifndef __windows_gui_util_hpp
 #define __windows_gui_util_hpp
 
+#include <string>
+
+#include <lockbox/lean_windows.h>
+
 namespace w32util {
 
 void
 quick_alert(HWND owner,
             const std::string &msg,
             const std::string &title);
+
+BOOL
+SetClientSizeInLogical(HWND hwnd, bool set_pos,
+                       int x, int y,
+                       int w, int h);
 
 }
 

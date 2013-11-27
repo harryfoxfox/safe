@@ -151,7 +151,8 @@ SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp \
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
 
-WINDOWS_APP_MAIN_SRCS = app_main_windows.cpp windows_app.rc $(SRCS)
+WINDOWS_APP_MAIN_SRCS = app_main_windows.cpp windows_app.rc mount_win.cpp \
+ windows_gui_util.cpp windows_about_dialog.cpp windows_app_actions.cpp $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 # dependencies

@@ -22,6 +22,7 @@
 #include <lockbox/logging.h>
 #include <lockbox/mount_win.hpp>
 #include <lockbox/windows_about_dialog.hpp>
+#include <lockbox/windows_app_actions.hpp>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_string.hpp>
 #include <lockbox/windows_gui_util.hpp>
@@ -242,15 +243,6 @@ securely_read_password_field(HWND hwnd, WORD id, bool clear = true) {
 
   st2.data()[ret] = '\0';
   return std::move(st2);
-}
-
-bool
-open_src_code(HWND owner) {
-  auto ret_shell2 =
-    (int) ShellExecuteW(owner, L"open",
-                        L"http://github.com/rianhunter/lockbox_app",
-                        NULL, NULL, SW_SHOWNORMAL);
-  return ret_shell2 > 32;
 }
 
 static
@@ -683,7 +675,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           break;
         }
         case MENU_GETSRCCODE_ID: {
-          open_src_code(hwnd);
+          lockbox::win::open_src_code(hwnd);
           break;
         }
         case MENU_TEST_BUBBLE_ID: {

@@ -16,9 +16,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+#include <lockbox/mount_win.hpp>
+
+#include <lockbox/lockbox_server.hpp>
+#include <lockbox/util.hpp>
+#include <lockbox/windows_string.hpp>
+
+#include <davfuse/util_sockets.h>
 #include <davfuse/webdav_server.h>
 
-#include <Winhttp.h>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+
+#include <ctime>
+
+#include <winhttp.h>
 
 namespace lockbox { namespace win {
 
@@ -72,7 +85,7 @@ MountDetails::signal_stop() const {
   // check if the thread is already dead
   DWORD exit_code;
   auto success_getexitcode =
-    GetExitCodeThread(_thread_handle, &exit_code);
+    GetExitCodeThread(_thread_handle.get(), &exit_code);
   if (!success_getexitcode) {
     throw std::runtime_error("Couldn't get exit code");
   }
@@ -85,10 +98,10 @@ MountDetails::signal_stop() const {
 }
 
 void
-unmount() {
+MountDetails::unmount() {
   std::ostringstream os;
   os << "use " << _drive_letter <<  ": /delete";
-  auto ret_shell1 = (int) ShellExecuteW(hwnd, L"open",
+  auto ret_shell1 = (int) ShellExecuteW(NULL, L"open",
                                         L"c:\\windows\\system32\\net.exe",
                                         w32util::widen(os.str()).c_str(),
                                         NULL, SW_HIDE);
@@ -96,7 +109,7 @@ unmount() {
 }
 
 void
-open_mount() const {
+MountDetails::open_mount() const {
   auto ret_shell2 =
     (int) ShellExecuteW(NULL, L"open",
                         w32util::widen(std::to_string(_drive_letter) +
@@ -106,7 +119,7 @@ open_mount() const {
 }
 
 void
-disconnect_clients() const {
+MountDetails::disconnect_clients() const {
   _post_http("localhost", _listen_port, WEBDAV_SERVER_DISCONNECT_URL);
 }
 
@@ -184,9 +197,9 @@ public:
     EnterCriticalSection(&_cs);
     auto _deferred_unlock = lockbox::create_deferred(LeaveCriticalSection, &_cs);
     assert(_msg_sent);
-    return (error
+    return (_error
             ? opt::nullopt
-            : opt::make_optional(listen_port));
+            : opt::make_optional(_listen_port));
   }
 };
 
@@ -286,13 +299,13 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                                         L"c:\\windows\\system32\\net.exe",
                                         w32util::widen(os.str()).c_str(),
                                         NULL, SW_HIDE);
+  if (ret_shell1 <= 32) throw w32util::windows_error();
 
-  return MountDetails {
-    drive_letter,
-    mount_name,
-    std::move(thread_handle),
-    listen_port,
-  };
+  return MountDetails(drive_letter,
+                      mount_name,
+                      std::move(thread_handle),
+                      listen_port,
+                      encrypted_container_path);
 }
 
 }}

@@ -31,6 +31,7 @@
 
 namespace lockbox { namespace win {
 
+WINAPI
 void
 about_dialog(HWND hwnd);
 
