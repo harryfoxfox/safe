@@ -32,8 +32,6 @@ namespace lockbox { namespace win {
 
 enum {
   IDCBLURB = 100,
-  IDCGETSOURCECODE,
-  IDCCREATELOCKBOX,
 };
 
 CALLBACK
@@ -52,27 +50,25 @@ about_dialog_proc(HWND hwnd, UINT Message,
     auto text_hwnd = GetDlgItem(hwnd, IDCBLURB);
     if (!text_hwnd) throw w32util::windows_error();
 
-    const unit_t BLURB_TEXT_WIDTH = 350;
+    const unit_t BLURB_TEXT_WIDTH = 300;
 
-    const unit_t BUTTON_WIDTH_SRCCODE_DLG = 55;
-    const unit_t BUTTON_WIDTH_CREATELB_DLG = 100;
+    const unit_t BUTTON_WIDTH_CREATELB_DLG = 44;
     const unit_t BUTTON_HEIGHT_DLG = 14;
 
     RECT r;
-    r.left = BUTTON_WIDTH_SRCCODE_DLG;
+    lockbox::zero_object(r);
     r.right = BUTTON_WIDTH_CREATELB_DLG;
     r.top = BUTTON_HEIGHT_DLG;
     auto success_map = MapDialogRect(hwnd, &r);
     if (!success_map) throw w32util::windows_error();
 
-    const unit_t BUTTON_WIDTH_SRCCODE = r.left;
     const unit_t BUTTON_WIDTH_CREATELB = r.right;
     const unit_t BUTTON_HEIGHT = r.top;
 
-    const unit_t BUTTON_SPACING = 8;
-
     auto blurb_text = w32util::widen(LOCKBOX_ABOUT_BLURB);
 
+    // get necessary height to contain the text at the desired
+    // `BLURB_TEXT_WIDTH` via DrawText()
     auto dc = GetDC(text_hwnd);
     if (!dc) throw w32util::windows_error();
     auto _release_dc_1 = lockbox::create_deferred(ReleaseDC, text_hwnd, dc);
@@ -104,30 +100,20 @@ about_dialog_proc(HWND hwnd, UINT Message,
                                                              w, h);
     if (!set_client_area_1) throw w32util::windows_error();
 
-    // create "create lockbox" button
-    auto create_lockbox_hwnd = GetDlgItem(hwnd, IDCCREATELOCKBOX);
-    if (!create_lockbox_hwnd) throw w32util::windows_error();
+    // create "Ok" button
+    auto ok_hwnd = GetDlgItem(hwnd, IDOK);
+    if (!ok_hwnd) throw w32util::windows_error();
 
-    w32util::SetClientSizeInLogical(create_lockbox_hwnd, true,
+    w32util::SetClientSizeInLogical(ok_hwnd, true,
                                     DIALOG_WIDTH -
-                                    margin - BUTTON_WIDTH_SRCCODE -
-                                    BUTTON_SPACING - BUTTON_WIDTH_CREATELB,
+                                    margin - BUTTON_WIDTH_CREATELB,
                                     margin + h + margin,
                                     BUTTON_WIDTH_CREATELB, BUTTON_HEIGHT);
 
-    // set focus on create lockbox button
-    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM) create_lockbox_hwnd, TRUE);
+    // set focus on "Ok" button
+    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM) ok_hwnd, TRUE);
 
-    // create "get source code" button
-    auto get_source_code_hwnd = GetDlgItem(hwnd, IDCGETSOURCECODE);
-    if (!get_source_code_hwnd) throw w32util::windows_error();
-
-    w32util::SetClientSizeInLogical(get_source_code_hwnd, true,
-                                    DIALOG_WIDTH -
-                                    margin - BUTTON_WIDTH_SRCCODE,
-                                    margin + h + margin,
-                                    BUTTON_WIDTH_SRCCODE, BUTTON_HEIGHT);
-
+    // set up about window (size + position)
     auto set_client_area_2 = w32util::SetClientSizeInLogical(hwnd, true, 0, 0,
                                                              DIALOG_WIDTH,
                                                              DIALOG_HEIGHT);
@@ -140,11 +126,7 @@ about_dialog_proc(HWND hwnd, UINT Message,
 
   case WM_COMMAND: {
     switch (LOWORD(wParam)) {
-    case IDCGETSOURCECODE: {
-      lockbox::win::open_src_code(hwnd);
-      return TRUE;
-    }
-    case IDCCREATELOCKBOX: case IDCANCEL: {
+    case IDOK: case IDCANCEL: {
       EndDialog(hwnd, (INT_PTR) LOWORD(wParam));
       return TRUE;
     }
@@ -182,11 +164,7 @@ about_dialog(HWND hwnd) {
                    {
                      LText("", IDCBLURB,
                            0, 0, 0, 0),
-                     PushButton("&Get Source Code", IDCGETSOURCECODE,
-                                0, 0, 0, 0),
-                     DefPushButton(("&Start or Create a "
-                                    ENCRYPTED_STORAGE_NAME_A),
-                                   IDCCREATELOCKBOX,
+                     DefPushButton("&Ok", IDOK,
                                    0, 0, 0, 0),
                    }
                    );

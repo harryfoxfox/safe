@@ -30,7 +30,7 @@
                                                                         \
   "\r\n\r\n"                                                            \
                                                                         \
-  "This program is distributed in the hope that it will be useful, "    \
+  "Bitvault is distributed in the hope that it will be useful, "    \
   "but WITHOUT ANY WARRANTY; without even the implied warranty of "     \
   "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. USE AT YOUR OWN RISK." \
                                                                         \
