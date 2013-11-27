@@ -33,6 +33,17 @@
 extern "C" {
 #endif
 
+WINAPI
+int CompareStringOrdinal(
+  LPCWSTR lpString1,
+  int cchCount1,
+  LPCWSTR lpString2,
+  int cchCount2,
+  BOOL bIgnoreCase
+);
+
+#ifdef DONT_HAVE_WINNLS
+
 typedef enum _NORM_FORM {
   NormalizationOther  = 0,
   NormalizationC      = 0x1,
@@ -59,15 +70,7 @@ NormalizeString(
   int cwDstLength
 );
 
-WINAPI
-int CompareStringOrdinal(
-  LPCWSTR lpString1,
-  int cchCount1,
-  LPCWSTR lpString2,
-  int cchCount2,
-  BOOL bIgnoreCase
-);
-
+#endif
 
 #ifdef __cplusplus
 }
