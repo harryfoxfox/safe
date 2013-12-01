@@ -19,21 +19,15 @@
 #ifndef __lockbox_windows_string_hpp
 #define __lockbox_windows_string_hpp
 
+#include <lockbox/windows_error.hpp>
+
 #include <memory>
 #include <stdexcept>
 #include <string>
 
 #include <cstddef>
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#define __MUTEX_WIN32_CS_DEFINED_LAM
-#endif
-#include <windows.h>
-#ifdef __MUTEX_WIN32_CS_DEFINED_LAM
-#undef WIN32_LEAN_AND_MEAN
-#undef __MUTEX_WIN32_CS_DEFINED_LAM
-#endif
+#include <lockbox/lean_windows.h>
 
 namespace w32util {
 
@@ -65,12 +59,14 @@ inline
 size_t
 narrow_into_buf(const wchar_t *s, size_t num_chars,
                 char *out, size_t buf_size_in_bytes) {
+  if (!num_chars) return 0;
   DWORD flags = 0 /*| WC_ERR_INVALID_CHARS*/;
   const int required_buffer_size =
     WideCharToMultiByte(CP_UTF8, flags,
                         s, num_chars,
                         out, buf_size_in_bytes,
                         NULL, NULL);
+  if (!required_buffer_size) throw w32util::windows_error();
   return required_buffer_size;
 }
 
@@ -104,54 +100,6 @@ inline
 std::string
 narrow(const std::wstring & s) {
   return narrow(s.data(), s.size());
-}
-
-inline
-std::string
-error_message(DWORD err_code) {
-  enum {
-    MAX_MSG=128,
-  };
-  wchar_t error_buf_wide[MAX_MSG];
-  char error_buf[MAX_MSG];
-
-  DWORD num_chars =
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
-                   FORMAT_MESSAGE_IGNORE_INSERTS, 0, err_code, 0,
-                   error_buf_wide,
-                   sizeof(error_buf_wide) / sizeof(error_buf_wide[0]),
-                   NULL);
-  if (!num_chars) {
-    return "Couldn't get error message, FormatMessageW() failed";
-  }
-
-  error_buf_wide[num_chars - 2] = L'\0';
-  num_chars -= 2;
-
-  const DWORD flags = 0;
-  const int required_buffer_size =
-    WideCharToMultiByte(CP_UTF8, flags,
-                        error_buf_wide, num_chars,
-                        error_buf, sizeof(error_buf),
-                        NULL, NULL);
-  if (!required_buffer_size) {
-    return "Couldn't get error_message, WideCharToMultibyte() failed";
-  }
-
-  return std::string(error_buf, required_buffer_size);
-}
-
-inline
-std::string
-last_error_message() {
-  return error_message(GetLastError());
-}
-
-// TODO: implement
-inline
-std::runtime_error
-windows_error() {
-  return std::runtime_error("windows error to go here");
 }
 
 }

@@ -19,15 +19,7 @@
 #ifndef __lockbox_windows_about_dialog_hpp
 #define __lockbox_windows_about_dialog_hpp
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#define __MUTEX_WIN32_CS_DEFINED_LAM
-#endif
-#include <windows.h>
-#ifdef __MUTEX_WIN32_CS_DEFINED_LAM
-#undef WIN32_LEAN_AND_MEAN
-#undef __MUTEX_WIN32_CS_DEFINED_LAM
-#endif
+#include <lockbox/lean_windows.h>
 
 namespace lockbox { namespace win {
 

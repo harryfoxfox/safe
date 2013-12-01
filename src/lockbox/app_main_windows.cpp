@@ -24,6 +24,7 @@
 #include <lockbox/windows_about_dialog.hpp>
 #include <lockbox/windows_app_actions.hpp>
 #include <lockbox/windows_async.hpp>
+#include <lockbox/windows_create_lockbox_dialog.hpp>
 #include <lockbox/windows_string.hpp>
 #include <lockbox/windows_gui_util.hpp>
 #include <lockbox/util.hpp>
@@ -53,7 +54,6 @@
 #include <windowsx.h>
 #include <CommCtrl.h>
 #include <Shellapi.h>
-#include <Shlobj.h>
 #include <dbt.h>
 
 // TODO:
@@ -179,70 +179,6 @@ stop_relevant_drive_threads(HWND lockbox_main_window, WindowData & wd) {
     }
     else ++it;
   }
-}
-
-WINAPI
-opt::optional<std::string>
-get_folder_dialog(HWND owner) {
-  while (true) {
-    wchar_t chosen_name[MAX_PATH];
-    BROWSEINFOW bi;
-    lockbox::zero_object(bi);
-    bi.hwndOwner = owner;
-    bi.lpszTitle = L"Select Location for new " ENCRYPTED_STORAGE_NAME_W;
-    bi.ulFlags = BIF_USENEWUI;
-    bi.pszDisplayName = chosen_name;
-    auto pidllist = SHBrowseForFolderW(&bi);
-    if (pidllist) {
-      wchar_t file_buffer_ret[MAX_PATH];
-      const auto success = SHGetPathFromIDList(pidllist, file_buffer_ret);
-      CoTaskMemFree(pidllist);
-      if (success) return w32util::narrow(file_buffer_ret);
-      else {
-        std::ostringstream os;
-        os << "Your selection \"" << w32util::narrow(bi.pszDisplayName) <<
-          "\" is not a valid folder!";
-        w32util::quick_alert(owner, os.str(), "Bad Selection!");
-      }
-    }
-    else return opt::nullopt;
-  }
-}
-
-void
-clear_field(HWND hwnd, WORD id, size_t num_chars){
-  auto zeroed_bytes =
-    std::unique_ptr<wchar_t[]>(new wchar_t[num_chars + 1]);
-  memset(zeroed_bytes.get(), 0xaa, num_chars * sizeof(wchar_t));
-  zeroed_bytes[num_chars] = 0;
-  SetDlgItemTextW(hwnd, id, zeroed_bytes.get());
-}
-
-encfs::SecureMem
-securely_read_password_field(HWND hwnd, WORD id, bool clear = true) {
-  // securely get what's in dialog box
-  auto st1 = encfs::SecureMem((MAX_PASS_LEN + 1) * sizeof(wchar_t));
-  auto num_chars =
-    GetDlgItemTextW(hwnd, id,
-                    (wchar_t *) st1.data(),
-                    st1.size() / sizeof(wchar_t));
-
-  // attempt to clear what's in dialog box
-  if (clear) clear_field(hwnd, id, num_chars);
-
-  // convert wchars to utf8
-  auto st2 = encfs::SecureMem(MAX_PASS_LEN * 3);
-  size_t ret;
-  if (num_chars) {
-    ret = w32util::narrow_into_buf((wchar_t *) st1.data(), num_chars,
-                                   (char *) st2.data(), st2.size() - 1);
-    // should never happen
-    if (!ret) throw std::runtime_error("fail");
-  }
-  else ret = 0;
-
-  st2.data()[ret] = '\0';
-  return std::move(st2);
 }
 
 static
@@ -878,6 +814,10 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   }
 
   auto native_fs = lockbox::create_native_fs();
+
+  lockbox::win::create_new_lockbox_dialog(NULL, native_fs);
+  return 0;
+
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
     /*.mounts = */std::vector<lockbox::win::MountDetails>(),

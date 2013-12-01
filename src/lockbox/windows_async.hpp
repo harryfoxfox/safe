@@ -20,6 +20,7 @@
 #define __lockbox_windows_async_hpp
 
 #include <lockbox/windows_dialog.hpp>
+#include <lockbox/windows_gui_util.hpp>
 #include <lockbox/util.hpp>
 
 #include <davfuse/logging.h>
@@ -29,15 +30,7 @@
 
 #include <cstddef>
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#define __MUTEX_WIN32_CS_DEFINED_LAM
-#endif
-#include <windows.h>
-#ifdef __MUTEX_WIN32_CS_DEFINED_LAM
-#undef WIN32_LEAN_AND_MEAN
-#undef __MUTEX_WIN32_CS_DEFINED_LAM
-#endif
+#include <lockbox/lean_windows.h>
 
 #include <CommCtrl.h>
 

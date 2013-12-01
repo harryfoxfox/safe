@@ -16,42 +16,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef __windows_gui_util_hpp
-#define __windows_gui_util_hpp
+#ifndef __lockbox_windows_create_lockbox_dialog_hpp
+#define __lockbox_windows_create_lockbox_dialog_hpp
 
-#include <encfs/cipher/MemoryPool.h>
+#include <lockbox/mount_win.hpp>
 
-#include <string>
+#include <encfs/fs/FsIO.h>
+
+#include <encfs/base/optional.h>
 
 #include <lockbox/lean_windows.h>
 
-namespace w32util {
+namespace lockbox { namespace win {
 
-void
-quick_alert(HWND owner,
-            const std::string &msg,
-            const std::string &title);
+opt::optional<lockbox::win::MountDetails>
+create_new_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio);
 
-BOOL
-SetClientSizeInLogical(HWND hwnd, bool set_pos,
-                       int x, int y,
-                       int w, int h);
-
-void
-center_window_in_monitor(HWND hwnd);
-
-void
-set_default_dialog_font(HWND hwnd);
-
-void
-cleanup_default_dialog_font(HWND hwnd);
-
-void
-clear_text_field(HWND text_hwnd, size_t num_chars);
-
-encfs::SecureMem
-securely_read_text_field(HWND text_wnd, bool clear = true);
-
-}
+}}
 
 #endif
