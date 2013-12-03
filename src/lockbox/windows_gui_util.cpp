@@ -18,14 +18,19 @@
 
 #include <lockbox/windows_gui_util.hpp>
 
+#include <lockbox/product_name.h>
 #include <lockbox/util.hpp>
 #include <lockbox/windows_string.hpp>
 
 #include <encfs/cipher/MemoryPool.h>
+#include <encfs/base/optional.h>
 
+#include <iostream>
+#include <sstream>
 #include <string>
 
 #include <windows.h>
+#include <Shlobj.h>
 
 namespace w32util {
 
@@ -196,17 +201,35 @@ clear_text_field(HWND text_hwnd, size_t num_chars) {
   if (!success) throw w32util::windows_error();
 }
 
+std::string
+read_text_field(HWND text_hwnd) {
+  // read size of text in text field
+  SetLastError(0);
+  auto max_num_chars = GetWindowTextLengthW(text_hwnd);
+  if (!max_num_chars && GetLastError()) throw w32util::windows_error();
+
+  auto text_buf = std::unique_ptr<wchar_t[]>(new wchar_t[max_num_chars + 1]);
+  SetLastError(0);
+  auto num_chars = GetWindowTextW(text_hwnd, text_buf.get(), max_num_chars + 1);
+  if (!num_chars && GetLastError()) throw w32util::windows_error();
+
+  return w32util::narrow(text_buf.get(), num_chars);
+}
+
 encfs::SecureMem
 securely_read_text_field(HWND text_hwnd, bool clear) {
   // read size of text in text field
+  SetLastError(0);
   auto max_num_chars = GetWindowTextLengthW(text_hwnd);
-  if (max_num_chars < 0) throw std::runtime_error("fail");
+  if (!max_num_chars && GetLastError()) throw w32util::windows_error();
 
   auto st1 = encfs::SecureMem((max_num_chars + 1) * sizeof(wchar_t));
+  SetLastError(0);
   auto num_chars =
     GetWindowTextW(text_hwnd,
                    (wchar_t *) st1.data(),
                    st1.size() / sizeof(wchar_t));
+  if (!num_chars && GetLastError()) throw w32util::windows_error();
 
   // attempt to clear what's in dialog box
   if (clear) clear_text_field(text_hwnd, num_chars);
@@ -223,6 +246,33 @@ securely_read_text_field(HWND text_hwnd, bool clear) {
   st2.data()[ret] = '\0';
 
   return std::move(st2);
+}
+
+opt::optional<std::string>
+get_folder_dialog(HWND owner) {
+  while (true) {
+    wchar_t chosen_name[MAX_PATH];
+    BROWSEINFOW bi;
+    lockbox::zero_object(bi);
+    bi.hwndOwner = owner;
+    bi.lpszTitle = L"Select Location for new " ENCRYPTED_STORAGE_NAME_W;
+    bi.ulFlags = BIF_USENEWUI;
+    bi.pszDisplayName = chosen_name;
+    auto pidllist = SHBrowseForFolderW(&bi);
+    if (pidllist) {
+      wchar_t file_buffer_ret[MAX_PATH];
+      const auto success = SHGetPathFromIDList(pidllist, file_buffer_ret);
+      CoTaskMemFree(pidllist);
+      if (success) return w32util::narrow(file_buffer_ret);
+      else {
+        std::ostringstream os;
+        os << "Your selection \"" << w32util::narrow(bi.pszDisplayName) <<
+          "\" is not a valid folder!";
+        w32util::quick_alert(owner, os.str(), "Bad Selection!");
+      }
+    }
+    else return opt::nullopt;
+  }
 }
 
 }

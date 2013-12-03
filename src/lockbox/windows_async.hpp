@@ -39,6 +39,7 @@ namespace w32util {
 const int IDC_PROGRESS = 2;
 
 CALLBACK
+inline
 BOOL
 _modal_call_dialog_proc(HWND hwnd, UINT Message,
                         WPARAM /*wParam*/, LPARAM /*lParam*/) {
@@ -67,6 +68,7 @@ _modal_call_dialog_proc(HWND hwnd, UINT Message,
 }
 
 WINAPI
+inline
 HWND
 create_waiting_modal(HWND parent, std::string title, std::string ui_msg) {
   typedef WORD unit_t;
@@ -112,6 +114,7 @@ create_waiting_modal(HWND parent, std::string title, std::string ui_msg) {
 }
 
 WINAPI
+inline
 std::unique_ptr<MSG>
 modal_until_message(HWND parent, std::string title, std::string ui_msg,
                     UINT msg) {
@@ -150,7 +153,7 @@ modal_until_message(HWND parent, std::string title, std::string ui_msg,
 }
 
 WINAPI
-static
+inline
 DWORD
 _modal_call_thread_proc(LPVOID param) {
   auto fn = (std::function<void()> *) param;

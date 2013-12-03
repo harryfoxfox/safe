@@ -815,9 +815,6 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
   auto native_fs = lockbox::create_native_fs();
 
-  lockbox::win::create_new_lockbox_dialog(NULL, native_fs);
-  return 0;
-
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
     /*.mounts = */std::vector<lockbox::win::MountDetails>(),

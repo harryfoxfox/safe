@@ -18,7 +18,9 @@
 
 #include <lockbox/windows_create_lockbox_dialog.hpp>
 
+#include <lockbox/create_lockbox_dialog_logic.hpp>
 #include <lockbox/product_name.h>
+#include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_error.hpp>
 #include <lockbox/windows_gui_util.hpp>
@@ -28,8 +30,6 @@
 #include <sstream>
 
 #include <windows.h>
-
-#include <Shlobj.h>
 
 namespace lockbox { namespace win {
 
@@ -175,41 +175,21 @@ enum {
   IDC_STATIC,
 };
 
-static
-opt::optional<std::string>
-get_folder_dialog(HWND owner) {
-  while (true) {
-    wchar_t chosen_name[MAX_PATH];
-    BROWSEINFOW bi;
-    lockbox::zero_object(bi);
-    bi.hwndOwner = owner;
-    bi.lpszTitle = L"Select Location for new " ENCRYPTED_STORAGE_NAME_W;
-    bi.ulFlags = BIF_USENEWUI;
-    bi.pszDisplayName = chosen_name;
-    auto pidllist = SHBrowseForFolderW(&bi);
-    if (pidllist) {
-      wchar_t file_buffer_ret[MAX_PATH];
-      const auto success = SHGetPathFromIDList(pidllist, file_buffer_ret);
-      CoTaskMemFree(pidllist);
-      if (success) return w32util::narrow(file_buffer_ret);
-      else {
-        std::ostringstream os;
-        os << "Your selection \"" << w32util::narrow(bi.pszDisplayName) <<
-          "\" is not a valid folder!";
-        w32util::quick_alert(owner, os.str(), "Bad Selection!");
-      }
-    }
-    else return opt::nullopt;
-  }
-}
+struct CreateNewLockboxDialogCtx {
+  std::shared_ptr<encfs::FsIO> fs;
+};
 
 CALLBACK
 static
 INT_PTR
 create_new_lockbox_dialog_proc(HWND hwnd, UINT Message,
-                               WPARAM wParam, LPARAM /*lParam*/) {
+                               WPARAM wParam, LPARAM lParam) {
+  const auto ctx = (CreateNewLockboxDialogCtx *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+
   switch (Message) {
   case WM_INITDIALOG: {
+    const auto ctx = (CreateNewLockboxDialogCtx *) lParam;
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) ctx);
     w32util::center_window_in_monitor(hwnd);
     w32util::set_default_dialog_font(hwnd);
     return TRUE;
@@ -217,62 +197,79 @@ create_new_lockbox_dialog_proc(HWND hwnd, UINT Message,
   case WM_COMMAND: {
     switch (LOWORD(wParam)) {
     case IDC_BROWSE: {
-      auto ret = get_folder_dialog(hwnd);
+      auto ret = w32util::get_folder_dialog(hwnd);
       if (ret) {
         SetDlgItemTextW(hwnd, IDC_LOCATION, w32util::widen(*ret).c_str());
       }
       break;
     }
     case IDOK: {
-      // TODO: check if location is a well-formed path
-
-      // TODO: check if location exists
-
-      // TODO: check validity of name field
-      // non-zero length
-      // we can join it to the location path
-
-      // TODO: check if full bitvault path already exists
-
+      auto location_hwnd = GetDlgItem(hwnd, IDC_LOCATION);
+      if (!location_hwnd) throw w32util::windows_error();
+      auto name_hwnd = GetDlgItem(hwnd, IDC_NAME);
+      if (!name_hwnd) throw w32util::windows_error();
       auto password_hwnd = GetDlgItem(hwnd, IDC_PASSWORD);
       if (!password_hwnd) throw w32util::windows_error();
-
       auto confirm_password_hwnd = GetDlgItem(hwnd, IDC_CONFIRM_PASSWORD);
       if (!confirm_password_hwnd) throw w32util::windows_error();
 
-      auto secure_pass_1 =
+      auto location_string = w32util::read_text_field(location_hwnd);
+      auto name_string = w32util::read_text_field(name_hwnd);
+      auto password_buf =
         w32util::securely_read_text_field(password_hwnd, false);
-      auto secure_pass_2 =
+      auto confirm_password_buf =
         w32util::securely_read_text_field(confirm_password_hwnd, false);
 
-      auto num_chars_1 = strlen((char *) secure_pass_1.data());
-      auto num_chars_2 = strlen((char *) secure_pass_2.data());
-
-      // check if password is empty
-      if (!num_chars_1) {
-        w32util::quick_alert(hwnd, "Empty password is not allowed!",
-                             "Invalid Password");
-        return TRUE;
+      auto error_msg =
+        lockbox::verify_create_lockbox_dialog_fields(ctx->fs, location_string,
+                                                     name_string, password_buf,
+                                                     confirm_password_buf);
+      if (error_msg) {
+        w32util::quick_alert(hwnd, error_msg->message, error_msg->title);
+        break;
       }
 
-      // check if passwords match
-      if (num_chars_1 != num_chars_2 ||
-          memcmp(secure_pass_1.data(), secure_pass_2.data(), num_chars_1)) {
-        w32util::quick_alert(hwnd, "The Passwords do not match!",
-                             "Passwords don't match");
-        return TRUE;
+      // create encfs drive
+      auto encrypted_container_path = ctx->fs->pathFromString(location_string).join(name_string);
+      auto use_case_safe_filename_encoding = true;
+      auto maybe_cfg =
+        w32util::modal_call(hwnd,
+                            "Creating New Bitvault...",
+                            "Creating new Bitvault....",
+                            [&] {
+                              auto cfg =
+                                encfs::create_paranoid_config(password_buf,
+                                                              use_case_safe_filename_encoding);
+                              ctx->fs->mkdir(encrypted_container_path);
+                              encfs::write_config(ctx->fs, encrypted_container_path, cfg);
+                              return cfg;
+                            });
+      if (!maybe_cfg) {
+        // modal_call returns nullopt if we got a quit signal
+        EndDialog(hwnd, (INT_PTR) 0);
+        break;
       }
 
-      // TODO: create paranoid config
+      // mount encfs drive
+      auto maybe_mount_details =
+        w32util::modal_call(hwnd,
+                            "Mounting New Bitvault...",
+                            "Mounting new Bitvault...",
+                            lockbox::win::mount_new_encfs_drive,
+                            ctx->fs, encrypted_container_path, *maybe_cfg, password_buf);
+      if (!maybe_mount_details) {
+        // modal_call returns nullopt if we got a quit signal
+        EndDialog(hwnd, (INT_PTR) 0);
+        break;
+      }
 
-      // TODO: write config
+      w32util::clear_text_field(password_hwnd,
+                                strlen((char *) password_buf.data()));
+      w32util::clear_text_field(confirm_password_hwnd,
+                                strlen((char *) confirm_password_buf.data()));
 
-      // TODO: mount encfs drive
-
-      w32util::clear_text_field(password_hwnd, num_chars_1);
-      w32util::clear_text_field(confirm_password_hwnd, num_chars_2);
-
-      EndDialog(hwnd, (INT_PTR) 0);
+      auto toret = new opt::optional<lockbox::win::MountDetails>(std::move(maybe_mount_details));
+      EndDialog(hwnd, (INT_PTR) toret);
       break;
     }
     case IDCANCEL: {
@@ -445,14 +442,18 @@ create_new_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
                    }
                    );
 
-  (void) fsio;
+  CreateNewLockboxDialogCtx ctx = { std::move(fsio) };
   auto ret_ptr =
-    DialogBoxIndirect(GetModuleHandle(NULL),
-                      dlg.get_data(),
-                      owner, create_new_lockbox_dialog_proc);
+    DialogBoxIndirectParam(GetModuleHandle(NULL),
+                           dlg.get_data(),
+                           owner, create_new_lockbox_dialog_proc,
+                           (LPARAM) &ctx);
   if (!ret_ptr) return opt::nullopt;
 
-  return opt::nullopt;
+  auto md_ptr = (opt::optional<lockbox::win::MountDetails> *) ret_ptr;
+  auto toret = std::move(*md_ptr);
+  delete md_ptr;
+  return std::move(toret);
 }
 
 }}

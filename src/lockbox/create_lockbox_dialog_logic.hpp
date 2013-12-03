@@ -16,48 +16,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef __windows_gui_util_hpp
-#define __windows_gui_util_hpp
+#ifndef __create_lockbox_dialog_logic_hpp
+#define __create_lockbox_dialog_logic_hpp
 
+#include <encfs/fs/FsIO.h>
 #include <encfs/cipher/MemoryPool.h>
 #include <encfs/base/optional.h>
 
+#include <memory>
 #include <string>
 
-#include <lockbox/lean_windows.h>
+namespace lockbox {
 
-namespace w32util {
+struct CreateLockboxDialogErrorMessage {
+  std::string title;
+  std::string message;
+};
 
-void
-quick_alert(HWND owner,
-            const std::string &msg,
-            const std::string &title);
-
-BOOL
-SetClientSizeInLogical(HWND hwnd, bool set_pos,
-                       int x, int y,
-                       int w, int h);
-
-void
-center_window_in_monitor(HWND hwnd);
-
-void
-set_default_dialog_font(HWND hwnd);
-
-void
-cleanup_default_dialog_font(HWND hwnd);
-
-void
-clear_text_field(HWND text_hwnd, size_t num_chars);
-
-std::string
-read_text_field(HWND text_hwnd);
-
-encfs::SecureMem
-securely_read_text_field(HWND text_wnd, bool clear = true);
-
-opt::optional<std::string>
-get_folder_dialog(HWND owner);
+opt::optional<CreateLockboxDialogErrorMessage>
+verify_create_lockbox_dialog_fields(const std::shared_ptr<encfs::FsIO> & fs,
+                                    const std::string & location,
+                                    const std::string & name,
+                                    const encfs::SecureMem & password,
+                                    const encfs::SecureMem & password_confirm);
 
 }
 
