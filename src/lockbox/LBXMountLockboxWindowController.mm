@@ -9,6 +9,7 @@
 #import <lockbox/LBXMountLockboxWindowController.h>
 
 #import <lockbox/LBXProgressSheetController.h>
+#import <lockbox/mount_lockbox_dialog_logic.hpp>
 
 #import <lockbox/logging.h>
 
@@ -88,31 +89,18 @@
            self.passwordSecureTextField.stringValue.UTF8String,
            password.size());
     
-    opt::optional<encfs::Path> maybeLocationPath;
-    try {
-        maybeLocationPath = self->fs->pathFromString(self.locationPathControl.URL.path.UTF8String);
-    }
-    catch (...) {
-        inputErrorAlert(self.window, @"Bad Location",
-                        @"The location you chose is not a valid path.");
+    auto error_msg =
+        lockbox::verify_mount_lockbox_dialog_fields(self->fs,
+                                                    self.locationPathControl.URL.path.UTF8String,
+                                                    password);
+    if (error_msg) {
+        inputErrorAlert(self.window,
+                        [NSString stringWithUTF8String:error_msg->title.c_str()],
+                        [NSString stringWithUTF8String:error_msg->message.c_str()]);
         return;
     }
     
-    auto encrypted_container_path = *maybeLocationPath;
-    
-    bool is_dir = false;
-    try {
-        is_dir = encfs::is_directory(self->fs, encrypted_container_path);
-    }
-    catch (...) {
-        // TODO: log error?
-    }
-    
-    if (!is_dir) {
-        inputErrorAlert(self.window, @"Bad Location",
-                        @"The location you chose is not a folder.");
-        return;
-    }
+    auto encrypted_container_path = self->fs->pathFromString(self.locationPathControl.URL.path.fileSystemRepresentation);
     
     auto onFail = ^(const std::exception_ptr & eptr) {
         bool alerted = false;
