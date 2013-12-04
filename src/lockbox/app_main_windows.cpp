@@ -78,7 +78,11 @@ struct WindowData {
   UINT LOCKBOX_DUPLICATE_INSTANCE_MSG;
   HWND last_foreground_window;
   bool popup_menu_is_open;
+  ManagedMenuHandle tray_menu;
+  bool control_was_pressed_on_tray_open;
 };
+
+typedef decltype(WindowData().mounts)::size_type mount_idx_t;
 
 // constants
 const unsigned MOUNT_RETRY_ATTEMPTS = 10;
@@ -100,11 +104,14 @@ const auto LOCKBOX_TRAY_ICON_ID = 1;
 
 const auto MENU_MOUNT_IDX_BASE = (UINT) 1;
 const auto MENU_BASE = MENU_MOUNT_IDX_BASE + 26;
-const auto MENU_CREATE_ID = MENU_BASE + 0;
-const auto MENU_QUIT_ID = MENU_BASE + 1;
-const auto MENU_DEBUG_ID = MENU_BASE + 2;
-const auto MENU_GETSRCCODE_ID = MENU_BASE + 3;
-const auto MENU_TEST_BUBBLE_ID = MENU_BASE + 4;
+enum {
+  MENU_CREATE_ID = MENU_BASE,
+  MENU_MOUNT_ID,
+  MENU_ABOUT_ID,
+  MENU_DEBUG_ID,
+  MENU_TEST_BUBBLE_ID,
+  MENU_EXIT_ID,
+};
 
 const wchar_t LOCKBOX_SINGLE_APP_INSTANCE_MUTEX_NAME[] =
   L"LockboxAppMutex";
@@ -121,22 +128,14 @@ const char LOCKBOX_TRAY_ICON_WELCOME_MSG[] =
   PRODUCT_NAME_A
   ", just right-click on this icon.";
 
-
-UINT
-mount_idx_to_menu_id(unsigned idx) {
-  return idx + MENU_MOUNT_IDX_BASE;
-}
-
-unsigned
-menu_id_to_mount_idx(UINT id) {
-  assert(id >= MENU_MOUNT_IDX_BASE);
-  return id - MENU_MOUNT_IDX_BASE;
-}
-
 static
 void
 bubble_msg(HWND lockbox_main_window,
            const std::string title, const std::string &msg);
+
+static
+void
+update_tray_menu(WindowData & wd);
 
 static
 void
@@ -152,6 +151,8 @@ stop_drive(HWND lockbox_main_window,
   // remove mount from list (even if thread hasn't died)
   auto md = std::move(*it);
   it = wd.mounts.erase(it);
+
+  update_tray_menu(wd);
 
   // then stop thread
   auto success =
@@ -172,8 +173,6 @@ stop_drive(HWND lockbox_main_window,
 static
 void
 stop_relevant_drive_threads(HWND lockbox_main_window, WindowData & wd) {
-  assert(!wd.popup_menu_is_open);
-
   for (auto it = wd.mounts.begin(); it != wd.mounts.end();) {
     if (!it->is_still_mounted()) {
       it = stop_drive(lockbox_main_window, wd, it);
@@ -184,30 +183,14 @@ stop_relevant_drive_threads(HWND lockbox_main_window, WindowData & wd) {
 
 static
 void
-append_string_menu_item(HMENU menu_handle, bool is_default,
-                        std::string text, UINT id) {
-  auto menu_item_text =
-    w32util::widen(std::move(text));
+unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
+  auto mount_p = wd.mounts.begin() + mount_idx;
 
-  MENUITEMINFOW mif;
-  lockbox::zero_object(mif);
+  // first unmount drive
+  mount_p->unmount();
 
-  mif.cbSize = sizeof(mif);
-  mif.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
-  mif.fType = MFT_STRING;
-  mif.fState = is_default ? MFS_DEFAULT : 0;
-  mif.wID = id;
-  mif.dwTypeData = const_cast<LPWSTR>(menu_item_text.data());
-  mif.cch = menu_item_text.size();
-
-  auto items_added = GetMenuItemCount(menu_handle);
-  if (items_added == -1) throw std::runtime_error("GetMenuItemCount");
-
-  auto success_menu_item =
-    InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
-  if (!success_menu_item) {
-    throw std::runtime_error("InsertMenuItem elt");
-  }
+  // now remove mount from list
+  stop_drive(hwnd, wd, mount_p);
 }
 
 static
@@ -241,49 +224,33 @@ alert_of_popup_if_we_have_one(HWND lockbox_main_window, const WindowData & wd,
   return (bool) child;
 }
 
-WINAPI
-bool
-open_create_mount_dialog(HWND lockbox_main_window, WindowData & wd) {
-  // only run this dialog if we don't already have a dialog
-  (void) lockbox_main_window;
-  (void) wd;
-  assert(!GetWindow(lockbox_main_window, GW_ENABLEDPOPUP));
-  // TODO: implement
-  return false;
-}
-
+static
 void
-unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
-  assert(!wd.popup_menu_is_open);
-
-  auto mount_p = wd.mounts.begin() + mount_idx;
-
-  // first unmount drive
-  mount_p->unmount();
-
-  // now remove mount from list
-  stop_drive(hwnd, wd, mount_p);
+new_mount(WindowData & wd, lockbox::win::MountDetails md) {
+  wd.mounts.push_back(std::move(md));
+  update_tray_menu(wd);
 }
 
 static
-void
-perform_default_lockbox_action(HWND lockbox_main_window, WindowData & wd) {
-  auto child = alert_of_popup_if_we_have_one(lockbox_main_window, wd, false);
-  if (child) return;
+bool
+run_create_dialog(HWND lockbox_main_window, WindowData & wd) {
+  // only run this dialog if we don't already have a dialog
+  assert(!GetWindow(lockbox_main_window, GW_ENABLEDPOPUP));
 
-  // if there is an active mount, open the folder
-  // otherwise allow the user to make a new mount
-  if (wd.mounts.empty()) open_create_mount_dialog(lockbox_main_window, wd);
-  else {
-    try {
-      wd.mounts.front().open_mount();
-    }
-    catch (const std::exception & err) {
-      lbx_log_error("Error while opening mount \"%s\": %s",
-                    wd.mounts.front().get_mount_name().c_str(),
-                    err.what());
-    }
-  }
+  auto ret = lockbox::win::create_new_lockbox_dialog(lockbox_main_window, wd.native_fs);
+  if (ret) new_mount(wd, std::move(*ret));
+  return (bool) ret;
+}
+
+static
+bool
+run_mount_dialog(HWND lockbox_main_window, WindowData & wd) {
+  // only run this dialog if we don't already have a dialog
+  assert(!GetWindow(lockbox_main_window, GW_ENABLEDPOPUP));
+
+  auto ret = lockbox::win::mount_existing_lockbox_dialog(lockbox_main_window, wd.native_fs);
+  if (ret) new_mount(wd, std::move(*ret));
+  return (bool) ret;
 }
 
 static
@@ -317,8 +284,87 @@ bubble_msg(HWND lockbox_main_window,
   if (!success) throw w32util::windows_error();
 }
 
-ManagedMenuHandle
-create_lockbox_menu(const WindowData & wd, bool is_control_pressed) {
+static
+void
+clear_menu(HMENU menu_handle) {
+  auto item_count = GetMenuItemCount(menu_handle);
+  if (item_count == -1) throw w32util::windows_error();
+
+  for (auto _ : lockbox::range(item_count)) {
+    (void) _;
+    auto success = DeleteMenu(menu_handle, 0, MF_BYPOSITION);
+    if (!success) throw w32util::windows_error();
+  }
+}
+
+static
+void
+append_string_menu_item(HMENU menu_handle, bool is_default,
+                        std::string text, UINT id) {
+  auto menu_item_text =
+    w32util::widen(std::move(text));
+
+  MENUITEMINFOW mif;
+  lockbox::zero_object(mif);
+
+  mif.cbSize = sizeof(mif);
+  mif.fMask = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
+  mif.fType = MFT_STRING;
+  mif.fState = is_default ? MFS_DEFAULT : 0;
+  mif.wID = id;
+  mif.dwTypeData = const_cast<LPWSTR>(menu_item_text.data());
+  mif.cch = menu_item_text.size();
+
+  auto items_added = GetMenuItemCount(menu_handle);
+  if (items_added == -1) throw std::runtime_error("GetMenuItemCount");
+
+  auto success_menu_item =
+    InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
+  if (!success_menu_item) {
+    throw std::runtime_error("InsertMenuItem elt");
+  }
+}
+
+static
+void
+append_separator(HMENU menu_handle) {
+  MENUITEMINFOW mif;
+  lockbox::zero_object(mif);
+
+  mif.cbSize = sizeof(mif);
+  mif.fMask = MIIM_FTYPE;
+  mif.fType = MFT_SEPARATOR;
+
+  auto items_added = GetMenuItemCount(menu_handle);
+  if (items_added == -1) throw w32util::windows_error();
+  auto success_menu_item =
+    InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
+  if (!success_menu_item) throw w32util::windows_error();
+}
+
+const UINT UNMOUNT_MASK = 1 << (sizeof(UINT) * 8 - 1);
+
+static
+UINT
+mount_idx_to_menu_action_id(mount_idx_t idx, bool unmount) {
+  return (((UINT) idx + MENU_MOUNT_IDX_BASE) |
+          (unmount ? UNMOUNT_MASK : 0));
+}
+
+static
+std::tuple<mount_idx_t, bool>
+menu_action_id_to_mount_idx(UINT id) {
+  auto raw_idx = id & ~UNMOUNT_MASK;
+  bool should_unmount = id & UNMOUNT_MASK;
+  assert(raw_idx >= MENU_MOUNT_IDX_BASE);
+  return std::make_tuple(raw_idx - MENU_MOUNT_IDX_BASE, should_unmount);
+}
+
+static
+void
+populate_tray_menu(HMENU menu_handle,
+                   const std::vector<lockbox::win::MountDetails> & mounts,
+                   bool is_control_pressed) {
   // okay our menu is like this
   // [ Lockbox A ]
   // [ Lockbox B ]
@@ -336,77 +382,128 @@ create_lockbox_menu(const WindowData & wd, bool is_control_pressed) {
   // [ DebugBreak ]
   // [ Test Bubble ]
   // -----------
-  // Quit
-
-  auto menu_handle = CreatePopupMenu();
-  if (!menu_handle) throw std::runtime_error("CreatePopupMenu");
-  auto to_ret = ManagedMenuHandle(menu_handle);
+  // Exit
 
   const auto action = is_control_pressed
-    ? std::string("Stop")
+    ? std::string("Unmount")
     : std::string("Open");
 
   UINT idx = 0;
-  for (const auto & md : wd.mounts) {
+  for (const auto & md : mounts) {
     append_string_menu_item(menu_handle,
                             idx == 0,
                             (action + " \"" + md.get_mount_name() + "\" (" +
                              std::to_string(md.get_drive_letter()) + ":)"),
-                            mount_idx_to_menu_id(idx));
+                            mount_idx_to_menu_action_id(idx, is_control_pressed));
     ++idx;
   }
 
-  // add separator
-  if (!wd.mounts.empty()) {
-    MENUITEMINFOW mif;
-    lockbox::zero_object(mif);
+  if (!mounts.empty()) append_separator(menu_handle);
 
-    mif.cbSize = sizeof(mif);
-    mif.fMask = MIIM_FTYPE;
-    mif.fType = MFT_SEPARATOR;
-
-    auto items_added = GetMenuItemCount(menu_handle);
-    if (items_added == -1) throw std::runtime_error("GetMenuItemCount");
-    auto success_menu_item =
-      InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
-    if (!success_menu_item) {
-      throw std::runtime_error("InsertMenuItem sep");
-    }
-  }
-
-  // add create action
   append_string_menu_item(menu_handle,
-                          wd.mounts.empty(),
-                          "Start or create a " ENCRYPTED_STORAGE_NAME_A,
+                          mounts.empty(),
+                          "Create New...",
                           MENU_CREATE_ID);
 
-  // add get source code action
   append_string_menu_item(menu_handle,
                           false,
-                          "Get source code",
-                          MENU_GETSRCCODE_ID);
+                          "Mount Existing...",
+                          MENU_MOUNT_ID);
 
-  // add quit action
+  append_separator(menu_handle);
+
   append_string_menu_item(menu_handle,
                           false,
-                          "Exit",
-                          MENU_QUIT_ID);
+                          "About " PRODUCT_NAME_A,
+                          MENU_ABOUT_ID);
+
 
 #ifndef NDEBUG
-  // add breakpoint action
   append_string_menu_item(menu_handle,
                           false,
                           "DebugBreak",
                           MENU_DEBUG_ID);
 
-  // add breakpoint action
   append_string_menu_item(menu_handle,
                           false,
                           "Test Bubble",
                           MENU_TEST_BUBBLE_ID);
 #endif
 
-  return std::move(to_ret);
+  append_separator(menu_handle);
+
+  append_string_menu_item(menu_handle,
+                          false,
+                          "Exit",
+                          MENU_EXIT_ID);
+}
+
+static
+void
+update_tray_menu(WindowData & wd) {
+  clear_menu(wd.tray_menu.get());
+  populate_tray_menu(wd.tray_menu.get(), wd.mounts, wd.control_was_pressed_on_tray_open);
+}
+
+static
+void
+dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT selected) {
+  switch (selected) {
+  case MENU_CREATE_ID: {
+    run_create_dialog(lockbox_main_window, wd);
+    break;
+  }
+  case MENU_MOUNT_ID: {
+    run_mount_dialog(lockbox_main_window, wd);
+    break;
+  }
+  case MENU_ABOUT_ID: {
+    lockbox::win::about_dialog(lockbox_main_window);
+    break;
+  }
+  case MENU_DEBUG_ID: {
+    DebugBreak();
+    break;
+  }
+  case MENU_TEST_BUBBLE_ID: {
+    bubble_msg(lockbox_main_window, "Short Title",
+               "Very long message full of meaningful info that you "
+               "will find very interesting because you love to read "
+               "tray icon bubbles. Don't you? Don't you?!?!");
+    break;
+  }
+  case MENU_EXIT_ID: {
+    DestroyWindow(lockbox_main_window);
+    break;
+  }
+  default: {
+    mount_idx_t selected_mount_idx;
+    bool should_unmount;
+    std::tie(selected_mount_idx, should_unmount) = menu_action_id_to_mount_idx(selected);
+    assert(selected_mount_idx < wd.mounts.size());
+    if (should_unmount) unmount_and_stop_drive(lockbox_main_window, wd, selected_mount_idx);
+    else wd.mounts[selected_mount_idx].open_mount();
+    break;
+  }
+  }
+}
+
+static
+void
+perform_default_tray_action(HWND lockbox_main_window, WindowData & wd) {
+  assert(!wd.popup_menu_is_open);
+  auto child = alert_of_popup_if_we_have_one(lockbox_main_window, wd, false);
+  if (child) return;
+
+  wd.control_was_pressed_on_tray_open = false;
+  update_tray_menu(wd);
+
+  auto default_menu_item_id =
+    GetMenuDefaultItem(wd.tray_menu.get(), FALSE, GMDI_GOINTOPOPUPS);
+  if (default_menu_item_id == (decltype(default_menu_item_id)) -1) throw w32util::windows_error();
+
+  dispatch_tray_menu_action(lockbox_main_window, wd,
+                            (UINT) default_menu_item_id);
 }
 
 static
@@ -457,12 +554,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     NO_FALLTHROUGH(WM_TIMER): {
       if (wParam == STOP_RELEVANT_DRIVE_THREADS_TIMER_ID) {
-        if (wd->popup_menu_is_open) {
-          // delay message until menu is closed
-          auto success =
-            SetTimer(hwnd, STOP_RELEVANT_DRIVE_THREADS_TIMER_ID, 0, NULL);
-          if (!success) throw w32util::windows_error();
-        } else if (!wd->is_stopping) {
+        if (!wd->is_stopping) {
           wd->is_stopping = true;
           // if this throws an exception, our app is going to close
           stop_relevant_drive_threads(hwnd, *wd);
@@ -527,7 +619,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
 
         NO_FALLTHROUGH(WM_LBUTTONDBLCLK): {
-          perform_default_lockbox_action(hwnd, *wd);
+          perform_default_tray_action(hwnd, *wd);
           break;
         }
 
@@ -555,22 +647,19 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       default: break;
       }
 
-      // Always return 0 for all tray icon messages
       return DefWindowProc(hwnd, msg, wParam, lParam);
     }
 
     NO_FALLTHROUGH(LOCKBOX_TRAY_ICON_MSG_2): {
-      {
-        //only do the action if we don't have a dialog up
-        auto child = alert_of_popup_if_we_have_one(hwnd, *wd, false);
-        if (child) return 0;
-      }
+      // only do the action if we don't have a dialog up
+      auto child = alert_of_popup_if_we_have_one(hwnd, *wd, false);
+      if (child) return 0;
 
       if (wd->popup_menu_is_open) return 0;
 
       try {
-        auto is_control_pressed = (bool) wParam;
-        auto menu_handle = create_lockbox_menu(*wd, is_control_pressed);
+        wd->control_was_pressed_on_tray_open = (bool) wParam;
+        update_tray_menu(*wd);
 
         // NB: have to do this so the menu disappears
         // when you click out of it
@@ -579,7 +668,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         wd->popup_menu_is_open = true;
         SetLastError(0);
         auto selected =
-          (UINT) TrackPopupMenu(menu_handle.get(),
+          (UINT) TrackPopupMenu(wd->tray_menu.get(),
                                 TPM_RIGHTALIGN | TPM_BOTTOMALIGN |
                                 TPM_RIGHTBUTTON |
                                 TPM_NONOTIFY | TPM_RETURNCMD,
@@ -587,7 +676,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                 0, hwnd, NULL);
         wd->popup_menu_is_open = false;
 
-        if (!selected) throw std::runtime_error("TrackPopupMenu");
+        if (!selected && GetLastError()) throw std::runtime_error("TrackPopupMenu");
 
         // according to MSDN, we must force a "task switch"
         // this is so that if the user attempts to open the
@@ -595,45 +684,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // of disappearing
         PostMessage(hwnd, WM_NULL, 0, 0);
 
-        switch (selected) {
-        case 0:
-          // menu was canceled
-          break;
-        case MENU_QUIT_ID: {
-          DestroyWindow(hwnd);
-          break;
-        }
-        case MENU_CREATE_ID: {
-          open_create_mount_dialog(hwnd, *wd);
-          break;
-        }
-        case MENU_DEBUG_ID: {
-          DebugBreak();
-          break;
-        }
-        case MENU_GETSRCCODE_ID: {
-          lockbox::win::open_src_code(hwnd);
-          break;
-        }
-        case MENU_TEST_BUBBLE_ID: {
-          bubble_msg(hwnd, "Short Title",
-                     "Very long message full of meaningful info that you "
-                     "will find very interesting because you love to read "
-                     "tray icon bubbles. Don't you? Don't you?!?!");
-          break;
-        }
-        default: {
-          const auto selected_mount_idx = menu_id_to_mount_idx(selected);
-          assert(selected_mount_idx < wd->mounts.size());
-          if (is_control_pressed) {
-            unmount_and_stop_drive(hwnd, *wd, selected_mount_idx);
-          }
-          else {
-            wd->mounts[selected_mount_idx].open_mount();
-          }
-          break;
-        }
-        }
+        if (selected) dispatch_tray_menu_action(hwnd, *wd, selected);
       }
       catch (const std::exception & err) {
         lbx_log_error("Error while doing: \"%s\": %s (%lu)",
@@ -671,9 +722,9 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       // re-add tray icon
       add_tray_icon(hwnd);
     }
-    else if (msg == LOCKBOX_DUPLICATE_INSTANCE_MSG){
+    else if (msg == LOCKBOX_DUPLICATE_INSTANCE_MSG) {
       // do the current default action
-      perform_default_lockbox_action(hwnd, *wd);
+      perform_default_tray_action(hwnd, *wd);
     }
     return DefWindowProc(hwnd, msg, wParam, lParam);
   }
@@ -816,6 +867,10 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
   auto native_fs = lockbox::create_native_fs();
 
+  auto tray_menu_handle = CreatePopupMenu();
+  if (!tray_menu_handle) throw w32util::windows_error();
+  auto tray_menu = ManagedMenuHandle(tray_menu_handle);
+
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
     /*.mounts = */std::vector<lockbox::win::MountDetails>(),
@@ -824,6 +879,8 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     /*.LOCKBOX_DUPLICATE_INSTANCE_MSG = */LOCKBOX_DUPLICATE_INSTANCE_MSG,
     /*.last_foreground_window = */NULL,
     /*.popup_menu_is_open = */false,
+    /*.tray_menu = */std::move(tray_menu),
+    /*.control_was_pressed_on_tray_open = */false,
   };
 
   // register our main window class

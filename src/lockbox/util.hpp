@@ -180,6 +180,55 @@ escape_double_quotes(std::string mount_name) {
     return std::string(replaced.begin(), replaced.end());
 }
 
+namespace _int {
+
+template<typename T,
+         typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
+class IntegralIterator {
+private:
+  T _val;
+public:
+  IntegralIterator(T start_val) : _val(std::move(start_val)) {}
+
+  T & operator*() { return _val; }
+  IntegralIterator & operator++() { ++_val; return *this; }
+  IntegralIterator operator++(int) const { return IntegralIterator(_val++); }
+  IntegralIterator & operator--() { --_val; return *this; }
+  IntegralIterator operator--(int) const { return IntegralIterator(_val--); }
+
+  bool operator==(const IntegralIterator & other) const {
+    return _val == other._val;
+  }
+
+  bool operator!=(const IntegralIterator & other) const {
+    return !(*this == other);
+  }
+};
+
+template<typename T>
+class Range {
+private:
+  T _max;
+
+public:
+  explicit Range(T max) : _max(std::move(max)) {}
+
+  IntegralIterator<T> begin() const { return IntegralIterator<T>(0); }
+  IntegralIterator<T> end() const { return IntegralIterator<T>(_max); }
+};
+
+}
+
+/* works like a python range(), e.g.
+   for (auto & _ : range(4));
+   <=>
+   for _ in range(4): pass
+*/
+template<typename T>
+_int::Range<T>
+range(T max) {
+  return _int::Range<T>(max);
+}
 
 }
 
