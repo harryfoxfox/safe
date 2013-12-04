@@ -25,6 +25,7 @@
 #include <lockbox/windows_app_actions.hpp>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_create_lockbox_dialog.hpp>
+#include <lockbox/windows_mount_lockbox_dialog.hpp>
 #include <lockbox/windows_string.hpp>
 #include <lockbox/windows_gui_util.hpp>
 #include <lockbox/util.hpp>

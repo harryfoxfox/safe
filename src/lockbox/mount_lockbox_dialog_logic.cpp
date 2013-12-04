@@ -16,10 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef __create_lockbox_dialog_logic_hpp
-#define __create_lockbox_dialog_logic_hpp
-
-#include <lockbox/util.hpp>
+#include <lockbox/mount_lockbox_dialog_logic.hpp>
 
 #include <encfs/fs/FsIO.h>
 #include <encfs/cipher/MemoryPool.h>
@@ -31,12 +28,36 @@
 namespace lockbox {
 
 opt::optional<decltype(make_error_message("", ""))>
-verify_create_lockbox_dialog_fields(const std::shared_ptr<encfs::FsIO> & fs,
-                                    const std::string & location,
-                                    const std::string & name,
-                                    const encfs::SecureMem & password,
-                                    const encfs::SecureMem & password_confirm);
+verify_mount_lockbox_dialog_fields(const std::shared_ptr<encfs::FsIO> & fs,
+                                   const std::string & location,
+                                   const encfs::SecureMem & password) {
+  (void) password;
 
+  opt::optional<encfs::Path> maybe_location_path;
+  try {
+    maybe_location_path = fs->pathFromString(location);
+  }
+  catch (...) {
+    return make_error_message("Bad Location",
+                              "The location you chose is not a valid path.");
+  }
+
+  auto encrypted_container_path = *maybe_location_path;
+
+  auto is_dir = false;
+  try {
+    is_dir = encfs::is_directory(fs, encrypted_container_path);
+  }
+  catch (...) {
+    // TODO: log error?
+  }
+
+  if (!is_dir) {
+    return make_error_message("Bad Location",
+                              "The location you chose is not a folder.");
+  }
+
+  return opt::nullopt;
 }
 
-#endif
+}

@@ -16,27 +16,23 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef __create_lockbox_dialog_logic_hpp
-#define __create_lockbox_dialog_logic_hpp
+#ifndef __lockbox_windows_mount_lockbox_dialog_hpp
+#define __lockbox_windows_mount_lockbox_dialog_hpp
 
-#include <lockbox/util.hpp>
+#include <lockbox/mount_win.hpp>
 
 #include <encfs/fs/FsIO.h>
-#include <encfs/cipher/MemoryPool.h>
 #include <encfs/base/optional.h>
 
 #include <memory>
-#include <string>
 
-namespace lockbox {
+#include <lockbox/lean_windows.h>
 
-opt::optional<decltype(make_error_message("", ""))>
-verify_create_lockbox_dialog_fields(const std::shared_ptr<encfs::FsIO> & fs,
-                                    const std::string & location,
-                                    const std::string & name,
-                                    const encfs::SecureMem & password,
-                                    const encfs::SecureMem & password_confirm);
+namespace lockbox { namespace win {
 
-}
+opt::optional<lockbox::win::MountDetails>
+mount_existing_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio);
+
+}}
 
 #endif

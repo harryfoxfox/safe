@@ -24,6 +24,7 @@
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_error.hpp>
 #include <lockbox/windows_gui_util.hpp>
+#include <lockbox/windows_lockbox_dialog_common.hpp>
 
 #include <encfs/fs/FsIO.h>
 
@@ -351,21 +352,6 @@ create_new_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
   const unit_t BROWSE_BTN_LEFT = (LOCATION_ENTRY_LEFT + LOCATION_ENTRY_WIDTH + BROWSE_BTN_SPACE);
   const unit_t BROWSE_BTN_TOP = (LOCATION_LABEL_TOP + LABEL_TO_ENTRY_V_OFFSET);
 
-#define ALIGN_LABEL(__NAME, PRECEDING_LABEL)                      \
-  const unit_t __NAME ## _LABEL_WIDTH = LABEL_WIDTH; \
-  const unit_t __NAME ## _LABEL_HEIGHT = LABEL_HEIGHT; \
-  const unit_t __NAME ## _LABEL_LEFT = LEFT_MARGIN; \
-  const unit_t __NAME ## _LABEL_TOP = (PRECEDING_LABEL ## _LABEL_TOP + \
-                                       PRECEDING_LABEL ## _LABEL_HEIGHT + \
-                                       FORM_V_SPACING)
-
-#define ALIGN_TEXT_ENTRY(__NAME) \
-  const unit_t __NAME ## _ENTRY_WIDTH = TEXT_ENTRY_WIDTH; \
-  const unit_t __NAME ## _ENTRY_HEIGHT = TEXT_ENTRY_HEIGHT; \
-  const unit_t __NAME ## _ENTRY_LEFT = (__NAME ## _LABEL_LEFT + \
-                                        __NAME ## _LABEL_WIDTH + FORM_H_SPACING); \
-  const unit_t __NAME ## _ENTRY_TOP = __NAME ## _LABEL_TOP + LABEL_TO_ENTRY_V_OFFSET
-
   ALIGN_LABEL(NAME, LOCATION);
   ALIGN_TEXT_ENTRY(NAME);
 
@@ -386,8 +372,7 @@ create_new_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
   const unit_t OK_BTN_WIDTH = 37;
   const unit_t OK_BTN_HEIGHT = 11;
   const unit_t OK_BTN_LEFT = (CANCEL_BTN_LEFT - BUTTON_H_SPACE - OK_BTN_WIDTH);
-  const unit_t OK_BTN_TOP = (CONFIRM_ENTRY_TOP + CONFIRM_ENTRY_HEIGHT +
-                             TOP_BTN_MARGIN);
+  const unit_t OK_BTN_TOP = CANCEL_BTN_TOP;
 
   const unit_t DIALOG_HEIGHT = OK_BTN_TOP + OK_BTN_HEIGHT + BOTTOM_MARGIN;
 

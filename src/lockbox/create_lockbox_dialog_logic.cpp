@@ -27,18 +27,14 @@
 
 namespace lockbox {
 
-static
-CreateLockboxDialogErrorMessage
-_make_error_message(std::string title, std::string msg) {
-  return CreateLockboxDialogErrorMessage {std::move(title), std::move(msg)};
-}
-
-opt::optional<CreateLockboxDialogErrorMessage>
+opt::optional<decltype(make_error_message("", ""))>
 verify_create_lockbox_dialog_fields(const std::shared_ptr<encfs::FsIO> & fs,
                                     const std::string & location,
                                     const std::string & name,
                                     const encfs::SecureMem & password,
                                     const encfs::SecureMem & password_confirm) {
+  const static auto _make_error_message = lockbox::make_error_message;
+
   // check if location is a well-formed path
   opt::optional<encfs::Path> maybe_location_path;
   try {

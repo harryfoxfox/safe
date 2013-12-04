@@ -11,6 +11,17 @@
 
 namespace lockbox {
 
+struct ErrorMessage {
+  std::string title;
+  std::string message;
+};
+
+inline
+ErrorMessage
+make_error_message(std::string title, std::string msg) {
+  return ErrorMessage {std::move(title), std::move(msg)};
+}
+
 // this little class allows us to get C++ RAII with C based data structures
 template <class FNRET>
 class CDestroyer;
