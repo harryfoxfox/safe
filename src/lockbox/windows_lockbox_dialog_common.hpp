@@ -34,6 +34,8 @@
                                         __NAME ## _LABEL_WIDTH + FORM_H_SPACING); \
   const unit_t __NAME ## _ENTRY_TOP = __NAME ## _LABEL_TOP + LABEL_TO_ENTRY_V_OFFSET
 
+namespace lockbox {
+
 inline
 opt::optional<lockbox::win::MountDetails>
 receive_mount_details(INT_PTR ret_ptr) {
@@ -46,6 +48,8 @@ inline
 INT_PTR
 send_mount_details(opt::optional<lockbox::win::MountDetails> maybe_mount_details) {
   return (INT_PTR) new lockbox::win::MountDetails(std::move(*maybe_mount_details));
+}
+
 }
 
 #endif
