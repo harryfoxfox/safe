@@ -283,7 +283,7 @@ mount_existing_lockbox_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio) {
   if (!ret_ptr) return opt::nullopt;
 
   auto md_ptr = std::unique_ptr<lockbox::win::MountDetails>((lockbox::win::MountDetails *) ret_ptr);
-  return opt::make_optional(std::move(*md_ptr.get()));
+  return opt::make_optional(std::move(*md_ptr));
 }
 
 }}
