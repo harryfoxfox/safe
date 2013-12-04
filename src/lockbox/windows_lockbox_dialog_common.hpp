@@ -34,4 +34,18 @@
                                         __NAME ## _LABEL_WIDTH + FORM_H_SPACING); \
   const unit_t __NAME ## _ENTRY_TOP = __NAME ## _LABEL_TOP + LABEL_TO_ENTRY_V_OFFSET
 
+inline
+opt::optional<lockbox::win::MountDetails>
+receive_mount_details(INT_PTR ret_ptr) {
+  if (!ret_ptr) return opt::nullopt;
+  auto md_ptr = std::unique_ptr<lockbox::win::MountDetails>((lockbox::win::MountDetails *) ret_ptr);
+  return std::move(*md_ptr);
+}
+
+inline
+INT_PTR
+send_mount_details(opt::optional<lockbox::win::MountDetails> maybe_mount_details) {
+  return (INT_PTR) new lockbox::win::MountDetails(std::move(*maybe_mount_details));
+}
+
 #endif

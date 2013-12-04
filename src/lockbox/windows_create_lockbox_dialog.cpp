@@ -136,8 +136,7 @@ create_new_lockbox_dialog_proc(HWND hwnd, UINT Message,
       w32util::clear_text_field(confirm_password_hwnd,
                                 strlen((char *) confirm_password_buf.data()));
 
-      auto toret = new opt::optional<lockbox::win::MountDetails>(std::move(maybe_mount_details));
-      EndDialog(hwnd, (INT_PTR) toret);
+      EndDialog(hwnd, send_mount_details(std::move(maybe_mount_details)));
       break;
     }
     case IDCANCEL: {
@@ -300,12 +299,8 @@ create_new_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
                            dlg.get_data(),
                            owner, create_new_lockbox_dialog_proc,
                            (LPARAM) &ctx);
-  if (!ret_ptr) return opt::nullopt;
 
-  auto md_ptr = (opt::optional<lockbox::win::MountDetails> *) ret_ptr;
-  auto toret = std::move(*md_ptr);
-  delete md_ptr;
-  return std::move(toret);
+  return receive_mount_details(ret_ptr);
 }
 
 }}
