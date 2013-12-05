@@ -19,6 +19,7 @@
 #include <lockbox/windows_about_dialog.hpp>
 
 #include <lockbox/lockbox_strings.h>
+#include <lockbox/logging.h>
 #include <lockbox/windows_app_actions.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_gui_util.hpp>
@@ -31,7 +32,8 @@
 namespace lockbox { namespace win {
 
 enum {
-  IDCBLURB = 100,
+  IDC_BLURB = 1000,
+  IDC_GET_SOURCE_CODE,
 };
 
 CALLBACK
@@ -47,23 +49,34 @@ about_dialog_proc(HWND hwnd, UINT Message,
     typedef unsigned unit_t;
 
     // compute size of about string
-    auto text_hwnd = GetDlgItem(hwnd, IDCBLURB);
+    auto text_hwnd = GetDlgItem(hwnd, IDC_BLURB);
     if (!text_hwnd) throw w32util::windows_error();
 
     const unit_t BLURB_TEXT_WIDTH = 300;
 
-    const unit_t BUTTON_WIDTH_CREATELB_DLG = 44;
+    const unit_t BUTTON_WIDTH_CREATELB_DLG = 35;
+    const unit_t BUTTON_WIDTH_GET_SOURCE_CODELB_DLG = 50;
     const unit_t BUTTON_HEIGHT_DLG = 14;
+    const unit_t BUTTON_H_SPACING_DLG = 2;
 
     RECT r;
     lockbox::zero_object(r);
+    r.left = BUTTON_WIDTH_GET_SOURCE_CODELB_DLG;
     r.right = BUTTON_WIDTH_CREATELB_DLG;
     r.top = BUTTON_HEIGHT_DLG;
     auto success_map = MapDialogRect(hwnd, &r);
     if (!success_map) throw w32util::windows_error();
 
+    const unit_t BUTTON_WIDTH_GET_SOURCE_CODELB = r.left;
     const unit_t BUTTON_WIDTH_CREATELB = r.right;
     const unit_t BUTTON_HEIGHT = r.top;
+
+    lockbox::zero_object(r);
+    r.left = BUTTON_H_SPACING_DLG;
+    auto success_map_2 = MapDialogRect(hwnd, &r);
+    if (!success_map_2) throw w32util::windows_error();
+
+    const unit_t BUTTON_H_SPACING = r.left;
 
     auto blurb_text = w32util::widen(LOCKBOX_ABOUT_BLURB);
 
@@ -100,7 +113,18 @@ about_dialog_proc(HWND hwnd, UINT Message,
                                                              w, h);
     if (!set_client_area_1) throw w32util::windows_error();
 
-    // create "Ok" button
+    // align "Get Source Code" button
+    auto get_source_code_hwnd = GetDlgItem(hwnd, IDC_GET_SOURCE_CODE);
+    if (!get_source_code_hwnd) throw w32util::windows_error();
+
+    w32util::SetClientSizeInLogical(get_source_code_hwnd, true,
+                                    DIALOG_WIDTH -
+                                    margin - BUTTON_WIDTH_CREATELB -
+                                    BUTTON_H_SPACING - BUTTON_WIDTH_GET_SOURCE_CODELB,
+                                    margin + h + margin,
+                                    BUTTON_WIDTH_GET_SOURCE_CODELB, BUTTON_HEIGHT);
+
+    // align "OK" button
     auto ok_hwnd = GetDlgItem(hwnd, IDOK);
     if (!ok_hwnd) throw w32util::windows_error();
 
@@ -126,6 +150,11 @@ about_dialog_proc(HWND hwnd, UINT Message,
 
   case WM_COMMAND: {
     switch (LOWORD(wParam)) {
+    case IDC_GET_SOURCE_CODE: {
+      auto success = open_src_code(hwnd);
+      if (!success) lbx_log_error("Error opening source website");
+      return TRUE;
+    }
     case IDOK: case IDCANCEL: {
       EndDialog(hwnd, (INT_PTR) LOWORD(wParam));
       return TRUE;
@@ -157,14 +186,14 @@ about_dialog(HWND hwnd) {
 
   const auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              ("Welcome to "
-                               PRODUCT_NAME_A
-                               "!"),
+                              ("Welcome to " PRODUCT_NAME_A "!"),
                               0, 0, 500, 500),
                    {
-                     LText("", IDCBLURB,
+                     LText("", IDC_BLURB,
                            0, 0, 0, 0),
-                     DefPushButton("&Ok", IDOK,
+                     PushButton("Get Source Code", IDC_GET_SOURCE_CODE,
+                                0, 0, 0, 0),
+                     DefPushButton("OK", IDOK,
                                    0, 0, 0, 0),
                    }
                    );
