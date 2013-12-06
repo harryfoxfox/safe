@@ -21,6 +21,7 @@
 #include <lockbox/lockbox_strings.h>
 #include <lockbox/logging.h>
 #include <lockbox/mount_win.hpp>
+#include <lockbox/recent_paths_storage.hpp>
 #include <lockbox/tray_menu.hpp>
 #include <lockbox/tray_menu_win.hpp>
 #include <lockbox/windows_about_dialog.hpp>
@@ -59,6 +60,7 @@
 #include <CommCtrl.h>
 #include <Shellapi.h>
 #include <dbt.h>
+#include <Shlobj.h>
 
 // TODO:
 // 2) Icons
@@ -74,9 +76,8 @@ struct WindowData {
   bool popup_menu_is_open;
   lockbox::win::ManagedMenuHandle tray_menu;
   bool control_was_pressed_on_tray_open;
+  lockbox::RecentlyUsedPathStoreV1 recent_mount_paths_store;
 };
-
-typedef decltype(WindowData().mounts)::size_type mount_idx_t;
 
 // constants
 const unsigned MOUNT_RETRY_ATTEMPTS = 10;
@@ -87,6 +88,7 @@ const auto MAX_PASS_LEN = 256;
 const wchar_t TRAY_ICON_TOOLTIP[] = PRODUCT_NAME_W;
 const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const UINT_PTR STOP_RELEVANT_DRIVE_THREADS_TIMER_ID = 0;
+const lockbox::RecentlyUsedPathStoreV1::max_ent_t RECENTLY_USED_PATHS_MENU_NUM_ITEMS = 10;
 
 const auto APP_BASE = (UINT) (6 + WM_APP);
 const auto LOCKBOX_MOUNT_DONE_MSG = APP_BASE;
@@ -221,6 +223,7 @@ alert_of_popup_if_we_have_one(HWND lockbox_main_window, const WindowData & wd,
 static
 void
 new_mount(WindowData & wd, lockbox::win::MountDetails md) {
+  wd.recent_mount_paths_store.use_path(md.get_source_path());
   wd.mounts.push_back(std::move(md));
   update_tray_menu(wd);
 }
@@ -238,11 +241,12 @@ run_create_dialog(HWND lockbox_main_window, WindowData & wd) {
 
 static
 bool
-run_mount_dialog(HWND lockbox_main_window, WindowData & wd) {
+run_mount_dialog(HWND lockbox_main_window, WindowData & wd,
+                 opt::optional<encfs::Path> p = opt::nullopt) {
   // only run this dialog if we don't already have a dialog
   assert(!GetWindow(lockbox_main_window, GW_ENABLEDPOPUP));
 
-  auto ret = lockbox::win::mount_existing_lockbox_dialog(lockbox_main_window, wd.native_fs);
+  auto ret = lockbox::win::mount_existing_lockbox_dialog(lockbox_main_window, wd.native_fs, p);
   if (ret) new_mount(wd, std::move(*ret));
   return (bool) ret;
 }
@@ -285,6 +289,7 @@ update_tray_menu(WindowData & wd) {
   auto tm = lockbox::win::TrayMenu(wd.tray_menu);
   lockbox::populate_tray_menu(tm,
                               wd.mounts,
+                              wd.recent_mount_paths_store,
                               wd.control_was_pressed_on_tray_open);
   auto success = SetMenuDefaultItem(wd.tray_menu.get(), 0, TRUE);
   if (!success) throw w32util::windows_error();
@@ -333,6 +338,16 @@ dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT select
   }
   case TrayMenuAction::UNMOUNT: {
     unmount_and_stop_drive(lockbox_main_window, wd, menu_action_arg);
+    break;
+  }
+  case TrayMenuAction::CLEAR_RECENTS: {
+    wd.recent_mount_paths_store.clear();
+    update_tray_menu(wd);
+    break;
+  }
+  case TrayMenuAction::MOUNT_RECENT: {
+    auto path = wd.recent_mount_paths_store.recently_used_paths()[menu_action_arg];
+    run_mount_dialog(lockbox_main_window, wd, path);
     break;
   }
   default: {
@@ -725,6 +740,19 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   auto tray_menu_handle = CreatePopupMenu();
   if (!tray_menu_handle) throw w32util::windows_error();
 
+  wchar_t app_directory_buf[MAX_PATH];
+  auto result = SHGetFolderPathW(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE,
+                                 NULL, SHGFP_TYPE_CURRENT, app_directory_buf);
+  if (result != S_OK) throw w32util::windows_error();
+  auto app_directory = w32util::narrow(app_directory_buf, wcslen(app_directory_buf));
+
+  auto recently_used_paths_storage_path =
+    native_fs->pathFromString(app_directory).join(lockbox::RECENTLY_USED_PATHS_V1_FILE_NAME);
+  auto path_store =
+    lockbox::RecentlyUsedPathStoreV1(native_fs,
+                                     recently_used_paths_storage_path,
+                                     RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
     /*.mounts = */std::vector<lockbox::win::MountDetails>(),
@@ -735,6 +763,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     /*.popup_menu_is_open = */false,
     /*.tray_menu = */lockbox::win::ManagedMenuHandle(tray_menu_handle),
     /*.control_was_pressed_on_tray_open = */false,
+    /*.recent_mount_paths_store = */std::move(path_store),
   };
 
   // register our main window class

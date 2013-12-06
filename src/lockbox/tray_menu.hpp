@@ -28,8 +28,8 @@ enum class TrayMenuAction : uint16_t {
   OPEN,
   CREATE,
   MOUNT,
-  /*  MOUNT_RECENT,
-      CLEAR_RECENTS, */
+  MOUNT_RECENT,
+  CLEAR_RECENTS,
   ABOUT_APP,
   TEST_BUBBLE,
   TRIGGER_BREAKPOINT,
@@ -38,11 +38,11 @@ enum class TrayMenuAction : uint16_t {
 
 typedef uint16_t tray_menu_action_arg_t;
 
-template<typename Menu, typename MountList/*, typename RecentMountStore*/>
+template<typename Menu, typename MountList, typename RecentMountStore>
 void
 populate_tray_menu(Menu & menu,
                    const MountList & mounts,
-                   /*                   const RecentMountStore & recent_mounts,*/
+                   const RecentMountStore & recent_mounts,
                    bool show_alternative_menu) {
   // Menu is:
   // [ (Open | Unmount) "<mount name>" ]
@@ -90,24 +90,23 @@ populate_tray_menu(Menu & menu,
   menu.append_item("Mount Existing...", TrayMenuAction::MOUNT);
 
   // create "Mount Recent" submenu
-  /*
-  {
-    auto & sub_menu_handle = menu_handle.append_menu("Mount Recent");
+  if (true) {
+    auto sub_menu = menu.append_menu("Mount Recent");
 
     tray_menu_action_arg_t sub_tag = 0;
     for (const auto & p : recent_mounts.recently_used_paths()) {
-      auto & item = sub_menu_handle.append_item(p.basename(),
-                                                TRAY_MENY_MOUNT_RECENT, sub_tag);
+      auto item = sub_menu.append_item(p.basename(),
+                                       TrayMenuAction::MOUNT_RECENT, sub_tag);
       item.set_tooltip(p);
       item.set_property("mac_file_type", "pubilc.folder");
       ++sub_tag;
     }
 
-    if (sub_tag) sub_menu_handle.append_separator();
+    if (sub_tag) sub_menu.append_separator();
 
-    sub_menu_handle.append_item("Clear Menu", TrayMenuAction::CLEAR_RECENTS);
+    auto item = sub_menu.append_item("Clear Menu", TrayMenuAction::CLEAR_RECENTS);
+    if (!sub_tag) item.disable();
   }
-  */
 
   menu.append_separator();
 

@@ -43,6 +43,7 @@ enum {
 
 struct MountExistingLockboxDialogCtx {
   std::shared_ptr<encfs::FsIO> fs;
+  opt::optional<encfs::Path> initial_path;
 };
 
 CALLBACK
@@ -58,6 +59,11 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) ctx);
     w32util::center_window_in_monitor(hwnd);
     w32util::set_default_dialog_font(hwnd);
+
+    if (ctx->initial_path) {
+      SetDlgItemTextW(hwnd, IDC_LOCATION, w32util::widen(*ctx->initial_path).c_str());
+    }
+
     return TRUE;
   }
   case WM_COMMAND:
@@ -157,7 +163,8 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
 }
 
 opt::optional<lockbox::win::MountDetails>
-mount_existing_lockbox_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio) {
+mount_existing_lockbox_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
+                              opt::optional<encfs::Path> initial_path) {
   using namespace w32util;
 
   typedef unsigned unit_t;
@@ -273,7 +280,7 @@ mount_existing_lockbox_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio) {
                    }
                    );
 
-  MountExistingLockboxDialogCtx ctx = {std::move(fsio)};
+  MountExistingLockboxDialogCtx ctx = {std::move(fsio), std::move(initial_path)};
   auto ret_ptr =
     DialogBoxIndirectParam(GetModuleHandle(NULL),
                            dlg.get_data(),

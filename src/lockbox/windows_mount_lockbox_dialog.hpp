@@ -31,7 +31,8 @@
 namespace lockbox { namespace win {
 
 opt::optional<lockbox::win::MountDetails>
-mount_existing_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio);
+mount_existing_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio,
+                              opt::optional<encfs::Path> path);
 
 }}
 

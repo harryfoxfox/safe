@@ -112,7 +112,7 @@ private:
       try {
           return std::stoul(str);
       }
-      catch (const std::logic_error & err) {
+      catch (const std::invalid_argument & err) {
           throw RecentlyUsedPathsParseError(err.what());
       }
       catch (const std::out_of_range & err) {
@@ -144,7 +144,7 @@ private:
     auto nentries = (max_ent_t) _read_unsigned_int(fit);
     if (nentries > maxents) {
         lbx_log_warning("More entries than requested in file, going to skip some: %lu vs %lu",
-                        nentries, maxents);
+                        (long unsigned) nentries, (long unsigned) maxents);
     }
 
     std::vector<encfs::Path> path_list;
@@ -215,6 +215,14 @@ public:
     , _num_paths(num_paths) {
     std::tie(_last_rev, _path_cache) = _load_file(_fs, _storage_file, _num_paths);
   }
+
+  // copy not implemented for now
+  RecentlyUsedPathStoreV1(const RecentlyUsedPathStoreV1 &) = delete;
+  RecentlyUsedPathStoreV1 &operator=(const RecentlyUsedPathStoreV1 &) = delete;
+
+  // move is okay
+  RecentlyUsedPathStoreV1(RecentlyUsedPathStoreV1 &&) = default;
+  RecentlyUsedPathStoreV1 &operator=(RecentlyUsedPathStoreV1 &&) = default;
 
   void
   use_path(encfs::Path p) {

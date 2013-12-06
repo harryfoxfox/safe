@@ -22,14 +22,15 @@
 #include <lockbox/util.hpp>
 
 #include <lockbox/tray_menu.hpp>
+#include <lockbox/windows_error.hpp>
 #include <lockbox/windows_menu.hpp>
 
 namespace lockbox { namespace win {
 
 struct DestroyMenuDestroyer {
   void operator()(HMENU a) {
-   auto ret = DestroyMenu(a);
-   if (!ret) throw std::runtime_error("couldn't free!");
+    auto ret = DestroyMenu(a);
+    if (!ret) throw std::runtime_error("couldn't free!");
   }
 };
 
@@ -58,7 +59,23 @@ encode_menu_id(lockbox::TrayMenuAction action,
   return (action_int << _MENU_ACTION_BITS) | action_arg;
 }
 
+class TrayMenu;
+
 class TrayMenuItem {
+private:
+  ManagedMenuHandle _parent_mh;
+  HMENU _mh;
+  int _item_idx;
+
+  HMENU _get_mh() { return _mh; }
+
+  TrayMenuItem(ManagedMenuHandle parent_mh,
+               HMENU mh,
+               int item_idx)
+    : _parent_mh(std::move(parent_mh))
+    , _mh(std::move(mh))
+    , _item_idx(std::move(item_idx)) {}
+
 public:
   bool
   set_tooltip(std::string tooltip) {
@@ -74,27 +91,80 @@ public:
     (void) value;
     return false;
   }
+
+  void
+  disable() {
+    // NB: EnableMenuItem with MF_DISABLED doesn't seem to work on
+    // Wine-1.6.1 on Mac OS X 10.9, i686-w64-mingw32-g++ (GCC) 4.9.0 20130531 (experimental)
+    // use SetMenuItemInfo() instead
+
+    MENUITEMINFOW mif;
+    lockbox::zero_object(mif);
+
+    mif.cbSize = sizeof(mif);
+    mif.fMask = MIIM_STATE;
+    mif.fState = MFS_GRAYED;
+
+    auto success = SetMenuItemInfo(_get_mh(), _item_idx, TRUE, &mif);
+    if (!success) throw w32util::windows_error();
+  }
+
+  friend class TrayMenu;
 };
 
 class TrayMenu {
 private:
-  ManagedMenuHandle _mh;
+  ManagedMenuHandle _parent_mh;
+  HMENU _mh;
+
+  HMENU _get_mh() { return _mh; }
+
+  TrayMenu(ManagedMenuHandle parent_mh, HMENU mh)
+  : _parent_mh(std::move(parent_mh))
+  , _mh(std::move(mh)) {}
 
 public:
-  TrayMenu(ManagedMenuHandle mh) : _mh(std::move(mh)) {}
+  TrayMenu(ManagedMenuHandle parent_mh) : TrayMenu(parent_mh, parent_mh.get()) {}
 
   TrayMenuItem
   append_item(std::string title,
               lockbox::TrayMenuAction action,
               lockbox::tray_menu_action_arg_t action_arg = 0) {
-    w32util::menu_append_string_item(_mh.get(), false, title,
-                                     encode_menu_id(action, action_arg));
-    return TrayMenuItem();
+    const int item_idx =
+      w32util::menu_append_string_item(_get_mh(), false, title,
+                                       encode_menu_id(action, action_arg));
+    // give the item a reference to the parent_mh to keep us in scope
+    return TrayMenuItem(_parent_mh, _mh, item_idx);
   }
 
   void
   append_separator() {
-    return w32util::menu_append_separator(_mh.get());
+    return w32util::menu_append_separator(_get_mh());
+  }
+
+  TrayMenu
+  append_menu(std::string title) {
+    auto item_idx = w32util::menu_append_string_item(_get_mh(), false, title, 0);
+
+    auto sub_menu = CreateMenu();
+    if (!sub_menu) throw w32util::windows_error();
+
+    MENUITEMINFOW mif;
+    lockbox::zero_object(mif);
+
+    mif.cbSize = sizeof(mif);
+    mif.fMask = MIIM_SUBMENU;
+    mif.hSubMenu = sub_menu;
+
+    auto success = SetMenuItemInfo(_get_mh(), item_idx, TRUE, &mif);
+    if (!success) {
+      auto success = DestroyMenu(sub_menu);
+      if (!success) lbx_log_error("Failure to destroy sub_menu, leaking...");
+      throw w32util::windows_error();
+    }
+
+    // give the submenu a reference to the parent_mh to keep us in scope
+    return TrayMenu(_parent_mh, sub_menu);
   }
 };
 

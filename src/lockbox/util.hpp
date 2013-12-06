@@ -127,7 +127,7 @@ class ManagedResource {
   std::shared_ptr<T> _ptr;
 
 public:
-  ManagedResource(T arg_) : _ptr(new T(std::move(arg_)), SubF()) {}
+  explicit ManagedResource(T arg_) : _ptr(new T(std::move(arg_)), SubF()) {}
   ManagedResource() : _ptr() {}
 
   const T & get() const {
@@ -141,7 +141,7 @@ public:
 
 template <class T>
 void
-zero_object(T & obj) {
+zero_object(T & obj) noexcept {
   memset(&obj, 0, sizeof(obj));
 }
 
