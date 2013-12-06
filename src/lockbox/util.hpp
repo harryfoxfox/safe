@@ -114,44 +114,28 @@ DynamicManagedResource<T> create_dynamic_managed_resource(T a, F f) {
 
 template <class T, class F>
 class ManagedResource {
-  T data;
-  bool is_valid;
+  struct SubF {
+    void operator()(T *todel) noexcept {
+      try {
+        F()(*todel);
+      }
+      catch (...) {}
+      delete todel;
+    }
+  };
+
+  std::shared_ptr<T> _ptr;
 
 public:
-  ManagedResource(T arg_)
-    : data(std::move(arg_))
-    , is_valid(true) {}
-
-  ManagedResource()
-    : is_valid(false) {}
-
-  ManagedResource(ManagedResource && f)
-    : data(std::move(f.data))
-    , is_valid(f.is_valid) {
-    f.is_valid = false;
-  }
-
-  ManagedResource &operator=(ManagedResource && f) {
-    if (this != &f) {
-      this->~ManagedResource();
-      new (this) ManagedResource(std::move(f));
-    }
-    return *this;
-  }
-
-  ~ManagedResource() { if (is_valid) F()(data); };
+  ManagedResource(T arg_) : _ptr(new T(std::move(arg_)), SubF()) {}
+  ManagedResource() : _ptr() {}
 
   const T & get() const {
-    if (!is_valid) throw std::runtime_error("invalid resource!");
-    return data;
+    return *_ptr;
   }
 
   void reset(T arg_) {
-    auto old_data = data;
-    auto old_is_valid = is_valid;
-    data = std::move(arg_);
-    is_valid = true;
-    if (old_is_valid) F()(old_data);
+    _ptr.reset(new T(std::move(arg_)), SubF());
   }
 };
 
@@ -229,6 +213,34 @@ template<typename T>
 _int::Range<T>
 range(T max) {
   return _int::Range<T>(max);
+}
+
+template<typename T>
+struct numbits {
+  static const size_t value = sizeof(T) * 8;
+};
+
+template<typename T>
+constexpr
+size_t
+numbitsf(T) {
+  return numbits<T>::value;
+}
+
+template<typename T>
+typename std::enable_if<std::is_integral<T>::value, size_t>::type
+position_of_highest_bit_set(T a) {
+  assert(a);
+  size_t toret = 0;
+  while (a >>= 1) ++toret;
+  return toret;
+}
+
+template<typename T>
+T
+create_bit_mask(size_t num_bits_to_mask) {
+  assert(num_bits_to_mask <= numbits<T>::value);
+  return ((T) 1 << num_bits_to_mask) - 1;
 }
 
 }

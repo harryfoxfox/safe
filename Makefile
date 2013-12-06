@@ -155,6 +155,7 @@ WINDOWS_APP_MAIN_SRCS = app_main_windows.cpp windows_app.rc mount_win.cpp \
  windows_gui_util.cpp windows_about_dialog.cpp windows_app_actions.cpp \
  windows_create_lockbox_dialog.cpp create_lockbox_dialog_logic.cpp \
  windows_mount_lockbox_dialog.cpp mount_lockbox_dialog_logic.cpp \
+ windows_menu.cpp \
  $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
