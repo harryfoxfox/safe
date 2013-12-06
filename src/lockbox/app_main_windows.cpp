@@ -80,34 +80,15 @@ struct WindowData {
 };
 
 // constants
-const unsigned MOUNT_RETRY_ATTEMPTS = 10;
-const WORD IDC_STATIC = ~0;
-const WORD IDPASSWORD = 200;
-const WORD IDCONFIRMPASSWORD = 201;
-const auto MAX_PASS_LEN = 256;
 const wchar_t TRAY_ICON_TOOLTIP[] = PRODUCT_NAME_W;
 const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const UINT_PTR STOP_RELEVANT_DRIVE_THREADS_TIMER_ID = 0;
 const lockbox::RecentlyUsedPathStoreV1::max_ent_t RECENTLY_USED_PATHS_MENU_NUM_ITEMS = 10;
 
 const auto APP_BASE = (UINT) (6 + WM_APP);
-const auto LOCKBOX_MOUNT_DONE_MSG = APP_BASE;
-const auto LOCKBOX_MOUNT_OVER_MSG = APP_BASE + 1;
-const auto LOCKBOX_TRAY_ICON_MSG = APP_BASE + 2;
-const auto LOCKBOX_TRAY_ICON_MSG_2 = APP_BASE + 3;
-
+const auto LOCKBOX_TRAY_ICON_MSG = APP_BASE + 1;
+const auto LOCKBOX_TRAY_ICON_MSG_2 = APP_BASE + 2;
 const auto LOCKBOX_TRAY_ICON_ID = 1;
-
-const auto MENU_MOUNT_IDX_BASE = (UINT) 1;
-const auto MENU_BASE = MENU_MOUNT_IDX_BASE + 26;
-enum {
-  MENU_CREATE_ID = MENU_BASE,
-  MENU_MOUNT_ID,
-  MENU_ABOUT_ID,
-  MENU_DEBUG_ID,
-  MENU_TEST_BUBBLE_ID,
-  MENU_EXIT_ID,
-};
 
 const wchar_t LOCKBOX_SINGLE_APP_INSTANCE_MUTEX_NAME[] =
   L"LockboxAppMutex";
@@ -417,11 +398,6 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   const auto LOCKBOX_DUPLICATE_INSTANCE_MSG =
     wd ? wd->LOCKBOX_DUPLICATE_INSTANCE_MSG : 0;
   switch(msg){
-    NO_FALLTHROUGH(LOCKBOX_MOUNT_OVER_MSG): {
-      // TODO: handle this
-      return 0;
-    }
-
     NO_FALLTHROUGH(WM_TIMER): {
       if (wParam == STOP_RELEVANT_DRIVE_THREADS_TIMER_ID) {
         if (!wd->is_stopping) {
