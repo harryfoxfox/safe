@@ -77,6 +77,7 @@ struct WindowData {
   lockbox::win::ManagedMenuHandle tray_menu;
   bool control_was_pressed_on_tray_open;
   lockbox::RecentlyUsedPathStoreV1 recent_mount_paths_store;
+  encfs::Path first_run_cookie_path;
 };
 
 // constants
@@ -84,6 +85,7 @@ const wchar_t TRAY_ICON_TOOLTIP[] = PRODUCT_NAME_W;
 const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const UINT_PTR STOP_RELEVANT_DRIVE_THREADS_TIMER_ID = 0;
 const lockbox::RecentlyUsedPathStoreV1::max_ent_t RECENTLY_USED_PATHS_MENU_NUM_ITEMS = 10;
+const char APP_STARTED_COOKIE_FILENAME[] = "AppStarted";
 
 const auto APP_BASE = (UINT) (6 + WM_APP);
 const auto LOCKBOX_TRAY_ICON_MSG = APP_BASE + 1;
@@ -388,6 +390,22 @@ add_tray_icon(HWND lockbox_main_window) {
   }
 }
 
+static
+bool
+is_first_run(const WindowData & wd) {
+  return !encfs::file_exists(wd.native_fs, wd.first_run_cookie_path);
+}
+
+static
+void
+record_app_start(WindowData & wd) {
+  // TODO: we can run this async
+  bool open_for_write = true;
+  bool should_create = true;
+  wd.native_fs->openfile(wd.first_run_cookie_path,
+                         open_for_write, should_create);
+}
+
 #define NO_FALLTHROUGH(c) assert(false); case c
 
 CALLBACK
@@ -432,12 +450,11 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
       SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
 
-      // add tray icon
-      add_tray_icon(hwnd);
+      if (is_first_run(*wd)) lockbox::win::about_dialog(hwnd);
 
-      // open about dialog
-      // TODO: only do this if we've never done this before
-      lockbox::win::about_dialog(hwnd);
+      record_app_start(*wd);
+
+      add_tray_icon(hwnd);
 
       bubble_msg(hwnd,
                  LOCKBOX_TRAY_ICON_WELCOME_TITLE,
@@ -721,13 +738,16 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
                                  NULL, SHGFP_TYPE_CURRENT, app_directory_buf);
   if (result != S_OK) throw w32util::windows_error();
   auto app_directory = w32util::narrow(app_directory_buf, wcslen(app_directory_buf));
+  auto app_directory_path = native_fs->pathFromString(app_directory);
 
   auto recently_used_paths_storage_path =
-    native_fs->pathFromString(app_directory).join(lockbox::RECENTLY_USED_PATHS_V1_FILE_NAME);
+    app_directory_path.join(lockbox::RECENTLY_USED_PATHS_V1_FILE_NAME);
   auto path_store =
     lockbox::RecentlyUsedPathStoreV1(native_fs,
                                      recently_used_paths_storage_path,
                                      RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+
+  auto first_run_cookie_path = app_directory_path.join(APP_STARTED_COOKIE_FILENAME);
 
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
@@ -740,6 +760,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     /*.tray_menu = */lockbox::win::ManagedMenuHandle(tray_menu_handle),
     /*.control_was_pressed_on_tray_open = */false,
     /*.recent_mount_paths_store = */std::move(path_store),
+    /*.first_run_cookie_path = */std::move(first_run_cookie_path),
   };
 
   // register our main window class
