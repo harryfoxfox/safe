@@ -738,7 +738,13 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
                                  NULL, SHGFP_TYPE_CURRENT, app_directory_buf);
   if (result != S_OK) throw w32util::windows_error();
   auto app_directory = w32util::narrow(app_directory_buf, wcslen(app_directory_buf));
-  auto app_directory_path = native_fs->pathFromString(app_directory);
+  auto app_directory_path = native_fs->pathFromString(app_directory).join(PRODUCT_NAME_A);
+
+  // make `app_directory_path` if it doesn't already exists
+  try { native_fs->mkdir(app_directory_path); }
+  catch (const std::system_error & err) {
+    if (err.code() != std::errc::file_exists) throw;
+  }
 
   auto recently_used_paths_storage_path =
     app_directory_path.join(lockbox::RECENTLY_USED_PATHS_V1_FILE_NAME);
