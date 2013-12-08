@@ -77,6 +77,7 @@ struct WindowData {
   bool control_was_pressed_on_tray_open;
   lockbox::RecentlyUsedPathStoreV1 recent_mount_paths_store;
   encfs::Path first_run_cookie_path;
+  unsigned timer_rev;
 };
 
 // constants
@@ -420,11 +421,18 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   switch(msg){
     NO_FALLTHROUGH(WM_TIMER): {
       if (wParam == STOP_RELEVANT_DRIVE_THREADS_TIMER_ID) {
+        auto local_timer_rev = wd->timer_rev;
         if (!wd->is_stopping) {
           wd->is_stopping = true;
           // if this throws an exception, our app is going to close
           stop_relevant_drive_threads(hwnd, *wd);
           wd->is_stopping = false;
+        }
+
+        // if the timer rev changes, that means the timer was re-triggered
+        // while we were stopping the drives so don't kill it
+        if (local_timer_rev == wd->timer_rev) {
+          KillTimer(hwnd, STOP_RELEVANT_DRIVE_THREADS_TIMER_ID);
         }
         return 0;
       }
@@ -443,6 +451,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
           SetTimer(hwnd, STOP_RELEVANT_DRIVE_THREADS_TIMER_ID, 0, NULL);
         // TODO: we don't yet handle this gracefully
         if (!success) throw w32util::windows_error();
+        wd->timer_rev += 1;
       }
       return TRUE;
     }
@@ -778,6 +787,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     /*.control_was_pressed_on_tray_open = */false,
     /*.recent_mount_paths_store = */std::move(path_store),
     /*.first_run_cookie_path = */std::move(first_run_cookie_path),
+    /*.timer_rev = */0,
   };
 
   // register our main window class
