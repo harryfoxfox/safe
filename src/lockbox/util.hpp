@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include <cassert>
 #include <cstring>
 
 namespace lockbox {
