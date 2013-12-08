@@ -11,8 +11,6 @@
 
 namespace lockbox {
 
-static const auto RECENTLY_USED_PATHS_V1_FILE_NAME = std::string("RecentlyUsedPathsV1.db");
-
 class RecentlyUsedPathsParseError : public std::runtime_error {
 public:
   RecentlyUsedPathsParseError(const char *msg) : std::runtime_error(msg) {}

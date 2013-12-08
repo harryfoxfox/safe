@@ -19,7 +19,7 @@
 #include <lockbox/windows_create_lockbox_dialog.hpp>
 
 #include <lockbox/create_lockbox_dialog_logic.hpp>
-#include <lockbox/product_name.h>
+#include <lockbox/lockbox_constants.h>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_error.hpp>
@@ -102,8 +102,8 @@ create_new_lockbox_dialog_proc(HWND hwnd, UINT Message,
       auto use_case_safe_filename_encoding = true;
       auto maybe_cfg =
         w32util::modal_call(hwnd,
-                            "Creating New Bitvault...",
-                            "Creating new Bitvault....",
+                            LOCKBOX_PROGRESS_CREATING_TITLE,
+                            LOCKBOX_PROGRESS_CREATING_MESSAGE,
                             [&] {
                               auto cfg =
                                 encfs::create_paranoid_config(password_buf,
@@ -121,8 +121,8 @@ create_new_lockbox_dialog_proc(HWND hwnd, UINT Message,
       // mount encfs drive
       auto maybe_mount_details =
         w32util::modal_call(hwnd,
-                            "Mounting New Bitvault...",
-                            "Mounting new Bitvault...",
+                            LOCKBOX_PROGRESS_MOUNTING_TITLE,
+                            LOCKBOX_PROGRESS_MOUNTING_TITLE,
                             lockbox::win::mount_new_encfs_drive,
                             ctx->fs, encrypted_container_path, *maybe_cfg, password_buf);
       if (!maybe_mount_details) {

@@ -9,6 +9,7 @@
 #import <lockbox/LBXCreateLockboxWindowController.h>
 #import <lockbox/LBXProgressSheetController.h>
 #import <lockbox/create_lockbox_dialog_logic.hpp>
+#import <lockbox/lockbox_constants.h>
 #import <lockbox/mount_mac.hpp>
 
 #import <encfs/fs/FileUtils.h>
@@ -134,10 +135,10 @@ NSStringToSecureMem(NSString *str) {
         [self.window performClose:self];
     };
     
-    auto onSaveCfgSuccess = ^(encfs::EncfsConfig cfg) {
+    auto onCreateCfgSuccess = ^(encfs::EncfsConfig cfg) {
         // success pass values to app
         showBlockingSheetMessage(self.window,
-                                 @"Mounting new Bitvault",
+                                 [NSString stringWithUTF8String:LOCKBOX_PROGRESS_MOUNTING_TITLE],
                                  onMountSuccess,
                                  onFail,
                                  lockbox::mac::mount_new_encfs_drive,
@@ -145,24 +146,18 @@ NSStringToSecureMem(NSString *str) {
                                  encrypted_container_path, cfg, password);
     };
     
-    auto onCreateCfgSuccess = ^(const encfs::EncfsConfig & cfg_) {
-        auto cfg = cfg_;
-        showBlockingSheetMessage(self.window,
-                                 @"Saving new configuration...",
-                                 onSaveCfgSuccess,
-                                 onFail,
-                                 ^{
-                                     self->fs->mkdir(encrypted_container_path);
-                                     encfs::write_config(self->fs, encrypted_container_path, cfg);
-                                     return cfg;
-                                 });
-    };
-    
     showBlockingSheetMessage(self.window,
-                             @"Creating new configuration...",
+                             [NSString stringWithUTF8String:LOCKBOX_PROGRESS_CREATING_TITLE],
                              onCreateCfgSuccess,
                              onFail,
-                             encfs::create_paranoid_config, password, use_case_safe_filename_encoding);
+                             ^{
+                               auto cfg =
+                                 encfs::create_paranoid_config(password,
+                                                               use_case_safe_filename_encoding);
+                               self->fs->mkdir(encrypted_container_path);
+                               encfs::write_config(self->fs, encrypted_container_path, cfg);
+                               return cfg;
+                             });
 }
 
 - (IBAction)cancelWindow:(id)sender {

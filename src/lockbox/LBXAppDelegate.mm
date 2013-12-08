@@ -9,21 +9,14 @@
 #import <lockbox/LBXAppDelegate.h>
 
 #import <lockbox/mount_mac.hpp>
+#import <lockbox/lockbox_constants.h>
 #import <lockbox/lockbox_server.hpp>
-#import <lockbox/lockbox_strings.h>
+#import <lockbox/logging.h>
 #import <lockbox/recent_paths_storage.hpp>
 #import <lockbox/util.hpp>
 
-#import <lockbox/logging.h>
-
-enum {
-    CHECK_MOUNT_INTERVAL_IN_SECONDS = 1,
-};
-
 // 10 to model after system mac recent menus
-const lockbox::RecentlyUsedPathStoreV1::max_ent_t RECENTLY_USED_PATHS_MENU_NUM_ITEMS = 10;
 static NSString *const LBX_ACTION_KEY = @"_lbx_action";
-static NSString *const APP_STARTED_COOKIE_FILENAME = @"AppStarted";
 
 @implementation LBXAppDelegate
 
@@ -355,10 +348,12 @@ recent_idx_from_menu_item(NSMenuItem *mi) {
     NSStatusBar *sb = [NSStatusBar systemStatusBar];
     self.statusItem = [sb statusItemWithLength:NSVariableStatusItemLength];
     
-    self.statusItem.title = @"Bitvault";
+    NSString *executableName = NSBundle.mainBundle.infoDictionary[@"CFBundleExecutable"];
+
+    self.statusItem.title = executableName;
     self.statusItem.highlightMode = YES;
     self.statusItem.menu = statusMenu;
-    self.statusItem.toolTip = @"Bitvault";
+    self.statusItem.toolTip = [NSString stringWithUTF8String:LOCKBOX_TRAY_ICON_TOOLTIP];
     
     [self _updateStatusMenu];
 }
@@ -466,11 +461,11 @@ _Pragma("clang diagnostic pop") \
 
 - (IBAction)aboutWindowGetSourceCode:(NSButton *)sender {
     (void) sender;
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://github.com/rianhunter/bitvault"]];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:LOCKBOX_SOURCE_CODE_WEBSITE]]];
 }
 
 - (BOOL)haveStartedAppBefore:(NSURL *)appSupportDir {
-    NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:APP_STARTED_COOKIE_FILENAME];
+    NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:[NSString stringWithUTF8String:LOCKBOX_APP_STARTED_COOKIE_FILENAME]];
     // NB: assuming the following operation is quick
     return [NSFileManager.defaultManager fileExistsAtPath:cookieURL.path];
 }
@@ -488,7 +483,7 @@ _Pragma("clang diagnostic pop") \
                            return;
                        }
                        
-                       NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:APP_STARTED_COOKIE_FILENAME];
+                       NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:[NSString stringWithUTF8String:LOCKBOX_APP_STARTED_COOKIE_FILENAME]];
                        [NSFileManager.defaultManager createFileAtPath:cookieURL.path
                                                              contents:NSData.data
                                                            attributes:nil];
@@ -500,8 +495,8 @@ _Pragma("clang diagnostic pop") \
     [self recordAppStart];
     
     if ([self haveUserNotifications]) {
-        [self notifyUserTitle:@"Bitvault is now Running!"
-                      message:@"If you need to use Bitvault, just click on Bitvault menu bar icon."
+        [self notifyUserTitle:[NSString stringWithUTF8String:LOCKBOX_TRAY_ICON_WELCOME_TITLE]
+                      message:[NSString stringWithUTF8String:LOCKBOX_TRAY_ICON_MAC_WELCOME_MSG]
                        action:@selector(clickStatusItem)];
     }
     else [self clickStatusItem];
@@ -551,17 +546,17 @@ _Pragma("clang diagnostic pop") \
     self->native_fs = lockbox::create_native_fs();
     
     auto recently_used_paths_storage_path =
-    self->native_fs->pathFromString(appSupportDir.path.fileSystemRepresentation).join(lockbox::RECENTLY_USED_PATHS_V1_FILE_NAME);
+    self->native_fs->pathFromString(appSupportDir.path.fileSystemRepresentation).join(LOCKBOX_RECENTLY_USED_PATHS_V1_FILE_NAME);
     
     try {
         try {
-            self->path_store = lockbox::make_unique<lockbox::RecentlyUsedPathStoreV1>(self->native_fs, recently_used_paths_storage_path, RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+            self->path_store = lockbox::make_unique<lockbox::RecentlyUsedPathStoreV1>(self->native_fs, recently_used_paths_storage_path, LOCKBOX_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
         }
         catch (const lockbox::RecentlyUsedPathsParseError & err) {
             lbx_log_error("Parse error on recently used path store: %s", err.what());
             // delete path and try again
             self->native_fs->unlink(recently_used_paths_storage_path);
-            self->path_store = lockbox::make_unique<lockbox::RecentlyUsedPathStoreV1>(self->native_fs, recently_used_paths_storage_path, RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+            self->path_store = lockbox::make_unique<lockbox::RecentlyUsedPathStoreV1>(self->native_fs, recently_used_paths_storage_path, LOCKBOX_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
         }
     }
     catch (const std::exception & err) {

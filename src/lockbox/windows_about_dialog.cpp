@@ -18,9 +18,8 @@
 
 #include <lockbox/windows_about_dialog.hpp>
 
-#include <lockbox/lockbox_strings.h>
+#include <lockbox/lockbox_constants.h>
 #include <lockbox/logging.h>
-#include <lockbox/windows_app_actions.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_gui_util.hpp>
 #include <lockbox/windows_string.hpp>
@@ -28,6 +27,7 @@
 #include <cassert>
 
 #include <windows.h>
+#include <shellapi.h>
 
 namespace lockbox { namespace win {
 
@@ -35,6 +35,16 @@ enum {
   IDC_BLURB = 1000,
   IDC_GET_SOURCE_CODE,
 };
+
+static
+bool
+open_src_code(HWND owner) {
+  auto ret_shell2 =
+    (int) ShellExecuteW(owner, L"open",
+                        w32util::widen(LOCKBOX_SOURCE_CODE_WEBSITE).c_str(),
+                        NULL, NULL, SW_SHOWNORMAL);
+  return ret_shell2 > 32;
+}
 
 CALLBACK
 INT_PTR

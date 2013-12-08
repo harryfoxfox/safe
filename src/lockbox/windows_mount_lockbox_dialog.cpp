@@ -18,9 +18,9 @@
 
 #include <lockbox/windows_mount_lockbox_dialog.hpp>
 
+#include <lockbox/lockbox_constants.h>
 #include <lockbox/mount_lockbox_dialog_logic.hpp>
 #include <lockbox/mount_win.hpp>
-#include <lockbox/product_name.h>
 #include <lockbox/util.hpp>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
@@ -95,14 +95,23 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
 
       auto encrypted_container_path = ctx->fs->pathFromString(location_string);
 
-      auto maybe_cfg =
-        w32util::modal_call(hwnd,
-                            "Reading Bitvault Configuration...",
-                            "Reading Bitvault configuration...",
-                            encfs::read_config, ctx->fs, encrypted_container_path);
-      if (!maybe_cfg) {
-        // modal_call returns nullopt if we got a quit signal
-        EndDialog(hwnd, (INT_PTR) 0);
+      opt::optional<encfs::EncfsConfig> maybe_cfg;
+      try {
+        maybe_cfg =
+          w32util::modal_call(hwnd,
+                              LOCKBOX_PROGRESS_READING_CONFIG_TITLE,
+                              LOCKBOX_PROGRESS_READING_CONFIG_MESSAGE,
+                              encfs::read_config, ctx->fs, encrypted_container_path);
+        if (!maybe_cfg) {
+          // modal_call returns nullopt if we got a quit signal
+          EndDialog(hwnd, (INT_PTR) 0);
+          break;
+        }
+      }
+      catch (const encfs::ConfigurationFileDoesNotExist &) {
+        w32util::quick_alert(hwnd,
+                             LOCKBOX_DIALOG_NO_CONFIG_EXISTS_TITLE,
+                             LOCKBOX_DIALOG_NO_CONFIG_EXISTS_MESSAGE);
         break;
       }
 
@@ -110,8 +119,8 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
 
       auto maybe_pass_is_correct =
         w32util::modal_call(hwnd,
-                            "Verifying Bitvault Password...",
-                            "Verifying Bitvault password...",
+                            LOCKBOX_PROGRESS_VERIFYING_PASS_TITLE,
+                            LOCKBOX_PROGRESS_VERIFYING_PASS_MESSAGE,
                             encfs::verify_password, cfg, password_buf);
       if (!maybe_pass_is_correct) {
         EndDialog(hwnd, (INT_PTR) 0);
@@ -120,8 +129,9 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
 
       auto pass_is_correct = *maybe_pass_is_correct;
       if (!pass_is_correct) {
-        w32util::quick_alert(hwnd, "Password is Incorrect",
-                             "The password you have entered is incorrect.");
+        w32util::quick_alert(hwnd,
+                             LOCKBOX_DIALOG_PASS_INCORRECT_TITLE,
+                             LOCKBOX_DIALOG_PASS_INCORRECT_MESSAGE);
         break;
       }
 
@@ -130,8 +140,8 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
       // mount encfs drive
       auto maybe_mount_details =
         w32util::modal_call(hwnd,
-                            "Mounting New Bitvault...",
-                            "Mounting new Bitvault...",
+                            LOCKBOX_PROGRESS_MOUNTING_EXISTING_TITLE,
+                            LOCKBOX_PROGRESS_MOUNTING_EXISTING_MESSAGE,
                             lockbox::win::mount_new_encfs_drive,
                             ctx->fs, encrypted_container_path, cfg, password_buf);
       if (!maybe_mount_details) {

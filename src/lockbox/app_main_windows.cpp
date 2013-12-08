@@ -17,15 +17,14 @@
  */
 
 #include <lockbox/product_name.h>
+#include <lockbox/lockbox_constants.h>
 #include <lockbox/lockbox_server.hpp>
-#include <lockbox/lockbox_strings.h>
 #include <lockbox/logging.h>
 #include <lockbox/mount_win.hpp>
 #include <lockbox/recent_paths_storage.hpp>
 #include <lockbox/tray_menu.hpp>
 #include <lockbox/tray_menu_win.hpp>
 #include <lockbox/windows_about_dialog.hpp>
-#include <lockbox/windows_app_actions.hpp>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_create_lockbox_dialog.hpp>
 #include <lockbox/windows_gui_util.hpp>
@@ -81,11 +80,8 @@ struct WindowData {
 };
 
 // constants
-const wchar_t TRAY_ICON_TOOLTIP[] = PRODUCT_NAME_W;
 const wchar_t MAIN_WINDOW_CLASS_NAME[] = L"lockbox_tray_icon";
 const UINT_PTR STOP_RELEVANT_DRIVE_THREADS_TIMER_ID = 0;
-const lockbox::RecentlyUsedPathStoreV1::max_ent_t RECENTLY_USED_PATHS_MENU_NUM_ITEMS = 10;
-const char APP_STARTED_COOKIE_FILENAME[] = "AppStarted";
 
 const auto APP_BASE = (UINT) (6 + WM_APP);
 const auto LOCKBOX_TRAY_ICON_MSG = APP_BASE + 1;
@@ -100,12 +96,6 @@ const wchar_t LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME[] =
   L"LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME";
 const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
   L"TaskbarCreated";
-const char LOCKBOX_TRAY_ICON_WELCOME_TITLE[] =
-  PRODUCT_NAME_A " is now Running!";
-const char LOCKBOX_TRAY_ICON_WELCOME_MSG[] =
-  "If you need to use "
-  PRODUCT_NAME_A
-  ", just right-click on this icon.";
 
 static
 void
@@ -371,7 +361,8 @@ add_tray_icon(HWND lockbox_main_window) {
   icon_data.uCallbackMessage = LOCKBOX_TRAY_ICON_MSG;
   icon_data.hIcon = LoadIconW(NULL, IDI_APPLICATION);
   icon_data.uVersion = NOTIFYICON_VERSION;
-  memcpy(icon_data.szTip, TRAY_ICON_TOOLTIP, sizeof(TRAY_ICON_TOOLTIP));
+  auto wtooltip = w32util::widen(LOCKBOX_TRAY_ICON_TOOLTIP);
+  memcpy(icon_data.szTip, wtooltip.c_str(), (wtooltip.size() + 1) * sizeof(wtooltip[0]));
 
   auto success = Shell_NotifyIconW(NIM_ADD, &icon_data);
   if (!success) {
@@ -747,13 +738,13 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   }
 
   auto recently_used_paths_storage_path =
-    app_directory_path.join(lockbox::RECENTLY_USED_PATHS_V1_FILE_NAME);
+    app_directory_path.join(LOCKBOX_RECENTLY_USED_PATHS_V1_FILE_NAME);
   auto path_store =
     lockbox::RecentlyUsedPathStoreV1(native_fs,
                                      recently_used_paths_storage_path,
-                                     RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+                                     LOCKBOX_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
 
-  auto first_run_cookie_path = app_directory_path.join(APP_STARTED_COOKIE_FILENAME);
+  auto first_run_cookie_path = app_directory_path.join(LOCKBOX_APP_STARTED_COOKIE_FILENAME);
 
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
