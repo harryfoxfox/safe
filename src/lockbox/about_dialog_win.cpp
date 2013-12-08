@@ -16,7 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <lockbox/windows_about_dialog.hpp>
+#include <lockbox/about_dialog_win.hpp>
 
 #include <lockbox/constants.h>
 #include <lockbox/logging.h>

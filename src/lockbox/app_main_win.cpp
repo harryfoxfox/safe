@@ -16,20 +16,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+#include <lockbox/about_dialog_win.hpp>
+#include <lockbox/create_lockbox_dialog_win.hpp>
 #include <lockbox/constants.h>
 #include <lockbox/fs.hpp>
 #include <lockbox/logging.h>
+#include <lockbox/mount_lockbox_dialog_win.hpp>
 #include <lockbox/mount_win.hpp>
 #include <lockbox/recent_paths_storage.hpp>
 #include <lockbox/tray_menu.hpp>
 #include <lockbox/tray_menu_win.hpp>
 #include <lockbox/webdav_server.hpp>
-#include <lockbox/windows_about_dialog.hpp>
 #include <lockbox/windows_async.hpp>
-#include <lockbox/windows_create_lockbox_dialog.hpp>
 #include <lockbox/windows_gui_util.hpp>
 #include <lockbox/windows_menu.hpp>
-#include <lockbox/windows_mount_lockbox_dialog.hpp>
 #include <lockbox/windows_string.hpp>
 #include <lockbox/util.hpp>
 

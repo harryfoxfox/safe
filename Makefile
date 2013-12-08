@@ -151,10 +151,10 @@ SRCS = fs_fsio.cpp CFsToFsIO.cpp webdav_server.cpp fs.cpp \
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
 
-WINDOWS_APP_MAIN_SRCS = app_main_windows.cpp windows_app.rc mount_win.cpp \
- windows_gui_util.cpp windows_about_dialog.cpp \
- windows_create_lockbox_dialog.cpp create_lockbox_dialog_logic.cpp \
- windows_mount_lockbox_dialog.cpp mount_lockbox_dialog_logic.cpp \
+WINDOWS_APP_MAIN_SRCS = app_main_win.cpp app_win.rc mount_win.cpp \
+ windows_gui_util.cpp about_dialog_win.cpp \
+ create_lockbox_dialog_win.cpp create_lockbox_dialog_logic.cpp \
+ mount_lockbox_dialog_win.cpp mount_lockbox_dialog_logic.cpp \
  windows_menu.cpp \
  $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
