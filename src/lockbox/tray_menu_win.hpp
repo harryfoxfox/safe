@@ -36,29 +36,6 @@ struct DestroyMenuDestroyer {
 
 typedef lockbox::ManagedResource<HMENU, DestroyMenuDestroyer> ManagedMenuHandle;
 
-constexpr size_t _MENU_ACTION_BITS = lockbox::numbits<lockbox::tray_menu_action_arg_t>::value;
-
-inline
-std::tuple<lockbox::TrayMenuAction, lockbox::tray_menu_action_arg_t>
-decode_menu_id(UINT menu_id) {
-  return std::make_tuple((lockbox::TrayMenuAction) (menu_id >> _MENU_ACTION_BITS),
-                         menu_id & lockbox::create_bit_mask<UINT>(_MENU_ACTION_BITS));
-}
-
-inline
-UINT
-encode_menu_id(lockbox::TrayMenuAction action,
-               lockbox::tray_menu_action_arg_t action_arg) {
-  static_assert(_MENU_ACTION_BITS == lockbox::numbits<decltype(action_arg)>::value, "invalid argument");
-  static_assert(sizeof(UINT) >= sizeof(action_arg), "UINT IS TOO SMALL");
-  static_assert(sizeof(UINT) >= sizeof(action), "UINT Is too small");
-  auto action_int = static_cast<UINT>(action);
-  assert(!action_int ||
-         lockbox::numbitsf(action_int) - lockbox::numbitsf(action_arg) >
-         lockbox::position_of_highest_bit_set(action_int));
-  return (action_int << _MENU_ACTION_BITS) | action_arg;
-}
-
 class TrayMenu;
 
 class TrayMenuItem {
@@ -85,8 +62,8 @@ public:
   }
 
   bool
-  set_property(std::string name, std::string value) {
-    // we don't support menu tooltips
+  set_property(lockbox::TrayMenuProperty name, std::string value) {
+    // we don't support any properties
     (void) name;
     (void) value;
     return false;
@@ -132,7 +109,7 @@ public:
               lockbox::tray_menu_action_arg_t action_arg = 0) {
     const int item_idx =
       w32util::menu_append_string_item(_get_mh(), false, title,
-                                       encode_menu_id(action, action_arg));
+                                       lockbox::encode_menu_id<UINT>(action, action_arg));
     // give the item a reference to the parent_mh to keep us in scope
     return TrayMenuItem(_parent_mh, _mh, item_idx);
   }

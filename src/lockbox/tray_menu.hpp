@@ -19,6 +19,8 @@
 #ifndef __lockbox_lockbox_tray_menu_hpp
 #define __lockbox_lockbox_tray_menu_hpp
 
+#include <lockbox/util.hpp>
+
 #include <cstdint>
 
 namespace lockbox {
@@ -37,6 +39,33 @@ enum class TrayMenuAction : uint16_t {
 };
 
 typedef uint16_t tray_menu_action_arg_t;
+
+enum class TrayMenuProperty {
+    MAC_FILE_TYPE,
+};
+
+constexpr size_t _MENU_ACTION_BITS = lockbox::numbits<tray_menu_action_arg_t>::value;
+
+template<typename Container>
+std::tuple<TrayMenuAction, tray_menu_action_arg_t>
+decode_menu_id(Container menu_id) {
+  return std::make_tuple((lockbox::TrayMenuAction) (menu_id >> _MENU_ACTION_BITS),
+                         menu_id & lockbox::create_bit_mask<Container>(_MENU_ACTION_BITS));
+}
+
+template<typename Container>
+Container
+encode_menu_id(lockbox::TrayMenuAction action,
+               lockbox::tray_menu_action_arg_t action_arg) {
+  static_assert(_MENU_ACTION_BITS == lockbox::numbits<decltype(action_arg)>::value, "invalid argument");
+  static_assert(sizeof(Container) >= sizeof(action_arg), "Container IS TOO SMALL");
+  static_assert(sizeof(Container) >= sizeof(action), "Container Is too small");
+  auto action_int = static_cast<Container>(action);
+  assert(!action_int ||
+         lockbox::numbitsf(action_int) - lockbox::numbitsf(action_arg) >
+         lockbox::position_of_highest_bit_set(action_int));
+  return (action_int << _MENU_ACTION_BITS) | action_arg;
+}
 
 template<typename Menu, typename MountList, typename RecentMountStore>
 void
@@ -98,7 +127,7 @@ populate_tray_menu(Menu & menu,
       auto item = sub_menu.append_item(p.basename(),
                                        TrayMenuAction::MOUNT_RECENT, sub_tag);
       item.set_tooltip(p);
-      item.set_property("mac_file_type", "pubilc.folder");
+      item.set_property(TrayMenuProperty::MAC_FILE_TYPE, "public.folder");
       ++sub_tag;
     }
 

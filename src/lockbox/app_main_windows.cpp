@@ -275,7 +275,7 @@ dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT select
   TrayMenuAction menu_action;
   lockbox::tray_menu_action_arg_t menu_action_arg;
 
-  std::tie(menu_action, menu_action_arg) = lockbox::win::decode_menu_id(selected);
+  std::tie(menu_action, menu_action_arg) = lockbox::decode_menu_id(selected);
 
   switch (menu_action) {
   case TrayMenuAction::CREATE: {
