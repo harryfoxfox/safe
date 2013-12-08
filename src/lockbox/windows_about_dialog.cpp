@@ -189,15 +189,13 @@ about_dialog_proc(HWND hwnd, UINT Message,
   assert(false);
 }
 
-WINAPI
 void
-about_dialog(HWND hwnd) {
+about_dialog(HWND hwnd, std::string title) {
   using namespace w32util;
 
   const auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              ("Welcome to " PRODUCT_NAME_A "!"),
-                              0, 0, 500, 500),
+                              title, 0, 0, 500, 500),
                    {
                      LText("", IDC_BLURB,
                            0, 0, 0, 0),

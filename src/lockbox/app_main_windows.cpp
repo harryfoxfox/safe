@@ -297,7 +297,7 @@ dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT select
     break;
   }
   case TrayMenuAction::ABOUT_APP: {
-    lockbox::win::about_dialog(lockbox_main_window);
+    lockbox::win::about_dialog(lockbox_main_window, LOCKBOX_DIALOG_ABOUT_TITLE);
     break;
   }
   case TrayMenuAction::TRIGGER_BREAKPOINT: {
@@ -452,7 +452,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
       SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
 
-      if (is_first_run(*wd)) lockbox::win::about_dialog(hwnd);
+      if (is_first_run(*wd)) lockbox::win::about_dialog(hwnd, LOCKBOX_DIALOG_WELCOME_TITLE);
 
       record_app_start(*wd);
 

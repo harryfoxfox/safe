@@ -19,13 +19,14 @@
 #ifndef __lockbox_windows_about_dialog_hpp
 #define __lockbox_windows_about_dialog_hpp
 
+#include <string>
+
 #include <lockbox/lean_windows.h>
 
 namespace lockbox { namespace win {
 
-WINAPI
 void
-about_dialog(HWND hwnd);
+about_dialog(HWND hwnd, std::string title);
 
 }}
 
