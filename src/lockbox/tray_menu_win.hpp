@@ -107,9 +107,15 @@ public:
   append_item(std::string title,
               lockbox::TrayMenuAction action,
               lockbox::tray_menu_action_arg_t action_arg = 0) {
+    auto menu_item_id = lockbox::encode_menu_id<UINT>(action, action_arg);
+    // a zero id does not work well with TPM_RETURNCMD unless it means
+    // "do nothing", since TrackPopupMenu uses a zero return to mean
+    // "the user clicked away from the popup men"
+    assert(menu_item_id);
+
     const int item_idx =
-      w32util::menu_append_string_item(_get_mh(), false, title,
-                                       lockbox::encode_menu_id<UINT>(action, action_arg));
+      w32util::menu_append_string_item(_get_mh(), false, title, menu_item_id);
+
     // give the item a reference to the parent_mh to keep us in scope
     return TrayMenuItem(_parent_mh, _mh, item_idx);
   }
