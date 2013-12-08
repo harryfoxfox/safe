@@ -240,6 +240,16 @@ public:
     _path_cache.clear();
     _update_file();
   }
+
+  bool
+  empty() const {
+    return recently_used_paths().empty();
+  }
+
+  const encfs::Path &
+  front() const {
+    return recently_used_paths().front();
+  }
 };
 
 }
