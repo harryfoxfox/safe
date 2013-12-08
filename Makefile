@@ -67,7 +67,7 @@ libencfs: clean
                $(if $(RANLIB),-DCMAKE_RANLIB=`which $(RANLIB)`,) \
                $(if $(CXX),-DCMAKE_CXX_COMPILER=$(CXX),) \
                $(if $(CC),-DCMAKE_C_COMPILER=$(CC),) \
-               $(if $(IS_WIN_HOST),-G"MSYS Makefiles",) \
+               $(if $(IS_WIN),-G"MSYS Makefiles",) \
                -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) \
                $(if $(IS_WIN_TARGET),-DCMAKE_INCLUDE_PATH=$(DEPS_INSTALL_ROOT)/include/botan-1.10,)
 	@cd $(ENCFS_ROOT); make clean
@@ -84,24 +84,30 @@ libencfs: clean
          $(AR) -x $(ENCFS_ROOT)/base/libencfs-base.a; rm -f $(ENCFS_STATIC_LIBRARY); $(AR) rcs $(ENCFS_STATIC_LIBRARY) *.*;
 
 libbotan: clean
-	@mkdir -p /tmp/botan_ar_command;
-	@echo '#!/bin/sh' > /tmp/botan_ar_command/ar; echo '$(AR) $$@' >> /tmp/botan_ar_command/ar; chmod a+x /tmp/botan_ar_command/ar; 
-	@echo '#!/bin/sh' > /tmp/botan_ar_command/ranlib; echo '$(RANLIB) $$@' >> /tmp/botan_ar_command/ranlib; chmod a+x /tmp/botan_ar_command/ranlib; 
-	@cd $(BOTAN_ROOT); PATH="/tmp/botan_ar_command:$$PATH" ./configure.py --prefix=$(DEPS_INSTALL_ROOT) --disable-shared $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,--cc-bin=$(CXX)) $(if $(IS_WIN_TARGET),--os=mingw --cpu=x86,)
-	@cd $(BOTAN_ROOT); PATH="/tmp/botan_ar_command:$$PATH" make clean
-	@cd $(BOTAN_ROOT); PATH="/tmp/botan_ar_command:$$PATH" make -j$(PROCS)
-	@cd $(BOTAN_ROOT); PATH="/tmp/botan_ar_command:$$PATH" make install
+	@mkdir -p /tmp/botan_path;
+	@echo '#!/bin/sh' > /tmp/botan_path/ar; \
+         echo "export PATH=\"$$PATH\"" >> /tmp/botan_path/ar; \
+         echo 'exec $(AR) $$@' >> /tmp/botan_path/ar; \
+         chmod a+x /tmp/botan_path/ar;
+	@echo '#!/bin/sh' > /tmp/botan_path/ranlib; \
+         echo "export PATH=\"$$PATH\"" >> /tmp/botan_path/ranlib; \
+         echo 'exec $(RANLIB) $$@' >> /tmp/botan_path/ranlib; \
+         chmod a+x /tmp/botan_path/ranlib;
+	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" ./configure.py --prefix=$(DEPS_INSTALL_ROOT) --disable-shared $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,--cc-bin=$(CXX)) $(if $(IS_WIN_TARGET),--os=mingw --cpu=x86,)
+	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make clean
+	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make -j$(PROCS)
+	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make install
 
 libprotobuf: clean
 	@cd $(PROTOBUF_ROOT); if [ ! -e configure ]; then ./autogen.sh; fi
 # first build protobuf protoc
 	@cd $(PROTOBUF_ROOT); unset CC CXX CXXFLAGS AR RANLIB; ./configure --prefix=$(DEPS_INSTALL_ROOT) $(if $(IS_WIN_CROSS),--target $(IS_WIN_CROSS),) --disable-shared
 	@cd $(PROTOBUF_ROOT); unset CC CXX CXXFLAGS AR RANLIB; make clean
-	@cd $(PROTOBUF_ROOT); cd src; unset CC CXX CXXFLAGS AR RANLIB; make -j$(PROCS) protoc
+	@cd $(PROTOBUF_ROOT); cd src; unset CC CXX CXXFLAGS AR RANLIB; make -j$(PROCS) $(if $(IS_WIN),protoc.exe,protoc)
 	@mkdir -p $(DEPS_INSTALL_ROOT)/bin
-	@cp $(PROTOBUF_ROOT)/src/protoc $(DEPS_INSTALL_ROOT)/bin
+	@cp $(PROTOBUF_ROOT)/src/$(if $(IS_WIN),protoc.exe,protoc) $(DEPS_INSTALL_ROOT)/bin
 # now build libprotobuf.a
-	@cd $(PROTOBUF_ROOT); ./configure --prefix=$(DEPS_INSTALL_ROOT) --with-protoc=$(DEPS_INSTALL_ROOT)/bin/protoc $(if $(IS_WIN_CROSS),--host $(IS_WIN_CROSS),) --disable-shared
+	@cd $(PROTOBUF_ROOT); ./configure --prefix=$(DEPS_INSTALL_ROOT) --with-protoc=$(DEPS_INSTALL_ROOT)/bin/$(if $(IS_WIN),protoc.exe,protoc) $(if $(IS_WIN_CROSS),--host $(IS_WIN_CROSS),) --disable-shared
 	@cd $(PROTOBUF_ROOT); make clean
 	@cd $(PROTOBUF_ROOT); make -j$(PROCS)
 	@cd $(PROTOBUF_ROOT); make install
