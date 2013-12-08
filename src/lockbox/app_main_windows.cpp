@@ -458,9 +458,18 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
       add_tray_icon(hwnd);
 
-      bubble_msg(hwnd,
-                 LOCKBOX_TRAY_ICON_WELCOME_TITLE,
-                 LOCKBOX_TRAY_ICON_WELCOME_MSG);
+      if (wd->recent_mount_paths_store.empty()) {
+        bubble_msg(hwnd,
+                   LOCKBOX_TRAY_ICON_WELCOME_TITLE,
+                   LOCKBOX_TRAY_ICON_WELCOME_MSG);
+      }
+      // if the user has mounted paths in the past
+      // auto start the mount dialog with the most recently path
+      // populated in the ui
+      else {
+        run_mount_dialog(hwnd, *wd,
+                         wd->recent_mount_paths_store.front());
+      }
 
       // return -1 on failure, CreateWindow* will return NULL
       return 0;
