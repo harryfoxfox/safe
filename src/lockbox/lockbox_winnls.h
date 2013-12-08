@@ -19,6 +19,8 @@
 #ifndef _LOCKBOX_WINNLS_H
 #define _LOCKBOX_WINNLS_H
 
+#include <lockbox_nlscheck.h>
+
 #include <lockbox/lean_windows.h>
 
 #ifdef __cplusplus
@@ -34,7 +36,7 @@ int CompareStringOrdinal(
   BOOL bIgnoreCase
 );
 
-#ifdef DONT_HAVE_WINNLS
+#ifndef LOCKBOX_HAVE_WINNLS
 
 typedef enum _NORM_FORM {
   NormalizationOther  = 0,

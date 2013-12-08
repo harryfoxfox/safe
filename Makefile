@@ -131,6 +131,19 @@ $(WINHTTP_DEP2): $(CURDIR)/winhttp.h
 
 winhttp: $(WINHTTP_DEP2) $(WINHTTP_DEP)
 
+NLSCHECK := $(CURDIR)/out/deps/include/lockbox_nlscheck.h
+$(NLSCHECK):
+	@mkdir -p /tmp/nlschk && \
+         echo '#include <windows.h>' > /tmp/nlschk/chk.c && \
+         echo 'NORM_FORM a = NormalizationC;' >> /tmp/nlschk/chk.c && \
+         $(CC) -o /tmp/nlschk/chk.o -c /tmp/nlschk/chk.c; \
+         touch $(NLSCHECK); \
+         if [ -e /tmp/nlschk/chk.o ]; then \
+         echo '#define LOCKBOX_HAVE_WINNLS' > $(NLSCHECK); \
+         fi
+
+nlscheck: $(NLSCHECK)
+
 NORMALIZ_DEP := $(CURDIR)/out/deps/lib/libnormaliz.a
 $(NORMALIZ_DEP): $(CURDIR)/normaliz.def
 	$(DLLTOOL) -k -d $^ -l $@
@@ -141,7 +154,7 @@ dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
  libencfs \
  libwebdav_server_fs \
- $(if $(IS_WIN_TARGET),winhttp normaliz,)
+ $(if $(IS_WIN_TARGET),winhttp normaliz nlscheck,)
 
 clean-deps:
 	rm -rf out
