@@ -9,6 +9,9 @@
 #include <memory>
 #include <string>
 
+#include <climits>
+#include <cstdlib>
+
 namespace lockbox {
 
 class RecentlyUsedPathsParseError : public std::runtime_error {
@@ -84,6 +87,16 @@ writestringterm(encfs::File &f, encfs::fs_off_t off, const std::string &s, encfs
   return off + 1;
 }
 
+// NB: we have to define our own version of to_string() since old versions
+//     of mingw don't include it
+std::string
+to_string(unsigned long t) {
+  static_assert(sizeof(t) <= 8, "unsigned long is too big");
+  char buf[21]; // log10(2**64-1) => 19.xxx
+  auto num_chars = snprintf(buf, sizeof(buf), "%lu", t);
+  return std::string(buf, num_chars);
+}
+
 }
 
 class RecentlyUsedPathStoreV1 {
@@ -108,7 +121,14 @@ private:
   _read_unsigned_int(_rps_int::FileReader & fit) {
       auto str = _rps_int::read_string(fit, '\n', RecentlyUsedPathStoreV1::MAX_NUM_SIZE);
       try {
-          return std::stoul(str);
+        // NB: we'd use std::stoul() normally
+        //     but old versions of mingw don't support it
+        errno = 0;
+        auto toret = strtoul(str.c_str(), NULL, 10);
+        if (toret == ULONG_MAX && errno) {
+          throw std::invalid_argument("couldn't convert: " + str);
+        }
+        return toret;
       }
       catch (const std::invalid_argument & err) {
           throw RecentlyUsedPathsParseError(err.what());
@@ -174,7 +194,7 @@ private:
         throw std::runtime_error("BAD MAGIC: " + magic);
       }
 
-      auto read_rev = std::stoul(_rps_int::read_string(fit, '\n', RecentlyUsedPathStoreV1::MAX_NUM_SIZE));
+      auto read_rev = (rev_t) _read_unsigned_int(fit);
       if (read_rev != rev) throw std::runtime_error("File rev has changeD!");
     }
 
@@ -185,12 +205,12 @@ private:
     encfs::fs_off_t off = 0;
 
     off = _rps_int::writestringterm(f, off, RecentlyUsedPathStoreV1::MAGIC, '\n');
-    off = _rps_int::writestringterm(f, off, std::to_string(new_rev), '\n');
-    off = _rps_int::writestringterm(f, off, std::to_string(paths.size()), '\n');
+    off = _rps_int::writestringterm(f, off, _rps_int::to_string(new_rev), '\n');
+    off = _rps_int::writestringterm(f, off, _rps_int::to_string(paths.size()), '\n');
 
     for (const auto & path : paths) {
       auto pstring = std::string(path);
-      off = _rps_int::writestringterm(f, off, std::to_string(pstring.size()), '\n');
+      off = _rps_int::writestringterm(f, off, _rps_int::to_string(pstring.size()), '\n');
       off = _rps_int::writestringterm(f, off, pstring, '\n');
     }
 
