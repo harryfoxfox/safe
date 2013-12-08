@@ -22,8 +22,6 @@
 #include <davfuse/iface_util.h>
 #include <davfuse/shared_types_fs.h>
 
-#define OUT_VAR
-
 #ifdef __cplusplus
 #include <encfs/fs/FsIO.h>
 
@@ -46,6 +44,11 @@ typedef struct _fsio_handle *fs_fsio_handle_t;
 typedef struct _fsio_directory_handle *fs_fsio_directory_handle_t;
 typedef struct _fsio_file_handle *fs_fsio_file_handle_t;
 
+#endif
+
+#ifndef OUT_VAR
+#define OUT_VAR
+#define __FS_FSIO_DEFINED_OUT_VAR
 #endif
 
 fs_error_t
@@ -135,10 +138,13 @@ fs_fsio_path_join(fs_fsio_handle_t fs, const char *p, const char *n);
 
 CREATE_IMPL_TAG(FS_FSIO_IMPL);
 
+#ifdef __FS_FSIO_DEFINED_OUT_VAR
+#undef __FS_FSIO_DEFINED_OUT_VAR
+#undef OUT_VAR
+#endif
+
 #ifdef __cplusplus
 }
 #endif
-
-#undef OUT_VAR
 
 #endif
