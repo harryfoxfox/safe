@@ -143,7 +143,7 @@ clean-deps:
 clean:
 	rm -f src/lockbox/*.o
 
-SRCS = fs_fsio.cpp CFsToFsIO.cpp lockbox_server.cpp \
+SRCS = fs_fsio.cpp CFsToFsIO.cpp webdav_server.cpp fs.cpp \
 	SecureMemPasswordReader.cpp UnicodeWrapperFsIO.cpp \
 	$(if $(IS_WIN_TARGET),unicode_fs_win.cpp,) \
 	$(if $(IS_MAC_TARGET),unicode_fs_mac.mm,)

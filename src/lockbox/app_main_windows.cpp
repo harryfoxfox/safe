@@ -17,13 +17,14 @@
  */
 
 #include <lockbox/product_name.h>
+#include <lockbox/fs.hpp>
 #include <lockbox/lockbox_constants.h>
-#include <lockbox/lockbox_server.hpp>
 #include <lockbox/logging.h>
 #include <lockbox/mount_win.hpp>
 #include <lockbox/recent_paths_storage.hpp>
 #include <lockbox/tray_menu.hpp>
 #include <lockbox/tray_menu_win.hpp>
+#include <lockbox/webdav_server.hpp>
 #include <lockbox/windows_about_dialog.hpp>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_create_lockbox_dialog.hpp>

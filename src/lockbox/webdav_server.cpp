@@ -16,33 +16,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <encfs/cipher/MemoryPool.h>
-#include <encfs/fs/EncfsFsIO.h>
-#include <encfs/fs/FileUtils.h>
+#include <lockbox/webdav_server.hpp>
+
+#include <lockbox/fs_fsio.h>
+#include <lockbox/util.hpp>
+
+#include <encfs/fs/FsIO.h>
 
 #include <davfuse/c_util.h>
 #include <davfuse/event_loop.h>
 #include <davfuse/http_helpers.h>
 #include <davfuse/iface_util.h>
 #include <davfuse/logging.h>
-#include <davfuse/fs.h>
 #include <davfuse/fs_dynamic.h>
-#include <davfuse/fs_native.h>
 #include <davfuse/sockets.h>
 #include <davfuse/webdav_backend_fs.h>
 #include <davfuse/webdav_server.h>
 #include <davfuse/webdav_server_xml.h>
-#include <davfuse/uthread.h>
 #include <davfuse/util.h>
 #include <davfuse/util_sockets.h>
-
-#include <lockbox/CFsToFsIO.hpp>
-#include <lockbox/SecureMemPasswordReader.hpp>
-#include <lockbox/fs_fsio.h>
-#include <lockbox/util.hpp>
-#include <lockbox/UnicodeWrapperFsIO.hpp>
-
-#include <lockbox/lockbox_server.hpp>
 
 #include <sstream>
 
@@ -98,62 +90,6 @@ global_webdav_shutdown() {
   shutdown_socket_subsystem();
 }
 
-static const FsOperations native_ops = {
-  .open = (fs_dynamic_open_fn) fs_native_open,
-  .fgetattr = (fs_dynamic_fgetattr_fn) fs_native_fgetattr,
-  .ftruncate = (fs_dynamic_ftruncate_fn) fs_native_ftruncate,
-  .read = (fs_dynamic_read_fn) fs_native_read,
-  .write = (fs_dynamic_write_fn) fs_native_write,
-  .close = (fs_dynamic_close_fn) fs_native_close,
-  .opendir = (fs_dynamic_opendir_fn) fs_native_opendir,
-  .readdir = (fs_dynamic_readdir_fn) fs_native_readdir,
-  .closedir = (fs_dynamic_closedir_fn) fs_native_closedir,
-  .remove = (fs_dynamic_remove_fn) fs_native_remove,
-  .mkdir = (fs_dynamic_mkdir_fn) fs_native_mkdir,
-  .getattr = (fs_dynamic_getattr_fn) fs_native_getattr,
-  .rename = (fs_dynamic_rename_fn) fs_native_rename,
-  .set_times = (fs_dynamic_set_times_fn) fs_native_set_times,
-  .path_is_root = (fs_dynamic_path_is_root_fn) fs_native_path_is_root,
-  .path_is_valid = (fs_dynamic_path_is_valid_fn) fs_native_path_is_valid,
-  .path_dirname = (fs_dynamic_path_dirname_fn) fs_native_path_dirname,
-  .path_basename = (fs_dynamic_path_basename_fn) fs_native_path_basename,
-  .path_join = (fs_dynamic_path_join_fn) fs_native_path_join,
-  .destroy = (fs_dynamic_destroy_fn) fs_native_destroy,
-};
-
-CXX_STATIC_ATTR
-std::shared_ptr<encfs::FsIO>
-create_native_fs() {
-  const bool destroy_fs_on_delete = true;
-  const auto native_fs = fs_native_default_new();
-  if (!native_fs) throw std::runtime_error("error while creating posix fs!");
-  const auto base_fs = fs_dynamic_new(native_fs, &native_ops, destroy_fs_on_delete);
-  if (!base_fs) {
-    fs_native_destroy(native_fs);
-    throw std::runtime_error("error while creating base fs!");
-  }
-  return std::make_shared<CFsToFsIO>(base_fs, destroy_fs_on_delete);
-}
-
-CXX_STATIC_ATTR
-std::shared_ptr<encfs::FsIO>
-create_enc_fs(std::shared_ptr<encfs::FsIO> base_fs_io,
-              encfs::Path encrypted_folder_path,
-              const encfs::EncfsConfig & cfg,
-              encfs::SecureMem password) {
-  // encfs options
-  auto encfs_opts = std::make_shared<encfs::EncFS_Opts>();
-  encfs_opts->fs_io = std::move(base_fs_io);
-  encfs_opts->rootDir = encrypted_folder_path;
-  encfs_opts->passwordReader = std::make_shared<SecureMemPasswordReader>(std::move(password));
-
-  // encfs
-  auto encfs_io = std::make_shared<encfs::EncfsFsIO>();
-  encfs_io->initFS(std::move(encfs_opts), cfg);
-
-  return std::make_shared<UnicodeWrapperFsIO>(encfs_io, std::move(encrypted_folder_path));
-}
-
 static const FsOperations fsio_ops = {
   .open = (fs_dynamic_open_fn) fs_fsio_open,
   .fgetattr = (fs_dynamic_fgetattr_fn) fs_fsio_fgetattr,
@@ -197,12 +133,12 @@ EVENT_HANDLER_DEFINE(_when_server_runs, ev_type, ev, ud) {
 
 CXX_STATIC_ATTR
 void
-run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
-                          encfs::Path root_path,
-                          ipv4_t ipaddr,
-                          port_t port,
-                          const std::string & mount_name,
-                          std::function<void(event_loop_handle_t)> when_done) {
+run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
+                  encfs::Path root_path,
+                  ipv4_t ipaddr,
+                  port_t port,
+                  const std::string & mount_name,
+                  std::function<void(event_loop_handle_t)> when_done) {
   // create event loop (implemented by file descriptors)
   auto loop = event_loop_default_new();
   if (!loop) throw std::runtime_error("Couldn't create event loop");

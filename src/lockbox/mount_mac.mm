@@ -8,8 +8,9 @@
 
 #import <lockbox/mount_mac.hpp>
 
+#import <lockbox/fs.hpp>
 #import <lockbox/util.hpp>
-#import <lockbox/lockbox_server.hpp>
+#import <lockbox/webdav_server.hpp>
 
 #import <encfs/fs/FsIO.h>
 
@@ -264,12 +265,12 @@ mount_thread_fn(void *p) {
         sent_signal = true;
     };
         
-    lockbox::run_lockbox_webdav_server(std::move(enc_fs),
-                                       std::move(params->encrypted_container_path),
-                                       ip_addr,
-                                       listen_port,
-                                       std::move(params->mount_name),
-                                       our_callback);
+    lockbox::run_webdav_server(std::move(enc_fs),
+                               std::move(params->encrypted_container_path),
+                               ip_addr,
+                               listen_port,
+                               std::move(params->mount_name),
+                               our_callback);
     
     if (!sent_signal) params->event->send_mount_fail();
 

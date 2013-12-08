@@ -16,33 +16,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef _lockbox_lockbox_server_hpp
-#define _lockbox_lockbox_server_hpp
+#ifndef _lockbox_fs_hpp
+#define _lockbox_fs_hpp
 
 #include <encfs/fs/FsIO.h>
 #include <encfs/fs/FileUtils.h>
-
 #include <encfs/cipher/MemoryPool.h>
-
-#include <davfuse/event_loop.h>
-#include <davfuse/util_sockets.h>
 
 #include <functional>
 #include <memory>
+#include <string>
 
 #ifndef _CXX_STATIC_BUILD
 #define CXX_STATIC_ATTR
 #endif
 
 namespace lockbox {
-
-CXX_STATIC_ATTR
-bool
-global_webdav_init();
-
-CXX_STATIC_ATTR
-void
-global_webdav_shutdown();
 
 CXX_STATIC_ATTR
 std::shared_ptr<encfs::FsIO>
@@ -55,19 +44,10 @@ create_enc_fs(std::shared_ptr<encfs::FsIO> base_fs_io,
               const encfs::EncfsConfig & cfg,
               encfs::SecureMem password);
 
-CXX_STATIC_ATTR
-void
-run_lockbox_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
-                          encfs::Path root_path,
-                          ipv4_t ipaddr,
-                          port_t port,
-                          const std::string & mount_name,
-                          std::function<void(event_loop_handle_t)> when_done);
-
 }
 
 #ifdef _CXX_STATIC_BUILD
-#include <lockbox/lockbox_server.cpp>
+#include <lockbox/fs.cpp>
 #else
 #undef CXX_STATIC_ATTR
 #endif

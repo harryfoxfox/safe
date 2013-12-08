@@ -11,7 +11,6 @@
 		9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101761182A1499001D50E8 /* CFsToFsIO.cpp */; };
 		9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101763182A1499001D50E8 /* fs_fsio.cpp */; };
 		9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96101766182A1499001D50E8 /* LBXAppDelegate.mm */; };
-		96101770182A1499001D50E8 /* lockbox_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101767182A1499001D50E8 /* lockbox_server.cpp */; };
 		96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */; };
 		96185B3418361C1900A2A67F /* unicode_fs_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96185B3018361C1900A2A67F /* unicode_fs_mac.mm */; };
 		96185B3518361C1900A2A67F /* UnicodeWrapperFsIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96185B3218361C1900A2A67F /* UnicodeWrapperFsIO.cpp */; };
@@ -34,6 +33,8 @@
 		966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */; };
 		966ED38D184F2F3100463408 /* mount_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
+		96F36AC2185470B500DEE145 /* fs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36ABE185470B500DEE145 /* fs.cpp */; };
+		96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36AC0185470B500DEE145 /* webdav_server.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,8 +45,6 @@
 		96101764182A1499001D50E8 /* fs_fsio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fs_fsio.h; path = ../src/lockbox/fs_fsio.h; sourceTree = "<group>"; };
 		96101765182A1499001D50E8 /* LBXAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXAppDelegate.h; path = ../src/lockbox/LBXAppDelegate.h; sourceTree = "<group>"; };
 		96101766182A1499001D50E8 /* LBXAppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXAppDelegate.mm; path = ../src/lockbox/LBXAppDelegate.mm; sourceTree = "<group>"; };
-		96101767182A1499001D50E8 /* lockbox_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lockbox_server.cpp; path = ../src/lockbox/lockbox_server.cpp; sourceTree = "<group>"; };
-		96101768182A1499001D50E8 /* lockbox_server.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = lockbox_server.hpp; path = ../src/lockbox/lockbox_server.hpp; sourceTree = "<group>"; };
 		9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SecureMemPasswordReader.cpp; path = ../src/lockbox/SecureMemPasswordReader.cpp; sourceTree = "<group>"; };
 		9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SecureMemPasswordReader.hpp; path = ../src/lockbox/SecureMemPasswordReader.hpp; sourceTree = "<group>"; };
 		9610176C182A1499001D50E8 /* util.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = util.hpp; path = ../src/lockbox/util.hpp; sourceTree = "<group>"; };
@@ -93,6 +92,10 @@
 		96974443185422000042FA6C /* tray_menu.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = tray_menu.hpp; path = ../src/lockbox/tray_menu.hpp; sourceTree = "<group>"; };
 		96E1639217A74F55009BE867 /* Lock-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Lock-icon.png"; path = "../Lock-icon.png"; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
+		96F36ABE185470B500DEE145 /* fs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs.cpp; path = ../src/lockbox/fs.cpp; sourceTree = "<group>"; };
+		96F36ABF185470B500DEE145 /* fs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = fs.hpp; path = ../src/lockbox/fs.hpp; sourceTree = "<group>"; };
+		96F36AC0185470B500DEE145 /* webdav_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = webdav_server.cpp; path = ../src/lockbox/webdav_server.cpp; sourceTree = "<group>"; };
+		96F36AC1185470B500DEE145 /* webdav_server.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = webdav_server.hpp; path = ../src/lockbox/webdav_server.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +118,10 @@
 		9610175F182A1407001D50E8 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				96F36ABE185470B500DEE145 /* fs.cpp */,
+				96F36ABF185470B500DEE145 /* fs.hpp */,
+				96F36AC0185470B500DEE145 /* webdav_server.cpp */,
+				96F36AC1185470B500DEE145 /* webdav_server.hpp */,
 				96974443185422000042FA6C /* tray_menu.hpp */,
 				9697444218541D430042FA6C /* lockbox_constants.h */,
 				966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */,
@@ -142,8 +149,6 @@
 				96101764182A1499001D50E8 /* fs_fsio.h */,
 				96101765182A1499001D50E8 /* LBXAppDelegate.h */,
 				96101766182A1499001D50E8 /* LBXAppDelegate.mm */,
-				96101767182A1499001D50E8 /* lockbox_server.cpp */,
-				96101768182A1499001D50E8 /* lockbox_server.hpp */,
 				9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */,
 				9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */,
 				9610176C182A1499001D50E8 /* util.hpp */,
@@ -322,13 +327,14 @@
 				96185B3418361C1900A2A67F /* unicode_fs_mac.mm in Sources */,
 				9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */,
 				96230549182B2E5200913551 /* LBXCreateLockboxWindowController.mm in Sources */,
+				96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */,
 				966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */,
 				9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */,
 				9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */,
-				96101770182A1499001D50E8 /* lockbox_server.cpp in Sources */,
 				9632FB7B182F13BD003C3F2E /* LBXMountLockboxWindowController.mm in Sources */,
 				966ED38D184F2F3100463408 /* mount_lockbox_dialog_logic.cpp in Sources */,
 				96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */,
+				96F36AC2185470B500DEE145 /* fs.cpp in Sources */,
 				96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */,
 				9632FB76182F1160003C3F2E /* app_main_mac.m in Sources */,
 				9644D029182F251600ED4911 /* mount_mac.mm in Sources */,

@@ -8,13 +8,14 @@
 
 #import <lockbox/LBXAppDelegate.h>
 
+#import <lockbox/fs.hpp>
 #import <lockbox/mount_mac.hpp>
 #import <lockbox/lockbox_constants.h>
-#import <lockbox/lockbox_server.hpp>
 #import <lockbox/logging.h>
 #import <lockbox/recent_paths_storage.hpp>
 #import <lockbox/tray_menu.hpp>
 #import <lockbox/util.hpp>
+#import <lockbox/webdav_server.hpp>
 
 // 10 to model after system mac recent menus
 static NSString *const LBX_ACTION_KEY = @"_lbx_action";

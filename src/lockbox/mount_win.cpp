@@ -18,8 +18,9 @@
 
 #include <lockbox/mount_win.hpp>
 
-#include <lockbox/lockbox_server.hpp>
+#include <lockbox/fs.hpp>
 #include <lockbox/util.hpp>
+#include <lockbox/webdav_server.hpp>
 #include <lockbox/windows_string.hpp>
 
 #include <davfuse/util_sockets.h>
@@ -241,12 +242,12 @@ mount_thread(LPVOID params_) {
     sent_signal = true;
   };
 
-  lockbox::run_lockbox_webdav_server(std::move(enc_fs),
-                                     std::move(params->encrypted_directory_path),
-                                     ip_addr,
-                                     listen_port,
-                                     std::move(params->mount_name),
-                                     our_callback);
+  lockbox::run_webdav_server(std::move(enc_fs),
+                             std::move(params->encrypted_directory_path),
+                             ip_addr,
+                             listen_port,
+                             std::move(params->mount_name),
+                             our_callback);
 
   if (!sent_signal) params->mount_event_p->set_mount_fail();
 
