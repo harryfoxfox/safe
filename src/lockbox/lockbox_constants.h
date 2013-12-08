@@ -55,6 +55,9 @@ enum {
 #define LOCKBOX_DIALOG_NO_CONFIG_EXISTS_TITLE "Not a Bitvault"
 #define LOCKBOX_DIALOG_NO_CONFIG_EXISTS_MESSAGE "The location you selected is not a Bitvault."
 
+#define LOCKBOX_DIALOG_QUIT_CONFIRMATION_TITLE "Quit Bitvault Now?"
+#define LOCKBOX_DIALOG_QUIT_CONFIRMATION_MESSAGE "You currently have Bitvaults mounted, if you quit they will not be accessible until you run Bitvault again. Quit Bitvault Now?"
+
 #define LOCKBOX_TRAY_ICON_WELCOME_TITLE (PRODUCT_NAME_A " is now Running!")
 #define LOCKBOX_TRAY_ICON_WELCOME_MSG                                   \
   (                                                                     \

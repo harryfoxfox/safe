@@ -231,11 +231,11 @@ public:
             bool actually_quit = true;
             if (!self->mounts.empty()) {
                 [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
-                NSAlert *alert = [NSAlert alertWithMessageText:@"Are you sure you want to quit?"
+                NSAlert *alert = [NSAlert alertWithMessageText:[NSString stringWithUTF8String:LOCKBOX_DIALOG_QUIT_CONFIRMATION_TITLE]
                                                  defaultButton:@"Quit"
                                                alternateButton:@"Cancel"
                                                    otherButton:nil
-                                     informativeTextWithFormat:@"You currently have Bitvaults mounted, if you quit they will not be accessible until you run Bitvault again.", nil];
+                                     informativeTextWithFormat:[NSString stringWithUTF8String:LOCKBOX_DIALOG_QUIT_CONFIRMATION_MESSAGE], nil];
                 actually_quit = [alert runModal] == NSAlertDefaultReturn;
             }
             if (actually_quit) [NSApp terminate:sender];

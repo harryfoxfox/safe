@@ -225,6 +225,16 @@ run_mount_dialog(HWND lockbox_main_window, WindowData & wd,
 }
 
 static
+bool
+run_quit_confirmation_dialog(HWND lockbox_main_window) {
+  auto ret = MessageBoxW(lockbox_main_window,
+                         w32util::widen(LOCKBOX_DIALOG_QUIT_CONFIRMATION_MESSAGE).c_str(),
+                         w32util::widen(LOCKBOX_DIALOG_QUIT_CONFIRMATION_TITLE).c_str(),
+                         MB_YESNO | MB_ICONWARNING | MB_SETFOREGROUND);
+  return ret == IDYES;
+}
+
+static
 void
 bubble_msg(HWND lockbox_main_window,
            const std::string title, const std::string &msg) {
@@ -302,7 +312,10 @@ dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT select
     break;
   }
   case TrayMenuAction::QUIT_APP: {
-    DestroyWindow(lockbox_main_window);
+    const bool actually_quit = wd.mounts.empty()
+      ? true
+      : run_quit_confirmation_dialog(lockbox_main_window);
+    if (actually_quit) DestroyWindow(lockbox_main_window);
     break;
   }
   case TrayMenuAction::OPEN: {
