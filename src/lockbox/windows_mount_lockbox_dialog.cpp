@@ -18,7 +18,7 @@
 
 #include <lockbox/windows_mount_lockbox_dialog.hpp>
 
-#include <lockbox/lockbox_constants.h>
+#include <lockbox/constants.h>
 #include <lockbox/mount_lockbox_dialog_logic.hpp>
 #include <lockbox/mount_win.hpp>
 #include <lockbox/util.hpp>

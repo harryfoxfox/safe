@@ -16,9 +16,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <lockbox/product_name.h>
+#include <lockbox/constants.h>
 #include <lockbox/fs.hpp>
-#include <lockbox/lockbox_constants.h>
 #include <lockbox/logging.h>
 #include <lockbox/mount_win.hpp>
 #include <lockbox/recent_paths_storage.hpp>

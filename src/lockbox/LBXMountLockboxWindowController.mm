@@ -9,7 +9,7 @@
 #import <lockbox/LBXMountLockboxWindowController.h>
 
 #import <lockbox/LBXProgressSheetController.h>
-#import <lockbox/lockbox_constants.h>
+#import <lockbox/constants.h>
 #import <lockbox/logging.h>
 #import <lockbox/mount_lockbox_dialog_logic.hpp>
 

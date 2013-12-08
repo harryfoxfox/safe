@@ -7,9 +7,10 @@
 //
 
 #import <lockbox/LBXCreateLockboxWindowController.h>
+
 #import <lockbox/LBXProgressSheetController.h>
+#import <lockbox/constants.h>
 #import <lockbox/create_lockbox_dialog_logic.hpp>
-#import <lockbox/lockbox_constants.h>
 #import <lockbox/mount_mac.hpp>
 
 #import <encfs/fs/FileUtils.h>

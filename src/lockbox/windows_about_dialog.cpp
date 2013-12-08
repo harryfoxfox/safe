@@ -18,7 +18,7 @@
 
 #include <lockbox/windows_about_dialog.hpp>
 
-#include <lockbox/lockbox_constants.h>
+#include <lockbox/constants.h>
 #include <lockbox/logging.h>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_gui_util.hpp>

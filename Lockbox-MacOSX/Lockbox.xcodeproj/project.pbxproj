@@ -88,8 +88,8 @@
 		966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mount_lockbox_dialog_logic.cpp; path = ../src/lockbox/mount_lockbox_dialog_logic.cpp; sourceTree = "<group>"; };
 		966ED38A184F2F3100463408 /* mount_lockbox_dialog_logic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mount_lockbox_dialog_logic.hpp; path = ../src/lockbox/mount_lockbox_dialog_logic.hpp; sourceTree = "<group>"; };
 		966ED38B184F2F3100463408 /* product_name.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = product_name.h; path = ../src/lockbox/product_name.h; sourceTree = "<group>"; };
-		9697444218541D430042FA6C /* lockbox_constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lockbox_constants.h; path = ../src/lockbox/lockbox_constants.h; sourceTree = "<group>"; };
 		96974443185422000042FA6C /* tray_menu.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = tray_menu.hpp; path = ../src/lockbox/tray_menu.hpp; sourceTree = "<group>"; };
+		96A7AEAB185473030003AEE5 /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../src/lockbox/constants.h; sourceTree = "<group>"; };
 		96E1639217A74F55009BE867 /* Lock-icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Lock-icon.png"; path = "../Lock-icon.png"; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
 		96F36ABE185470B500DEE145 /* fs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs.cpp; path = ../src/lockbox/fs.cpp; sourceTree = "<group>"; };
@@ -118,12 +118,12 @@
 		9610175F182A1407001D50E8 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				96A7AEAB185473030003AEE5 /* constants.h */,
 				96F36ABE185470B500DEE145 /* fs.cpp */,
 				96F36ABF185470B500DEE145 /* fs.hpp */,
 				96F36AC0185470B500DEE145 /* webdav_server.cpp */,
 				96F36AC1185470B500DEE145 /* webdav_server.hpp */,
 				96974443185422000042FA6C /* tray_menu.hpp */,
-				9697444218541D430042FA6C /* lockbox_constants.h */,
 				966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */,
 				966ED387184F2F3100463408 /* create_lockbox_dialog_logic.hpp */,
 				966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */,

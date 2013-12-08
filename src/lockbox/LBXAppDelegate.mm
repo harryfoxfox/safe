@@ -8,9 +8,9 @@
 
 #import <lockbox/LBXAppDelegate.h>
 
+#import <lockbox/constants.h>
 #import <lockbox/fs.hpp>
 #import <lockbox/mount_mac.hpp>
-#import <lockbox/lockbox_constants.h>
 #import <lockbox/logging.h>
 #import <lockbox/recent_paths_storage.hpp>
 #import <lockbox/tray_menu.hpp>

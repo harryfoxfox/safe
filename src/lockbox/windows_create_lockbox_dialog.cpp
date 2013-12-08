@@ -18,8 +18,8 @@
 
 #include <lockbox/windows_create_lockbox_dialog.hpp>
 
+#include <lockbox/constants.h>
 #include <lockbox/create_lockbox_dialog_logic.hpp>
-#include <lockbox/lockbox_constants.h>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_error.hpp>
