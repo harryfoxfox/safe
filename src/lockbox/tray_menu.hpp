@@ -21,6 +21,7 @@
 
 #include <lockbox/util.hpp>
 
+#include <cassert>
 #include <cstdint>
 
 namespace lockbox {
