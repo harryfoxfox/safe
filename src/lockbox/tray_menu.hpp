@@ -27,6 +27,7 @@
 namespace lockbox {
 
 enum class TrayMenuAction : uint16_t {
+  _NO_ACTION,
   UNMOUNT,
   OPEN,
   CREATE,
