@@ -213,7 +213,7 @@ public:
             break;
         }
         case TrayMenuAction::ABOUT_APP: {
-            [self _loadAboutWindowTitle:@"About Bitvault"];
+            [self _loadAboutWindowTitle:[NSString stringWithUTF8String:LOCKBOX_DIALOG_ABOUT_TITLE]];
             break;
         }
         case TrayMenuAction::TRIGGER_BREAKPOINT: {
@@ -559,7 +559,7 @@ _Pragma("clang diagnostic pop") \
         [self startAppUI];
     }
     else {
-        [self _loadAboutWindowTitle:@"Welcome to Bitvault!"];
+        [self _loadAboutWindowTitle:[NSString stringWithUTF8String:LOCKBOX_DIALOG_WELCOME_TITLE]];
     }
 }
 
