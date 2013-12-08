@@ -305,10 +305,8 @@ dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT select
     break;
   }
   case TrayMenuAction::TEST_BUBBLE: {
-    bubble_msg(lockbox_main_window, "Short Title",
-               "Very long message full of meaningful info that you "
-               "will find very interesting because you love to read "
-               "tray icon bubbles. Don't you? Don't you?!?!");
+    bubble_msg(lockbox_main_window, LOCKBOX_NOTIFICATION_TEST_TITLE,
+               LOCKBOX_NOTIFICATION_TEST_MESSAGE);
     break;
   }
   case TrayMenuAction::QUIT_APP: {

@@ -221,10 +221,8 @@ public:
             break;
         }
         case TrayMenuAction::TEST_BUBBLE: {
-            [self notifyUserTitle:@"Short Title"
-                          message:(@"Very long message full of meaningful info that you "
-                                   @"will find very interesting because you love to read "
-                                   @"tray icon bubbles. Don't you? Don't you?!?!")];
+            [self notifyUserTitle:[NSString stringWithUTF8String:LOCKBOX_NOTIFICATION_TEST_TITLE]
+                          message:[NSString stringWithUTF8String:LOCKBOX_NOTIFICATION_TEST_MESSAGE]];
             break;
         }
         case TrayMenuAction::QUIT_APP: {

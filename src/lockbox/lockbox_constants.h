@@ -104,4 +104,11 @@ enum {
   "! Hopefully it makes your life just a little "                       \
   "bit safer."                                                          \
                                                                         )
+
+#define LOCKBOX_NOTIFICATION_TEST_TITLE "Short Title"
+#define LOCKBOX_NOTIFICATION_TEST_MESSAGE \
+  ("Very long message full of meaningful info that you " \
+   "will find very interesting because you love to read " \
+   "tray icon bubbles. Don't you? Don't you?!?!")
+
 #endif
