@@ -112,14 +112,7 @@ public:
 static
 std::string
 escape_double_quotes(std::string mount_name) {
-    std::vector<char> replaced;
-    for (const auto & c : mount_name) {
-        if (c == '"') {
-            replaced.push_back('\\');
-        }
-        replaced.push_back(c);
-    }
-    return std::string(replaced.begin(), replaced.end());
+    return lockbox::escape_double_quotes(std::move(mount_name));
 }
 
 static

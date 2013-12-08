@@ -8,12 +8,13 @@
 
 #import <lockbox/LBXCreateLockboxWindowController.h>
 #import <lockbox/LBXProgressSheetController.h>
+#import <lockbox/create_lockbox_dialog_logic.hpp>
+#import <lockbox/lockbox_constants.h>
+#import <lockbox/mount_mac.hpp>
 
-#include <lockbox/mount_mac.hpp>
+#import <encfs/fs/FileUtils.h>
 
-#include <encfs/fs/FileUtils.h>
-
-#include <encfs/cipher/MemoryPool.h>
+#import <encfs/cipher/MemoryPool.h>
 
 @interface LBXCreateLockboxWindowController ()
 
@@ -66,77 +67,36 @@
     inputErrorAlert(self.window, title, msg);
 }
 
-- (opt::optional<std::pair<encfs::Path, encfs::SecureMem>>) verifyFields {
-    // check if this location is a well-formed path
-    opt::optional<encfs::Path> maybeLocationPath;
-    try {
-        maybeLocationPath = self->fs->pathFromString(self.locationPathControl.URL.path.fileSystemRepresentation);
-    }
-    catch (...) {
-        // location is bad
-        [self inputErrorAlertWithTitle:@"Bad Location"
-                               message:@"The location you have chosen is invalid."];
-        return opt::nullopt;
-    }
-    
-    auto locationPath = std::move(*maybeLocationPath);
-    
-    // check if location exists
-    if (!encfs::file_exists(self->fs, locationPath)) {
-        [self inputErrorAlertWithTitle:@"Location does not exist"
-                               message:@"The location you have chosen does not exist."];
-        return opt::nullopt;
-    }
-    
-    // check validity of name field
-    NSString *name = self.nameTextField.stringValue;
-    
-    if (![name length]) {
-        [self inputErrorAlertWithTitle:@"Name is Empty"
-                               message:@"The name you have entered is empty. Please enter a non-empty name."];
-        return opt::nullopt;
-    }
-    
-    opt::optional<encfs::Path> maybeContainerPath;
-    try {
-        maybeContainerPath = locationPath.join(name.fileSystemRepresentation);
-    }
-    catch (...) {
-        [self inputErrorAlertWithTitle:@"Bad Name"
-                               message:@"The name you have entered is not valid for a folder name. Please choose a name that's more appropriate for a folder, try not using special characters."];
-        return opt::nullopt;
-    }
-    
-    auto containerPath = *maybeContainerPath;
-    
-    if (encfs::file_exists(self->fs, containerPath)) {
-        // path already exists
-        [self inputErrorAlertWithTitle:@"File Already Exists"
-                               message:@"A file already exists with the name you have chosen, please choose another name."];
-        return opt::nullopt;
-    }
-    
-    // check validity of password
-    NSString *password = self.passwordSecureTextField.stringValue;
-    
-    if (![password length]) {
-        [self inputErrorAlertWithTitle:@"Password is Empty"
-                               message:@"The password you have entered is empty. Please enter a non-empty password."];
-        return opt::nullopt;
-    }
-    
-    NSString *passwordConfirm = self.confirmSecureTextField.stringValue;
-    
-    if (![password isEqualToString:passwordConfirm]) {
-        [self inputErrorAlertWithTitle:@"Passwords Don't Match"
-                               message:@"The passwords you entered don't match. Please enter matching passwords for the \"Password\" and \"Confirm\" fields."];
-        return opt::nullopt;
-    }
-    
-    auto mem = encfs::SecureMem([password lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1);
-    memcpy(mem.data(), password.UTF8String, mem.size());
+static
+encfs::SecureMem
+NSStringToSecureMem(NSString *str) {
+    auto password_buf = encfs::SecureMem([str lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1);
+    memcpy(password_buf.data(), str.UTF8String, password_buf.size());
+    return std::move(password_buf);
+}
 
-    return std::make_pair(std::move(containerPath), std::move(mem));
+- (opt::optional<std::pair<encfs::Path, encfs::SecureMem>>) verifyFields {
+    auto password_buf = NSStringToSecureMem(self.passwordSecureTextField.stringValue);
+    auto confirm_password_buf = NSStringToSecureMem(self.confirmSecureTextField.stringValue);
+    
+    NSString *location = self.locationPathControl.URL.path;
+    NSString *name = self.nameTextField.stringValue;
+    auto error_msg =
+        lockbox::verify_create_lockbox_dialog_fields(self->fs,
+                                                     location.length ? location.fileSystemRepresentation : "",
+                                                     name.length ? name.fileSystemRepresentation : "",
+                                                     password_buf, confirm_password_buf);
+    if (error_msg) {
+        // location is bad
+        [self inputErrorAlertWithTitle:[NSString stringWithUTF8String:error_msg->title.c_str()]
+                               message:[NSString stringWithUTF8String:error_msg->message.c_str()]];
+        return opt::nullopt;
+    }
+
+    auto encrypted_container_path =
+        self->fs->pathFromString(self.locationPathControl.URL.path.fileSystemRepresentation).join(self.nameTextField.stringValue.fileSystemRepresentation);
+
+    return std::make_pair(std::move(encrypted_container_path), std::move(password_buf));
 }
 
 
@@ -175,10 +135,10 @@
         [self.window performClose:self];
     };
     
-    auto onSaveCfgSuccess = ^(encfs::EncfsConfig cfg) {
+    auto onCreateCfgSuccess = ^(encfs::EncfsConfig cfg) {
         // success pass values to app
         showBlockingSheetMessage(self.window,
-                                 @"Mounting new Bitvault",
+                                 [NSString stringWithUTF8String:LOCKBOX_PROGRESS_MOUNTING_TITLE],
                                  onMountSuccess,
                                  onFail,
                                  lockbox::mac::mount_new_encfs_drive,
@@ -186,24 +146,18 @@
                                  encrypted_container_path, cfg, password);
     };
     
-    auto onCreateCfgSuccess = ^(const encfs::EncfsConfig & cfg_) {
-        auto cfg = cfg_;
-        showBlockingSheetMessage(self.window,
-                                 @"Saving new configuration...",
-                                 onSaveCfgSuccess,
-                                 onFail,
-                                 ^{
-                                     self->fs->mkdir(encrypted_container_path);
-                                     encfs::write_config(self->fs, encrypted_container_path, cfg);
-                                     return cfg;
-                                 });
-    };
-    
     showBlockingSheetMessage(self.window,
-                             @"Creating new configuration...",
+                             [NSString stringWithUTF8String:LOCKBOX_PROGRESS_CREATING_TITLE],
                              onCreateCfgSuccess,
                              onFail,
-                             encfs::create_paranoid_config, password, use_case_safe_filename_encoding);
+                             ^{
+                               auto cfg =
+                                 encfs::create_paranoid_config(password,
+                                                               use_case_safe_filename_encoding);
+                               self->fs->mkdir(encrypted_container_path);
+                               encfs::write_config(self->fs, encrypted_container_path, cfg);
+                               return cfg;
+                             });
 }
 
 - (IBAction)cancelWindow:(id)sender {

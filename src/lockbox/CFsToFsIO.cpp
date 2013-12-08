@@ -66,9 +66,11 @@ public:
 #endif
     case FS_ERROR_INVALID_ARG: return std::errc::invalid_argument;
     case FS_ERROR_NO_MEM: return std::errc::not_enough_memory;
+    default: assert(false);
     }
     /* should never happen */
     assert(false);
+    return std::errc::io_error;
   }
 
   virtual const char *name() const noexcept {
@@ -93,6 +95,8 @@ public:
     default:
       assert(false);
     }
+    /* should never happen */
+    return "";
 #undef SC
   }
 };

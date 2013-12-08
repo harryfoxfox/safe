@@ -11,16 +11,6 @@ fi
 # just check libs for now
 # TODO: check headers as well!
 
-ANYGLOG_FILE=$(find "$APPDIR/../google-glog" \
-    -type f -and \
-    -newer "$APPDIR/out/deps/lib/libglog.a" 2>/dev/null | \
-    grep -v "^$APPDIR/../google-glog/.hg/" | \
-    head -n 1)
-if [ ! -e "$APPDIR/out/deps/lib/libglog.a" ] || [ "$ANYGLOG_FILE" ]; then
-    echo "google-glog is out of date" >> /dev/stderr
-    exit $DEPS_OUT_OF_DATE_RETURN_CODE
-fi
-
 ANYBOTAN_FILE=$(find "$APPDIR/encfs-dependencies/botan" \
     -type f -and \
     -newer "$APPDIR/out/deps/lib/libbotan-1.10.a" 2>/dev/null | \

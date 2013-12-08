@@ -16,57 +16,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef _LOCKBOX_WINNLS_H
-#define _LOCKBOX_WINNLS_H
+#ifndef __lockbox_windows_about_dialog_hpp
+#define __lockbox_windows_about_dialog_hpp
 
 #include <lockbox/lean_windows.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace lockbox { namespace win {
 
 WINAPI
-int CompareStringOrdinal(
-  LPCWSTR lpString1,
-  int cchCount1,
-  LPCWSTR lpString2,
-  int cchCount2,
-  BOOL bIgnoreCase
-);
+void
+about_dialog(HWND hwnd);
 
-#ifdef DONT_HAVE_WINNLS
-
-typedef enum _NORM_FORM {
-  NormalizationOther  = 0,
-  NormalizationC      = 0x1,
-  NormalizationD      = 0x2,
-  NormalizationKC     = 0x5,
-  NormalizationKD     = 0x6
-} NORM_FORM;
-
-WINAPI
-BOOL
-IsNormalizedString(
-  NORM_FORM NormForm,
-  LPCWSTR lpString,
-  int cwLength
-);
-
-WINAPI
-int
-NormalizeString(
-  NORM_FORM NormForm,
-  LPCWSTR lpSrcString,
-  int cwSrcLength,
-  LPWSTR lpDstString,
-  int cwDstLength
-);
-
-#endif
-
-#ifdef __cplusplus
-}
-#endif
-
+}}
 
 #endif

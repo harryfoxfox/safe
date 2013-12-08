@@ -9,8 +9,9 @@
 #import <lockbox/LBXMountLockboxWindowController.h>
 
 #import <lockbox/LBXProgressSheetController.h>
-
+#import <lockbox/lockbox_constants.h>
 #import <lockbox/logging.h>
+#import <lockbox/mount_lockbox_dialog_logic.hpp>
 
 @interface LBXMountLockboxWindowController ()
 
@@ -88,31 +89,18 @@
            self.passwordSecureTextField.stringValue.UTF8String,
            password.size());
     
-    opt::optional<encfs::Path> maybeLocationPath;
-    try {
-        maybeLocationPath = self->fs->pathFromString(self.locationPathControl.URL.path.UTF8String);
-    }
-    catch (...) {
-        inputErrorAlert(self.window, @"Bad Location",
-                        @"The location you chose is not a valid path.");
+    auto error_msg =
+        lockbox::verify_mount_lockbox_dialog_fields(self->fs,
+                                                    self.locationPathControl.URL.path.UTF8String,
+                                                    password);
+    if (error_msg) {
+        inputErrorAlert(self.window,
+                        [NSString stringWithUTF8String:error_msg->title.c_str()],
+                        [NSString stringWithUTF8String:error_msg->message.c_str()]);
         return;
     }
     
-    auto encrypted_container_path = *maybeLocationPath;
-    
-    bool is_dir = false;
-    try {
-        is_dir = encfs::is_directory(self->fs, encrypted_container_path);
-    }
-    catch (...) {
-        // TODO: log error?
-    }
-    
-    if (!is_dir) {
-        inputErrorAlert(self.window, @"Bad Location",
-                        @"The location you chose is not a folder.");
-        return;
-    }
+    auto encrypted_container_path = self->fs->pathFromString(self.locationPathControl.URL.path.fileSystemRepresentation);
     
     auto onFail = ^(const std::exception_ptr & eptr) {
         bool alerted = false;
@@ -122,9 +110,8 @@
             }
             catch (const encfs::ConfigurationFileDoesNotExist & /*err*/) {
                 inputErrorAlert(self.window,
-                                @"Not a Bitvault",
-                                [NSString stringWithFormat:@"The location you selected, \"%s\", is not a Bitvault.",
-                                 encrypted_container_path.c_str(), nil]);
+                                [NSString stringWithUTF8String:LOCKBOX_DIALOG_NO_CONFIG_EXISTS_TITLE],
+                                [NSString stringWithUTF8String:LOCKBOX_DIALOG_NO_CONFIG_EXISTS_MESSAGE]);
                 alerted = true;
             }
             catch (const std::exception &err) {
@@ -154,7 +141,7 @@
             
             // success pass values to app
             showBlockingSheetMessage(self.window,
-                                     @"Mounting Existing Bitvault...",
+                                     [NSString stringWithUTF8String:LOCKBOX_PROGRESS_MOUNTING_EXISTING_TITLE],
                                      onMountSuccess,
                                      onFail,
                                      lockbox::mac::mount_new_encfs_drive,
@@ -163,14 +150,14 @@
         }
         else {
             inputErrorAlert(self.window,
-                            @"Password is Incorrect",
-                            @"The password you have entered is incorrect.");
+                            [NSString stringWithUTF8String:LOCKBOX_DIALOG_PASS_INCORRECT_TITLE],
+                            [NSString stringWithUTF8String:LOCKBOX_DIALOG_PASS_INCORRECT_MESSAGE]);
         }
     };
     
     auto onReadCfgSuccess = ^(encfs::EncfsConfig cfg) {
         showBlockingSheetMessage(self.window,
-                                 @"Verifying Bitvault password...",
+                                 [NSString stringWithUTF8String:LOCKBOX_PROGRESS_VERIFYING_PASS_TITLE],
                                  onVerifySuccess,
                                  onFail,
                                  ^{
@@ -182,7 +169,7 @@
     };
     
     showBlockingSheetMessage(self.window,
-                             @"Reading Bitvault configuration...",
+                             [NSString stringWithUTF8String:LOCKBOX_PROGRESS_READING_CONFIG_TITLE],
                              onReadCfgSuccess,
                              onFail,
                              encfs::read_config, self->fs, encrypted_container_path);

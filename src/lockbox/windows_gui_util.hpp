@@ -16,57 +16,49 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef _LOCKBOX_WINNLS_H
-#define _LOCKBOX_WINNLS_H
+#ifndef __windows_gui_util_hpp
+#define __windows_gui_util_hpp
+
+#include <encfs/cipher/MemoryPool.h>
+#include <encfs/base/optional.h>
+
+#include <string>
 
 #include <lockbox/lean_windows.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace w32util {
 
-WINAPI
-int CompareStringOrdinal(
-  LPCWSTR lpString1,
-  int cchCount1,
-  LPCWSTR lpString2,
-  int cchCount2,
-  BOOL bIgnoreCase
-);
+void
+quick_alert(HWND owner,
+            const std::string &msg,
+            const std::string &title);
 
-#ifdef DONT_HAVE_WINNLS
-
-typedef enum _NORM_FORM {
-  NormalizationOther  = 0,
-  NormalizationC      = 0x1,
-  NormalizationD      = 0x2,
-  NormalizationKC     = 0x5,
-  NormalizationKD     = 0x6
-} NORM_FORM;
-
-WINAPI
 BOOL
-IsNormalizedString(
-  NORM_FORM NormForm,
-  LPCWSTR lpString,
-  int cwLength
-);
+SetClientSizeInLogical(HWND hwnd, bool set_pos,
+                       int x, int y,
+                       int w, int h);
 
-WINAPI
-int
-NormalizeString(
-  NORM_FORM NormForm,
-  LPCWSTR lpSrcString,
-  int cwSrcLength,
-  LPWSTR lpDstString,
-  int cwDstLength
-);
+void
+center_window_in_monitor(HWND hwnd);
 
-#endif
+void
+set_default_dialog_font(HWND hwnd);
 
-#ifdef __cplusplus
+void
+cleanup_default_dialog_font(HWND hwnd);
+
+void
+clear_text_field(HWND text_hwnd, size_t num_chars);
+
+std::string
+read_text_field(HWND text_hwnd);
+
+encfs::SecureMem
+securely_read_text_field(HWND text_wnd, bool clear = true);
+
+opt::optional<std::string>
+get_folder_dialog(HWND owner);
+
 }
-#endif
-
 
 #endif

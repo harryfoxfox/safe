@@ -1,11 +1,27 @@
-#ifndef _lockbox_util_H
-#define _lockbox_util_H
+#ifndef _lockbox_util_hpp
+#define _lockbox_util_hpp
 
 #include <encfs/base/optional.h>
+
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include <cstring>
 
 namespace lockbox {
+
+struct ErrorMessage {
+  std::string title;
+  std::string message;
+};
+
+inline
+ErrorMessage
+make_error_message(std::string title, std::string msg) {
+  return ErrorMessage {std::move(title), std::move(msg)};
+}
 
 // this little class allows us to get C++ RAII with C based data structures
 template <class FNRET>
@@ -98,39 +114,34 @@ DynamicManagedResource<T> create_dynamic_managed_resource(T a, F f) {
 
 template <class T, class F>
 class ManagedResource {
-  T data;
-  bool is_valid;
+  struct SubF {
+    void operator()(T *todel) noexcept {
+      try {
+        F()(*todel);
+      }
+      catch (...) {}
+      delete todel;
+    }
+  };
+
+  std::shared_ptr<T> _ptr;
 
 public:
-  ManagedResource(T arg_)
-    : data(std::move(arg_))
-    , is_valid(true) {}
-
-  ManagedResource(ManagedResource && f)
-    : data(std::move(f.data))
-    , is_valid(f.is_valid) {
-    f.is_valid = false;
-  }
-
-  ManagedResource &operator=(ManagedResource && f) {
-    if (this != &f) {
-      this->~ManagedResource();
-      new (this) ManagedResource(std::move(f));
-    }
-    return *this;
-  }
-
-  ~ManagedResource() { if (is_valid) F()(data); };
+  explicit ManagedResource(T arg_) : _ptr(new T(std::move(arg_)), SubF()) {}
+  ManagedResource() : _ptr() {}
 
   const T & get() const {
-    if (!is_valid) throw std::runtime_error("invalid resource!");
-    return data;
+    return *_ptr;
+  }
+
+  void reset(T arg_) {
+    _ptr.reset(new T(std::move(arg_)), SubF());
   }
 };
 
 template <class T>
 void
-zero_object(T & obj) {
+zero_object(T & obj) noexcept {
   memset(&obj, 0, sizeof(obj));
 }
 
@@ -139,6 +150,97 @@ template <class T, class ...Args>
 std::unique_ptr<T>
 make_unique(Args &&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+inline
+std::string
+escape_double_quotes(std::string mount_name) {
+    std::vector<char> replaced;
+    for (const auto & c : mount_name) {
+        if (c == '"') {
+            replaced.push_back('\\');
+        }
+        replaced.push_back(c);
+    }
+    return std::string(replaced.begin(), replaced.end());
+}
+
+namespace _int {
+
+template<typename T,
+         typename std::enable_if<std::is_integral<T>::value>::type * = nullptr>
+class IntegralIterator {
+private:
+  T _val;
+public:
+  IntegralIterator(T start_val) : _val(std::move(start_val)) {}
+
+  T & operator*() { return _val; }
+  IntegralIterator & operator++() { ++_val; return *this; }
+  IntegralIterator operator++(int) const { return IntegralIterator(_val++); }
+  IntegralIterator & operator--() { --_val; return *this; }
+  IntegralIterator operator--(int) const { return IntegralIterator(_val--); }
+
+  bool operator==(const IntegralIterator & other) const {
+    return _val == other._val;
+  }
+
+  bool operator!=(const IntegralIterator & other) const {
+    return !(*this == other);
+  }
+};
+
+template<typename T>
+class Range {
+private:
+  T _max;
+
+public:
+  explicit Range(T max) : _max(std::move(max)) {}
+
+  IntegralIterator<T> begin() const { return IntegralIterator<T>(0); }
+  IntegralIterator<T> end() const { return IntegralIterator<T>(_max); }
+};
+
+}
+
+/* works like a python range(), e.g.
+   for (auto & _ : range(4));
+   <=>
+   for _ in range(4): pass
+*/
+template<typename T>
+_int::Range<T>
+range(T max) {
+  return _int::Range<T>(max);
+}
+
+template<typename T>
+struct numbits {
+  static const size_t value = sizeof(T) * 8;
+};
+
+template<typename T>
+constexpr
+size_t
+numbitsf(T) {
+  return numbits<T>::value;
+}
+
+template<typename T>
+typename std::enable_if<std::is_integral<T>::value, size_t>::type
+position_of_highest_bit_set(T a) {
+  assert(a);
+  size_t toret = 0;
+  while (a >>= 1) ++toret;
+  return toret;
+}
+
+template<typename T>
+T
+create_bit_mask(size_t num_bits_to_mask) {
+  assert(num_bits_to_mask <= numbits<T>::value);
+  return ((T) 1 << num_bits_to_mask) - 1;
 }
 
 }

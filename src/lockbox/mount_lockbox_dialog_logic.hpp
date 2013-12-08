@@ -16,57 +16,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef _LOCKBOX_WINNLS_H
-#define _LOCKBOX_WINNLS_H
+#ifndef __mount_lockbox_dialog_logic_hpp
+#define __mount_lockbox_dialog_logic_hpp
 
-#include <lockbox/lean_windows.h>
+#include <lockbox/util.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <encfs/fs/FsIO.h>
+#include <encfs/cipher/MemoryPool.h>
+#include <encfs/base/optional.h>
 
-WINAPI
-int CompareStringOrdinal(
-  LPCWSTR lpString1,
-  int cchCount1,
-  LPCWSTR lpString2,
-  int cchCount2,
-  BOOL bIgnoreCase
-);
+#include <memory>
+#include <string>
 
-#ifdef DONT_HAVE_WINNLS
+namespace lockbox {
 
-typedef enum _NORM_FORM {
-  NormalizationOther  = 0,
-  NormalizationC      = 0x1,
-  NormalizationD      = 0x2,
-  NormalizationKC     = 0x5,
-  NormalizationKD     = 0x6
-} NORM_FORM;
+opt::optional<decltype(make_error_message("", ""))>
+verify_mount_lockbox_dialog_fields(const std::shared_ptr<encfs::FsIO> & fs,
+                                   const std::string & location,
+                                   const encfs::SecureMem & password);
 
-WINAPI
-BOOL
-IsNormalizedString(
-  NORM_FORM NormForm,
-  LPCWSTR lpString,
-  int cwLength
-);
-
-WINAPI
-int
-NormalizeString(
-  NORM_FORM NormForm,
-  LPCWSTR lpSrcString,
-  int cwSrcLength,
-  LPWSTR lpDstString,
-  int cwDstLength
-);
-
-#endif
-
-#ifdef __cplusplus
 }
-#endif
-
 
 #endif
