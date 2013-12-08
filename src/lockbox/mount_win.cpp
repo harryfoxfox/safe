@@ -302,11 +302,19 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                                         NULL, SW_HIDE);
   if (ret_shell1 <= 32) throw w32util::windows_error();
 
-  return MountDetails(drive_letter,
-                      mount_name,
-                      std::move(thread_handle),
-                      listen_port,
-                      encrypted_container_path);
+  auto toret = MountDetails(drive_letter,
+                            mount_name,
+                            std::move(thread_handle),
+                            listen_port,
+                            encrypted_container_path);
+
+  // there is a race condition here, the user (or something else) could have
+  // unmounted the drive immediately after we mounted it,
+  // although it's extremely rare
+  // TODO: add a timeout here
+  while (!toret.is_still_mounted());
+
+  return std::move(toret);
 }
 
 }}
