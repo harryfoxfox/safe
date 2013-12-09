@@ -221,7 +221,21 @@ run_mount_dialog(HWND lockbox_main_window, WindowData & wd,
   // only run this dialog if we don't already have a dialog
   assert(!GetWindow(lockbox_main_window, GW_ENABLEDPOPUP));
 
-  auto ret = lockbox::win::mount_existing_lockbox_dialog(lockbox_main_window, wd.native_fs, p);
+  lockbox::win::TakeMountFn take_mount = [&] (const encfs::Path & encrypted_container_path) -> opt::optional<lockbox::win::MountDetails> {
+    auto it = std::find_if(wd.mounts.begin(), wd.mounts.end(),
+                           [&] (const lockbox::win::MountDetails & md) {
+                             return md.get_source_path() == encrypted_container_path;
+                           });
+    if (it == wd.mounts.end()) return opt::nullopt;
+
+    auto md = std::move(*it);
+    wd.mounts.erase(it);
+    return std::move(md);
+  };
+
+  auto ret = lockbox::win::mount_existing_lockbox_dialog(lockbox_main_window,
+                                                         wd.native_fs,
+                                                         take_mount, p);
   if (ret) new_mount(wd, std::move(*ret));
   return (bool) ret;
 }

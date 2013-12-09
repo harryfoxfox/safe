@@ -43,6 +43,7 @@ enum {
 
 struct MountExistingLockboxDialogCtx {
   std::shared_ptr<encfs::FsIO> fs;
+  lockbox::win::TakeMountFn take_mount;
   opt::optional<encfs::Path> initial_path;
 };
 
@@ -135,19 +136,23 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
         break;
       }
 
-      // TODO: check if path is already mounted and return that instead
-
-      // mount encfs drive
+      // check if path is already mounted and return that instead
       auto maybe_mount_details =
-        w32util::modal_call(hwnd,
-                            LOCKBOX_PROGRESS_MOUNTING_EXISTING_TITLE,
-                            LOCKBOX_PROGRESS_MOUNTING_EXISTING_MESSAGE,
-                            lockbox::win::mount_new_encfs_drive,
-                            ctx->fs, encrypted_container_path, cfg, password_buf);
+        ctx->take_mount(encrypted_container_path);
+
+      // if mount doesn't exist then mount new encfs drive
       if (!maybe_mount_details) {
-        // modal_call returns nullopt if we got a quit signal
-        EndDialog(hwnd, (INT_PTR) 0);
-        break;
+        maybe_mount_details =
+          w32util::modal_call(hwnd,
+                              LOCKBOX_PROGRESS_MOUNTING_EXISTING_TITLE,
+                              LOCKBOX_PROGRESS_MOUNTING_EXISTING_MESSAGE,
+                              lockbox::win::mount_new_encfs_drive,
+                              ctx->fs, encrypted_container_path, cfg, password_buf);
+        if (!maybe_mount_details) {
+          // modal_call returns nullopt if we got a quit signal
+          EndDialog(hwnd, (INT_PTR) 0);
+          break;
+        }
       }
 
       w32util::clear_text_field(password_hwnd,
@@ -174,6 +179,7 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
 
 opt::optional<lockbox::win::MountDetails>
 mount_existing_lockbox_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
+                              lockbox::win::TakeMountFn take_mount,
                               opt::optional<encfs::Path> initial_path) {
   using namespace w32util;
 
@@ -290,7 +296,9 @@ mount_existing_lockbox_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
                    }
                    );
 
-  MountExistingLockboxDialogCtx ctx = {std::move(fsio), std::move(initial_path)};
+  MountExistingLockboxDialogCtx ctx = {
+    std::move(fsio), std::move(take_mount), std::move(initial_path),
+  };
   auto ret_ptr =
     DialogBoxIndirectParam(GetModuleHandle(NULL),
                            dlg.get_data(),

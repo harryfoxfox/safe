@@ -30,8 +30,11 @@
 
 namespace lockbox { namespace win {
 
+typedef std::function<opt::optional<lockbox::win::MountDetails>(const encfs::Path &)> TakeMountFn;
+
 opt::optional<lockbox::win::MountDetails>
 mount_existing_lockbox_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio,
+                              TakeMountFn take_mount,
                               opt::optional<encfs::Path> path);
 
 }}
