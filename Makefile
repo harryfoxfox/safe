@@ -36,19 +36,16 @@ ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 # available on minimum windows xp
 GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x500 -DWINVER=0x500 -DNTDDI_VERSION=0x05000000
 
-# these are global flags that we want everything (source and deps) to compile with
-# depending on build configuration
-# they are intentionally overridable by the caller
-CPPFLAGS_RELEASE ?= -DNDEBUG
-CXXFLAGS_RELEASE ?=  -Os #$(if $(IS_WIN_TARGET),-flto,,)
-CFLAGS_RELEASE ?= -Os # $(if $(IS_WIN_TARGET),-flto,,)
+CPPFLAGS_RELEASE = -DNDEBUG
+CXXFLAGS_RELEASE =  -Os #$(if $(IS_WIN_TARGET),-flto,,)
+CFLAGS_RELEASE = -Os # $(if $(IS_WIN_TARGET),-flto,,)
+CXXFLAGS_DEBUG = -g
+CFLAGS_RELEASE = -g
 
-# append configuration flags (convenience for using default release flags)
-ifdef RELEASE
-CXXFLAGS += $(CXXFLAGS_RELEASE)
-CFLAGS += $(CFLAGS_RELEASE)
-CPPFLAGS += $(CPPFLAGS_RELEASE)
-endif
+# default global configuration flags
+CPPFLAGS ?= $(if $(RELEASE),$(CPPFLAGS_RELEASE),$(CPPFLAGS_DBEUG))
+CXXFLAGS ?= $(if $(RELEASE),$(CXXFLAGS_RELEASE),$(CXXFLAGS_DBEUG))
+CFLAGS ?= $(if $(RELEASE),$(CFLAGS_RELEASE),$(CFLAGS_DBEUG))
 
 # these are flags specific to our source files (everything in lockbox-app/src, not our deps)
 MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) \
