@@ -200,7 +200,12 @@ new_mount(WindowData & wd, lockbox::win::MountDetails md) {
   wd.recent_mount_paths_store.use_path(md.get_source_path());
   wd.mounts.push_back(std::move(md));
   update_tray_menu(wd);
-  wd.mounts.back().open_mount();
+  try { wd.mounts.back().open_mount(); }
+  catch (const std::exception & err) {
+    lbx_log_error("Error opening %s: %s",
+                  std::to_string(md.get_drive_letter()).c_str(),
+                  err.what());
+  }
 }
 
 static
