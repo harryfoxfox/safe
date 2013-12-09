@@ -397,7 +397,7 @@ add_tray_icon(HWND lockbox_main_window) {
   if (wtooltip.size() >= lockbox::numelementsf(icon_data.szTip)) {
     throw std::runtime_error("tooltip constant is too large!");
   }
-  memcpy(icon_data.szTip, wtooltip.c_str(), (wtooltip.size() + 1) * sizeof(wtooltip[0]));
+  wmemcpy(icon_data.szTip, wtooltip.c_str(), wtooltip.size() + 1);
 
   auto success = Shell_NotifyIconW(NIM_ADD, &icon_data);
   if (!success) {
