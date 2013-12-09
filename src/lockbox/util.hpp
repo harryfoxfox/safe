@@ -244,6 +244,12 @@ create_bit_mask(size_t num_bits_to_mask) {
   return ((T) 1 << num_bits_to_mask) - 1;
 }
 
+template<typename T, size_t N>
+constexpr size_t
+numelementsf(T (&)[N]) {
+  return N;
+}
+
 }
 
 #endif

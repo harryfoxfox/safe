@@ -394,6 +394,9 @@ add_tray_icon(HWND lockbox_main_window) {
   icon_data.hIcon = LoadIconW(NULL, IDI_APPLICATION);
   icon_data.uVersion = NOTIFYICON_VERSION;
   auto wtooltip = w32util::widen(LOCKBOX_TRAY_ICON_TOOLTIP);
+  if (wtooltip.size() >= lockbox::numelementsf(icon_data.szTip)) {
+    throw std::runtime_error("tooltip constant is too large!");
+  }
   memcpy(icon_data.szTip, wtooltip.c_str(), (wtooltip.size() + 1) * sizeof(wtooltip[0]));
 
   auto success = Shell_NotifyIconW(NIM_ADD, &icon_data);
