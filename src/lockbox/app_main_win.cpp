@@ -101,7 +101,7 @@ const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
 static
 void
 bubble_msg(HWND lockbox_main_window,
-           const std::string title, const std::string &msg);
+           const std::string & title, const std::string & msg);
 
 static
 void
@@ -266,7 +266,7 @@ copy_to_wide_buffer(wchar_t (&dest)[N], const std::string & src) {
 static
 void
 bubble_msg(HWND lockbox_main_window,
-           const std::string title, const std::string &msg) {
+           const std::string & title, const std::string & msg) {
   NOTIFYICONDATAW icon_data;
   lockbox::zero_object(icon_data);
   icon_data.cbSize = NOTIFYICONDATA_V2_SIZE;
