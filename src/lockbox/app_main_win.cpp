@@ -255,6 +255,14 @@ run_quit_confirmation_dialog(HWND lockbox_main_window) {
   return ret == IDYES;
 }
 
+template<size_t N>
+void
+copy_to_wide_buffer(wchar_t (&dest)[N], const std::string & src) {
+  auto wsrc = w32util::widen(src);
+  if (wsrc.size() >= N) throw std::runtime_error("src is too long!");
+  wmemcpy(dest, wsrc.c_str(), wsrc.size() + 1);
+}
+
 static
 void
 bubble_msg(HWND lockbox_main_window,
@@ -266,20 +274,9 @@ bubble_msg(HWND lockbox_main_window,
   icon_data.uID = LOCKBOX_TRAY_ICON_ID;
   icon_data.uFlags = NIF_INFO;
   icon_data.uVersion = NOTIFYICON_VERSION;
-
-  auto wmsg = w32util::widen(msg);
-  if (wmsg.size() >= sizeof(icon_data.szInfo)) {
-    throw std::runtime_error("msg is too long!");
-  }
-  wmemcpy(icon_data.szInfo, wmsg.c_str(), wmsg.size() + 1);
+  copy_to_wide_buffer(icon_data.szInfo, msg);
   icon_data.uTimeout = 0; // let it be the minimum
-
-  auto wtitle = w32util::widen(title);
-  if (wtitle.size() >= sizeof(icon_data.szInfoTitle)) {
-    throw std::runtime_error("title is too long!");
-  }
-  wmemcpy(icon_data.szInfoTitle, wtitle.c_str(), wtitle.size() + 1);
-
+  copy_to_wide_buffer(icon_data.szInfoTitle, title);
   icon_data.dwInfoFlags = NIIF_NONE;
 
   auto success = Shell_NotifyIconW(NIM_MODIFY, &icon_data);
@@ -393,11 +390,7 @@ add_tray_icon(HWND lockbox_main_window) {
   icon_data.uCallbackMessage = LOCKBOX_TRAY_ICON_MSG;
   icon_data.hIcon = LoadIconW(NULL, IDI_APPLICATION);
   icon_data.uVersion = NOTIFYICON_VERSION;
-  auto wtooltip = w32util::widen(LOCKBOX_TRAY_ICON_TOOLTIP);
-  if (wtooltip.size() >= lockbox::numelementsf(icon_data.szTip)) {
-    throw std::runtime_error("tooltip constant is too large!");
-  }
-  wmemcpy(icon_data.szTip, wtooltip.c_str(), wtooltip.size() + 1);
+  copy_to_wide_buffer(icon_data.szTip, LOCKBOX_TRAY_ICON_TOOLTIP);
 
   auto success = Shell_NotifyIconW(NIM_ADD, &icon_data);
   if (!success) {
