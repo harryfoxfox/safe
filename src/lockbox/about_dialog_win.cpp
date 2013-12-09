@@ -47,6 +47,7 @@ open_src_code(HWND owner) {
 }
 
 CALLBACK
+static
 INT_PTR
 about_dialog_proc(HWND hwnd, UINT Message,
                   WPARAM wParam, LPARAM /*lParam*/) {
