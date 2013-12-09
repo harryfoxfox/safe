@@ -36,15 +36,35 @@ ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 # available on minimum windows xp
 GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x500 -DWINVER=0x500 -DNTDDI_VERSION=0x05000000
 
+# these are global flags that we want everything (source and deps) to compile with
+# depending on build configuration
+# they are intentionally overridable by the caller
+CPPFLAGS_RELEASE ?= -DNDEBUG
+CXXFLAGS_RELEASE ?=  -Os #$(if $(IS_WIN_TARGET),-flto,,)
+CFLAGS_RELEASE ?= -Os # $(if $(IS_WIN_TARGET),-flto,,)
+
+# append configuration flags (convenience for using default release flags)
+ifdef RELEASE
+CXXFLAGS += $(CXXFLAGS_RELEASE)
+CFLAGS += $(CFLAGS_RELEASE)
+CPPFLAGS += $(CPPFLAGS_RELEASE)
+endif
+
+# these are flags specific to our source files (everything in lockbox-app/src, not our deps)
 MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) \
  -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs \
  -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src \
  $(if $(IS_WIN_TARGET),$(GLOBAL_WINDOWS_DEFINES),)
-MY_CXXFLAGS = $(CXXFLAGS) -g -Wall -Wextra -Werror -std=c++11
+MY_CXXFLAGS = $(CXXFLAGS) -Wall -Wextra -Werror -std=c++11 \
+ $(if $(IS_WIN_TARGET),`$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags`,)
 
 # encfs on mac makes use of the Security framework
 MAC_EXTRA_LIBRARIES := -framework Security -framework Foundation
 WIN_EXTRA_LIBRARIES := -lws2_32
+DEPS_LIBRARIES = -lwebdav_server_fs -lencfs \
+ $(if $(IS_WIN_TARGET),`$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs`,) \
+ -lprotobuf \
+ -ltinyxml
 DEPS_EXTRA_LIBRARIES := $(if $(IS_MAC_TARGET),$(MAC_EXTRA_LIBRARIES),) $(if $(IS_WIN_TARGET),$(WIN_EXTRA_LIBRARIES),)
 
 all: test_encfs_main
@@ -52,7 +72,7 @@ all: test_encfs_main
 libwebdav_server_fs: clean
 	@rm -rf "$(DAVFUSE_ROOT)/out"
 	@cd $(DAVFUSE_ROOT); rm config.mk; cp $(if $(IS_WIN_TARGET),config-nt-msvcrt-mingw.mk,config-xnu-bsdlibc-clang.mk) config.mk
-	@cd $(DAVFUSE_ROOT); AR=$(AR) CC=$(CC) CXX=$(CXX) make -j$(PROCS) USE_DYNAMIC_FS=1 libwebdav_server_fs.a
+	@cd $(DAVFUSE_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make -j$(PROCS) RELEASE= USE_DYNAMIC_FS=1 libwebdav_server_fs.a
 	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
 	@cp "$(DAVFUSE_ROOT)/out/targets/$(notdir $(WEBDAV_SERVER_STATIC_LIBRARY))" $(WEBDAV_SERVER_STATIC_LIBRARY)
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/davfuse
@@ -69,6 +89,9 @@ libencfs: clean
                $(if $(CC),-DCMAKE_C_COMPILER=$(CC),) \
                $(if $(IS_WIN),-G"MSYS Makefiles",) \
                -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) \
+               "-DCMAKE_CXX_FLAGS=$(CXXFLAGS) $(CPPFLAGS)" \
+               "-DCMAKE_C_FLAGS=$(CFLAGS) $(CPPFLAGS)" \
+               "-DCMAKE_BUILD_TYPE=None" \
                $(if $(IS_WIN_TARGET),-DCMAKE_INCLUDE_PATH=$(DEPS_INSTALL_ROOT)/include/botan-1.10,)
 	@cd $(ENCFS_ROOT); make clean
 	@cd $(ENCFS_ROOT); PATH="$(DEPS_INSTALL_ROOT)/bin:$$PATH" make -j$(PROCS) encfs-base encfs-cipher encfs-fs
@@ -93,7 +116,16 @@ libbotan: clean
          echo "export PATH=\"$$PATH\"" >> /tmp/botan_path/ranlib; \
          echo 'exec $(RANLIB) $$@' >> /tmp/botan_path/ranlib; \
          chmod a+x /tmp/botan_path/ranlib;
-	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" ./configure.py --prefix=$(DEPS_INSTALL_ROOT) --disable-shared $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,--cc-bin=$(CXX)) $(if $(IS_WIN_TARGET),--os=mingw --cpu=x86,)
+	@echo '#!/bin/sh' > /tmp/botan_path/c++; \
+         echo "export PATH=\"$$PATH\"" >> /tmp/botan_path/c++; \
+         echo 'exec $(CXX) $(CXXFLAGS) $$@' >> /tmp/botan_path/c++; \
+         chmod a+x /tmp/botan_path/c++;
+# bmw_512 has detectable undefined behavior also we don't use it
+	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" ./configure.py \
+         --no-optimizations --prefix=$(DEPS_INSTALL_ROOT) \
+         --disable-shared \
+         $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,--cc-bin=c++) \
+         $(if $(IS_WIN_TARGET),--os=mingw --cpu=x86,)
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make clean
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make -j$(PROCS)
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make install
@@ -107,16 +139,17 @@ libprotobuf: clean
 	@mkdir -p $(DEPS_INSTALL_ROOT)/bin
 	@cp $(PROTOBUF_ROOT)/src/$(if $(IS_WIN),protoc.exe,protoc) $(DEPS_INSTALL_ROOT)/bin
 # now build libprotobuf.a
-	@cd $(PROTOBUF_ROOT); ./configure --prefix=$(DEPS_INSTALL_ROOT) --with-protoc=$(DEPS_INSTALL_ROOT)/bin/$(if $(IS_WIN),protoc.exe,protoc) $(if $(IS_WIN_CROSS),--host $(IS_WIN_CROSS),) --disable-shared
-	@cd $(PROTOBUF_ROOT); make clean
-	@cd $(PROTOBUF_ROOT); make -j$(PROCS)
-	@cd $(PROTOBUF_ROOT); make install
+	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" ./configure --prefix=$(DEPS_INSTALL_ROOT) --with-protoc=$(DEPS_INSTALL_ROOT)/bin/$(if $(IS_WIN),protoc.exe,protoc) $(if $(IS_WIN_CROSS),--host $(IS_WIN_CROSS),) --disable-shared
+	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make clean
+	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make -j$(PROCS)
+	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make install
 
 libtinyxml: clean
 	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include
 	@cd $(TINYXML_ROOT); rm -f libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o
-	@cd $(TINYXML_ROOT); $(CXX) $(CXXFLAGS) -c tinystr.cpp  tinyxml.cpp  tinyxmlerror.cpp  tinyxmlparser.cpp
+	cd $(TINYXML_ROOT); \
+ $(CXX) $(CXXFLAGS) -c tinystr.cpp  tinyxml.cpp  tinyxmlerror.cpp  tinyxmlparser.cpp
 	@cd $(TINYXML_ROOT); $(AR) rcs libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o
 	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
@@ -194,30 +227,26 @@ $(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 # build instructions
 
 %.cpp.o: %.cpp
-	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
+	$(CXX) $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
 
 %.mm.o: %.mm
-	$(CXX) `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --cflags` $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
+	$(CXX) $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
 
 %.rc.o: %.rc
 	$(WINDRES) -I./src -i $< -o $@
 
 test_encfs_main:
-	$(CXX) -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
- -o $@ $(TEST_ENCFS_MAIN_OBJS) \
- -lwebdav_server_fs -lencfs \
- `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
- -ltinyxml $(DEPS_EXTRA_LIBRARIES)
+	$(CXX) -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
+ -o $@ $(TEST_ENCFS_MAIN_OBJS) $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES)
 
 ASLR_LINK_FLAGS := -Wl,--dynamicbase=true -Wl,--nxcompat=true
 WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
 
 $(EXE_NAME):
-	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -flto -static \
- -O4 -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
- -lwebdav_server_fs -lencfs \
- `$(DEPS_INSTALL_ROOT)/bin/botan-config-1.10 --libs` -lprotobuf \
- -ltinyxml -lole32 -lcomctl32 -lwinhttp -lnormaliz $(DEPS_EXTRA_LIBRARIES)
+	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
+ -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
+ $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
+ -lole32 -lcomctl32 -lwinhttp -lnormaliz
 
 .PHONY: dependencies clean libbotan \
 	libprotobuf libtinyxml libencfs libwebdav_server_fs winhttp
