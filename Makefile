@@ -37,8 +37,8 @@ ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x500 -DWINVER=0x500 -DNTDDI_VERSION=0x05000000
 
 CPPFLAGS_RELEASE = -DNDEBUG
-CXXFLAGS_RELEASE = -Os # $(if $(IS_WIN_TARGET),-flto,,)
-CFLAGS_RELEASE = -Os # $(if $(IS_WIN_TARGET),-flto,,)
+CXXFLAGS_RELEASE = -O3 $(if $(IS_WIN_TARGET),-flto,,)
+CFLAGS_RELEASE = -O3 $(if $(IS_WIN_TARGET),-flto,,)
 CXXFLAGS_DEBUG = -g
 CFLAGS_DEBUG = -g
 
@@ -117,8 +117,9 @@ libbotan: clean
          echo "export PATH=\"$$PATH\"" >> /tmp/botan_path/c++; \
          echo 'exec $(CXX) $(CPPFLAGS) $(CXXFLAGS) $$@' >> /tmp/botan_path/c++; \
          chmod a+x /tmp/botan_path/c++;
-# bmw_512 has detectable undefined behavior also we don't use it
+# the nr module has an issue with LTO
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" ./configure.py \
+	--disable-modules=nr \
          --no-optimizations --prefix=$(DEPS_INSTALL_ROOT) \
          --disable-shared \
          $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,--cc-bin=c++) \
