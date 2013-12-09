@@ -37,15 +37,15 @@ ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x500 -DWINVER=0x500 -DNTDDI_VERSION=0x05000000
 
 CPPFLAGS_RELEASE = -DNDEBUG
-CXXFLAGS_RELEASE =  -Os #$(if $(IS_WIN_TARGET),-flto,,)
+CXXFLAGS_RELEASE = -Os # $(if $(IS_WIN_TARGET),-flto,,)
 CFLAGS_RELEASE = -Os # $(if $(IS_WIN_TARGET),-flto,,)
 CXXFLAGS_DEBUG = -g
-CFLAGS_RELEASE = -g
+CFLAGS_DEBUG = -g
 
 # default global configuration flags
-CPPFLAGS ?= $(if $(RELEASE),$(CPPFLAGS_RELEASE),$(CPPFLAGS_DBEUG))
-CXXFLAGS ?= $(if $(RELEASE),$(CXXFLAGS_RELEASE),$(CXXFLAGS_DBEUG))
-CFLAGS ?= $(if $(RELEASE),$(CFLAGS_RELEASE),$(CFLAGS_DBEUG))
+CPPFLAGS ?= $(if $(RELEASE),$(CPPFLAGS_RELEASE),$(CPPFLAGS_DEBUG))
+CXXFLAGS ?= $(if $(RELEASE),$(CXXFLAGS_RELEASE),$(CXXFLAGS_DEBUG))
+CFLAGS ?= $(if $(RELEASE),$(CFLAGS_RELEASE),$(CFLAGS_DEBUG))
 
 # these are flags specific to our source files (everything in lockbox-app/src, not our deps)
 MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) \
@@ -69,7 +69,7 @@ all: test_encfs_main
 libwebdav_server_fs: clean
 	@rm -rf "$(DAVFUSE_ROOT)/out"
 	@cd $(DAVFUSE_ROOT); rm config.mk; cp $(if $(IS_WIN_TARGET),config-nt-msvcrt-mingw.mk,config-xnu-bsdlibc-clang.mk) config.mk
-	@cd $(DAVFUSE_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make -j$(PROCS) RELEASE= USE_DYNAMIC_FS=1 libwebdav_server_fs.a
+	@cd $(DAVFUSE_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make -j$(PROCS) RELEASE= USE_DYNAMIC_FS=1 libwebdav_server_fs.a
 	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
 	@cp "$(DAVFUSE_ROOT)/out/targets/$(notdir $(WEBDAV_SERVER_STATIC_LIBRARY))" $(WEBDAV_SERVER_STATIC_LIBRARY)
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/davfuse
@@ -86,8 +86,8 @@ libencfs: clean
                $(if $(CC),-DCMAKE_C_COMPILER=$(CC),) \
                $(if $(IS_WIN),-G"MSYS Makefiles",) \
                -DCMAKE_PREFIX_PATH=$(DEPS_INSTALL_ROOT) \
-               "-DCMAKE_CXX_FLAGS=$(CXXFLAGS) $(CPPFLAGS)" \
-               "-DCMAKE_C_FLAGS=$(CFLAGS) $(CPPFLAGS)" \
+               "-DCMAKE_CXX_FLAGS=$(CPPFLAGS) $(CXXFLAGS)" \
+               "-DCMAKE_C_FLAGS=$(CPPFLAGS) $(CFLAGS)" \
                "-DCMAKE_BUILD_TYPE=None" \
                $(if $(IS_WIN_TARGET),-DCMAKE_INCLUDE_PATH=$(DEPS_INSTALL_ROOT)/include/botan-1.10,)
 	@cd $(ENCFS_ROOT); make clean
@@ -115,7 +115,7 @@ libbotan: clean
          chmod a+x /tmp/botan_path/ranlib;
 	@echo '#!/bin/sh' > /tmp/botan_path/c++; \
          echo "export PATH=\"$$PATH\"" >> /tmp/botan_path/c++; \
-         echo 'exec $(CXX) $(CXXFLAGS) $$@' >> /tmp/botan_path/c++; \
+         echo 'exec $(CXX) $(CPPFLAGS) $(CXXFLAGS) $$@' >> /tmp/botan_path/c++; \
          chmod a+x /tmp/botan_path/c++;
 # bmw_512 has detectable undefined behavior also we don't use it
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" ./configure.py \
@@ -130,23 +130,23 @@ libbotan: clean
 libprotobuf: clean
 	@cd $(PROTOBUF_ROOT); if [ ! -e configure ]; then ./autogen.sh; fi
 # first build protobuf protoc
-	@cd $(PROTOBUF_ROOT); unset CC CXX CXXFLAGS AR RANLIB; ./configure --prefix=$(DEPS_INSTALL_ROOT) $(if $(IS_WIN_CROSS),--target $(IS_WIN_CROSS),) --disable-shared
-	@cd $(PROTOBUF_ROOT); unset CC CXX CXXFLAGS AR RANLIB; make clean
-	@cd $(PROTOBUF_ROOT); cd src; unset CC CXX CXXFLAGS AR RANLIB; make -j$(PROCS) $(if $(IS_WIN),protoc.exe,protoc)
+	@cd $(PROTOBUF_ROOT); unset CC CXX CPPFLAGS CFLAGS CXXFLAGS AR RANLIB; ./configure --prefix=$(DEPS_INSTALL_ROOT) $(if $(IS_WIN_CROSS),--target $(IS_WIN_CROSS),) --disable-shared
+	@cd $(PROTOBUF_ROOT); unset CC CXX CPPFLAGS CFLAGS CXXFLAGS AR RANLIB; make clean
+	@cd $(PROTOBUF_ROOT); cd src; unset CC CXX CPPFLAGS CXXFLAGS AR RANLIB; make -j$(PROCS) $(if $(IS_WIN),protoc.exe,protoc)
 	@mkdir -p $(DEPS_INSTALL_ROOT)/bin
 	@cp $(PROTOBUF_ROOT)/src/$(if $(IS_WIN),protoc.exe,protoc) $(DEPS_INSTALL_ROOT)/bin
 # now build libprotobuf.a
-	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" ./configure --prefix=$(DEPS_INSTALL_ROOT) --with-protoc=$(DEPS_INSTALL_ROOT)/bin/$(if $(IS_WIN),protoc.exe,protoc) $(if $(IS_WIN_CROSS),--host $(IS_WIN_CROSS),) --disable-shared
-	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make clean
-	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make -j$(PROCS)
-	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make install
+	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" ./configure --prefix=$(DEPS_INSTALL_ROOT) --with-protoc=$(DEPS_INSTALL_ROOT)/bin/$(if $(IS_WIN),protoc.exe,protoc) $(if $(IS_WIN_CROSS),--host $(IS_WIN_CROSS),) --disable-shared
+	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make clean
+	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make -j$(PROCS)
+	@cd $(PROTOBUF_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make install
 
 libtinyxml: clean
 	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include
 	@cd $(TINYXML_ROOT); rm -f libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o
 	cd $(TINYXML_ROOT); \
- $(CXX) $(CXXFLAGS) -c tinystr.cpp  tinyxml.cpp  tinyxmlerror.cpp  tinyxmlparser.cpp
+ $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c tinystr.cpp  tinyxml.cpp  tinyxmlerror.cpp  tinyxmlparser.cpp
 	@cd $(TINYXML_ROOT); $(AR) rcs libtinyxml.a tinystr.o  tinyxml.o  tinyxmlerror.o  tinyxmlparser.o
 	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
@@ -224,10 +224,10 @@ $(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 # build instructions
 
 %.cpp.o: %.cpp
-	$(CXX) $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
+	$(CXX) $(MY_CPPFLAGS) $(MY_CXXFLAGS) -c -o $@ $<
 
 %.mm.o: %.mm
-	$(CXX) $(MY_CXXFLAGS) $(MY_CPPFLAGS) -c -o $@ $<
+	$(CXX) $(MY_CPPFLAGS) $(MY_CXXFLAGS) -c -o $@ $<
 
 %.rc.o: %.rc
 	$(WINDRES) -I./src -i $< -o $@
