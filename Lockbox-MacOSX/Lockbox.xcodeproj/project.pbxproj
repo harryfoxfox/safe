@@ -239,6 +239,7 @@
 				963D099F17A1D89D00AEE673 /* Sources */,
 				963D09A017A1D89D00AEE673 /* Frameworks */,
 				963D09A117A1D89D00AEE673 /* Resources */,
+				96FCB3F4185716E400FB2839 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -315,6 +316,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cd $SRCROOT/..\n\n# add cmake to path\nPATH=\"/usr/local/bin:$PATH\"\n\n# set up compiler environment\n\n# TODO: derive from xcode settings\nCC=clang\nCXX=clang++\n\nif [ \"$CLANG_CXX_LIBRARYx\" != x ]; then\n    CXXFLAGS=\"$CXXFLAGS -stdlib=$CLANG_CXX_LIBRARY\"\nfi\n\nif [ \"$GCC_GENERATE_DEBUGGING_SYMBOLS\" = YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -g\"\n    CFLAGS=\"$CFLAGS -g\"\nfi\n\nfor DEF in $GCC_PREPROCESSOR_DEFINITIONS; do\n    CXXFLAGS=\"$CXXFLAGS -D$DEF\"\n    CFLAGS=\"$CFLAGS -D$DEF\"\ndone\n\nif [ \"$GCC_OPTIMIZATION_LEVELx\" != x ]; then\n    CXXFLAGS=\"$CXXFLAGS -O$GCC_OPTIMIZATION_LEVEL\"\n    CFLAGS=\"$CFLAGS -O$GCC_OPTIMIZATION_LEVEL\"\nfi\n\nif [ \"$LLVM_LTO\" = YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -emit-llvm\"\n    CFLAGS=\"$CFLAGS -emit-llvm\"\nfi\n\nif [ \"$LLVM_VECTORIZE_LOOPS\" != YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -fno-vectorize\"\n    CFLAGS=\"$CFLAGS -fno-vectorize\"\nfi\n\nexport CXXFLAGS CFLAGS CPPFLAGS CC CXX\n\nenv > ~/yo.txt\n\nif ! ./are_dependencies_up_to_date.sh; then\n    make clean-deps\n    make dependencies\nfi";
+		};
+		96FCB3F4185716E400FB2839 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 8;
+			files = (
+			);
+			inputPaths = (
+				"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+			shellPath = /bin/sh;
+			shellScript = "strip -u -r \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"\nexec upx --best --ultra-brute \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
