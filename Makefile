@@ -71,11 +71,12 @@ all: test_encfs_main
 libwebdav_server_fs: clean
 	@rm -rf "$(DAVFUSE_ROOT)/out"
 	@cd $(DAVFUSE_ROOT); rm config.mk; cp $(if $(IS_WIN_TARGET),config-nt-msvcrt-mingw.mk,config-xnu-bsdlibc-clang.mk) config.mk
-	@cd $(DAVFUSE_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make -j$(PROCS) RELEASE= USE_DYNAMIC_FS=1 libwebdav_server_fs.a
+	@cd $(DAVFUSE_ROOT); AR="$(AR)" CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CPPFLAGS)" CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" make -j$(PROCS) USE_DYNAMIC_FS=1 libwebdav_server_fs.a
 	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
 	@cp "$(DAVFUSE_ROOT)/out/targets/$(notdir $(WEBDAV_SERVER_STATIC_LIBRARY))" $(WEBDAV_SERVER_STATIC_LIBRARY)
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/davfuse
-	@find $(DAVFUSE_ROOT) -name '*.h' | (while read F; do cp $$F $(DEPS_INSTALL_ROOT)/include/davfuse/$$(basename $$F); done)
+	@find $(DAVFUSE_ROOT)/src -name '*.h' | (while read F; do cp $$F $(DEPS_INSTALL_ROOT)/include/davfuse/$$(basename $$F); done)
+	@find $(DAVFUSE_ROOT)/out/libwebdav_server_fs/headers -name '*.h' | (while read F; do cp $$F $(DEPS_INSTALL_ROOT)/include/davfuse/$$(basename $$F); done)
 
 libencfs: clean
 #	TODO: don't require fuse when configuring encfs

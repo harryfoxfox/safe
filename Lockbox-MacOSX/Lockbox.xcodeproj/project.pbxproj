@@ -314,7 +314,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $SRCROOT/..\n\n# add cmake to path\nPATH=\"/usr/local/bin:$PATH\"\n\n# set up compiler environment\nexport CXX=clang++\nexport CXXFLAGS=-stdlib=$CLANG_CXX_LIBRARY\n\nif ! ./are_dependencies_up_to_date.sh; then\n    make clean-deps\n    make dependencies\nfi";
+			shellScript = "cd $SRCROOT/..\n\n# add cmake to path\nPATH=\"/usr/local/bin:$PATH\"\n\n# set up compiler environment\n\n# TODO: derive from xcode settings\nCC=clang\nCXX=clang++\n\nif [ \"$CLANG_CXX_LIBRARYx\" != x ]; then\n    CXXFLAGS=\"$CXXFLAGS -stdlib=$CLANG_CXX_LIBRARY\"\nfi\n\nif [ \"$GCC_GENERATE_DEBUGGING_SYMBOLS\" = YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -g\"\n    CFLAGS=\"$CFLAGS -g\"\nfi\n\nfor DEF in $GCC_PREPROCESSOR_DEFINITIONS; do\n    CXXFLAGS=\"$CXXFLAGS -D$DEF\"\n    CFLAGS=\"$CFLAGS -D$DEF\"\ndone\n\nif [ \"$GCC_OPTIMIZATION_LEVELx\" != x ]; then\n    CXXFLAGS=\"$CXXFLAGS -O$GCC_OPTIMIZATION_LEVEL\"\n    CFLAGS=\"$CFLAGS -O$GCC_OPTIMIZATION_LEVEL\"\nfi\n\nif [ \"$LLVM_LTO\" = YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -emit-llvm\"\n    CFLAGS=\"$CFLAGS -emit-llvm\"\nfi\n\nif [ \"$LLVM_VECTORIZE_LOOPS\" != YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -fno-vectorize\"\n    CFLAGS=\"$CFLAGS -fno-vectorize\"\nfi\n\nexport CXXFLAGS CFLAGS CPPFLAGS CC CXX\n\nenv > ~/yo.txt\n\nif ! ./are_dependencies_up_to_date.sh; then\n    make clean-deps\n    make dependencies\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -402,6 +402,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = $SRCROOT/../out/deps/lib;
 				LLVM_LTO = YES;
+				LLVM_VECTORIZE_LOOPS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
@@ -427,6 +428,9 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
 				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
@@ -447,6 +451,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = $SRCROOT/../out/deps/lib;
 				LLVM_LTO = YES;
+				LLVM_VECTORIZE_LOOPS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;
@@ -508,7 +513,7 @@
 				963D09D317A1D89D00AEE673 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		963D09D417A1D89D00AEE673 /* Build configuration list for PBXNativeTarget "Lockbox" */ = {
 			isa = XCConfigurationList;
@@ -517,7 +522,7 @@
 				963D09D617A1D89D00AEE673 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
