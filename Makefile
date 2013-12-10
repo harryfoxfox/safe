@@ -167,10 +167,11 @@ $(NLSCHECK):
 	@mkdir -p /tmp/nlschk && \
          echo '#include <windows.h>' > /tmp/nlschk/chk.c && \
          echo 'NORM_FORM a = NormalizationC;' >> /tmp/nlschk/chk.c && \
+	 rm -f /tmp/nlschk/chk.o && \
          $(CC) -o /tmp/nlschk/chk.o -c /tmp/nlschk/chk.c; \
-         touch $(NLSCHECK); \
+         echo > $(NLSCHECK); \
          if [ -e /tmp/nlschk/chk.o ]; then \
-         echo '#define LOCKBOX_HAVE_WINNLS' > $(NLSCHECK); \
+         echo '#define LOCKBOX_HAVE_WINNLS' >> $(NLSCHECK); \
          fi
 
 nlscheck: $(NLSCHECK)
