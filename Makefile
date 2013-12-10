@@ -15,10 +15,12 @@ ifdef IS_WIN_CROSS
  CC = $(IS_WIN_CROSS)-gcc
  CXX = $(IS_WIN_CROSS)-g++
  DLLTOOL = $(IS_WIN_CROSS)-dlltool
+ STRIP = $(IS_WIN_CROSS)-strip
 else
  RANLIB ?= ranlib
  WINDRES ?= windres
  DLLTOOL ?= dlltool
+ STRIP ?= strip
 endif
 
 IS_WIN := $(shell uname | grep -i mingw)
@@ -243,9 +245,12 @@ WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
 
 $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
- -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
+ -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
  -lole32 -lcomctl32 -lwinhttp -lnormaliz
+	$(if $(RELEASE),$(STRIP) -s $@.pre,)
+	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@.pre,)
+	mv $@.pre $@
 
 .PHONY: dependencies clean libbotan \
 	libprotobuf libtinyxml libencfs libwebdav_server_fs winhttp
