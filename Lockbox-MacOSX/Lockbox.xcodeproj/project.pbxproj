@@ -323,7 +323,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
 			);
 			outputPaths = (
 			);
