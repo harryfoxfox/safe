@@ -8,7 +8,7 @@ PROTOBUF_ROOT := $(CURDIR)/../protobuf
 HEADERS_ROOT := $(CURDIR)/out/headers
 DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
 
-ifneq ($(IS_WIN_CROSS),)
+ifdef IS_WIN_CROSS
  WINDRES = $(IS_WIN_CROSS)-windres
  RANLIB = $(IS_WIN_CROSS)-ranlib
  AR = $(IS_WIN_CROSS)-ar
