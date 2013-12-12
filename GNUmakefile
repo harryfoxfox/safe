@@ -142,7 +142,7 @@ libbotan: clean
          --no-optimizations --prefix=$(DEPS_INSTALL_ROOT) \
          --disable-shared \
          $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,--cc-bin=c++) \
-         $(if $(IS_WIN_TARGET),--os=mingw --cpu=x86,)
+         $(if $(IS_WIN_TARGET),--os=mingw --cpu=x86,) --with-tr1=none
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make clean
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make -j$(PROCS)
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make install
