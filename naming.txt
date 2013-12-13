@@ -1,0 +1,114 @@
+literal things it stores:
+bit
+file
+byte
+data
+memory
+document
+doc
+
+things usually privately stored:
+passwords
+keys
+contracts
+tax returns
+receipts
+letters / correspondence
+money / jewelry / treasure / objects of financial value
+photos
+hospital records / health data / DNA
+
+literal insecure storage nouns:
+disk
+drive
+filesystem
+
+insecure storage nouns:
+cache
+box
+trunk
+keep
+chest
+repository
+store
+bag
+bin
+warehouse
+
+secure storage nouns:
+vault
+safe
+locker
+lockbox
+strongbox
+depository
+
+storage securers:
+lock
+chain
+shell
+guard
+guardian
+shield
+armor
+ward
+cover
+
+verbs:
+protects
+secures
+shields
+covers
+locks
+defends
+fortifies
+safeguards
+guards
+
+qualities:
+lightweight
+micro
+fast
+quick
+efficient
+easy
+simple
+secure
+strong
+dependable
+sovereign
+independent
+open
+libre
+
+related metaphors:
+Helios
+Fort Knox
+Secret Service
+National Guard
+chainmail
+bullet-proof vest
+treasure box
+
+contenders:
+
+what it is:
+lockbox
+bitvault
+lightsafe
+quicksafe 
+quickvault
+strongvault
+bitsafe
+microvault
+
+what it does:
+bytelock
+bitlock
+bitguard
+
+how it does it:
+quicklock
+microcrypt
+lightcrypt
+quickcrypt
