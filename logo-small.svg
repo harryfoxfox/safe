@@ -16,7 +16,7 @@
    id="svg2991"
    version="1.1"
    inkscape:version="0.48.2 r9819"
-   sodipodi:docname="logo.svg"
+   sodipodi:docname="logo-small.svg"
    inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-512.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
@@ -446,18 +446,18 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.1699219"
+     inkscape:zoom="1.53125"
      inkscape:cx="256"
      inkscape:cy="256"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:document-units="px"
      inkscape:grid-bbox="true"
-     inkscape:window-width="1407"
-     inkscape:window-height="817"
-     inkscape:window-x="26"
+     inkscape:window-width="1280"
+     inkscape:window-height="1002"
+     inkscape:window-x="0"
      inkscape:window-y="0"
-     inkscape:window-maximized="0"
+     inkscape:window-maximized="1"
      showguides="true"
      inkscape:guide-bbox="true"
      inkscape:showpageshadow="false" />
@@ -469,7 +469,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -527,24 +527,15 @@
        style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
        id="rect3855"
        width="10"
-       height="33.919617"
+       height="20.858391"
        x="251"
-       y="150.12416"
+       y="163.18538"
        inkscape:tile-cx="256"
        inkscape:tile-cy="256"
        inkscape:tile-w="10"
        inkscape:tile-h="175.599"
        inkscape:tile-x0="251"
        inkscape:tile-y0="168.2005" />
-    <use
-       x="0"
-       y="0"
-       inkscape:tiled-clone-of="#rect3855"
-       xlink:href="#rect3855"
-       id="use3077"
-       inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-       inkscape:export-xdpi="6.7580395"
-       inkscape:export-ydpi="6.7580395" />
     <use
        x="0"
        y="0"
