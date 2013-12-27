@@ -19,6 +19,8 @@
    inkscape:version="0.48.2 r9819"
    sodipodi:docname="webmock.svg">
   <script
+     xlink:href="common.js" />
+  <script
      xlink:href="webmock.js"
      id="script23708" />
   <style type="text/css">

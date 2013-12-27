@@ -1,19 +1,6 @@
-var RuntimeException = function (message) {
-    this.message = message;
-    this.name = "UserException";
-}
+var safe_splash = {};
 
-try {
-    assert;
-}
-catch (ReferenceError) {
-    assert = function (bool, msg) {
-        if (bool) return;
-        alert(msg);
-    };
-}
-
-(function () {
+(function (exports) {
     var SVG_NS_URI = 'http://www.w3.org/2000/svg';
 
     var CONTENT_ID = 'content';
@@ -123,25 +110,25 @@ catch (ReferenceError) {
             var use_element = uses[i];
             var other_id = use_element.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
             if (other_id[0] != '#') {
-                throw new RuntimeException("only id hrefs are supported!");
+                throw new safe_common.RuntimeException("only id hrefs are supported!");
             }
 
             var source_element = document.getElementById(other_id.substr(1));
             if (!source_element) {
-                throw new RuntimeException("no source element!");
+                throw new safe_common.RuntimeException("no source element!");
             }
 
             if (source_element.tagName == "svg" ||
                 source_element.tagName == "symbol" ||
                 source_element.namespaceURI != SVG_NS_URI) {
-                throw new RuntimeException("we only support g sources");
+                throw new safe_common.RuntimeException("we only support g sources");
             }
 
             var new_node = deep_clone_element(source_element, id_prefix);
 
             var id_prefix = use_element.getAttribute("id");
             if (!id_prefix) {
-                throw new RuntimeException("use element must have id!");
+                throw new safe_common.RuntimeException("use element must have id!");
             }
             prefix_all_ids(new_node, id_prefix);
 
@@ -301,6 +288,4 @@ catch (ReferenceError) {
     
     window.onload = webmock_on_load;
     window.onresize = webmock_on_resize;
-})();
-
-
+})(safe_splash);
