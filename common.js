@@ -29,17 +29,19 @@ var safe_common = {};
     };
 
     exports.remove_element = function (elt) {
-        return elt.parentElement.removeChild(elt);
+        return elt.parentNode.removeChild(elt);
     };
     
     var prefix_all_ids = function (root_elt, id_prefix) {
         var nodes = [root_elt];
         while (nodes.length) {
             var curnode = nodes.pop();
-            var cur_id = curnode.getAttribute("id");
+            var cur_id = curnode.id;
             if (cur_id) curnode.setAttribute("id", id_prefix + "-" + cur_id);
-            for (var i = 0; i < curnode.children.length; ++i) {
-                nodes.push(curnode.children[i]);
+            for (var i = 0; i < curnode.childNodes.length; ++i) {
+                if (curnode.childNodes[i].nodeType == 1) { // element node
+                    nodes.push(curnode.childNodes[i]);
+                }
             }
         }
     };
@@ -104,7 +106,7 @@ var safe_common = {};
             // this is in no means fully general
             // we should always use the correct xml namespaces when inserting into
             // a different part of the dom tree (since new_node comes from source_element)
-            use_element.parentElement.insertBefore(new_node, use_element);
+            use_element.parentNode.insertBefore(new_node, use_element);
 
             // transfer all attributes from use node to the cloned node
             for (var j = 0; j < use_element.attributes.length; ++j) {
@@ -205,8 +207,8 @@ var safe_common = {};
         // TODO: this is pretty hacky
         var title = document.getElementById(id_prefix + 'button').getAttribute("safe_button:label")
         document.getElementById(id_prefix + 'tspan5753').textContent = title;
-        var text_width_px = document.getElementById(id_prefix + 'button_text').getBoundingClientRect().width;
-        var button_width_px = highlight_elt.getBoundingClientRect().width;
+        var text_width_px = document.getElementById(id_prefix + 'button_text').getBBox().width;
+        var button_width_px = highlight_elt.getBBox().width;
         var offset = ((button_width_px - text_width_px) / 2 +
                       parseFloat(highlight_elt.getAttribute("x")));
         document.getElementById(id_prefix + 'tspan5753').setAttribute("x", offset);
@@ -216,10 +218,10 @@ var safe_common = {};
         var root_element = document.rootElement;
 
         var content_svg_elt = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        var all_root_children = safe_common.array(document.rootElement.children);
+        var all_root_children = safe_common.array(document.rootElement.childNodes);
         for (var i = 0; i < all_root_children.length; ++i) {
             var elt = all_root_children[i];
-            if (elt.hasAttribute("safe_common:main_content")) {
+            if (elt.nodeType == 1 && elt.hasAttribute("safe_common:main_content")) {
                 content_svg_elt.appendChild(safe_common.remove_element(elt));
             }
         }
