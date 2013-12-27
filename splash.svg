@@ -2,7 +2,8 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:safe_button="http://thelig.ht/xmlns/safe_button/2009"
+   xmlns:safe_button="http://thelig.ht/xmlns/safe_button/2013"
+   xmlns:safe_common="http://thelig.ht/xmlns/safe_common/2013"
    xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -2231,7 +2232,7 @@ fill-opacity: 1.0;
        sodipodi:linespacing="125%"><a xlink:href="about.html" class="text_link">About</a> | <a xlink:href="http://github.com/rianhunter/safe" class="text_link">GitHub</a> | <a xlink:href="http://twitter.com/safe_app" class="text_link">Twitter</a> | © 2013 <a xlink:href="http://thelig.ht" class="text_link">Rian Hunter</a></text>
   </g>
   <g
-     id="content"
+     safe_common:main_content="true"
      inkscape:label="Content"
      inkscape:groupmode="layer"
      style="display:inline"
