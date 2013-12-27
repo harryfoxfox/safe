@@ -21,6 +21,17 @@
   <script
      xlink:href="webmock.js"
      id="script23708" />
+  <style type="text/css">
+    <![CDATA[
+    .text_link:hover {
+    text-decoration: underline;
+    }
+.text_link {
+fill: #7777ff;
+fill-opacity: 1.0;
+}
+    ]]>
+  </style>
   <defs
      id="defs3006">
     <linearGradient
@@ -2215,7 +2226,7 @@
        x="10.136055"
        y="658.70233"
        id="text5874"
-       sodipodi:linespacing="125%">About | GitHub | Twitter | © 2013 Rian Hunter</text>
+       sodipodi:linespacing="125%"><a xlink:href="about.html" class="text_link">About</a> | <a xlink:href="http://github.com/rianhunter/safe" class="text_link">GitHub</a> | <a xlink:href="http://twitter.com/safe_app" class="text_link">Twitter</a> | © 2013 <a xlink:href="http://thelig.ht" class="text_link">Rian Hunter</a></text>
   </g>
   <g
      id="content"
@@ -2401,6 +2412,7 @@
            y="102.91817"
            style="font-variant:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia"
            id="tspan5747">Protect your files.</tspan></tspan></text>
+    <a xlink:href="about.html#download">
     <g
        id="button"
        safe_button:label="Download"
@@ -2474,6 +2486,8 @@
          style="fill:#000000;fill-opacity:0;fill-rule:nonzero;stroke:none;stroke-width:1.21456038999999993;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;opacity:1"
          inkscape:label="#rect25679" />
     </g>
+    </a>
+    <a xlink:href="tour.svg">
     <use
        x="0"
        y="0"
@@ -2484,5 +2498,6 @@
        height="670"
        safe_button:label="Learn More"
        inkscape:label="#use26423" />
+    </a>
   </g>
 </svg>
