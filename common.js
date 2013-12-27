@@ -205,8 +205,8 @@ var safe_common = {};
         // TODO: this is pretty hacky
         var title = document.getElementById(id_prefix + 'button').getAttribute("safe_button:label")
         document.getElementById(id_prefix + 'tspan5753').textContent = title;
-        var text_width_px = document.getElementById(id_prefix + 'button_text').clientWidth;
-        var button_width_px = highlight_elt.width.baseVal.value;
+        var text_width_px = document.getElementById(id_prefix + 'button_text').getBoundingClientRect().width;
+        var button_width_px = highlight_elt.getBoundingClientRect().width;
         var offset = ((button_width_px - text_width_px) / 2 +
                       parseFloat(highlight_elt.getAttribute("x")));
         document.getElementById(id_prefix + 'tspan5753').setAttribute("x", offset);
