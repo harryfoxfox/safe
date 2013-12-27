@@ -1,4 +1,4 @@
-function RuntimeException(message) {
+var RuntimeException = function (message) {
     this.message = message;
     this.name = "UserException";
 }
@@ -188,7 +188,7 @@ catch (ReferenceError) {
         }
     };
 
-    var set_up_button = function (title, id_prefix) {
+    var set_up_button = function (id_prefix) {
         var BUTTON_HILITE_ID = 'button_hover_gradient';
         var BUTTON_CLICK_HILITE_ID = 'button_click_mask';
         var BUTTON_HIT_REGION_ID = 'button_hit_region';
@@ -232,15 +232,13 @@ catch (ReferenceError) {
 
         set_button_style();
         
-        hit_region_elt.style.cursor = 'pointer';
         hit_region_elt.onmouseover = webmock_button_on_hover;
         hit_region_elt.onmouseout = webmock_button_on_hoverout;
         hit_region_elt.onmousedown = webmock_button_on_mousedown;
 
         var global_mouse_up = function (evt) {
             if (mouse_pressed && mouse_entered) {
-                window.location = 'tour-preso.svg';
-                console.log("click action");
+                /* TODO: click action to be parsed from ui desc */
             }
             mouse_pressed = false;
             set_button_style();
@@ -250,6 +248,7 @@ catch (ReferenceError) {
         document.rootElement.addEventListener('mouseup', global_mouse_up);
 
         // TODO: this is pretty hacky
+        var title = document.getElementById(id_prefix + 'button').getAttribute("safe_button:label")
         document.getElementById(id_prefix + 'tspan5753').textContent = title;
         var text_width_px = document.getElementById(id_prefix + 'button_text').clientWidth;
         var button_width_px = highlight_elt.width.baseVal.value;
@@ -291,10 +290,9 @@ catch (ReferenceError) {
         text_element.style['font-size'] = footer_height() + 'px';
 
         // set up buttons
-        var button_defs = [["Download", ""],
-                           ["Learn More", "learn_more_button-"]];
+        var button_defs = ["", "learn_more_button-"];
         for (var i = 0; i < button_defs.length; ++i) {
-            set_up_button(button_defs[i][0], button_defs[i][1]);
+            set_up_button(button_defs[i]);
         }
 
         // finally kick off a resize

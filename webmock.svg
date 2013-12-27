@@ -2,6 +2,7 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
+   xmlns:safe_button="http://thelig.ht/xmlns/safe_button/2009"
    xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -2402,6 +2403,7 @@
            id="tspan5747">Protect your files.</tspan></tspan></text>
     <g
        id="button"
+       safe_button:label="Download"
        inkscape:label="#g25683">
       <rect
          inkscape:label="#rect4827"
@@ -2480,6 +2482,7 @@
        transform="translate(0,111.7393)"
        width="630.85516"
        height="670"
+       safe_button:label="Learn More"
        inkscape:label="#use26423" />
   </g>
 </svg>
