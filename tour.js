@@ -16,7 +16,7 @@ var safe_tour = {};
     var ARROW_WIDTH_INCHES = 0.75;
     var TIMER_SIZE_INCHES = 0.5;
     var BUTTON_MARGIN_PX = 8;
-    var SLIDE_DURATION_SECS = 120;
+    var SLIDE_DURATION_SECS = 5;
     var TIMER_UPDATE_FREQUENCY = 30;
     var ARROW_BLINK_FREQUENCY = 5;
 
@@ -39,7 +39,7 @@ var safe_tour = {};
         if (timer_update_id === null) {
             var timer_func = function () {
                 var cur_time = (new Date()).getTime();
-                var timer_percentage = (cur_time - start_time) / SLIDE_DURATION_SECS / 60;
+                var timer_percentage = (cur_time - start_time) / 1000 / SLIDE_DURATION_SECS;
                 timer_widget_set_percentage(timer_percentage);
 
                 if (timer_percentage >= 1.0) {
