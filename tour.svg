@@ -2,6 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
+   xmlns:ns="http://thelig.ht/xmlns/safe_common/2013"
+   xmlns:safe_button="http://thelig.ht/xmlns/safe_button/2009"
+   xmlns:safe_common="http://thelig.ht/xmlns/safe_common/2009"
    xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -17,6 +20,12 @@
    version="1.1"
    inkscape:version="0.48.2 r9819"
    sodipodi:docname="tour.svg">
+  <script
+     xlink:href="common.js"
+     id="script2986" />
+  <script
+     xlink:href="tour.js"
+     id="script23708" />
   <defs
      id="defs5982">
     <linearGradient
@@ -38,56 +47,6 @@
          offset="1"
          id="stop7446" />
     </linearGradient>
-    <linearGradient
-       y2="0.47232473"
-       x2="32.118271"
-       y1="63.645756"
-       x1="32.117889"
-       spreadMethod="pad"
-       gradientTransform="matrix(7.9676531,0,0,7.9676529,1.0351094,1.0351443)"
-       gradientUnits="userSpaceOnUse"
-       id="linearGradient3835"
-       xlink:href="#linearGradient5312"
-       inkscape:collect="always" />
-    <linearGradient
-       y2="57.151291"
-       x2="32.140224"
-       y1="7.0848689"
-       x1="32.214024"
-       gradientTransform="matrix(7.4547165,0,0,7.4547165,17.449056,17.449087)"
-       gradientUnits="userSpaceOnUse"
-       id="linearGradient3833"
-       xlink:href="#linearGradient5338"
-       inkscape:collect="always" />
-    <linearGradient
-       y2="29.376289"
-       x2="37.267944"
-       y1="42.602524"
-       x1="24.669722"
-       gradientUnits="userSpaceOnUse"
-       id="linearGradient3831"
-       xlink:href="#linearGradient5655"
-       inkscape:collect="always" />
-    <linearGradient
-       y2="31.647572"
-       x2="29.491108"
-       y1="25.657457"
-       x1="31.317177"
-       gradientUnits="userSpaceOnUse"
-       id="linearGradient3829"
-       xlink:href="#linearGradient5675"
-       inkscape:collect="always" />
-    <radialGradient
-       r="2.5247233"
-       fy="11.710496"
-       fx="27.611296"
-       cy="11.710496"
-       cx="27.611296"
-       gradientTransform="matrix(4.3835295,0,0,3.8602107,135.91395,85.217594)"
-       gradientUnits="userSpaceOnUse"
-       id="radialGradient3827"
-       xlink:href="#linearGradient5384"
-       inkscape:collect="always" />
     <g
        id="symbolz">
       <radialGradient
@@ -796,6 +755,86 @@
     .fil1 {fill:#FFCF63}
    
   </style>
+    <g
+       id="symbolz-8">
+      <radialGradient
+         r="0.70999998"
+         id="gradientz-1">
+        <!-- Slightly more than sqrt(2)*50% -->
+        <stop
+           style="stop-color:#ffffff;stop-opacity:1;"
+           id="stop5523-4"
+           stop-color="rgb(1%,0%,0%)"
+           offset="0" />
+        <!-- The red channel corresponds to 1/t -->
+        <!-- The offset corresponds to 1/t. -->
+        <stop
+           style="stop-color:#ffffff;stop-opacity:0;"
+           id="stop5527-7"
+           stop-color="#f00"
+           offset="1" />
+      </radialGradient>
+      <rect
+         id="rect5529-1"
+         height="150"
+         width="150"
+         x="0"
+         y="0"
+         style="fill:url(#gradientz-1)" />
+    </g>
+    <linearGradient
+       y2="302.0434"
+       x2="514.50665"
+       y1="377.24335"
+       x1="514.50665"
+       gradientTransform="matrix(0.93851415,0,0,0.93851415,-352.66561,-283.6377)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient9632"
+       xlink:href="#linearGradient5805"
+       inkscape:collect="always" />
+    <radialGradient
+       r="127.96092"
+       fy="277.82355"
+       fx="813.08368"
+       cy="277.82355"
+       cx="813.08368"
+       gradientTransform="matrix(1.2939459,0.01044224,-0.01501596,1.8594418,-921.9237,-456.25816)"
+       gradientUnits="userSpaceOnUse"
+       id="radialGradient9629"
+       xlink:href="#gradientz-1"
+       inkscape:collect="always" />
+    <linearGradient
+       gradientTransform="translate(-187.56824,-416.90625)"
+       y2="502.21265"
+       x2="232.48157"
+       y1="342.63849"
+       x1="216.59561"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient9623"
+       xlink:href="#linearGradient34289"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient5805">
+      <stop
+         id="stop5807"
+         offset="0"
+         style="stop-color:#9799ff;stop-opacity:0.50427353;" />
+      <stop
+         id="stop5809"
+         offset="1"
+         style="stop-color:#97dcff;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient34289">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1"
+         offset="0"
+         id="stop34291" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="1"
+         id="stop34295" />
+    </linearGradient>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -804,10 +843,10 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.82552083"
-     inkscape:cx="512"
-     inkscape:cy="384"
-     inkscape:current-layer="g7118"
+     inkscape:zoom="1"
+     inkscape:cx="906.89422"
+     inkscape:cy="102.12195"
+     inkscape:current-layer="layer1"
      inkscape:document-units="px"
      showgrid="true"
      inkscape:window-width="1440"
@@ -840,195 +879,112 @@
     </rdf:RDF>
   </metadata>
   <g
+     inkscape:groupmode="layer"
      id="layer1"
-     inkscape:label="Safe Logo"
-     inkscape:groupmode="layer"
-     style="opacity:0.51415094;display:none"
-     sodipodi:insensitive="true">
+     inkscape:label="Master">
+    <a xlink:href="about.html#download">
     <g
-       id="g6328">
-      <g
-         transform="matrix(0.12499988,0,0,0.12500006,7.9999999,7.9999693)"
-         id="layer1-7"
-         inkscape:label="Layer 1">
-        <rect
-           style="fill:url(#linearGradient3835);fill-opacity:1;fill-rule:nonzero;stroke:#000132;stroke-width:9.91527462;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-           id="rect3003"
-           width="502.08472"
-           height="502.08472"
-           x="4.9576416"
-           y="4.9576459"
-           ry="47.070442"
-           inkscape:export-xdpi="90"
-           inkscape:export-ydpi="90" />
-        <path
-           id="rect3789"
-           style="fill:url(#linearGradient3833);fill-opacity:1;stroke:#000132;stroke-width:9.27695656;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-           d="m 107.17191,65.638472 297.65617,0 c 23.00955,0 41.53344,18.52392 41.53344,41.533428 l 0,297.6562 c 0,23.00952 -18.52389,41.53343 -41.53344,41.53343 l -297.65617,0 c -23.009524,0 -41.533429,-18.52391 -41.533429,-41.53343 l 0,-297.6562 c 0,-23.009508 18.523905,-41.533428 41.533429,-41.533428 z"
-           inkscape:connector-curvature="0" />
-        <path
-           sodipodi:type="arc"
-           style="fill:url(#linearGradient3831);fill-opacity:1;stroke:#000132;stroke-width:1.12340677;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-           id="path3836"
-           sodipodi:cx="34.538746"
-           sodipodi:cy="33.121773"
-           sodipodi:rx="11.394834"
-           sodipodi:ry="11.394834"
-           d="m 45.933579,33.121773 c 0,6.293193 -5.10164,11.394833 -11.394833,11.394833 -6.293193,0 -11.394834,-5.10164 -11.394834,-11.394833 0,-6.293193 5.101641,-11.394834 11.394834,-11.394834 6.293193,0 11.394833,5.101641 11.394833,11.394834 z"
-           transform="matrix(8.9014948,0,0,8.9014948,-51.446467,-38.833286)"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-        <path
-           sodipodi:type="arc"
-           style="fill:url(#linearGradient3829);fill-opacity:1;stroke:#000632;stroke-width:1.16905522;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-           id="path3838"
-           sodipodi:cx="29.461254"
-           sodipodi:cy="30.760147"
-           sodipodi:rx="5.1365314"
-           sodipodi:ry="5.1365314"
-           d="m 34.597785,30.760147 c 0,2.836828 -2.299703,5.136531 -5.136531,5.136531 -2.836828,0 -5.136531,-2.299703 -5.136531,-5.136531 0,-2.836828 2.299703,-5.136531 5.136531,-5.136531 2.836828,0 5.136531,2.299703 5.136531,5.136531 z"
-           transform="matrix(8.5539162,0,0,8.5539162,3.9909011,-7.1197157)"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-        <path
-           id="path3856"
-           style="fill:url(#radialGradient3827);fill-opacity:1;stroke:#000132;stroke-width:1.60714722;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-           d="m 256.00001,142.75865 -4.93092,-8.5406 -4.93092,-8.54061 9.86184,0 9.86184,0 -4.93092,8.54061 z"
-           inkscape:connector-curvature="0" />
-        <rect
-           style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
-           id="rect3855"
-           width="10"
-           height="20.858391"
-           x="251"
-           y="163.18538"
-           inkscape:tile-cx="256"
-           inkscape:tile-cy="256"
-           inkscape:tile-w="10"
-           inkscape:tile-h="175.599"
-           inkscape:tile-x0="251"
-           inkscape:tile-y0="168.2005" />
-        <use
-           height="1"
-           width="1"
-           x="0"
-           y="0"
-           inkscape:tiled-clone-of="#rect3855"
-           xlink:href="#rect3855"
-           transform="matrix(0.70710678,0.70710678,-0.70710678,0.70710678,256,-106.03867)"
-           id="use3079"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-        <use
-           height="1"
-           width="1"
-           x="0"
-           y="0"
-           inkscape:tiled-clone-of="#rect3855"
-           xlink:href="#rect3855"
-           transform="matrix(0,1,-1,0,512,0)"
-           id="use3081"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-        <use
-           height="1"
-           width="1"
-           x="0"
-           y="0"
-           inkscape:tiled-clone-of="#rect3855"
-           xlink:href="#rect3855"
-           transform="matrix(-0.70710678,0.70710678,-0.70710678,-0.70710678,618.03867,256)"
-           id="use3083"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-        <use
-           height="1"
-           width="1"
-           x="0"
-           y="0"
-           inkscape:tiled-clone-of="#rect3855"
-           xlink:href="#rect3855"
-           transform="matrix(-1,0,0,-1,512,512)"
-           id="use3085"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-        <use
-           height="1"
-           width="1"
-           x="0"
-           y="0"
-           inkscape:tiled-clone-of="#rect3855"
-           xlink:href="#rect3855"
-           transform="matrix(-0.70710678,-0.70710678,0.70710678,-0.70710678,256,618.03867)"
-           id="use3087"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-        <use
-           height="1"
-           width="1"
-           x="0"
-           y="0"
-           inkscape:tiled-clone-of="#rect3855"
-           xlink:href="#rect3855"
-           transform="matrix(0,-1,1,0,0,512)"
-           id="use3089"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-        <use
-           height="1"
-           width="1"
-           x="0"
-           y="0"
-           inkscape:tiled-clone-of="#rect3855"
-           xlink:href="#rect3855"
-           transform="matrix(0.70710678,-0.70710678,0.70710678,0.70710678,-106.03867,256)"
-           id="use3091"
-           inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-           inkscape:export-xdpi="6.7580395"
-           inkscape:export-ydpi="6.7580395" />
-      </g>
-      <text
-         sodipodi:linespacing="125%"
-         id="text6295"
-         y="57.29686"
-         x="81.387756"
-         style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-         xml:space="preserve"><tspan
-           style="font-size:52px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia"
-           y="57.29686"
-           x="81.387756"
-           id="tspan6297"
-           sodipodi:role="line">Safe</tspan></text>
-    </g>
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="layer7"
-     inkscape:label="Download Button"
-     sodipodi:insensitive="true"
-     style="display:none">
-    <image
+       id="button"
        style="display:inline"
-       y="714.25665"
-       x="842.96936"
-       id="image7368"
-       xlink:href="data:image/png;base64,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 "
-       height="45.504414"
-       width="173.06596" />
+       inkscape:label="Content"
+       ns:main_content="true"
+       safe_button:label="Download"
+       transform="matrix(0.6197644,0,0,0.6197644,855.90037,709.30883)">
+      <rect
+         inkscape:label="#rect4827"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="button_background"
+         width="254.70728"
+         height="72.773514"
+         x="0.5"
+         y="0.5"
+         ry="9.6952181" />
+      <rect
+         ry="9.6952181"
+         y="0.5"
+         x="0.5"
+         height="72.773514"
+         width="254.70728"
+         id="button_face"
+         style="fill:url(#linearGradient9632);fill-opacity:1;fill-rule:nonzero;stroke:none"
+         inkscape:label="#rect4827" />
+      <rect
+         style="opacity:0;fill:url(#radialGradient9629);fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="button_hover_gradient"
+         width="254.70728"
+         height="72.773514"
+         x="0.5"
+         y="0.5"
+         ry="9.6952181"
+         inkscape:label="#rect25151" />
+      <text
+         xml:space="preserve"
+         style="font-size:37.54056549px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Trebuchet MS;-inkscape-font-specification:Trebuchet MS"
+         x="45.971947"
+         y="50.54287"
+         id="button_text"
+         sodipodi:linespacing="125%"
+         inkscape:label="#text5749"><tspan
+           sodipodi:role="line"
+           x="45.971947"
+           y="50.54287"
+           id="tspan5751"><tspan
+             x="45.971947"
+             y="50.54287"
+             style="fill:#000000;fill-opacity:1;stroke:none;font-family:Trebuchet MS;-inkscape-font-specification:Trebuchet MS"
+             id="tspan5753">Download</tspan></tspan></text>
+      <path
+         style="fill:url(#linearGradient9623);fill-opacity:1;stroke:none"
+         d="M 10.213014,0 C 4.8418638,0 0.49426379,4.3163501 0.49426379,9.6875001 l 0,46.7926799 C 162.54562,56.45328 122.76969,17.32534 255.21301,17.2984 l 0,-7.6108999 C 255.21301,4.3163501 250.89666,0 245.52551,0 z"
+         id="path26444"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="ssccsss" />
+      <rect
+         ry="9.6952181"
+         y="0.5"
+         x="0.5"
+         height="72.773514"
+         width="254.70728"
+         id="button_click_mask"
+         style="opacity:0;fill:#000000;fill-opacity:0.14222221;fill-rule:nonzero;stroke:none"
+         inkscape:label="#rect25681" />
+      <rect
+         ry="9.6952181"
+         y="0.5"
+         x="0.5"
+         height="72.773514"
+         width="254.70728"
+         id="button_hit_region"
+         style="fill:#000000;fill-opacity:0;fill-rule:nonzero;stroke:#000132;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         inkscape:label="#rect25679" />
+    </g>
+    </a>
+    <path
+       sodipodi:type="arc"
+       style="fill:#818181;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="timerpath"
+       sodipodi:cx="948.49213"
+       sodipodi:cy="621.42584"
+       sodipodi:rx="32.706623"
+       sodipodi:ry="32.706623"
+       d="m 981.19875,621.42584 a 32.706623,32.706623 0 1 1 -32.70663,-32.70662 l 10e-6,32.70662 z"
+       sodipodi:start="0"
+       sodipodi:end="4.7123887"
+       transform="matrix(0.55555553,0,0,0.55555553,461.52683,333.12304)"
+       inkscape:label="#path3949" />
+    <path
+       id="path4743"
+       style="fill:#000000;fill-opacity:1;stroke:none;display:inline;opacity:0"
+       d="m 887.90371,624.28549 -25,40 -25,-40 15,0 0,-40 20,0 0,40 z"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccccc" />
   </g>
   <g
      inkscape:groupmode="layer"
      id="layer5"
      inkscape:label="1"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <flowRoot
        xml:space="preserve"
        id="flowRoot7001"
@@ -1081,7 +1037,8 @@
      style="display:none"
      inkscape:label="2"
      id="g6867"
-     inkscape:groupmode="layer">
+     inkscape:groupmode="layer"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
@@ -1243,7 +1200,8 @@
      inkscape:groupmode="layer"
      id="g6972"
      inkscape:label="3"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
@@ -1290,7 +1248,7 @@
       <polygon
          id="polygon8442"
          stroke-miterlimit="10"
-         points="195.38,35.414 133.63,17.918 75.719,20.74 60.772,42.11 93.892,68.589 156.95,86.237 212.17,84.081 228.64,62.352 "
+         points="156.95,86.237 212.17,84.081 228.64,62.352 195.38,35.414 133.63,17.918 75.719,20.74 60.772,42.11 93.892,68.589 "
          style="fill:none;stroke:#000000;stroke-width:3.37353516;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
       <polyline
          id="polyline8444"
@@ -1382,7 +1340,8 @@
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="4"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <g
        id="g10838"
        transform="translate(451.5,187.92687)"
@@ -1470,7 +1429,8 @@
      inkscape:groupmode="layer"
      id="layer6"
      inkscape:label="5"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -1508,7 +1468,7 @@
            id="tspan18909">you consider highly </tspan></tspan><tspan
          sodipodi:role="line"
          x="204.96289"
-         y="0"
+         y="256.00098"
          id="tspan18911"><tspan
            x="204.96289"
            y="536.13867"
@@ -1635,7 +1595,8 @@
      style="display:none"
      inkscape:label="6"
      id="g7076"
-     inkscape:groupmode="layer">
+     inkscape:groupmode="layer"
+     safe_common:main_content="true">
     <text
        sodipodi:linespacing="125%"
        id="text7078"
@@ -1710,104 +1671,84 @@
          inkscape:tile-h="175.599"
          inkscape:tile-x0="251"
          inkscape:tile-y0="168.2005" />
-      <use
-         style="fill:#000000;fill-opacity:1;stroke:none"
-         height="1"
-         width="1"
-         x="0"
-         y="0"
-         inkscape:tiled-clone-of="#rect3855"
-         xlink:href="#rect3855"
-         transform="matrix(0.21322409,0.21322439,-0.21322409,0.21322439,512,84.554187)"
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="-253.04247"
+         x="497.51541"
+         height="6.2897353"
+         width="3.0154462"
          id="use11885"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-ydpi="6.7580395" />
-      <use
-         style="fill:#000000;fill-opacity:1;stroke:none"
-         height="1"
-         width="1"
-         x="0"
-         y="0"
-         inkscape:tiled-clone-of="#rect3855"
-         xlink:href="#rect3855"
-         transform="matrix(0,0.30154483,-0.3015444,0,589.19536,116.5296)"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(0.70710628,0.70710728,-0.70710628,0.70710728,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="-539.98773"
+         x="192.21735"
+         height="6.289731"
+         width="3.0154483"
          id="use11887"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-ydpi="6.7580395" />
-      <use
-         style="fill:none;stroke:none"
-         height="1"
-         width="1"
-         x="0"
-         y="0"
-         inkscape:tiled-clone-of="#rect3855"
-         xlink:href="#rect3855"
-         transform="matrix(-0.21322409,0.21322439,-0.21322409,-0.21322439,621.17073,193.72508)"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(0,1,-1,0,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="-527.01086"
+         x="-226.56242"
+         height="6.2897353"
+         width="3.0154462"
          id="use11889"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-ydpi="6.7580395" />
-      <use
-         style="fill:none;stroke:none"
-         height="1"
-         width="1"
-         x="0"
-         y="0"
-         inkscape:tiled-clone-of="#rect3855"
-         xlink:href="#rect3855"
-         transform="matrix(-0.3015444,0,0,-0.30154483,589.19536,270.92055)"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(-0.70710628,0.70710728,-0.70710628,-0.70710728,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="-221.71284"
+         x="-513.50769"
+         height="6.2897401"
+         width="3.015444"
          id="use11891"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-ydpi="6.7580395" />
-      <use
-         style="fill:#000000;fill-opacity:1;stroke:none"
-         height="1"
-         width="1"
-         x="0"
-         y="0"
-         inkscape:tiled-clone-of="#rect3855"
-         xlink:href="#rect3855"
-         transform="matrix(-0.21322409,-0.21322439,0.21322409,-0.21322439,512,302.89597)"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="scale(-1,-1)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="197.06696"
+         x="-500.53088"
+         height="6.2897353"
+         width="3.0154462"
          id="use11893"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-ydpi="6.7580395" />
-      <use
-         style="fill:#000000;fill-opacity:1;stroke:none"
-         height="1"
-         width="1"
-         x="0"
-         y="0"
-         inkscape:tiled-clone-of="#rect3855"
-         xlink:href="#rect3855"
-         transform="matrix(0,-0.30154483,0.3015444,0,434.80463,270.92055)"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(-0.70710628,-0.70710728,0.70710628,-0.70710728,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="484.01227"
+         x="-195.2328"
+         height="6.289731"
+         width="3.0154483"
          id="use11895"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-ydpi="6.7580395" />
-      <use
-         style="fill:#000000;fill-opacity:1;stroke:none"
-         height="1"
-         width="1"
-         x="0"
-         y="0"
-         inkscape:tiled-clone-of="#rect3855"
-         xlink:href="#rect3855"
-         transform="matrix(0.21322409,-0.21322439,0.21322409,0.21322439,402.82926,193.72508)"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(0,-1,1,0,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="471.0354"
+         x="223.54698"
+         height="6.2897353"
+         width="3.0154462"
          id="use11897"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-ydpi="6.7580395" />
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(0.70710628,-0.70710728,0.70710628,0.70710728,0,0)" />
     </g>
   </g>
   <g
      style="display:none"
      inkscape:label="7"
      id="g7086"
-     inkscape:groupmode="layer">
+     inkscape:groupmode="layer"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -1981,7 +1922,8 @@
      inkscape:groupmode="layer"
      id="g7098"
      inkscape:label="8"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -2085,7 +2027,8 @@
      style="display:none"
      inkscape:label="9"
      id="g7108"
-     inkscape:groupmode="layer">
+     inkscape:groupmode="layer"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -2180,7 +2123,7 @@
        transform="translate(0,97.801387)">
       <path
          transform="translate(0,-0.90649244)"
-         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
+         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
          sodipodi:ry="3.3238056"
          sodipodi:rx="3.3238056"
          sodipodi:cy="99.612907"
@@ -2196,11 +2139,11 @@
          sodipodi:cy="99.612907"
          sodipodi:rx="3.3238056"
          sodipodi:ry="3.3238056"
-         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
+         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
          transform="translate(12,-0.90649244)" />
       <path
          transform="translate(24,-0.90649244)"
-         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
+         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
          sodipodi:ry="3.3238056"
          sodipodi:rx="3.3238056"
          sodipodi:cy="99.612907"
@@ -2278,7 +2221,8 @@
      inkscape:groupmode="layer"
      id="g7118"
      inkscape:label="10"
-     style="display:inline">
+     style="display:inline"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -2312,7 +2256,7 @@
            style="text-align:start;text-anchor:start">your files.</tspan></tspan></text>
     <g
        id="g12946"
-       transform="translate(-52.389002,134.90052)"
+       transform="translate(-52.38899,134.90052)"
        style="display:inline">
       <path
          style="fill:none;stroke:#000000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none"
@@ -2345,7 +2289,7 @@
     </g>
     <g
        style="display:inline"
-       transform="translate(458.05075,134.90052)"
+       transform="translate(458.05074,134.90052)"
        id="g12977">
       <path
          d="M 268.51053,49.549305 V 158.79794 h 81.22251 V 76.136595 l -50.65765,-26.58391 h -30.56563 z"
@@ -2379,18 +2323,18 @@
     <path
        id="path13002"
        style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dashoffset:0;display:inline"
-       d="m 352.18094,214.07414 40,25 -40,25 0,-15 -40,0 0,-20 40,0 z"
+       d="m 366.87208,214.07414 40,25 -40,25 0,-15 -40,0 0,-20 40,0 z"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccccc" />
     <path
        sodipodi:nodetypes="cccccccc"
        inkscape:connector-curvature="0"
-       d="m 642.43683,214.07414 40,25 -40,25 0,-15 -40,0 0,-20 40,0 z"
+       d="m 657.12794,214.07414 40,25 -40,25 0,-15 -40,0 0,-20 40,0 z"
        style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dashoffset:0;display:inline"
        id="path13009" />
     <g
        style="stroke:#000000;stroke-opacity:1;display:inline"
-       transform="translate(1.5e-5,45.34907)"
+       transform="translate(2.65e-5,45.34907)"
        id="g18528">
       <rect
          inkscape:export-ydpi="90"
@@ -2451,104 +2395,84 @@
          width="3.015444"
          id="rect18540"
          style="fill:#000000;fill-opacity:1;stroke:none" />
-      <use
-         inkscape:export-ydpi="6.7580395"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="-253.04247"
+         x="497.51541"
+         height="6.2897353"
+         width="3.0154462"
          id="use18542"
-         transform="matrix(0.21322409,0.21322439,-0.21322409,0.21322439,512,84.554187)"
-         xlink:href="#rect3855"
-         inkscape:tiled-clone-of="#rect3855"
-         y="0"
-         x="0"
-         width="1"
-         height="1"
-         style="fill:#000000;fill-opacity:1;stroke:none" />
-      <use
-         inkscape:export-ydpi="6.7580395"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(0.70710628,0.70710728,-0.70710628,0.70710728,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="-539.98773"
+         x="192.21735"
+         height="6.289731"
+         width="3.0154483"
          id="use18544"
-         transform="matrix(0,0.30154483,-0.3015444,0,589.19536,116.5296)"
-         xlink:href="#rect3855"
-         inkscape:tiled-clone-of="#rect3855"
-         y="0"
-         x="0"
-         width="1"
-         height="1"
-         style="fill:#000000;fill-opacity:1;stroke:none" />
-      <use
-         inkscape:export-ydpi="6.7580395"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(0,1,-1,0,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="-527.01086"
+         x="-226.56242"
+         height="6.2897353"
+         width="3.0154462"
          id="use18546"
-         transform="matrix(-0.21322409,0.21322439,-0.21322409,-0.21322439,621.17073,193.72508)"
-         xlink:href="#rect3855"
-         inkscape:tiled-clone-of="#rect3855"
-         y="0"
-         x="0"
-         width="1"
-         height="1"
-         style="fill:none;stroke:none" />
-      <use
-         inkscape:export-ydpi="6.7580395"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(-0.70710628,0.70710728,-0.70710628,-0.70710728,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="-221.71284"
+         x="-513.50769"
+         height="6.2897401"
+         width="3.015444"
          id="use18548"
-         transform="matrix(-0.3015444,0,0,-0.30154483,589.19536,270.92055)"
-         xlink:href="#rect3855"
-         inkscape:tiled-clone-of="#rect3855"
-         y="0"
-         x="0"
-         width="1"
-         height="1"
-         style="fill:none;stroke:none" />
-      <use
-         inkscape:export-ydpi="6.7580395"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="scale(-1,-1)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="197.06696"
+         x="-500.53088"
+         height="6.2897353"
+         width="3.0154462"
          id="use18550"
-         transform="matrix(-0.21322409,-0.21322439,0.21322409,-0.21322439,512,302.89597)"
-         xlink:href="#rect3855"
-         inkscape:tiled-clone-of="#rect3855"
-         y="0"
-         x="0"
-         width="1"
-         height="1"
-         style="fill:#000000;fill-opacity:1;stroke:none" />
-      <use
-         inkscape:export-ydpi="6.7580395"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(-0.70710628,-0.70710728,0.70710628,-0.70710728,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="484.01227"
+         x="-195.2328"
+         height="6.289731"
+         width="3.0154483"
          id="use18552"
-         transform="matrix(0,-0.30154483,0.3015444,0,434.80463,270.92055)"
-         xlink:href="#rect3855"
-         inkscape:tiled-clone-of="#rect3855"
-         y="0"
-         x="0"
-         width="1"
-         height="1"
-         style="fill:#000000;fill-opacity:1;stroke:none" />
-      <use
-         inkscape:export-ydpi="6.7580395"
-         inkscape:export-xdpi="6.7580395"
-         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(0,-1,1,0,0,0)" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         y="471.0354"
+         x="223.54698"
+         height="6.2897353"
+         width="3.0154462"
          id="use18554"
-         transform="matrix(0.21322409,-0.21322439,0.21322409,0.21322439,402.82926,193.72508)"
-         xlink:href="#rect3855"
-         inkscape:tiled-clone-of="#rect3855"
-         y="0"
-         x="0"
-         width="1"
-         height="1"
-         style="fill:#000000;fill-opacity:1;stroke:none" />
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         transform="matrix(0.70710628,-0.70710728,0.70710628,0.70710728,0,0)" />
     </g>
   </g>
   <g
      inkscape:groupmode="layer"
      id="layer8"
      inkscape:label="12b"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -2724,7 +2648,8 @@
      inkscape:groupmode="layer"
      id="g7158"
      inkscape:label="12"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -2903,7 +2828,8 @@
      style="display:none"
      inkscape:label="13"
      id="g7176"
-     inkscape:groupmode="layer">
+     inkscape:groupmode="layer"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -2961,11 +2887,11 @@
            style="fill:none;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none">
           <polygon
              id="polygon17162"
-             points="32.833,56.518 54.054,73.512 85,54.402 63.524,36.479 "
+             points="54.054,73.512 85,54.402 63.524,36.479 32.833,56.518 "
              style="fill:none;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
           <polygon
              id="polygon17168"
-             points="106.476,36.479 85,54.402 115.946,73.512 137.167,56.518 "
+             points="85,54.402 115.946,73.512 137.167,56.518 106.476,36.479 "
              style="fill:none;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
           <path
              style="stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-dasharray:none"
@@ -2975,11 +2901,11 @@
              sodipodi:nodetypes="ccccc" />
           <polygon
              id="polygon17164"
-             points="63.524,110.545 85,92.619 54.054,73.512 32.833,90.506 "
+             points="85,92.619 54.054,73.512 32.833,90.506 63.524,110.545 "
              style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
           <polygon
              id="polygon17166"
-             points="106.476,110.545 137.167,90.506 115.946,73.512 85,92.619 "
+             points="137.167,90.506 115.946,73.512 85,92.619 106.476,110.545 "
              style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
         </g>
       </g>
@@ -3018,7 +2944,8 @@
      inkscape:groupmode="layer"
      id="g7194"
      inkscape:label="14"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -3107,7 +3034,8 @@
      style="display:none"
      inkscape:label="15"
      id="g7212"
-     inkscape:groupmode="layer">
+     inkscape:groupmode="layer"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
@@ -3407,7 +3335,8 @@
      inkscape:groupmode="layer"
      id="g7230"
      inkscape:label="16"
-     style="display:none">
+     style="display:none"
+     safe_common:main_content="true">
     <text
        xml:space="preserve"
        style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"

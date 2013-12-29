@@ -2,6 +2,7 @@ var safe_common = {};
 
 (function (exports) {
     exports.SVG_NS_URI = 'http://www.w3.org/2000/svg';
+    exports.XLINK_NS_URI = "http://www.w3.org/1999/xlink";
 
     exports.RuntimeException = function (message) {
         this.message = message;
@@ -13,7 +14,7 @@ var safe_common = {};
         alert(msg);
     };
 
-    var set_opacity = function (elt, opacity) {
+    exports.set_opacity = function (elt, opacity) {
         elt.setAttribute('opacity', opacity);
         elt.style.opacity = opacity;
     };
@@ -155,16 +156,16 @@ var safe_common = {};
         
         var set_button_style = function () {
             if (mouse_pressed) {
-                set_opacity(document.getElementById(id_prefix + BUTTON_CLICK_HILITE_ID), '1');
-                set_opacity(document.getElementById(id_prefix + BUTTON_HILITE_ID), '0');
+                safe_common.set_opacity(document.getElementById(id_prefix + BUTTON_CLICK_HILITE_ID), '1');
+                safe_common.set_opacity(document.getElementById(id_prefix + BUTTON_HILITE_ID), '0');
             }
             else if (mouse_entered) {
-                set_opacity(document.getElementById(id_prefix + BUTTON_CLICK_HILITE_ID), '0');
-                set_opacity(document.getElementById(id_prefix + BUTTON_HILITE_ID), '1');
+                safe_common.set_opacity(document.getElementById(id_prefix + BUTTON_CLICK_HILITE_ID), '0');
+                safe_common.set_opacity(document.getElementById(id_prefix + BUTTON_HILITE_ID), '1');
             }
             else {
-                set_opacity(document.getElementById(id_prefix + BUTTON_CLICK_HILITE_ID), '0');
-                set_opacity(document.getElementById(id_prefix + BUTTON_HILITE_ID), '0');
+                safe_common.set_opacity(document.getElementById(id_prefix + BUTTON_CLICK_HILITE_ID), '0');
+                safe_common.set_opacity(document.getElementById(id_prefix + BUTTON_HILITE_ID), '0');
             }
         };
         
@@ -212,6 +213,9 @@ var safe_common = {};
         var offset = ((button_width_px - text_width_px) / 2 +
                       parseFloat(highlight_elt.getAttribute("x")));
         document.getElementById(id_prefix + 'tspan5753').setAttribute("x", offset);
+
+        // return button group
+        return document.getElementById(id_prefix + "button");
     }
 
     exports.inkscape_move_main_content = function () {
@@ -238,5 +242,10 @@ var safe_common = {};
         root_element.appendChild(content_svg_elt);
 
         return [content_svg_elt, original_content_height / original_content_width];
+    };
+
+    exports.inkscape_show_layer = function (elt, should_show) {
+        safe_common.assert(elt.getAttribute("inkscape:groupmode") == "layer");
+        elt.style.display = should_show ? 'inline' : 'none';
     };
 })(safe_common);
