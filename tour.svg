@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:ns="http://thelig.ht/xmlns/safe_common/2013"
-   xmlns:safe_button="http://thelig.ht/xmlns/safe_button/2009"
    xmlns:safe_common="http://thelig.ht/xmlns/safe_common/2009"
+   xmlns:safe_button="http://thelig.ht/xmlns/safe_button/2009"
+   xmlns:ns="http://thelig.ht/xmlns/safe_common/2013"
    xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -844,7 +844,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="906.89422"
+     inkscape:cx="728.89422"
      inkscape:cy="102.12195"
      inkscape:current-layer="layer1"
      inkscape:document-units="px"
@@ -882,82 +882,84 @@
      inkscape:groupmode="layer"
      id="layer1"
      inkscape:label="Master">
-    <a xlink:href="about.html#download">
-    <g
-       id="button"
-       style="display:inline"
-       inkscape:label="Content"
-       ns:main_content="true"
-       safe_button:label="Download"
-       transform="matrix(0.6197644,0,0,0.6197644,855.90037,709.30883)">
-      <rect
-         inkscape:label="#rect4827"
-         style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
-         id="button_background"
-         width="254.70728"
-         height="72.773514"
-         x="0.5"
-         y="0.5"
-         ry="9.6952181" />
-      <rect
-         ry="9.6952181"
-         y="0.5"
-         x="0.5"
-         height="72.773514"
-         width="254.70728"
-         id="button_face"
-         style="fill:url(#linearGradient9632);fill-opacity:1;fill-rule:nonzero;stroke:none"
-         inkscape:label="#rect4827" />
-      <rect
-         style="opacity:0;fill:url(#radialGradient9629);fill-opacity:1;fill-rule:nonzero;stroke:none"
-         id="button_hover_gradient"
-         width="254.70728"
-         height="72.773514"
-         x="0.5"
-         y="0.5"
-         ry="9.6952181"
-         inkscape:label="#rect25151" />
-      <text
-         xml:space="preserve"
-         style="font-size:37.54056549px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Trebuchet MS;-inkscape-font-specification:Trebuchet MS"
-         x="45.971947"
-         y="50.54287"
-         id="button_text"
-         sodipodi:linespacing="125%"
-         inkscape:label="#text5749"><tspan
-           sodipodi:role="line"
+    <a
+       xlink:href="about.html#download"
+       id="a148">
+      <g
+         id="button"
+         style="display:inline"
+         inkscape:label="Content"
+         ns:main_content="true"
+         safe_button:label="Download"
+         transform="matrix(0.6197644,0,0,0.6197644,855.90037,709.30883)">
+        <rect
+           inkscape:label="#rect4827"
+           style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+           id="button_background"
+           width="254.70728"
+           height="72.773514"
+           x="0.5"
+           y="0.5"
+           ry="9.6952181" />
+        <rect
+           ry="9.6952181"
+           y="0.5"
+           x="0.5"
+           height="72.773514"
+           width="254.70728"
+           id="button_face"
+           style="fill:url(#linearGradient9632);fill-opacity:1;fill-rule:nonzero;stroke:none"
+           inkscape:label="#rect4827" />
+        <rect
+           style="opacity:0;fill:url(#radialGradient9629);fill-opacity:1;fill-rule:nonzero;stroke:none"
+           id="button_hover_gradient"
+           width="254.70728"
+           height="72.773514"
+           x="0.5"
+           y="0.5"
+           ry="9.6952181"
+           inkscape:label="#rect25151" />
+        <text
+           xml:space="preserve"
+           style="font-size:37.54056549px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Trebuchet MS;-inkscape-font-specification:Trebuchet MS"
            x="45.971947"
            y="50.54287"
-           id="tspan5751"><tspan
+           id="button_text"
+           sodipodi:linespacing="125%"
+           inkscape:label="#text5749"><tspan
+             sodipodi:role="line"
              x="45.971947"
              y="50.54287"
-             style="fill:#000000;fill-opacity:1;stroke:none;font-family:Trebuchet MS;-inkscape-font-specification:Trebuchet MS"
-             id="tspan5753">Download</tspan></tspan></text>
-      <path
-         style="fill:url(#linearGradient9623);fill-opacity:1;stroke:none"
-         d="M 10.213014,0 C 4.8418638,0 0.49426379,4.3163501 0.49426379,9.6875001 l 0,46.7926799 C 162.54562,56.45328 122.76969,17.32534 255.21301,17.2984 l 0,-7.6108999 C 255.21301,4.3163501 250.89666,0 245.52551,0 z"
-         id="path26444"
-         inkscape:connector-curvature="0"
-         sodipodi:nodetypes="ssccsss" />
-      <rect
-         ry="9.6952181"
-         y="0.5"
-         x="0.5"
-         height="72.773514"
-         width="254.70728"
-         id="button_click_mask"
-         style="opacity:0;fill:#000000;fill-opacity:0.14222221;fill-rule:nonzero;stroke:none"
-         inkscape:label="#rect25681" />
-      <rect
-         ry="9.6952181"
-         y="0.5"
-         x="0.5"
-         height="72.773514"
-         width="254.70728"
-         id="button_hit_region"
-         style="fill:#000000;fill-opacity:0;fill-rule:nonzero;stroke:#000132;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-         inkscape:label="#rect25679" />
-    </g>
+             id="tspan5751"><tspan
+               x="45.971947"
+               y="50.54287"
+               style="fill:#000000;fill-opacity:1;stroke:none;font-family:Trebuchet MS;-inkscape-font-specification:Trebuchet MS"
+               id="tspan5753">Download</tspan></tspan></text>
+        <path
+           style="fill:url(#linearGradient9623);fill-opacity:1;stroke:none"
+           d="M 10.213014,0 C 4.8418638,0 0.49426379,4.3163501 0.49426379,9.6875001 l 0,46.7926799 C 162.54562,56.45328 122.76969,17.32534 255.21301,17.2984 l 0,-7.6108999 C 255.21301,4.3163501 250.89666,0 245.52551,0 z"
+           id="path26444"
+           inkscape:connector-curvature="0"
+           sodipodi:nodetypes="ssccsss" />
+        <rect
+           ry="9.6952181"
+           y="0.5"
+           x="0.5"
+           height="72.773514"
+           width="254.70728"
+           id="button_click_mask"
+           style="opacity:0;fill:#000000;fill-opacity:0.14222221;fill-rule:nonzero;stroke:none"
+           inkscape:label="#rect25681" />
+        <rect
+           ry="9.6952181"
+           y="0.5"
+           x="0.5"
+           height="72.773514"
+           width="254.70728"
+           id="button_hit_region"
+           style="fill:#000000;fill-opacity:0;fill-rule:nonzero;stroke:#000132;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+           inkscape:label="#rect25679" />
+      </g>
     </a>
     <path
        sodipodi:type="arc"
@@ -974,7 +976,7 @@
        inkscape:label="#path3949" />
     <path
        id="path4743"
-       style="fill:#000000;fill-opacity:1;stroke:none;display:inline;opacity:0"
+       style="fill:none;fill-opacity:1;stroke:#000000;display:inline;opacity:0;stroke-opacity:1;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none"
        d="m 887.90371,624.28549 -25,40 -25,-40 15,0 0,-40 20,0 0,40 z"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccccc" />
@@ -2123,7 +2125,7 @@
        transform="translate(0,97.801387)">
       <path
          transform="translate(0,-0.90649244)"
-         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
+         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
          sodipodi:ry="3.3238056"
          sodipodi:rx="3.3238056"
          sodipodi:cy="99.612907"
@@ -2139,11 +2141,11 @@
          sodipodi:cy="99.612907"
          sodipodi:rx="3.3238056"
          sodipodi:ry="3.3238056"
-         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
+         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
          transform="translate(12,-0.90649244)" />
       <path
          transform="translate(24,-0.90649244)"
-         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
+         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
          sodipodi:ry="3.3238056"
          sodipodi:rx="3.3238056"
          sodipodi:cy="99.612907"
