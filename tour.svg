@@ -843,10 +843,10 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="728.89422"
-     inkscape:cy="102.12195"
-     inkscape:current-layer="layer1"
+     inkscape:zoom="0.82552083"
+     inkscape:cx="512"
+     inkscape:cy="384"
+     inkscape:current-layer="g7176"
      inkscape:document-units="px"
      showgrid="true"
      inkscape:window-width="1440"
@@ -1926,45 +1926,6 @@
      inkscape:label="8"
      style="display:none"
      safe_common:main_content="true">
-    <text
-       xml:space="preserve"
-       style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
-       x="-276.27344"
-       y="370.3978"
-       id="text18929"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         x="141.38281"
-         y="370.3978"
-         id="tspan18931"><tspan
-           x="141.38281"
-           y="370.3978"
-           id="tspan18933"
-           style="text-align:start;text-anchor:start">Encryption makes your </tspan></tspan><tspan
-         sodipodi:role="line"
-         x="93.5"
-         y="460.3978"
-         id="tspan18935"><tspan
-           x="93.5"
-           y="460.3978"
-           id="tspan18937"
-           style="text-align:start;text-anchor:start">files unreadable to anyone </tspan></tspan><tspan
-         sodipodi:role="line"
-         x="156.92188"
-         y="550.39777"
-         id="tspan18939"><tspan
-           x="156.92188"
-           y="550.39777"
-           id="tspan18941"
-           style="text-align:start;text-anchor:start">who doesn't have your </tspan></tspan><tspan
-         sodipodi:role="line"
-         x="350.63281"
-         y="640.39777"
-         id="tspan18943"><tspan
-           x="350.63281"
-           y="640.39777"
-           id="tspan18945"
-           style="text-align:start;text-anchor:start">password.</tspan></tspan></text>
     <g
        id="g13011"
        transform="matrix(1.3723474,0,0,1.3723474,87.712555,46.052476)"
@@ -2024,6 +1985,50 @@
            inkscape:connector-curvature="0" />
       </g>
     </g>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="-374.59027"
+       y="373.03955"
+       id="text3735"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="71.964409"
+         y="373.03955"
+         id="tspan3737"><tspan
+           x="71.964409"
+           y="373.03955"
+           style="font-size:72px;font-variant:normal;font-stretch:normal;text-align:start;text-anchor:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3739">When you encrypt your files</tspan><tspan
+           dx="0"
+           x="964.93317"
+           y="373.03955"
+           style="font-size:72px;font-variant:normal;font-stretch:normal;text-align:start;text-anchor:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3741" /></tspan><tspan
+         sodipodi:role="line"
+         x="90.175346"
+         y="463.03955"
+         id="tspan3743"><tspan
+           x="90.175346"
+           y="463.03955"
+           style="font-size:72px;font-variant:normal;font-stretch:normal;text-align:start;text-anchor:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3745">they become unreadable to </tspan></tspan><tspan
+         sodipodi:role="line"
+         x="121.11285"
+         y="553.03955"
+         id="tspan3747"><tspan
+           x="121.11285"
+           y="553.03955"
+           style="font-size:72px;font-variant:normal;font-stretch:normal;text-align:start;text-anchor:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3749">anyone who doesn't have </tspan></tspan><tspan
+         sodipodi:role="line"
+         x="276.15192"
+         y="643.03955"
+         id="tspan3751"><tspan
+           x="276.15192"
+           y="643.03955"
+           style="font-size:72px;font-variant:normal;font-stretch:normal;text-align:start;text-anchor:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3753">your password.</tspan></tspan></text>
   </g>
   <g
      style="display:none"
@@ -2125,7 +2130,7 @@
        transform="translate(0,97.801387)">
       <path
          transform="translate(0,-0.90649244)"
-         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
+         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
          sodipodi:ry="3.3238056"
          sodipodi:rx="3.3238056"
          sodipodi:cy="99.612907"
@@ -2141,11 +2146,11 @@
          sodipodi:cy="99.612907"
          sodipodi:rx="3.3238056"
          sodipodi:ry="3.3238056"
-         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
+         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
          transform="translate(12,-0.90649244)" />
       <path
          transform="translate(24,-0.90649244)"
-         d="m 518.51369,99.612907 c 0,1.835683 -1.48812,3.323803 -3.32381,3.323803 -1.83569,0 -3.32381,-1.48812 -3.32381,-3.323803 0,-1.835687 1.48812,-3.323805 3.32381,-3.323805 1.83569,0 3.32381,1.488118 3.32381,3.323805 z"
+         d="m 518.51369,99.612907 a 3.3238056,3.3238056 0 1 1 -6.64762,0 3.3238056,3.3238056 0 1 1 6.64762,0 z"
          sodipodi:ry="3.3238056"
          sodipodi:rx="3.3238056"
          sodipodi:cy="99.612907"
@@ -2223,7 +2228,7 @@
      inkscape:groupmode="layer"
      id="g7118"
      inkscape:label="10"
-     style="display:inline"
+     style="display:none"
      safe_common:main_content="true">
     <text
        xml:space="preserve"
@@ -2358,7 +2363,7 @@
          inkscape:export-xdpi="6.7580395"
          inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
          transform="matrix(2.6841959,0,0,2.6841997,419.29124,104.81962)"
-         d="m 45.933579,33.121773 c 0,6.293193 -5.10164,11.394833 -11.394833,11.394833 -6.293193,0 -11.394834,-5.10164 -11.394834,-11.394833 0,-6.293193 5.101641,-11.394834 11.394834,-11.394834 6.293193,0 11.394833,5.101641 11.394833,11.394834 z"
+         d="m 45.933579,33.121773 a 11.394834,11.394834 0 1 1 -22.789667,0 11.394834,11.394834 0 1 1 22.789667,0 z"
          sodipodi:ry="11.394834"
          sodipodi:rx="11.394834"
          sodipodi:cy="33.121773"
@@ -2371,7 +2376,7 @@
          inkscape:export-xdpi="6.7580395"
          inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
          transform="matrix(2.5793855,0,0,2.5793892,436.00806,114.38269)"
-         d="m 34.597785,30.760147 c 0,2.836828 -2.299703,5.136531 -5.136531,5.136531 -2.836828,0 -5.136531,-2.299703 -5.136531,-5.136531 0,-2.836828 2.299703,-5.136531 5.136531,-5.136531 2.836828,0 5.136531,2.299703 5.136531,5.136531 z"
+         d="m 34.597785,30.760147 a 5.1365314,5.1365314 0 1 1 -10.273062,0 5.1365314,5.1365314 0 1 1 10.273062,0 z"
          sodipodi:ry="5.1365314"
          sodipodi:rx="5.1365314"
          sodipodi:cy="30.760147"
@@ -2827,53 +2832,12 @@
        inkscape:connector-curvature="0" />
   </g>
   <g
-     style="display:none"
+     style="display:inline"
      inkscape:label="13"
      id="g7176"
      inkscape:groupmode="layer"
      safe_common:main_content="true">
-    <text
-       xml:space="preserve"
-       style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
-       x="-306.56055"
-       y="421.59207"
-       id="text18999"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         x="125.9668"
-         y="421.59207"
-         id="tspan19001"><tspan
-           x="125.9668"
-           y="421.59207"
-           id="tspan19003"
-           style="text-align:start;text-anchor:start">Safe complements cloud </tspan></tspan><tspan
-         sodipodi:role="line"
-         x="196.13867"
-         y="511.59207"
-         id="tspan19005"><tspan
-           x="196.13867"
-           y="511.59207"
-           id="tspan19007"
-           style="text-align:start;text-anchor:start">storage services like </tspan></tspan><tspan
-         sodipodi:role="line"
-         x="78.576172"
-         y="601.59204"
-         id="tspan19009"><tspan
-           x="78.576172"
-           y="601.59204"
-           id="tspan19011"
-           style="text-align:start;text-anchor:start">Dropbox and Google Drive.</tspan></tspan></text>
-    <flowRoot
-       xml:space="preserve"
-       id="flowRoot7186"
-       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"><flowRegion
-         id="flowRegion7188"><rect
-           id="rect7190"
-           width="479.07187"
-           height="204.02522"
-           x="196.27742"
-           y="270.84995" /></flowRegion><flowPara
-         id="flowPara7192" /></flowRoot>    <g
+    <g
        id="g17179"
        transform="matrix(1.4874153,0,0,1.4874153,270.6427,99.430258)"
        style="fill:none;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none">
@@ -2889,11 +2853,11 @@
            style="fill:none;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none">
           <polygon
              id="polygon17162"
-             points="54.054,73.512 85,54.402 63.524,36.479 32.833,56.518 "
+             points="63.524,36.479 32.833,56.518 54.054,73.512 85,54.402 "
              style="fill:none;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
           <polygon
              id="polygon17168"
-             points="85,54.402 115.946,73.512 137.167,56.518 106.476,36.479 "
+             points="137.167,56.518 106.476,36.479 85,54.402 115.946,73.512 "
              style="fill:none;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
           <path
              style="stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-dasharray:none"
@@ -2903,11 +2867,11 @@
              sodipodi:nodetypes="ccccc" />
           <polygon
              id="polygon17164"
-             points="85,92.619 54.054,73.512 32.833,90.506 63.524,110.545 "
+             points="32.833,90.506 63.524,110.545 85,92.619 54.054,73.512 "
              style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
           <polygon
              id="polygon17166"
-             points="137.167,90.506 115.946,73.512 85,92.619 106.476,110.545 "
+             points="85,92.619 106.476,110.545 137.167,90.506 115.946,73.512 "
              style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2.01692152;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
         </g>
       </g>
@@ -2941,6 +2905,37 @@
            inkscape:connector-curvature="0" />
       </g>
     </g>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="-318.67188"
+       y="429.06744"
+       id="text3817"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="103.73047"
+         y="429.06744"
+         id="tspan3819"><tspan
+           x="95.011719"
+           y="429.06744"
+           style="font-size:72px;font-variant:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia;text-anchor:start;text-align:start"
+           id="tspan3821">Safe complements storage </tspan></tspan><tspan
+         sodipodi:role="line"
+         x="110.12891"
+         y="519.06744"
+         id="tspan3823"><tspan
+           x="101.41016"
+           y="519.06744"
+           style="font-size:72px;font-variant:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia;text-anchor:start;text-align:start"
+           id="tspan3825">services like Dropbox and </tspan></tspan><tspan
+         sodipodi:role="line"
+         x="293.29297"
+         y="609.06744"
+         id="tspan3827"><tspan
+           x="293.29297"
+           y="609.06744"
+           style="font-size:72px;font-variant:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia;text-anchor:start;text-align:start"
+           id="tspan3829">Google Drive.</tspan></tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
