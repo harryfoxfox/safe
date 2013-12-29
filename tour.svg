@@ -844,9 +844,9 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.82552083"
-     inkscape:cx="512"
+     inkscape:cx="448.40379"
      inkscape:cy="384"
-     inkscape:current-layer="g7176"
+     inkscape:current-layer="layer1"
      inkscape:document-units="px"
      showgrid="true"
      inkscape:window-width="1440"
@@ -980,6 +980,12 @@
        d="m 887.90371,624.28549 -25,40 -25,-40 15,0 0,-40 20,0 0,40 z"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccccc" />
+    <path
+       sodipodi:nodetypes="cccccccc"
+       inkscape:connector-curvature="0"
+       d="m 901.66712,702.58517 -40,-25 40,-25 0,15 40,0 0,20 -40,0 z"
+       style="fill:#818181;fill-opacity:1;stroke:none;display:inline"
+       id="path3831" />
   </g>
   <g
      inkscape:groupmode="layer"

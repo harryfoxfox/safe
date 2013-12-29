@@ -11,6 +11,8 @@ var safe_tour = {};
     var TIMER_PATH_ID = "timerpath";
     var ARROW_ID = "path4743";
     var ARROW_GROUP_ID = "arrow_group_id";
+    var BACK_ARROW_ID = "path3831";
+    var BACK_ARROW_LINK_ID = "back_arrow_link_id";
 
     var BUTTON_WIDTH_INCHES = 1.5;
     var ARROW_WIDTH_INCHES = 0.75;
@@ -61,6 +63,12 @@ var safe_tour = {};
 
     var timer_widget_set_link = function (next_slide) {
         var link_tag = document.getElementById(TIMER_LINK_ID);
+        if (next_slide === null) {
+            link_tag.onclick = null;
+            link_tag.removeAttributeNS(safe_common.XLINK_NS_URI, "href");
+            return;
+        }
+
         link_tag.onclick = function () {
             move_to_slide(next_slide);
             return false;
@@ -96,6 +104,21 @@ var safe_tour = {};
         window.location.hash = "#" + slide_num;
     };
 
+    var back_arrow_widget_setup = function () {
+        var arrow_elt = document.getElementById(BACK_ARROW_ID);
+        arrow_elt.style.fill = '#dddddd';
+        arrow_elt.onmouseover = function () {
+            arrow_elt.style.fill = '#818181';
+        };
+
+        arrow_elt.onmouseout = function () {
+            arrow_elt.style.fill = '#dddddd';
+        };
+
+        var back_arrow_parent = reparent_node(arrow_elt, safe_common.SVG_NS_URI, "a");
+        back_arrow_parent.setAttribute("id", BACK_ARROW_LINK_ID);
+    };
+
     var onload = function () {
         safe_common.svg_instantiate_all_uses();
 
@@ -119,6 +142,9 @@ var safe_tour = {};
 
         // set up timer
         timer_widget_setup();
+
+        // set up back arrow
+        back_arrow_widget_setup();
 
         // set up arrow
         var arrow_parent = reparent_node(document.getElementById(ARROW_ID), safe_common.SVG_NS_URI, "g");
@@ -221,6 +247,13 @@ var safe_tour = {};
                                 (window_width_px - BUTTON_MARGIN_PX - TIMER_SIZE_PX) + "," +
                                 (download_button_rect.y - BUTTON_MARGIN_PX - TIMER_SIZE_PX) +
                                 ")");
+
+        return {
+            height: TIMER_SIZE_PX,
+            width: TIMER_SIZE_PX,
+            x: window_width_px - BUTTON_MARGIN_PX - TIMER_SIZE_PX,
+            y: download_button_rect.y - BUTTON_MARGIN_PX - TIMER_SIZE_PX,
+        };
     };
 
     var position_arrow = function (download_button_rect) {
@@ -233,7 +266,7 @@ var safe_tour = {};
         arrow_group.setAttribute("transform",
                                  "translate(" +
                                  ((download_button_rect.width - arrow_width_px) / 2 + download_button_rect.x) + "," +
-                                 (download_button_rect.y - BUTTON_MARGIN_PX - arrow_height_px) + ")" +
+                                 (download_button_rect.y - BUTTON_MARGIN_PX - arrow_height_px) + ") " +
                                  "scale(" +
                                  (arrow_width_px / bbox.width) + "," +
                                  (arrow_height_px / bbox.height) + ") " +
@@ -248,11 +281,50 @@ var safe_tour = {};
         safe_common.set_opacity(document.getElementById(TIMER_PATH_ID), show ? 1.0 : 0);
     };
 
+    var position_back_arrow = function (download_button_rect, timer_rect) {
+        var back_arrow_link_elt = document.getElementById(BACK_ARROW_LINK_ID);
+        var back_arrow_bbox = back_arrow_link_elt.getBBox();
+
+        var back_arrow_height_px = timer_rect.height;
+        var back_arrow_width_px = back_arrow_bbox.width * back_arrow_height_px / back_arrow_bbox.height;
+
+        back_arrow_link_elt.setAttribute("transform",
+                                         "translate(" +
+                                         download_button_rect.x + "," +
+                                         timer_rect.y + ") " +
+                                         "scale(" +
+                                         (back_arrow_width_px / back_arrow_bbox.width) + "," +
+                                         (back_arrow_height_px / back_arrow_bbox.height) + ") " +
+                                         "translate(" +
+                                         (-back_arrow_bbox.x) + "," +
+                                         (-back_arrow_bbox.y) + ") ");
+    };
+
     var onresize = function () {
         // layout all content
         var download_button_rect = position_download_button();
-        position_timer(download_button_rect);
+        var timer_rect = position_timer(download_button_rect);
+        position_back_arrow(download_button_rect, timer_rect);
         position_arrow(download_button_rect);
+    };
+
+    var back_arrow_widget_set_link = function (slide_num) {
+        var back_arrow_link_elt = document.getElementById(BACK_ARROW_LINK_ID);
+        if (slide_num === null) {
+            back_arrow_link_elt.onclick = null;
+            back_arrow_link_elt.removeAttributeNS(safe_common.XLINK_NS_URI, "href");
+            return;
+        }
+
+        back_arrow_link_elt.onclick = function () {
+            move_to_slide(slide_num);
+            return false;
+        };
+        back_arrow_link_elt.setAttributeNS(safe_common.XLINK_NS_URI, "href", '#' + slide_num);
+    };
+
+    var back_arrow_widget_set_visible = function (show) {
+        safe_common.set_opacity(document.getElementById(BACK_ARROW_LINK_ID), show ? 1.0 : 0);
     };
 
     var show_right_slide = function (slide_num) {
@@ -271,10 +343,22 @@ var safe_tour = {};
             stop_timer();
             arrow_widget_set_visible(true);
             timer_widget_set_visible(false);
+            back_arrow_widget_set_visible(false);
+            back_arrow_widget_set_link(null);
+            timer_widget_set_link(null);
         }
         else {
             arrow_widget_set_visible(false);
             timer_widget_set_visible(true);
+            if (slide_num) {
+                back_arrow_widget_set_visible(true);
+                back_arrow_widget_set_link(slide_num - 1);
+            }
+            else {
+                back_arrow_widget_set_visible(false);
+                back_arrow_widget_set_link(null);
+            }
+
             timer_widget_set_link(slide_num + 1);
             reset_timer();
         }
