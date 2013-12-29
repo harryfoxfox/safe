@@ -234,6 +234,16 @@ var safe_tour = {};
         timer_path.setAttribute("d", commands.join(" "));
     };
 
+    var position_element = function (elt, width_px, height_px, x, y) {
+        var bbox = elt.getBBox();
+        elt.setAttribute("transform",
+                         "translate(" + x + "," + y + ") " +
+                         "scale(" +
+                         (width_px / bbox.width) + "," +
+                         (height_px / bbox.height) + ") " +
+                         "translate(" + (-bbox.x) + "," + (-bbox.y) + ")");
+    };
+
     var position_timer = function (download_button_rect) {
         var window_width_px = window.innerWidth;
         var window_height_px = window.innerHeight;
@@ -263,14 +273,9 @@ var safe_tour = {};
         var arrow_width_px = ARROW_WIDTH_INCHES * safe_common.get_dpi();
         var arrow_height_px = bbox.height * arrow_width_px / bbox.width;
 
-        arrow_group.setAttribute("transform",
-                                 "translate(" +
-                                 ((download_button_rect.width - arrow_width_px) / 2 + download_button_rect.x) + "," +
-                                 (download_button_rect.y - BUTTON_MARGIN_PX - arrow_height_px) + ") " +
-                                 "scale(" +
-                                 (arrow_width_px / bbox.width) + "," +
-                                 (arrow_height_px / bbox.height) + ") " +
-                                 "translate(" + (-bbox.x) + "," + (-bbox.y) + ")");
+        position_element(arrow_group, arrow_width_px, arrow_height_px,
+                         (download_button_rect.width - arrow_width_px) / 2 + download_button_rect.x,
+                         download_button_rect.y - BUTTON_MARGIN_PX - arrow_height_px);
     };
 
     var arrow_widget_set_visible = function (show) {
@@ -288,16 +293,8 @@ var safe_tour = {};
         var back_arrow_height_px = timer_rect.height;
         var back_arrow_width_px = back_arrow_bbox.width * back_arrow_height_px / back_arrow_bbox.height;
 
-        back_arrow_link_elt.setAttribute("transform",
-                                         "translate(" +
-                                         download_button_rect.x + "," +
-                                         timer_rect.y + ") " +
-                                         "scale(" +
-                                         (back_arrow_width_px / back_arrow_bbox.width) + "," +
-                                         (back_arrow_height_px / back_arrow_bbox.height) + ") " +
-                                         "translate(" +
-                                         (-back_arrow_bbox.x) + "," +
-                                         (-back_arrow_bbox.y) + ") ");
+        position_element(back_arrow_link_elt, back_arrow_width_px, back_arrow_height_px,
+                         download_button_rect.x, timer_rect.y);
     };
 
     var onresize = function () {
