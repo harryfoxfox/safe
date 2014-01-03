@@ -1,0 +1,393 @@
+<html>
+<head>
+<title>Safe - About</title>
+<style type="text/css">
+body { font-family: Georgia; width: 33em; }
+p { text-align: justify; }
+.li-with-space-list > li { margin-bottom: 1em; }
+</style>
+</head>
+<body>
+<h1>Safe</h1>
+
+<a name="toc"></a>
+<ul>
+<li><a href="#about">About</a></li>
+<li><a href="#download">Download</a></li>
+<li><a href="#verifyinstructions">Verification Instructions</a>
+  <ul>
+    <li><a href="#verifyinstructions.windows">Windows</a></li>
+    <li><a href="#verifyinstructions.macosx">Mac OS X</a></li>
+  </ul>
+</li>
+<li><a href="#contribute">Contribute</a></li>
+<li><a href="#reportflaw">Report a Crash, Bug or Security Vulnerability</a></li>
+<li><a href="#faq">FAQ</a>
+<ul>
+<li><a href="#howdoiuseit">How do I use Safe?</a></li>
+<li><a href="#howdoesitwork">How does Safe work?</a></li>
+<li><a href="#howsecureisit">How secure is Safe?</a></li>
+<li><a href="#howiseachfileencrypted">How does Safe encrypt files?</a></li>
+<li><a href="#howissafedifferentfromencfs">How is Safe different from EncFS?</a></li>
+<li><a href="#howissafedifferentfromtruecrypt">How is Safe different from TrueCrypt?</a></li>
+<li><a href="#howissafedifferentfrombitlockerfilevault">How is Safe different from BitLocker / FileVault?</a></li>
+</ul>
+</li>
+
+<li><a href="#credits">Credits</a></li>
+</ul>
+
+<a name="about"></a>
+<h2>About</h2>
+
+<p>
+Safe is a application that makes it easy to encrypt your files.
+When you encrypt your files with Safe they are rendered unreadable to anyone who
+doesn't have your password.
+</p>
+
+<p>
+Safe is cross-platform and works with Windows, Mac OS X, and GNU/Linux.
+iOS and Android versions are coming soon.
+Safe also works well with online storage services like Dropbox or Google Drive.
+</p>
+
+<p>Safe is licensed under the <a href="">LGPLv2</a> and is based on free software.</p>
+
+<p>Find Safe on <a href="">Twitter</a> or <a href="">GitHub</a>.</p>
+
+<a name="download"></a>
+<h2>Download</h2>
+
+<ul>
+<li><a href="binaries/1.0/Safe-1.0-windows.zip">Safe-1.0-windows.zip</a></li>
+<li><a href="binaries/1.0/Safe-1.0-windows.zip.sig">Safe-1.0-windows.zip.sig</a></li>
+<li><a href="binaries/1.0/Safe-1.0-macosx.zip">Safe-1.0-macosx.zip</a></li>
+<li><a href="binaries/1.0/Safe-1.0-macosx.zip.sig">Safe-1.0-macosx.zip.sig</a></li>
+<li><a href="binaries/1.0/Safe-1.0-source.tar.gz">Safe-1.0-source.tar.gz</a></li>
+<li><a href="binaries/1.0/Safe-1.0-source.tar.gz.sig">Safe-1.0-source.tar.gz.sig</a></li>
+</ul>
+
+<p>
+All Safe binaries are distributed with an PGP signature (<code>.sig</code>). We
+<strong>highly</strong> recommend you <a href="#verifyinstructions">verify the binaries</a>
+once downloaded.
+</p>
+
+<p>The latest sources are also available on <a href="">our GitHub repository</a>.</p>
+
+<a name="verifyinstructions"></a>
+<h2>Verification Instructions</h2>
+
+<p>Once you've downloaded Safe, we recommend you verify
+the binaries you download using PGP tools. All binaries are signed
+using the <a href="codesigningkey.txt">Safe code signing key</a>, fingerprint: <code>0x874874</code>.</p>
+
+<a name="verifyinstructions.windows"></a>
+<h3>Windows</h3>
+<ol>
+<li>You need a GPG installation, we'll be using
+<a href="http://www.gpg4win.org/">Gpg4win</a>. Download and install it.</li>
+</ol>
+
+<a name="verifyinstructions.macosx"></a>
+<h3>Mac OS X</h3>
+<ol class="li-with-space-list">
+<li><strong>Download GPGTools</strong>
+<p>You need a GPG installation, we'll be using
+<a href="http://www.gpgtools.org/">GPGTools</a>. Download and install it.</p></li>
+<li><strong>Open Terminal.app</strong>
+<p>The quickest way to do this is to press ⌘-Space,
+type <em>Terminal.app</em>, then press the return key.</p></li>
+<li><strong>Import the Safe code signing key</strong>
+<p>Type in the Terminal window:</p>
+<pre>curl 'http://thelig.ht/rian_public_key.txt' | gpg --import -</pre>
+<p>After pressing return you should see the following output:</p>
+<pre>gpg: key 3370DD8A: "Rian Hunter (master key) <rian@alum.mit.edu>" not changed
+gpg: Total number processed: 1
+gpg:              unchanged: 0</pre>
+<li><strong>Sign the Safe code signing key using Twitter (optional)</strong>
+<p>
+Do you trust Twitter? Do you trust SSL? Do you trust Twitter's SSL certificate signer?
+Given your daily browsing habits, most likely the answer to all of these questions is yes.
+If this is true, then go to the <a href="https://twitter.com/safe_app">Safe Twitter Page
+(https://twitter.com/safe_app)</a>. In
+the <em>Bio</em> section of the profile, copy the text after <em>Fingerprint:</em>
+it should start with <em>0x</em>. Then in the Terminal, run the following command:
+</p>
+<pre>gpg --sign-key 0xCOPIED_TWITTER_FINGERPRINT</pre>
+<p>You should then see output similar to:</p>
+<pre>pub  2048R/EFBADFBC  created: 2004-10-30  expires: never       usage: SC
+                     trust: unknown       validity: unknown
+[ unknown] (1). Botan Distribution Key
+
+
+pub  2048R/EFBADFBC  created: 2004-10-30  expires: never       usage: SC
+                     trust: unknown       validity: unknown
+ Primary key fingerprint: 621D AF64 11E1 851C 4CF9  A2E1 6211 EBF1 EFBA DFBC
+
+     Botan Distribution Key
+
+Are you sure that you want to sign this key with your
+key "Rian Hunter (master key) <rian@alum.mit.edu>" (3370DD8A)
+
+Really sign? (y/N)</pre>
+<p>Type "y" and press enter. You should then see:</p>
+<pre>gpg: secret key parts are not available
+gpg: signing failed: Unusable secret key
+
+Key not changed so no update needed.</pre>
+</li>
+<li><strong>Navigate to the folder where you downloaded the files</strong>
+<p>Assuming you've downloaded Safe and its signature in the standard
+<em>Downloads</em> folder, in the Terminal window type:</p>
+<pre>cd ~/Downloads</pre><p>then press enter.</p></li>
+<li><strong>Verify signature</strong><p>In the Terminal window type:</p><pre>gpg --verify Safe-1.0-macosx.zip.sig</pre>You should see the following output in your terminal:<pre>gpg: Signature made Tue Dec 10 01:20:50 2013 PST using RSA key ID 6BB24D20
+gpg: Good signature from "Rian Hunter (master key) <rian@alum.mit.edu>"
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 71B1 1284 34E6 B799 1156  FD0B D1CD CC09 3370 DD8A
+     Subkey fingerprint: 19C4 5F4A 6542 B552 1BBC  CC5F 90D9 85D1 6BB2 4D20</pre>
+<p>The important part here is that it says <em>Good signature</em>.</p>
+<p>If you see a line that says
+<code>gpg: WARNING: This key is not certified with a trusted signature!</code>
+it's because the key you imported in step 3 is
+not trusted by you. This means that you have not informed the GPG software that you have
+verified that the code signing key belongs to the person it claims to belong to, in general
+this is a problem. The most
+secure way to do this is in person but if that is infeasible you can use the
+method described in step 4.</p></li>
+<li><strong>You're done!</strong><p>Now you can safely begin using Safe.</p></li>
+</ol>
+
+<a name="contribute"></a>
+<h2>Contribute</h2>
+
+<p>
+All development happens on <a href="http://github.com/rianhunter/safe">Safe's GitHub page</a>.
+Creating a fork and submitting a pull request is currently the best way to contribute.
+</p>
+
+<a name="reportflaw"></a>
+<h2>Report a Crash, Bug or Security Vulnerability</h2>
+
+<p>
+If you suspect you've found a crash or bug in Safe, please report it on our
+<a href="http://github.com/rianhunter/safe/issues">GitHub issues page</a>. Please
+include full reproduction steps if possible, that will drastically improve response
+time.
+</p>
+
+<p>
+If you suspect you've found a serious security vulnerability in Safe, it may be best to
+first report it privately to the <a href="mailto:rian@alum.mit.edu">lead maintainer</a>
+(<a href="leadpgpkey.txt">PGP key</a>). You may also
+report the flaw on the public GitHub issues page but use your best judgement before
+doing that.
+</p>
+
+<a name="faq"></a>
+<h2>FAQ</h2>
+
+<a name="howdoiuseit"></a>
+<h3>How do I use Safe?</h3>
+
+<p>
+To set Safe up, you must provide it with a folder to store your encrypted files in
+and a password to protect them.
+</p>
+
+<p>
+Once set up, Safe provides a virtual drive that you can use just
+like you would use a normal disk drive. You can use any program and store
+any type of file in this drive. Your files will
+appear in unencrypted form in this virtual drive
+but behind the scenes Safe will be storing your files in encrypted form.
+</p>
+
+<a name="howdoesitwork"></a>
+<h3>How does Safe work?</h3>
+
+<p>
+Safe is derived from <a href="http://arg0.net/encfs">EncFS</a>, a user-space
+encrypted file system based on <a href="">FUSE</a>. Its EncFS roots make Safe fully
+compatible with existing EncFS containers and the author intends for it to stay that
+way.
+</p>
+
+<p>
+Unlike EncFS, it does not use FUSE to integrate with your operating system.
+Instead Safe hosts a <em>localhost</em> <a href="">WebDAV</a> server and
+uses your operating system's existing WebDAV functionality to provide the native
+interface. This makes Safe more portable and more stable than FUSE-based
+user-space file systems. The increased stability claim is due to the fact that Safe
+doesn't depend on a third-party kernel-level component.
+</p>
+
+<a name="howsecureisit"></a>
+<h3>How secure is Safe?</h3>
+
+<p>
+Safe's goal is to protect you against offline attacks. This means that it makes
+it extremely difficult for attackers to access your data when they only have access
+to your encrypted data. E.g. your hard disk is stolen or your data is hacked from an online
+storage service. To accomplish its goal, Safe makes sure your files are <em>never
+stored in unencrypted form</em>.
+</p>
+
+<p>
+Safe <em>cannot</em> protect you from attackers who have obtained access to your
+computer while it is running. E.g. a computer virus, or someone who is physically at
+your computer. In general, if your computer has been compromised while it is running,
+an attacker already has unrestricted access to all your keystrokes and unencrypted RAM.
+Security in this situation is futile so it's important that you password protect
+your computer and use best practices when it comes to protecting yourself against
+computer viruses.
+</p>
+
+<p>
+Like EncFS, Safe encrypts each file individually. While this protects the data of each
+individual file, an attacker still has access to other metadata, e.g. approximate file size,
+last modification time, number of files. There are other encrypted file system
+that protect this data as well, e.g. <a href="http://truecrypt.org/">TrueCrypt</a>,
+but it comes with a cost. For more
+information about the tradeoffs here, see the
+<a href="http://www.arg0.net/encfsintro">EncFS extended introduction page</a>.
+</p>
+
+<a name="howiseachfileencrypted"></a>
+<h3>How does Safe encrypt files?</h3>
+
+<p>
+By default, Safe encrypts files in EncFS paranoid mode. From the
+<a href="http://linux.die.net/man/1/encfs">EncFS man page</a>:
+</p>
+
+<ul>
+  <li>Cipher: AES</li>
+  <li>Key Size: 256 bits</li>
+  <li>PBKDF2 with 3 second runtime, 160 bit salt</li>
+  <li>Filesystem Block Size: 1024 bytes</li>
+  <li>Filename Encoding: Block encoding with IV chaining</li>
+  <li>Unique initialization vector file headers</li>
+  <li>Message Authentication Code block headers</li>
+  <li>External IV Chaining</li>
+</ul>
+
+<p>
+I'll attempt to describe the procedure that Safe, via EncFS, uses to encrypt each file
+under the paranoid configuration.
+</p>
+
+<p>
+First, both the encryption of a file's name and a file's data are 
+dependent upon the directory path that the file resides in. For example,
+both the files <code>/foo/bar/baz.txt</code> and
+<code>/foo/bar/quux.txt</code> are both encrypted using a numeric value derived from
+the path, <code>/foo/bar</code>. We'll call this value the <em>directory IV</em>.
+</p>
+
+<p>
+To encrypt the file name, Safe pads the file name to the nearest 128-bit block then
+encrypts it in AES-CBC mode using an IV that is derived from the directory IV.
+Finally the filename is Base32 encoded.
+</p>
+
+<p>
+Each file is given a random 8 byte IV, called the <em>file IV</em>. This IV is stored
+in the header of the file. The header is encrypted in AES-CFB mode using an IV that derived
+from both the directory IV and the file name.
+</p>
+
+<p>
+The file data is split up into 1016 byte blocks, then an 8 byte MAC is prepended for
+a total of 1024 bytes. Each 1024 byte region is encrypted in AES-CBC mode using
+<code>fileIV ^ block_index</code> as the IV. If the size of the file is not
+1016-byte aligned, then the trailing data is instead encrypted in AES-CFB mode.
+</p>
+
+<p>
+All encryption uses the same 256-bit master key. The master key is randomly
+generated when the encrypted container is created. It is encrypted and
+stored with a key that is derived from the user's password
+using PBKDF2 with 3 seconds of CPU time and a 160 bit salt.
+</p>
+
+<a name="howissafedifferentfromencfs"></a>
+<h3>How is Safe different from EncFS?</h3>
+
+<p>It's not! Safe is a user-friendly port of EncFS to Windows and Mac OS X.</p>
+
+<a name="howissafedifferentfromtruecrypt">
+<h3>How is Safe different from TrueCrypt?</h3>
+
+<p>
+Safe requires an existing file system to function and it essentially works
+as encryption layer above that file system. TrueCrypt requires no existing file system
+and only requires raw block storage. The result is that TrueCrypt volumes
+are stored as one large file, whereas Safe stores and encrypts on a per-file basis.
+</p>
+
+<p>
+There are pros and cons to both approaches and they are better explained
+on the <a href="http://www.arg0.net/encfsintro">EncFS extended introduction page</a>.
+</p>
+
+<p>
+Another positive aspect of the Safe
+approach that is not discussed on that page is that Safe can be more efficient on
+systems that don't support large
+files well. This can be a problem with services like Dropbox and Google Drive,
+each of which have to reread an entire file when it changes. If you're
+editing a small text document within a 40GB TrueCrypt volume, that can eat up
+a lot of resources and slow down your computer significantly.
+</p>
+
+<a name="howissafedifferentfrombitlockerfilevault"></a>
+<h3>How is Safe different from BitLocker / FileVault?</h3>
+
+<p>
+BitLocker and FileVault are full disk encryption systems from Microsoft
+and Apple, respectively. Since they are quite similar I'll compare them
+together against Safe and refer to the pair as BLFV.
+</p>
+
+<p>
+BLFV requires a separate physical disk to function. You cannot store
+a drive encrypted with BLFV as an image file on top of an unencrypted file system.
+A consequence of this is that you cannot store BLFV volumes in online
+storage services like Dropbox.
+</p>
+
+<p>
+BLFV isn't cross-platform. You cannot use a BitLocker encrypted disk on
+Mac OS X and you can't use a FileVault encrypted disk on Windows. Safe
+works on Windows, Mac OS X, and Linux. The Safe encryption format
+transparently works across systems as well.
+</p>
+
+<p>
+BLFV isn't free software and the encryption format isn't public. The first
+problem with this is that independent security experts cannot verify the
+integrity of their system. To use BLFV confidently you must trust Microsoft and Apple
+that there are no backdoors and/or bugs in their implementation. Additionally,
+the lifetime of BLFV is limited to however long Microsoft and Apple will support
+it.
+</p>
+
+<a name="credits"></a>
+<h2>Credits</h2>
+
+<p>Safe was authored by <a href="http://thelig.ht/">Rian Hunter</a>.</p>
+
+<p>
+Safe would not be exist were it not for a few great
+free software projects: <a href="http://github.com/rianhunter/davfuse">davfuse</a>,
+<a href="http://www.arg0.net/encfs">EncFS</a>,
+<a href="http://botan.randombit.net/">Botan</a>,
+<a href="http://www.grinninglizard.com/tinyxml/index.html">TinyXML</a>,
+<a href="http://www.grinninglizard.com/tinyxml2/index.html">TinyXML2</a>,
+and <a href="https://developers.google.com/protocol-buffers/">Protocol Buffers</a>.
+</p>
+
+</body>
+</html>
