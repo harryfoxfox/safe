@@ -5,14 +5,34 @@
 body { font-family: Georgia; width: 33em; }
 p { text-align: justify; }
 .li-with-space-list > li { margin-bottom: 1em; }
+ .toc { border: 1px solid #aaa; background-color: #f9f9f9; margin: 0px; padding-top: 16px; padding-bottom: 16px; } 
 </style>
 </head>
 <body>
-<h1>Safe</h1>
+<h1 style="height: 128px; line-height: 128px; background: url(logo-128.png); background-repeat: no-repeat; padding-left: 136px;"><span style="font-size: 110px; font-weight: normal;">Safe</span></h1>
+<p>
+
+<strong>Safe</strong> is an application that makes it easy to encrypt your files.
+When you encrypt your files with Safe they are rendered unreadable to anyone who
+doesn't have your password.
+</p>
+
+<p>
+Safe is cross-platform and works with Windows, Mac OS X, and GNU/Linux.
+iOS and Android versions are coming soon.
+Safe also works well with online storage services like Dropbox or Google Drive.
+</p>
+
+<p>Safe is licensed under the <a href="">LGPLv2</a> and is based on free software.</p>
+
+<p>Follow <a href="https://twitter.com/safe_app">Safe news</a> on Twitter.</p>
+
+<p>Follow <a href="http://github.com/rianhunter/safe">Safe development</a> on GitHub.</p>
+
+<h2>Contents</h2>
 
 <a name="toc"></a>
-<ul>
-<li><a href="#about">About</a></li>
+<ul class="toc">
 <li><a href="#download">Download</a></li>
 <li><a href="#verifyinstructions">Verification Instructions</a>
   <ul>
@@ -33,28 +53,8 @@ p { text-align: justify; }
 <li><a href="#howissafedifferentfrombitlockerfilevault">How is Safe different from BitLocker / FileVault?</a></li>
 </ul>
 </li>
-
 <li><a href="#credits">Credits</a></li>
 </ul>
-
-<a name="about"></a>
-<h2>About</h2>
-
-<p>
-Safe is a application that makes it easy to encrypt your files.
-When you encrypt your files with Safe they are rendered unreadable to anyone who
-doesn't have your password.
-</p>
-
-<p>
-Safe is cross-platform and works with Windows, Mac OS X, and GNU/Linux.
-iOS and Android versions are coming soon.
-Safe also works well with online storage services like Dropbox or Google Drive.
-</p>
-
-<p>Safe is licensed under the <a href="">LGPLv2</a> and is based on free software.</p>
-
-<p>Find Safe on <a href="">Twitter</a> or <a href="">GitHub</a>.</p>
 
 <a name="download"></a>
 <h2>Download</h2>
@@ -74,7 +74,7 @@ All Safe binaries are distributed with an PGP signature (<code>.sig</code>). We
 once downloaded.
 </p>
 
-<p>The latest sources are also available on <a href="">our GitHub repository</a>.</p>
+<p>The latest sources are also available on <a href="http://github.com/rianhunter/safe">our GitHub repository</a>.</p>
 
 <a name="verifyinstructions"></a>
 <h2>Verification Instructions</h2>
@@ -108,10 +108,12 @@ gpg: Total number processed: 1
 gpg:              unchanged: 0</pre>
 <li><strong>Sign the Safe code signing key using Twitter (optional)</strong>
 <p>
-Do you trust Twitter? Do you trust SSL? Do you trust Twitter's SSL certificate signer?
+Do you trust your computer hardware? Do you trust your operating system?
+Do you trust your web browser? Do you trust Twitter?
+Do you trust Twitter's SSL certificate signer?
 Given your daily browsing habits, most likely the answer to all of these questions is yes.
-If this is true, then go to the <a href="https://twitter.com/safe_app">Safe Twitter Page
-(https://twitter.com/safe_app)</a>. In
+If this is true, then go to the
+<a href="https://twitter.com/safe_app">Safe Twitter Page</a>. In
 the <em>Bio</em> section of the profile, copy the text after <em>Fingerprint:</em>
 it should start with <em>0x</em>. Then in the Terminal, run the following command:
 </p>
@@ -144,7 +146,6 @@ Key not changed so no update needed.</pre>
 <pre>cd ~/Downloads</pre><p>then press enter.</p></li>
 <li><strong>Verify signature</strong><p>In the Terminal window type:</p><pre>gpg --verify Safe-1.0-macosx.zip.sig</pre>You should see the following output in your terminal:<pre>gpg: Signature made Tue Dec 10 01:20:50 2013 PST using RSA key ID 6BB24D20
 gpg: Good signature from "Rian Hunter (master key) <rian@alum.mit.edu>"
-gpg:          There is no indication that the signature belongs to the owner.
 Primary key fingerprint: 71B1 1284 34E6 B799 1156  FD0B D1CD CC09 3370 DD8A
      Subkey fingerprint: 19C4 5F4A 6542 B552 1BBC  CC5F 90D9 85D1 6BB2 4D20</pre>
 <p>The important part here is that it says <em>Good signature</em>.</p>
@@ -282,7 +283,7 @@ under the paranoid configuration.
 First, both the encryption of a file's name and a file's data are 
 dependent upon the directory path that the file resides in. For example,
 both the files <code>/foo/bar/baz.txt</code> and
-<code>/foo/bar/quux.txt</code> are both encrypted using a numeric value derived from
+<code>/foo/bar/quux.txt</code> are both encrypted using a numeric seed value derived from
 the path, <code>/foo/bar</code>. We'll call this value the <em>directory IV</em>.
 </p>
 
