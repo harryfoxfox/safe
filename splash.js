@@ -10,8 +10,8 @@ var safe_splash = {};
     var MIN_CONTENT_HEIGHT_IN = 6;
 
     var LOGO_DELAY = 0.4;
-    var LOGO_DURATION = 1.25;
-    var TAGLINE_DELAY = 0.6;
+    var LOGO_DURATION = 1.0;
+    var TAGLINE_DELAY = 0.5;
     var TAGLINE_DURATION = 1;
     var BUTTON_DELAY = 0.25;
     var BUTTON_DURATION = 1.0;
