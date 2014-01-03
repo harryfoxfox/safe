@@ -1,0 +1,769 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:safe_common="http://thelig.ht/xmlns/safe_common/2013"
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="622.78125"
+   height="550"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="download.svg">
+  <title
+     id="title2986">Safe - Download</title>
+  <script
+     xlink:href="common.js"
+     id="script2988" />
+  <script
+     xlink:href="download.js"
+     id="script2990" />
+  <style
+     type="text/css"
+     id="style2989">
+    .text_link:hover {
+    text-decoration: underline;
+    }
+.text_link {
+fill: #7777ff;
+fill-opacity: 1.0;
+}
+    </style>
+  <defs
+     id="defs4">
+    <linearGradient
+       y2="0.47232473"
+       x2="32.118271"
+       y1="63.645756"
+       x1="32.117889"
+       spreadMethod="pad"
+       gradientTransform="matrix(7.9676531,0,0,7.9676529,1.0351094,1.0351443)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient3835"
+       xlink:href="#linearGradient5312"
+       inkscape:collect="always" />
+    <linearGradient
+       y2="57.151291"
+       x2="32.140224"
+       y1="7.0848689"
+       x1="32.214024"
+       gradientTransform="matrix(7.4547165,0,0,7.4547165,17.449056,17.449087)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient3833"
+       xlink:href="#linearGradient5338"
+       inkscape:collect="always" />
+    <linearGradient
+       y2="29.376289"
+       x2="37.267944"
+       y1="42.602524"
+       x1="24.669722"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient3831"
+       xlink:href="#linearGradient5655"
+       inkscape:collect="always" />
+    <linearGradient
+       y2="31.647572"
+       x2="29.491108"
+       y1="25.657457"
+       x1="31.317177"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient3829"
+       xlink:href="#linearGradient5675"
+       inkscape:collect="always" />
+    <radialGradient
+       r="2.5247233"
+       fy="11.710496"
+       fx="27.611296"
+       cy="11.710496"
+       cx="27.611296"
+       gradientTransform="matrix(4.3835295,0,0,3.8602107,135.91395,85.217594)"
+       gradientUnits="userSpaceOnUse"
+       id="radialGradient3827"
+       xlink:href="#linearGradient5384"
+       inkscape:collect="always" />
+    <g
+       id="symbolz">
+      <radialGradient
+         id="gradientz"
+         r="0.70999998">
+        <!-- Slightly more than sqrt(2)*50% -->
+        <stop
+           offset="0"
+           stop-color="rgb(1%,0%,0%)"
+           id="stop5523" />
+        <!-- The red channel corresponds to 1/t -->
+        <stop
+           offset="0.01"
+           stop-color="rgb(1%,0%,0%)"
+           id="stop5525" />
+        <!-- The offset corresponds to 1/t. -->
+        <stop
+           offset="1"
+           stop-color="#f00"
+           id="stop5527" />
+      </radialGradient>
+      <rect
+         style="fill:url(#gradientz)"
+         y="0"
+         x="0"
+         width="150"
+         height="150"
+         id="rect5529" />
+    </g>
+    <g
+       id="symbolx">
+      <!-- It might be possible to compensate for the flat area in the middle
+			     of z (that tries to prevent a division by zero, amongst other things)
+			     by adjusting this gradient in the middle as well... -->
+      <linearGradient
+         id="gradientx">
+        <stop
+           offset="0"
+           stop-color="#000"
+           id="stop5533" />
+        <stop
+           offset="1"
+           stop-color="#F00"
+           id="stop5535" />
+      </linearGradient>
+      <rect
+         style="fill:url(#gradientx)"
+         y="0"
+         x="0"
+         width="150"
+         height="150"
+         id="rect5537" />
+    </g>
+    <g
+       id="symbolstops">
+      <linearGradient
+         id="gradientstops"
+         x1="0.0099999998"
+         x2="0.99000001">
+        <!-- Not completely to the edge to avoid sampling "over the edge" -->
+        <stop
+           offset="0"
+           stop-color="#f00"
+           id="stop5541" />
+        <stop
+           offset="0.33"
+           stop-color="#0f0"
+           id="stop5543" />
+        <stop
+           offset="0.67"
+           stop-color="#00f"
+           id="stop5545" />
+        <stop
+           offset="1"
+           stop-color="#000"
+           stop-opacity="0"
+           id="stop5547" />
+      </linearGradient>
+      <rect
+         style="fill:url(#gradientstops)"
+         y="0"
+         x="0"
+         width="150"
+         height="150"
+         id="rect5549" />
+    </g>
+    <g
+       id="symbolxoffset">
+      <linearGradient
+         id="gradientxoffset">
+        <stop
+           offset="0"
+           stop-color="#F00"
+           id="stop5553" />
+        <stop
+           offset="1"
+           stop-color="#000"
+           id="stop5555" />
+      </linearGradient>
+      <rect
+         style="fill:url(#gradientxoffset)"
+         y="0"
+         x="0"
+         width="150"
+         height="150"
+         id="rect5557" />
+    </g>
+    <filter
+       id="gradient"
+       x="0"
+       y="0"
+       width="1"
+       height="1"
+       color-interpolation-filters="sRGB">
+      <!-- Create proper gradient surface in f -->
+      <feImage
+         xlink:href="#symbolz"
+         result="z"
+         id="feImage5560" />
+      <feComponentTransfer
+         in="z"
+         result="invz"
+         id="feComponentTransfer5562">
+        <feFuncR
+           type="gamma"
+           amplitude="0.01"
+           exponent="-1"
+           id="feFuncR5564" />
+        <!-- The amplitude corresponds to 1/t -->
+      </feComponentTransfer>
+      <feImage
+         xlink:href="#symbolx"
+         result="x"
+         id="feImage5566" />
+      <feComposite
+         k3="0"
+         in="invz"
+         in2="x"
+         result="pf"
+         operator="arithmetic"
+         k1="70.422535"
+         k2="-35.211268"
+         k4="0.5"
+         id="feComposite5568" />
+      <!-- First iterative refinement block -->
+      <feComposite
+         k3="0"
+         in="z"
+         in2="pf"
+         result="zpf"
+         operator="arithmetic"
+         k1="1.136"
+         k2="-0.568"
+         k4="0.5"
+         id="feComposite5570" />
+      <!-- Scaled by 4/5 (but still centered around 0.5) so that values slightly outside the range [0,1] can also be represented (and corrected for) -->
+      <feComposite
+         k1="0"
+         in="x"
+         in2="zpf"
+         result="r"
+         operator="arithmetic"
+         k2="1"
+         k3="-1.25"
+         k4="0.625"
+         id="feComposite5572" />
+      <!-- As zpf was scaled but k4 was kept at 0.5 this k4 value needs to be adjusted correspondingly (0.5*5/4=0.625) -->
+      <feComposite
+         k3="0"
+         in="invz"
+         in2="r"
+         result="c"
+         operator="arithmetic"
+         k1="70.422535"
+         k2="-35.211268"
+         k4="0.5"
+         id="feComposite5574" />
+      <feComposite
+         k1="0"
+         in="pf"
+         in2="c"
+         result="pf"
+         operator="arithmetic"
+         k2="1"
+         k3="1"
+         k4="-0.5"
+         id="feComposite5576" />
+      <!-- Second iterative refinement block -->
+      <feComposite
+         k3="0"
+         in="z"
+         in2="pf"
+         result="zpf"
+         operator="arithmetic"
+         k1="1.42"
+         k2="-0.71"
+         k4="0.5"
+         id="feComposite5578" />
+      <feComposite
+         k1="0"
+         in="x"
+         in2="zpf"
+         result="r"
+         operator="arithmetic"
+         k2="1"
+         k3="-1"
+         k4="0.5"
+         id="feComposite5580" />
+      <feComposite
+         k3="0"
+         in="invz"
+         in2="r"
+         result="c"
+         operator="arithmetic"
+         k1="70.422535"
+         k2="-35.211268"
+         k4="0.5"
+         id="feComposite5582" />
+      <feComposite
+         k1="0"
+         in="pf"
+         in2="c"
+         result="pf"
+         operator="arithmetic"
+         k2="1"
+         k3="1"
+         k4="-0.5"
+         id="feComposite5584" />
+      <!--<feColorMatrix in="pf" type="matrix" values="1 0 0 0 0  1 0 0 0 0  1 0 0 0 0  0 0 0 0 1" />-->
+      <feColorMatrix
+         in="pf"
+         result="f"
+         type="matrix"
+         values="0.98 0 0 0 0.01  0 0 0 0 1  0 0 0 0 0  0 0 0 1 0"
+         id="feColorMatrix5586" />
+      <!-- The scaling and offset of the red channel are slightly adjusted in correspondence with the slightly "compressed" gradient -->
+      <!-- Color gradient -->
+      <feImage
+         xlink:href="#symbolxoffset"
+         result="xoffset"
+         id="feImage5588" />
+      <feComposite
+         k4="0"
+         k1="0"
+         in="f"
+         in2="xoffset"
+         result="fp"
+         operator="arithmetic"
+         k2="0.5"
+         k3="0.5"
+         id="feComposite5590" />
+      <feImage
+         xlink:href="#symbolstops"
+         result="stops"
+         id="feImage5592" />
+      <feDisplacementMap
+         in="stops"
+         in2="fp"
+         scale="300"
+         xChannelSelector="R"
+         yChannelSelector="G"
+         id="feDisplacementMap5594" />
+      <!-- The scale is 2*150 -->
+    </filter>
+    <inkscape:perspective
+       id="perspective3840"
+       inkscape:persp3d-origin="32 : 21.333333 : 1"
+       inkscape:vp_z="64 : 32 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 32 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       osb:paint="solid"
+       id="linearGradient5302">
+      <stop
+         id="stop5304"
+         offset="0"
+         style="stop-color:#000000;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5312">
+      <stop
+         id="stop5314"
+         offset="0"
+         style="stop-color:#a7b7fb;stop-opacity:1;" />
+      <stop
+         style="stop-color:#cbdcff;stop-opacity:1;"
+         offset="0.0807242"
+         id="stop5352" />
+      <stop
+         style="stop-color:#eeeffe;stop-opacity:1;"
+         offset="0.75175226"
+         id="stop5320" />
+      <stop
+         id="stop5316"
+         offset="1"
+         style="stop-color:#f5feff;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5338">
+      <stop
+         id="stop5340"
+         offset="0"
+         style="stop-color:#e7e8fe;stop-opacity:1;" />
+      <stop
+         style="stop-color:#eaf8fe;stop-opacity:1;"
+         offset="0.26475936"
+         id="stop5653" />
+      <stop
+         style="stop-color:#eeeeff;stop-opacity:1;"
+         offset="0.50357538"
+         id="stop5350" />
+      <stop
+         style="stop-color:#eafefd;stop-opacity:1;"
+         offset="0.8586306"
+         id="stop5346" />
+      <stop
+         id="stop5342"
+         offset="1"
+         style="stop-color:#d3d6ff;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5384">
+      <stop
+         id="stop5386"
+         offset="0"
+         style="stop-color:#656794;stop-opacity:1;" />
+      <stop
+         style="stop-color:#292b51;stop-opacity:1;"
+         offset="1"
+         id="stop5392" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5655">
+      <stop
+         style="stop-color:#6167f3;stop-opacity:1;"
+         offset="0"
+         id="stop5673" />
+      <stop
+         style="stop-color:#cbcdff;stop-opacity:1;"
+         offset="0.27734903"
+         id="stop5663" />
+      <stop
+         id="stop5665"
+         offset="0.64995575"
+         style="stop-color:#d8d9ff;stop-opacity:1;" />
+      <stop
+         id="stop5659"
+         offset="1"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5675">
+      <stop
+         id="stop5677"
+         offset="0"
+         style="stop-color:#0019a1;stop-opacity:1;" />
+      <stop
+         style="stop-color:#9fa4ff;stop-opacity:1;"
+         offset="0.0401941"
+         id="stop5683" />
+      <stop
+         id="stop5679"
+         offset="1"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.87250363"
+     inkscape:cx="172.70925"
+     inkscape:cy="141.33173"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer9"
+     showgrid="false"
+     fit-margin-top="32"
+     fit-margin-left="32"
+     fit-margin-right="32"
+     fit-margin-bottom="32"
+     inkscape:window-width="1258"
+     inkscape:window-height="706"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     safe_common:main_content="true"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-200.60937,-293.26246)">
+    <g
+       inkscape:label="Layer 1"
+       id="layer1-4"
+       transform="matrix(0.35897434,0,0,0.35897434,420.10257,326.87503)">
+      <rect
+         inkscape:export-ydpi="90"
+         inkscape:export-xdpi="90"
+         ry="47.070442"
+         y="4.9576459"
+         x="4.9576416"
+         height="502.08472"
+         width="502.08472"
+         id="rect3003"
+         style="fill:url(#linearGradient3835);fill-opacity:1;fill-rule:nonzero;stroke:#000132;stroke-width:9.91527462;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+      <path
+         inkscape:connector-curvature="0"
+         d="m 107.17191,65.638472 297.65617,0 c 23.00955,0 41.53344,18.52392 41.53344,41.533428 l 0,297.6562 c 0,23.00952 -18.52389,41.53343 -41.53344,41.53343 l -297.65617,0 c -23.009524,0 -41.533429,-18.52391 -41.533429,-41.53343 l 0,-297.6562 c 0,-23.009508 18.523905,-41.533428 41.533429,-41.533428 z"
+         style="fill:url(#linearGradient3833);fill-opacity:1;stroke:#000132;stroke-width:9.27695656;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         id="rect3789" />
+      <path
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         transform="matrix(8.9014948,0,0,8.9014948,-51.446467,-38.833286)"
+         d="m 45.933579,33.121773 c 0,6.293193 -5.10164,11.394833 -11.394833,11.394833 -6.293193,0 -11.394834,-5.10164 -11.394834,-11.394833 0,-6.293193 5.101641,-11.394834 11.394834,-11.394834 6.293193,0 11.394833,5.101641 11.394833,11.394834 z"
+         sodipodi:ry="11.394834"
+         sodipodi:rx="11.394834"
+         sodipodi:cy="33.121773"
+         sodipodi:cx="34.538746"
+         id="path3836"
+         style="fill:url(#linearGradient3831);fill-opacity:1;stroke:#000132;stroke-width:1.12340677;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         sodipodi:type="arc" />
+      <path
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         transform="matrix(8.5539162,0,0,8.5539162,3.9909011,-7.1197157)"
+         d="m 34.597785,30.760147 c 0,2.836828 -2.299703,5.136531 -5.136531,5.136531 -2.836828,0 -5.136531,-2.299703 -5.136531,-5.136531 0,-2.836828 2.299703,-5.136531 5.136531,-5.136531 2.836828,0 5.136531,2.299703 5.136531,5.136531 z"
+         sodipodi:ry="5.1365314"
+         sodipodi:rx="5.1365314"
+         sodipodi:cy="30.760147"
+         sodipodi:cx="29.461254"
+         id="path3838"
+         style="fill:url(#linearGradient3829);fill-opacity:1;stroke:#000632;stroke-width:1.16905522;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         sodipodi:type="arc" />
+      <path
+         inkscape:connector-curvature="0"
+         d="m 256.00001,142.75865 -4.93092,-8.5406 -4.93092,-8.54061 9.86184,0 9.86184,0 -4.93092,8.54061 z"
+         style="fill:url(#radialGradient3827);fill-opacity:1;stroke:#000132;stroke-width:1.60714722;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         id="path3856" />
+      <rect
+         inkscape:tile-y0="168.2005"
+         inkscape:tile-x0="251"
+         inkscape:tile-h="175.599"
+         inkscape:tile-w="10"
+         inkscape:tile-cy="256"
+         inkscape:tile-cx="256"
+         y="163.18538"
+         x="251"
+         height="20.858391"
+         width="10"
+         id="rect3855"
+         style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none" />
+      <use
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         id="use3079"
+         transform="matrix(0.70710678,0.70710678,-0.70710678,0.70710678,256,-106.03867)"
+         xlink:href="#rect3855"
+         inkscape:tiled-clone-of="#rect3855"
+         y="0"
+         x="0"
+         width="1"
+         height="1" />
+      <use
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         id="use3081"
+         transform="matrix(0,1,-1,0,512,0)"
+         xlink:href="#rect3855"
+         inkscape:tiled-clone-of="#rect3855"
+         y="0"
+         x="0"
+         width="1"
+         height="1" />
+      <use
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         id="use3083"
+         transform="matrix(-0.70710678,0.70710678,-0.70710678,-0.70710678,618.03867,256)"
+         xlink:href="#rect3855"
+         inkscape:tiled-clone-of="#rect3855"
+         y="0"
+         x="0"
+         width="1"
+         height="1" />
+      <use
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         id="use3085"
+         transform="matrix(-1,0,0,-1,512,512)"
+         xlink:href="#rect3855"
+         inkscape:tiled-clone-of="#rect3855"
+         y="0"
+         x="0"
+         width="1"
+         height="1" />
+      <use
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         id="use3087"
+         transform="matrix(-0.70710678,-0.70710678,0.70710678,-0.70710678,256,618.03867)"
+         xlink:href="#rect3855"
+         inkscape:tiled-clone-of="#rect3855"
+         y="0"
+         x="0"
+         width="1"
+         height="1" />
+      <use
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         id="use3089"
+         transform="matrix(0,-1,1,0,0,512)"
+         xlink:href="#rect3855"
+         inkscape:tiled-clone-of="#rect3855"
+         y="0"
+         x="0"
+         width="1"
+         height="1" />
+      <use
+         inkscape:export-ydpi="6.7580395"
+         inkscape:export-xdpi="6.7580395"
+         inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
+         id="use3091"
+         transform="matrix(0.70710678,-0.70710678,0.70710678,0.70710678,-106.03867,256)"
+         xlink:href="#rect3855"
+         inkscape:tiled-clone-of="#rect3855"
+         y="0"
+         x="0"
+         width="1"
+         height="1" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:64px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Georgia;-inkscape-font-specification:Georgia"
+       x="229.67188"
+       y="587.50031"
+       id="text3433"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="229.67188"
+         y="587.50031"
+         id="tspan3435"><tspan
+           x="229.67188"
+           y="587.50031"
+           id="tspan3437">Downloading Safe...</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:justify;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="233.67188"
+       y="644.92651"
+       id="text3275"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="233.67188"
+         y="644.92651"
+         id="tspan3277"><tspan
+           x="233.67188"
+           y="644.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3279">Your download should complete shortly. If it does not, then </tspan></tspan><tspan
+         sodipodi:role="line"
+         x="233.67188"
+         y="669.92651"
+         id="tspan3281"><tspan
+           x="233.67188"
+           y="669.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3283"><a
+   xlink:href=""
+   id="download_link"
+   class="text_link">restart the download</a>.</tspan><tspan
+           dx="0"
+           x="422.57812"
+           y="669.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3285" /></tspan><tspan
+         sodipodi:role="line"
+         x="233.67188"
+         y="694.92651"
+         id="tspan3287"><tspan
+           x="233.67188"
+           y="694.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3289" /></tspan><tspan
+         sodipodi:role="line"
+         x="233.67188"
+         y="719.92651"
+         id="tspan3291"><tspan
+           x="233.67188"
+           y="719.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3293">After download, simply unzip the file and run the application.</tspan><tspan
+           dx="0"
+           x="776.83594"
+           y="719.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3295" /></tspan><tspan
+         sodipodi:role="line"
+         x="233.67188"
+         y="744.92651"
+         id="tspan3297"><tspan
+           x="233.67188"
+           y="744.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3299" /></tspan><tspan
+         sodipodi:role="line"
+         x="233.67188"
+         y="769.92651"
+         id="tspan3301"><tspan
+           x="233.67188"
+           y="769.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3303">(If possible, we highly recommend <a
+   xlink:href="about.html#verifyinstructions"
+   id="a3100"
+   class="text_link">verifying the download</a> </tspan></tspan><tspan
+         sodipodi:role="line"
+         x="233.67188"
+         y="794.92651"
+         id="tspan3305"><tspan
+           x="233.67188"
+           y="794.92651"
+           style="font-size:20px;font-variant:normal;font-stretch:normal;text-align:start;font-family:Georgia;-inkscape-font-specification:Georgia"
+           id="tspan3307">before unzipping.)</tspan></tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer9"
+     inkscape:label="Footer"
+     style="display:inline">
+    <text
+       xml:space="preserve"
+       style="font-size:12.5px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:0.647343;stroke:none;display:inline;font-family:Sans-Serif"
+       x="4.4054198"
+       y="530.33612"
+       id="text5874"
+       sodipodi:linespacing="125%"><a
+   xlink:href="about.html"
+   style="fill:#7777ff;fill-opacity:1"
+   id="a3106"
+   class="text_link">About</a> | <a
+   xlink:href="http://github.com/rianhunter/safe"
+   class="text_link"
+   id="a3108"
+   style="fill:#7777ff;fill-opacity:1">GitHub</a> | <a
+   xlink:href="http://twitter.com/safe_app"
+   class="text_link"
+   id="a3110"
+   style="fill:#7777ff;fill-opacity:1">Twitter</a> | © 2013 <a
+   xlink:href="http://thelig.ht"
+   class="text_link"
+   id="a3112"
+   style="fill:#7777ff;fill-opacity:1">Rian Hunter</a></text>
+  </g>
+</svg>
