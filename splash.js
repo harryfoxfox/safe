@@ -2,9 +2,19 @@ var safe_splash = {};
 
 (function (exports) {
     var TEXT_ID = 'text5874';
+    var LOGO_ID = 'g3540';
+    var TAGLINE_ID = 'text5743';
+    var BUTTONS_ID = 'g3559';
 
     var TEXT_MARGIN_PX = 8;
     var MIN_CONTENT_HEIGHT_IN = 6;
+
+    var LOGO_DELAY = 0.4;
+    var LOGO_DURATION = 1.25;
+    var TAGLINE_DELAY = 0.6;
+    var TAGLINE_DURATION = 1;
+    var BUTTON_DELAY = 0.25;
+    var BUTTON_DURATION = 1.0;
 
     var content_root;
     var content_aspect_ratio;
@@ -68,6 +78,43 @@ var safe_splash = {};
         webmock_on_resize();
 
         window.onresize = webmock_on_resize;
+
+        // now start animations
+        var animate_in_buttons = function () {
+            var cb = function (fraction_done) {
+                safe_common.set_opacity(document.getElementById(BUTTONS_ID), fraction_done);
+            };
+
+            safe_common.linear_animate(BUTTON_DURATION, cb);
+        };
+
+        var animate_in_tagline = function () {
+            var cb = function (fraction_done) {
+                safe_common.set_opacity(document.getElementById(TAGLINE_ID), fraction_done);
+            };
+
+            safe_common.linear_animate(TAGLINE_DURATION, cb,
+                                       function () {
+                                           setTimeout(animate_in_buttons, BUTTON_DELAY * 1000);
+                                       });
+        };
+
+        var animate_in_logo = function () {
+            var cb = function (fraction_done) {
+                safe_common.set_opacity(document.getElementById(LOGO_ID), fraction_done);
+            };
+            safe_common.linear_animate(LOGO_DURATION, cb,
+                                       function () {
+                                           setTimeout(animate_in_tagline, TAGLINE_DELAY * 1000);
+                                       });
+        };
+
+        var _ids = [LOGO_ID, TAGLINE_ID, BUTTONS_ID];
+        for (var i = 0; i < _ids.length; ++i) {
+            safe_common.set_opacity(document.getElementById(_ids[i]), 0);
+        }
+
+        setTimeout(animate_in_logo, LOGO_DELAY * 1000);
     };
     
     window.onload = webmock_on_load;

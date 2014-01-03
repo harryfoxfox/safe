@@ -1,6 +1,8 @@
 var safe_common = {};
 
 (function (exports) {
+    var ANIMATE_FPS = 30;
+
     exports.SVG_NS_URI = 'http://www.w3.org/2000/svg';
     exports.XLINK_NS_URI = "http://www.w3.org/1999/xlink";
 
@@ -248,4 +250,26 @@ var safe_common = {};
         safe_common.assert(elt.getAttribute("inkscape:groupmode") == "layer");
         elt.style.display = should_show ? 'inline' : 'none';
     };
+
+
+    exports.linear_animate = function (duration, cb, on_done) {
+        var start_time;
+        var interval_id;
+
+        var animator = function () {
+            var cur_time = (new Date()).getTime();
+
+            var fraction_done = (cur_time - start_time) / 1000 / duration;
+
+            if (fraction_done >= 1.0) {
+                clearInterval(interval_id);
+                if (on_done) on_done();
+            }
+            else cb(fraction_done);
+        };
+
+        start_time = (new Date()).getTime();
+        interval_id = setInterval(animator, 1000 / ANIMATE_FPS);
+    };
+
 })(safe_common);
