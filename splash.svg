@@ -19,7 +19,7 @@
    version="1.1"
    inkscape:version="0.48.2 r9819"
    sodipodi:docname="splash.svg">
-  <title>Safe</title>
+  <title>Safe - Protect Your Files</title>
   <script
      xlink:href="common.js" />
   <script
@@ -2416,7 +2416,7 @@ fill-opacity: 1.0;
            y="102.91817"
            style="font-variant:normal;font-stretch:normal;font-family:Georgia;-inkscape-font-specification:Georgia"
            id="tspan5747">Protect your files.</tspan></tspan></text>
-    <a xlink:href="about.html#download">
+    <a xlink:href="download.svg">
     <g
        id="button"
        safe_button:label="Download"
