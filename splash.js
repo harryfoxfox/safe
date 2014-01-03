@@ -66,8 +66,9 @@ var safe_splash = {};
 
         // finally kick off a resize
         webmock_on_resize();
+
+        window.onresize = webmock_on_resize;
     };
     
     window.onload = webmock_on_load;
-    window.onresize = webmock_on_resize;
 })(safe_splash);
