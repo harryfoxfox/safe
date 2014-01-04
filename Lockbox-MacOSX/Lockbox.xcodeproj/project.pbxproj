@@ -29,13 +29,13 @@
 		96358D3A182AFE4D00BE18E8 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D39182AFE4D00BE18E8 /* Security.framework */; };
 		963D09A717A1D89D00AEE673 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 963D09A617A1D89D00AEE673 /* Cocoa.framework */; };
 		963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 963D09AF17A1D89D00AEE673 /* InfoPlist.strings */; };
-		963F17001877AD4700E50B2A /* menuBarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 963F16FF1877AD4700E50B2A /* menuBarIcon.png */; };
-		963F17021877AD6A00E50B2A /* menuBarIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 963F17011877AD6A00E50B2A /* menuBarIcon@2x.png */; };
 		963F170B1877AF7B00E50B2A /* LBXWelcomeWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */; };
 		963F170C1877AF7B00E50B2A /* LBXWelcomeWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */; };
 		9644D029182F251600ED4911 /* mount_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9644D028182F251600ED4911 /* mount_mac.mm */; };
 		966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */; };
 		966ED38D184F2F3100463408 /* mount_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */; };
+		967F51271877D1C40088DF45 /* menuBarIconTemplate.png in Resources */ = {isa = PBXBuildFile; fileRef = 967F51251877D1C40088DF45 /* menuBarIconTemplate.png */; };
+		967F51281877D1C40088DF45 /* menuBarIconTemplate@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 967F51261877D1C40088DF45 /* menuBarIconTemplate@2x.png */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
 		96F36AC2185470B500DEE145 /* fs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36ABE185470B500DEE145 /* fs.cpp */; };
 		96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36AC0185470B500DEE145 /* webdav_server.cpp */; };
@@ -74,7 +74,7 @@
 		96358D31182AFE2600BE18E8 /* libtinyxml.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libtinyxml.a; path = ../out/deps/lib/libtinyxml.a; sourceTree = "<group>"; };
 		96358D32182AFE2600BE18E8 /* libwebdav_server_fs.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libwebdav_server_fs.a; path = ../out/deps/lib/libwebdav_server_fs.a; sourceTree = "<group>"; };
 		96358D39182AFE4D00BE18E8 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
-		963D09A317A1D89D00AEE673 /* Bitvault.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bitvault.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		963D09A317A1D89D00AEE673 /* Safe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Safe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		963D09A617A1D89D00AEE673 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		963D09A917A1D89D00AEE673 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		963D09AA17A1D89D00AEE673 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -84,8 +84,6 @@
 		963D09B417A1D89D00AEE673 /* Lockbox-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Lockbox-Prefix.pch"; sourceTree = "<group>"; };
 		963D09B617A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		963D09C417A1D89D00AEE673 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
-		963F16FF1877AD4700E50B2A /* menuBarIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuBarIcon.png; sourceTree = SOURCE_ROOT; };
-		963F17011877AD6A00E50B2A /* menuBarIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuBarIcon@2x.png"; sourceTree = SOURCE_ROOT; };
 		963F17081877AF7B00E50B2A /* LBXWelcomeWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXWelcomeWindowController.h; path = ../src/lockbox/LBXWelcomeWindowController.h; sourceTree = "<group>"; };
 		963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LBXWelcomeWindowController.m; path = ../src/lockbox/LBXWelcomeWindowController.m; sourceTree = "<group>"; };
 		963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXWelcomeWindowController.xib; path = ../src/lockbox/LBXWelcomeWindowController.xib; sourceTree = "<group>"; };
@@ -97,6 +95,8 @@
 		966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mount_lockbox_dialog_logic.cpp; path = ../src/lockbox/mount_lockbox_dialog_logic.cpp; sourceTree = "<group>"; };
 		966ED38A184F2F3100463408 /* mount_lockbox_dialog_logic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mount_lockbox_dialog_logic.hpp; path = ../src/lockbox/mount_lockbox_dialog_logic.hpp; sourceTree = "<group>"; };
 		966ED38B184F2F3100463408 /* product_name.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = product_name.h; path = ../src/lockbox/product_name.h; sourceTree = "<group>"; };
+		967F51251877D1C40088DF45 /* menuBarIconTemplate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuBarIconTemplate.png; sourceTree = SOURCE_ROOT; };
+		967F51261877D1C40088DF45 /* menuBarIconTemplate@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuBarIconTemplate@2x.png"; sourceTree = SOURCE_ROOT; };
 		96974443185422000042FA6C /* tray_menu.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = tray_menu.hpp; path = ../src/lockbox/tray_menu.hpp; sourceTree = "<group>"; };
 		96A7AEAB185473030003AEE5 /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../src/lockbox/constants.h; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
@@ -188,7 +188,7 @@
 		963D09A417A1D89D00AEE673 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				963D09A317A1D89D00AEE673 /* Bitvault.app */,
+				963D09A317A1D89D00AEE673 /* Safe.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -217,8 +217,8 @@
 		963D09AD17A1D89D00AEE673 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				963F17011877AD6A00E50B2A /* menuBarIcon@2x.png */,
-				963F16FF1877AD4700E50B2A /* menuBarIcon.png */,
+				967F51251877D1C40088DF45 /* menuBarIconTemplate.png */,
+				967F51261877D1C40088DF45 /* menuBarIconTemplate@2x.png */,
 				96E1639417A7528D009BE867 /* output.icns */,
 				963D09AE17A1D89D00AEE673 /* Lockbox-Info.plist */,
 				963D09AF17A1D89D00AEE673 /* InfoPlist.strings */,
@@ -259,7 +259,7 @@
 			);
 			name = Lockbox;
 			productName = Lockbox;
-			productReference = 963D09A317A1D89D00AEE673 /* Bitvault.app */;
+			productReference = 963D09A317A1D89D00AEE673 /* Safe.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -305,12 +305,12 @@
 			files = (
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
 				963F170C1877AF7B00E50B2A /* LBXWelcomeWindowController.xib in Resources */,
+				967F51271877D1C40088DF45 /* menuBarIconTemplate.png in Resources */,
 				9632FB7C182F13BD003C3F2E /* LBXMountLockboxWindowController.xib in Resources */,
-				963F17021877AD6A00E50B2A /* menuBarIcon@2x.png in Resources */,
+				967F51281877D1C40088DF45 /* menuBarIconTemplate@2x.png in Resources */,
 				9602BF2E182F5F83003291A9 /* LBXAboutWindow.xib in Resources */,
 				96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */,
 				9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */,
-				963F17001877AD4700E50B2A /* menuBarIcon.png in Resources */,
 				96E1639517A7528D009BE867 /* output.icns in Resources */,
 				9632FB72182F107F003C3F2E /* LBXAppMain.xib in Resources */,
 			);

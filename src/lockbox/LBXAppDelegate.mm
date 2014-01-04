@@ -322,8 +322,11 @@ public:
     NSStatusBar *sb = [NSStatusBar systemStatusBar];
     self.statusItem = [sb statusItemWithLength:NSVariableStatusItemLength];
     
-    self.statusItem.image = [NSImage imageNamed:@"menuBarIcon"];
-    [self.statusItem.image setTemplate:YES];
+    self.statusItem.image = [NSImage imageNamed:@"menuBarIconTemplate"];
+    if (self.statusItem.image.size.width == 16) {
+        // XXX: this is a hack, for some reason images loaded with imageNamed are resized to 16x16
+        self.statusItem.image.size = NSMakeSize(16, 17);
+    }
     self.statusItem.highlightMode = YES;
     self.statusItem.menu = statusMenu;
     self.statusItem.toolTip = [NSString stringWithUTF8String:LOCKBOX_TRAY_ICON_TOOLTIP];
