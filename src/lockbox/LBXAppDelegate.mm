@@ -324,8 +324,16 @@ public:
     
     self.statusItem.image = [NSImage imageNamed:@"menuBarIconTemplate"];
     if (self.statusItem.image.size.width == 16) {
-        // XXX: this is a hack, for some reason images loaded with imageNamed are resized to 16x16
-        self.statusItem.image.size = NSMakeSize(16, 17);
+        // NB: 16x16 icons are positioned at 2 px from the top of the menu bar
+        // we'd rather position at 3 px from the top
+        // so create a new image with 16x17 dimensions
+        // with the image starting at 1px from the top
+        NSImage *oldImage = self.statusItem.image;
+        self.statusItem.image = [NSImage.alloc initWithSize:NSMakeSize(16, 17)];
+        [self.statusItem.image lockFocus];
+        [oldImage drawAtPoint:NSMakePoint(0, 0) fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
+        [self.statusItem.image unlockFocus];
+
     }
     self.statusItem.highlightMode = YES;
     self.statusItem.menu = statusMenu;

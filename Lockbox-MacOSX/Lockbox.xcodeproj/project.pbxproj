@@ -32,10 +32,9 @@
 		963F170B1877AF7B00E50B2A /* LBXWelcomeWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */; };
 		963F170C1877AF7B00E50B2A /* LBXWelcomeWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */; };
 		9644D029182F251600ED4911 /* mount_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9644D028182F251600ED4911 /* mount_mac.mm */; };
+		96597DFE1878B0F500073EC9 /* menuBarIconTemplate.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96597DFD1878B0F500073EC9 /* menuBarIconTemplate.icns */; };
 		966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */; };
 		966ED38D184F2F3100463408 /* mount_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */; };
-		967F51271877D1C40088DF45 /* menuBarIconTemplate.png in Resources */ = {isa = PBXBuildFile; fileRef = 967F51251877D1C40088DF45 /* menuBarIconTemplate.png */; };
-		967F51281877D1C40088DF45 /* menuBarIconTemplate@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 967F51261877D1C40088DF45 /* menuBarIconTemplate@2x.png */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
 		96F36AC2185470B500DEE145 /* fs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36ABE185470B500DEE145 /* fs.cpp */; };
 		96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36AC0185470B500DEE145 /* webdav_server.cpp */; };
@@ -90,13 +89,12 @@
 		9644D028182F251600ED4911 /* mount_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mount_mac.mm; path = ../src/lockbox/mount_mac.mm; sourceTree = "<group>"; };
 		9644D02A182F3E4100ED4911 /* logging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logging.h; path = ../src/lockbox/logging.h; sourceTree = "<group>"; };
 		9653052618319A9900676ABE /* recent_paths_storage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = recent_paths_storage.hpp; path = ../src/lockbox/recent_paths_storage.hpp; sourceTree = "<group>"; };
+		96597DFD1878B0F500073EC9 /* menuBarIconTemplate.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = menuBarIconTemplate.icns; sourceTree = SOURCE_ROOT; };
 		966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = create_lockbox_dialog_logic.cpp; path = ../src/lockbox/create_lockbox_dialog_logic.cpp; sourceTree = "<group>"; };
 		966ED387184F2F3100463408 /* create_lockbox_dialog_logic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = create_lockbox_dialog_logic.hpp; path = ../src/lockbox/create_lockbox_dialog_logic.hpp; sourceTree = "<group>"; };
 		966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mount_lockbox_dialog_logic.cpp; path = ../src/lockbox/mount_lockbox_dialog_logic.cpp; sourceTree = "<group>"; };
 		966ED38A184F2F3100463408 /* mount_lockbox_dialog_logic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mount_lockbox_dialog_logic.hpp; path = ../src/lockbox/mount_lockbox_dialog_logic.hpp; sourceTree = "<group>"; };
 		966ED38B184F2F3100463408 /* product_name.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = product_name.h; path = ../src/lockbox/product_name.h; sourceTree = "<group>"; };
-		967F51251877D1C40088DF45 /* menuBarIconTemplate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuBarIconTemplate.png; sourceTree = SOURCE_ROOT; };
-		967F51261877D1C40088DF45 /* menuBarIconTemplate@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuBarIconTemplate@2x.png"; sourceTree = SOURCE_ROOT; };
 		96974443185422000042FA6C /* tray_menu.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = tray_menu.hpp; path = ../src/lockbox/tray_menu.hpp; sourceTree = "<group>"; };
 		96A7AEAB185473030003AEE5 /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../src/lockbox/constants.h; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
@@ -217,8 +215,7 @@
 		963D09AD17A1D89D00AEE673 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				967F51251877D1C40088DF45 /* menuBarIconTemplate.png */,
-				967F51261877D1C40088DF45 /* menuBarIconTemplate@2x.png */,
+				96597DFD1878B0F500073EC9 /* menuBarIconTemplate.icns */,
 				96E1639417A7528D009BE867 /* output.icns */,
 				963D09AE17A1D89D00AEE673 /* Lockbox-Info.plist */,
 				963D09AF17A1D89D00AEE673 /* InfoPlist.strings */,
@@ -305,10 +302,9 @@
 			files = (
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
 				963F170C1877AF7B00E50B2A /* LBXWelcomeWindowController.xib in Resources */,
-				967F51271877D1C40088DF45 /* menuBarIconTemplate.png in Resources */,
 				9632FB7C182F13BD003C3F2E /* LBXMountLockboxWindowController.xib in Resources */,
-				967F51281877D1C40088DF45 /* menuBarIconTemplate@2x.png in Resources */,
 				9602BF2E182F5F83003291A9 /* LBXAboutWindow.xib in Resources */,
+				96597DFE1878B0F500073EC9 /* menuBarIconTemplate.icns in Resources */,
 				96230554182C708400913551 /* LBXProgressSheetController.xib in Resources */,
 				9623054A182B2E5200913551 /* LBXCreateLockboxWindowController.xib in Resources */,
 				96E1639517A7528D009BE867 /* output.icns in Resources */,
