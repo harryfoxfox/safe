@@ -29,8 +29,6 @@
         
         if (!fileURL) fileURL = [NSURL fileURLWithPath:NSHomeDirectory()];
         self.fileURL = fileURL;
-        
-        self.window.delegate = self;
     }
     
     return self;

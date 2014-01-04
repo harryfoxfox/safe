@@ -29,7 +29,6 @@
     if (self) {
         self.delegate = del;
         self->fs = fs_;
-        self.window.delegate = self;
     }
     
     return self;

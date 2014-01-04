@@ -21,7 +21,6 @@
     if (self) {
         self.delegate = delegate;
         self->action = WELCOME_WINDOW_NONE;
-        self.window.delegate = self;
     }
     return self;
 }

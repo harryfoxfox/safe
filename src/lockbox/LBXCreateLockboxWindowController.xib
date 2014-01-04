@@ -192,6 +192,9 @@ Gw
                     <constraint firstItem="KQQ-I2-O2M" firstAttribute="top" secondItem="ooD-Qg-duu" secondAttribute="bottom" constant="10" symbolic="YES" id="zm7-br-hGB"/>
                 </constraints>
             </view>
+            <connections>
+                <outlet property="delegate" destination="-2" id="bu9-2s-0tL"/>
+            </connections>
         </window>
     </objects>
 </document>

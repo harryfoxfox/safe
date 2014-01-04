@@ -184,6 +184,7 @@ public:
                                            initWithDelegate:self
                                            fs:self->native_fs
                                            path:std::move(maybePath)];
+    [wc showWindow:nil];
     [self.mountWindows addObject:wc];
 }
 
@@ -192,6 +193,7 @@ public:
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     LBXCreateLockboxWindowController *wc = [[LBXCreateLockboxWindowController alloc]
                                             initWithDelegate:self fs:self->native_fs];
+    [wc showWindow:nil];
     [self.createWindows addObject:wc];
 }
 
@@ -596,6 +598,7 @@ _Pragma("clang diagnostic pop") \
         [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
         self.welcomeWindowDelegate = [LBXWelcomeWindowController.alloc
                                       initWithDelegate:self];
+        [self.welcomeWindowDelegate showWindow:nil];
     }
 }
 
