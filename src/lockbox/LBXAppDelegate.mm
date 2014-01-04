@@ -300,9 +300,8 @@ public:
     NSStatusBar *sb = [NSStatusBar systemStatusBar];
     self.statusItem = [sb statusItemWithLength:NSVariableStatusItemLength];
     
-    NSString *executableName = NSBundle.mainBundle.infoDictionary[@"CFBundleExecutable"];
-
-    self.statusItem.title = executableName;
+    self.statusItem.image = [NSImage imageNamed:@"menuBarIcon"];
+    [self.statusItem.image setTemplate:YES];
     self.statusItem.highlightMode = YES;
     self.statusItem.menu = statusMenu;
     self.statusItem.toolTip = [NSString stringWithUTF8String:LOCKBOX_TRAY_ICON_TOOLTIP];
