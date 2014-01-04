@@ -446,9 +446,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="8.25"
+     inkscape:zoom="46.669047"
      inkscape:cx="32"
-     inkscape:cy="32"
+     inkscape:cy="42.654122"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:document-units="px"
@@ -472,7 +472,7 @@
        visible="true"
        enabled="true"
        snapvisiblegridlinesonly="true"
-       spacingx="1px"
+       spacingx="0.5px"
        spacingy="1px" />
   </sodipodi:namedview>
   <metadata
@@ -541,9 +541,9 @@
     <rect
        style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
        id="rect3855"
-       width="1.4999986"
+       width="0.99999988"
        height="1.9999925"
-       x="31.250004"
+       x="31.500004"
        y="469"
        inkscape:tile-cx="256"
        inkscape:tile-cy="256"
