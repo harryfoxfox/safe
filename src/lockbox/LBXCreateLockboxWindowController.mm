@@ -127,8 +127,8 @@ NSStringToSecureMem(NSString *str) {
             //TODO: log this error
         }
         
-        [self inputErrorAlertWithTitle:@"Unknown Error"
-                               message:@"Unknown error occurred while creating new Bitvault."];
+        [self inputErrorAlertWithTitle:[NSString stringWithUTF8String:LOCKBOX_DIALOG_UNKNOWN_CREATE_ERROR_TITLE]
+                               message:[NSString stringWithUTF8String:LOCKBOX_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE]];
     };
     
     auto onMountSuccess = ^(lockbox::mac::MountDetails md) {

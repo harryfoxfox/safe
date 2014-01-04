@@ -19,6 +19,7 @@
 #ifndef __lockbox_lockbox_tray_menu_hpp
 #define __lockbox_lockbox_tray_menu_hpp
 
+#include <lockbox/constants.h>
 #include <lockbox/util.hpp>
 
 #include <cassert>
@@ -142,7 +143,7 @@ populate_tray_menu(Menu & menu,
   menu.append_separator();
 
   // About Bitvault
-  menu.append_item("About Bitvault", TrayMenuAction::ABOUT_APP);
+  menu.append_item("About " PRODUCT_NAME_A, TrayMenuAction::ABOUT_APP);
 
 #ifndef NDEBUG
   // Test Bubble
@@ -153,7 +154,7 @@ populate_tray_menu(Menu & menu,
 
   menu.append_separator();
 
-  menu.append_item("Quit Bitvault", TrayMenuAction::QUIT_APP);
+  menu.append_item("Quit " PRODUCT_NAME_A, TrayMenuAction::QUIT_APP);
 }
 
 }

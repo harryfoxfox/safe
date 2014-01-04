@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="12E55" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13A603" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment defaultVersion="1070" identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
@@ -13,36 +13,36 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application"/>
-        <window title="Welcome to Bitvault!" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" wantsToBeColor="NO" visibleAtLaunch="NO" animationBehavior="default" id="1">
+        <window title="Welcome to Safe!" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" wantsToBeColor="NO" visibleAtLaunch="NO" animationBehavior="default" id="1">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
-            <rect key="contentRect" x="498" y="381" width="421" height="489"/>
+            <rect key="contentRect" x="498" y="381" width="423" height="489"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
             <view key="contentView" id="2">
-                <rect key="frame" x="0.0" y="0.0" width="421" height="489"/>
+                <rect key="frame" x="0.0" y="0.0" width="423" height="489"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" placeholderIntrinsicWidth="381" placeholderIntrinsicHeight="infinite" translatesAutoresizingMaskIntoConstraints="NO" id="xEr-tN-Enb">
-                        <rect key="frame" x="17" y="61" width="387" height="408"/>
+                        <rect key="frame" x="18" y="61" width="387" height="408"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="justified" id="X9K-d0-PKJ">
                             <font key="font" metaFont="system"/>
-                            <mutableString key="title">Bitvault is an application that makes it easy to encrypt your files. Encryption prevents others from reading your files without knowing your password.
+                            <mutableString key="title">Safe is an application that makes it easy to encrypt your files. Encryption prevents others from reading your files without knowing your password.
 
-You use Bitvault in the exact same way you would use a normal folder. Behind the scenes it's automatically encrypting your files on your behalf.
+You use Safe in the exact same way you would use a normal folder. Behind the scenes it's automatically encrypting your files on your behalf.
 
 Use it to store tax returns, receipts, passwords, or anything else you hold the most private. It also works well with cloud-based storage services.
 
-Bitvault is entirely composed of free software. Not free in the "free beer" sense but free in the "freedom" sense. All the code that makes up Bitvault is available for you to read, modify, and distribute at your will.
+Safe is entirely composed of free software. Not free in the "free beer" sense but free in the "freedom" sense. All the code that makes up Safe is available for you to read, modify, and distribute at your will.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. USE AT YOUR OWN RISK.
 
-Thanks for using Bitvault! Hopefully it makes your life just a little bit safer.</mutableString>
+Thanks for using Safe! Hopefully it makes your life just a little bit safer.</mutableString>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="bTH-fa-k01">
-                        <rect key="frame" x="323" y="13" width="84" height="32"/>
+                        <rect key="frame" x="325" y="13" width="84" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="72" id="qMw-Pz-Qke"/>
@@ -60,7 +60,7 @@ DQ
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IgO-BY-U81">
-                        <rect key="frame" x="178" y="13" width="145" height="32"/>
+                        <rect key="frame" x="180" y="13" width="145" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Get Source Code" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="roW-ge-WI4">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -73,7 +73,9 @@ DQ
                     </button>
                 </subviews>
                 <constraints>
-                    <constraint firstItem="xEr-tN-Enb" firstAttribute="top" secondItem="2" secondAttribute="top" constant="20" id="3sF-Fm-rnf"/>
+                    <constraint firstItem="xEr-tN-Enb" firstAttribute="top" secondItem="2" secondAttribute="top" constant="20" id="3sF-Fm-rnf">
+                        <mutableString key="userLabel">Vertical Space - (20) - Text Field - Safe is an application that makes it easy to encrypt your files. Encryption prevents others from reading your files without knowing your password.  You use Safe in the exact same way you would use a normal folder. Behind the scenes it's automatically encrypting your files on your behalf.  Use it to store tax returns, receipts, passwords, or anything else you hold the most private. It also works well with cloud-based storage services.  Safe is entirely composed of free software. Not free in the "free beer" sense but free in the "freedom" sense. All the code that makes up Safe is available for you to read, modify, and distribute at your will.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. USE AT YOUR OWN RISK.  Thanks for using Safe! Hopefully it makes your life just a little bit safer. - View</mutableString>
+                    </constraint>
                     <constraint firstAttribute="trailing" secondItem="bTH-fa-k01" secondAttribute="trailing" constant="20" id="5PE-if-dYu"/>
                     <constraint firstItem="bTH-fa-k01" firstAttribute="top" secondItem="xEr-tN-Enb" secondAttribute="bottom" constant="20" id="I75-lY-dVO"/>
                     <constraint firstItem="bTH-fa-k01" firstAttribute="leading" secondItem="IgO-BY-U81" secondAttribute="trailing" constant="12" id="N0q-NK-O2h"/>

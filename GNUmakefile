@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-EXE_NAME := Bitvault.exe
+EXE_NAME := Safe.exe
 
 DAVFUSE_ROOT := $(CURDIR)/../davfuse
 ENCFS_ROOT := $(CURDIR)/../encfs

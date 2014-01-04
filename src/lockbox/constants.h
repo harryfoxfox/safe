@@ -28,35 +28,41 @@ enum {
   LOCKBOX_RECENTLY_USED_PATHS_MENU_NUM_ITEMS=10,
 };
 
-#define LOCKBOX_SOURCE_CODE_WEBSITE "http://github.com/rianhunter/bitvault"
+#define LOCKBOX_SOURCE_CODE_WEBSITE "http://github.com/rianhunter/safe"
 
 /* UI Strings follow */
 
 #define LOCKBOX_TRAY_ICON_TOOLTIP PRODUCT_NAME_A
 
-#define LOCKBOX_PROGRESS_CREATING_TITLE "Creating New Bitvault..."
-#define LOCKBOX_PROGRESS_CREATING_MESSAGE "Creating new Bitvault..."
+#define LOCKBOX_PROGRESS_CREATING_TITLE ("Creating New " ENCRYPTED_STORAGE_NAME_A "...")
+#define LOCKBOX_PROGRESS_CREATING_MESSAGE ("Creating new " ENCRYPTED_STORAGE_NAME_A "...")
 
-#define LOCKBOX_PROGRESS_MOUNTING_TITLE "Mounting New Bitvault..."
-#define LOCKBOX_PROGRESS_MOUNTING_MESSAGE "Mounting new Bitvault..."
+#define LOCKBOX_PROGRESS_MOUNTING_TITLE ("Mounting New " ENCRYPTED_STORAGE_NAME_A "...")
+#define LOCKBOX_PROGRESS_MOUNTING_MESSAGE ("Mounting new " ENCRYPTED_STORAGE_NAME_A "...")
 
-#define LOCKBOX_PROGRESS_MOUNTING_EXISTING_TITLE "Mounting Existing Bitvault..."
-#define LOCKBOX_PROGRESS_MOUNTING_EXISTING_MESSAGE "Mounting existing Bitvault..."
+#define LOCKBOX_PROGRESS_MOUNTING_EXISTING_TITLE ("Mounting Existing " ENCRYPTED_STORAGE_NAME_A "...")
+#define LOCKBOX_PROGRESS_MOUNTING_EXISTING_MESSAGE ("Mounting existing " ENCRYPTED_STORAGE_NAME_A "...")
 
-#define LOCKBOX_PROGRESS_VERIFYING_PASS_TITLE "Verifying Bitvault Password..."
-#define LOCKBOX_PROGRESS_VERIFYING_PASS_MESSAGE "Verifying Bitvault password..."
+#define LOCKBOX_PROGRESS_VERIFYING_PASS_TITLE ("Verifying " ENCRYPTED_STORAGE_NAME_A " Password...")
+#define LOCKBOX_PROGRESS_VERIFYING_PASS_MESSAGE ("Verifying " ENCRYPTED_STORAGE_NAME_A " password...")
 
-#define LOCKBOX_PROGRESS_READING_CONFIG_TITLE "Reading Bitvault Configuration..."
-#define LOCKBOX_PROGRESS_READING_CONFIG_MESSAGE "Reading Bitvault configuration..."
+#define LOCKBOX_PROGRESS_READING_CONFIG_TITLE ("Reading " ENCRYPTED_STORAGE_NAME_A " Configuration...")
+#define LOCKBOX_PROGRESS_READING_CONFIG_MESSAGE ("Reading " ENCRYPTED_STORAGE_NAME_A " configuration...")
 
 #define LOCKBOX_DIALOG_PASS_INCORRECT_TITLE "Password is Incorrect"
 #define LOCKBOX_DIALOG_PASS_INCORRECT_MESSAGE "The password you have entered is incorrect."
 
-#define LOCKBOX_DIALOG_NO_CONFIG_EXISTS_TITLE "Not a Bitvault"
-#define LOCKBOX_DIALOG_NO_CONFIG_EXISTS_MESSAGE "The location you selected is not a Bitvault."
+#define LOCKBOX_DIALOG_NO_CONFIG_EXISTS_TITLE ("Not a " ENCRYPTED_STORAGE_NAME_A)
+#define LOCKBOX_DIALOG_NO_CONFIG_EXISTS_MESSAGE ("The location you selected is not a " ENCRYPTED_STORAGE_NAME_A ".")
 
-#define LOCKBOX_DIALOG_QUIT_CONFIRMATION_TITLE "Quit Bitvault Now?"
-#define LOCKBOX_DIALOG_QUIT_CONFIRMATION_MESSAGE "You currently have Bitvaults mounted, if you quit they will not be accessible until you run Bitvault again. Quit Bitvault Now?"
+#define LOCKBOX_DIALOG_QUIT_CONFIRMATION_TITLE ("Quit " PRODUCT_NAME_A " Now?")
+#define LOCKBOX_DIALOG_QUIT_CONFIRMATION_MESSAGE ("You currently have " ENCRYPTED_STORAGE_NAME_A " s mounted, if you quit they will not be accessible until you run " PRODUCT_NAME_A " again. Quit " PRODUCT_NAME_A " Now?")
+
+#define LOCKBOX_DIALOG_UNKNOWN_CREATE_ERROR_TITLE "Unknown Error"
+#define LOCKBOX_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE ("Unknown error occurred while creating new " ENCRYPTED_STORAGE_NAME_A ".")
+
+#define LOCKBOX_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE "Unknown Error"
+#define LOCKBOX_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE ("Unknown error occurred while mounting existing " ENCRYPTED_STORAGE_NAME_A ".")
 
 #define LOCKBOX_DIALOG_ABOUT_TITLE ("About " PRODUCT_NAME_A)
 #define LOCKBOX_DIALOG_WELCOME_TITLE ("Welcome to " PRODUCT_NAME_A "!")
@@ -68,7 +74,7 @@ enum {
    PRODUCT_NAME_A                                                       \
    ", just right-click on this icon."                                   \
                                                       )
-#define LOCKBOX_TRAY_ICON_MAC_WELCOME_MSG "If you need to use Bitvault, just click on Bitvault menu bar icon."
+#define LOCKBOX_TRAY_ICON_MAC_WELCOME_MSG ("If you need to use " PRODUCT_NAME_A ", just click on the " PRODUCT_NAME_A " menu bar icon.")
 
 #define LOCKBOX_ABOUT_BLURB (                                           \
   PRODUCT_NAME_A " is an application that makes it easy to encrypt your files. " \
@@ -97,7 +103,7 @@ enum {
                                                                         \
   "\r\n\r\n"                                                            \
                                                                         \
-  "Bitvault is distributed in the hope that it will be useful, "    \
+  PRODUCT_NAME_A " is distributed in the hope that it will be useful, " \
   "but WITHOUT ANY WARRANTY; without even the implied warranty of "     \
   "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. USE AT YOUR OWN RISK." \
                                                                         \

@@ -19,8 +19,8 @@
 #ifndef _PRODUCT_NAME_H
 #define _PRODUCT_NAME_H
 
-#define PRODUCT_NAME_W L"Bitvault"
-#define PRODUCT_NAME_A "Bitvault"
+#define PRODUCT_NAME_W L"Safe"
+#define PRODUCT_NAME_A "Safe"
 
 #ifdef _UNICODE
 #define PRODUCT_NAME PRODUCT_NAME_W

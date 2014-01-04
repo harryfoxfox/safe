@@ -121,8 +121,8 @@
         
         if (!alerted) {
             inputErrorAlert(self.window,
-                            @"Unknown Error",
-                            @"Unknown error occurred while starting the Bitvault.");
+                            [NSString stringWithUTF8String:LOCKBOX_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE],
+                            [NSString stringWithUTF8String:LOCKBOX_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE]);
         }
     };
     

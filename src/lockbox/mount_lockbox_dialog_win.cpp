@@ -261,7 +261,7 @@ mount_existing_lockbox_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
 
   auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              "Mount Existing Bitvault",
+                              "Mount Existing " ENCRYPTED_STORAGE_NAME_A,
                               0, 0, DIALOG_WIDTH, DIALOG_HEIGHT),
                    {
                      LText(("Mount Existing " ENCRYPTED_STORAGE_NAME_A),

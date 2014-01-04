@@ -491,7 +491,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
-				PRODUCT_NAME = Bitvault;
+				PRODUCT_NAME = Safe;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -513,7 +513,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
-				PRODUCT_NAME = Bitvault;
+				PRODUCT_NAME = Safe;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
