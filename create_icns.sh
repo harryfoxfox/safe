@@ -13,6 +13,13 @@ cp logo-256.png "$DIR/icon_256x256.png"
 cp logo-512.png "$DIR/icon_512x512.png"
 cp logo-1024.png "$DIR/icon_512x512@2x.png"
 
+if which pngcrush > /dev/null; then
+    cd "$DIR"
+    for I in *.png; do
+        pngcrush -ow -reduce -brute -l 9 $I;
+    done;
+fi
+
 mv "$DIR" "$DIR.iconset"
 
 iconutil -c icns "$DIR.iconset"
