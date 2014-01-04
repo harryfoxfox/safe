@@ -23,34 +23,12 @@
 
 @implementation LBXCreateLockboxWindowController
 
-- (id)initWithWindow:(NSWindow *)window
-{
-    self = [super initWithWindow:window];
-    if (self) {
-        // Initialization code here.
-    }
-    return self;
-}
-
 - (id)initWithDelegate:(NSObject <LBXCreateLockboxWindowControllerDelegate> *) del
                     fs:(std::shared_ptr<encfs::FsIO>)fs_ {
-    NSLog(@"sup");
-
     self = [self initWithWindowNibName:@"LBXCreateLockboxWindowController"];
     if (self) {
         self.delegate = del;
         self->fs = fs_;
-        
-        // load window
-        (void) self.window;
-        
-        self.locationPathControl.URL = [NSURL fileURLWithPath:NSHomeDirectory()];
-        
-        self.window.canHide = NO;
-        [self.window center];
-        [self.window makeKeyAndOrderFront:self];
-        self.window.level = NSModalPanelWindowLevel;
-        
         self.window.delegate = self;
     }
     
@@ -169,7 +147,12 @@ NSStringToSecureMem(NSString *str) {
 {
     [super windowDidLoad];
     
-    // Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
+    self.locationPathControl.URL = [NSURL fileURLWithPath:NSHomeDirectory()];
+    
+    [self.window center];
+    self.window.canHide = NO;
+    [self.window makeKeyAndOrderFront:self];
+    self.window.level = NSModalPanelWindowLevel;
 }
 
 @end

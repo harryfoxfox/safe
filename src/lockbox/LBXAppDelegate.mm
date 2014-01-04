@@ -148,7 +148,7 @@ public:
 }
 
 - (void)restoreLastActive {
-    if (!self.createWindows.count && !self.mountWindows.count) {
+    if (!self.createWindows.count && !self.mountWindows.count && !self.welcomeWindowDelegate) {
         [self.lastActiveApp activateWithOptions:NSApplicationActivateIgnoringOtherApps];
     }
 }
@@ -178,14 +178,42 @@ public:
     else [self restoreLastActive];
 }
 
-- (void)openMountDialogForPath:(encfs::Path)p {
+- (void)openMountDialogForPath:(opt::optional<encfs::Path>)maybePath {
     [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
     LBXMountLockboxWindowController *wc = [LBXMountLockboxWindowController.alloc
                                            initWithDelegate:self
                                            fs:self->native_fs
-                                           path:std::move(p)];
-    
+                                           path:std::move(maybePath)];
     [self.mountWindows addObject:wc];
+}
+
+- (void)createNewLockbox:(id)sender {
+    (void)sender;
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    LBXCreateLockboxWindowController *wc = [[LBXCreateLockboxWindowController alloc]
+                                            initWithDelegate:self fs:self->native_fs];
+    [self.createWindows addObject:wc];
+}
+
+- (void)mountExistingLockbox:(id)sender {
+    (void)sender;
+    [self openMountDialogForPath:opt::nullopt];
+
+}
+
+- (void)welcomeWindowDone:(id)sender withAction:(welcome_window_action_t)action{
+    (void) sender;
+    self.welcomeWindowDelegate = nil;
+    [self recordAppStart];
+    if (action == WELCOME_WINDOW_MOUNT) {
+        [self mountExistingLockbox:self];
+    }
+    else if (action == WELCOME_WINDOW_CREATE) {
+        [self createNewLockbox:self];
+    }
+    else {
+        [self restoreLastActive];
+    }
 }
 
 - (void)_dispatchMenu:(id)sender {
@@ -200,17 +228,11 @@ public:
     
     switch (menu_action) {
         case TrayMenuAction::CREATE: {
-            [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-            LBXCreateLockboxWindowController *wc = [[LBXCreateLockboxWindowController alloc]
-                                                    initWithDelegate:self fs:self->native_fs];
-            [self.createWindows addObject:wc];
+            [self createNewLockbox:self];
             break;
         }
         case TrayMenuAction::MOUNT: {
-            [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-            LBXMountLockboxWindowController *wc = [[LBXMountLockboxWindowController alloc]
-                                                   initWithDelegate:self fs:self->native_fs];
-            [self.mountWindows addObject:wc];
+            [self mountExistingLockbox:self];
             break;
         }
         case TrayMenuAction::ABOUT_APP: {
@@ -559,7 +581,10 @@ _Pragma("clang diagnostic pop") \
         [self startAppUI];
     }
     else {
-        [self _loadAboutWindowTitle:[NSString stringWithUTF8String:LOCKBOX_DIALOG_WELCOME_TITLE]];
+        [self _setupStatusBar];
+        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+        self.welcomeWindowDelegate = [LBXWelcomeWindowController.alloc
+                                      initWithDelegate:self];
     }
 }
 

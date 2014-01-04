@@ -8,6 +8,7 @@
 
 #import <lockbox/LBXCreateLockboxWindowController.h>
 #import <lockbox/LBXMountLockboxWindowController.h>
+#import <lockbox/LBXWelcomeWindowController.h>
 
 #import <lockbox/mount_mac.hpp>
 #import <lockbox/recent_paths_storage.hpp>
@@ -15,7 +16,7 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate, LBXMountLockboxWindowControllerDelegate, NSWindowDelegate, NSUserNotificationCenterDelegate, NSMenuDelegate>
+@interface LBXAppDelegate : NSObject <NSApplicationDelegate, LBXCreateLockboxWindowControllerDelegate, LBXMountLockboxWindowControllerDelegate, NSWindowDelegate, NSUserNotificationCenterDelegate, NSMenuDelegate, LBXWelcomeWindowControllerDelegate>
 {
     std::vector<lockbox::mac::MountDetails> mounts;
     std::shared_ptr<encfs::FsIO> native_fs;
@@ -30,8 +31,12 @@
 // NSWindow cannot be a weak reference, have to use assign
 @property (assign) IBOutlet NSWindow *aboutWindow;
 @property (weak) IBOutlet NSTextField *aboutWindowText;
+@property (retain) LBXWelcomeWindowController *welcomeWindowDelegate;
 
 - (IBAction)aboutWindowOK:(NSButton *)sender;
 - (IBAction)aboutWindowGetSourceCode:(NSButton *)sender;
+- (void)createNewLockbox:(id)sender;
+- (void)mountExistingLockbox:(id)sender;
+- (void)welcomeWindowDone:(id)sender withAction:(welcome_window_action_t)action;
 
 @end

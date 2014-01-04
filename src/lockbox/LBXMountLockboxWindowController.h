@@ -27,6 +27,7 @@
 }
 
 @property (nonatomic, weak) NSObject <LBXMountLockboxWindowControllerDelegate> *delegate;
+@property (retain) NSURL *fileURL;
 
 @property (weak) IBOutlet NSPathControl *locationPathControl;
 @property (weak) IBOutlet NSSecureTextField *passwordSecureTextField;
@@ -36,7 +37,7 @@
 
 - (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
                     fs:(std::shared_ptr<encfs::FsIO>)fs
-                  path:(encfs::Path)p;
+                  path:(opt::optional<encfs::Path>)maybePath;
 
 - (IBAction)confirmStart:(id)sender;
 - (IBAction)cancelStart:(id)sender;

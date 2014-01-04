@@ -31,6 +31,8 @@
 		963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 963D09AF17A1D89D00AEE673 /* InfoPlist.strings */; };
 		963F17001877AD4700E50B2A /* menuBarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 963F16FF1877AD4700E50B2A /* menuBarIcon.png */; };
 		963F17021877AD6A00E50B2A /* menuBarIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 963F17011877AD6A00E50B2A /* menuBarIcon@2x.png */; };
+		963F170B1877AF7B00E50B2A /* LBXWelcomeWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */; };
+		963F170C1877AF7B00E50B2A /* LBXWelcomeWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */; };
 		9644D029182F251600ED4911 /* mount_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9644D028182F251600ED4911 /* mount_mac.mm */; };
 		966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */; };
 		966ED38D184F2F3100463408 /* mount_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */; };
@@ -84,6 +86,9 @@
 		963D09C417A1D89D00AEE673 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
 		963F16FF1877AD4700E50B2A /* menuBarIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = menuBarIcon.png; sourceTree = SOURCE_ROOT; };
 		963F17011877AD6A00E50B2A /* menuBarIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "menuBarIcon@2x.png"; sourceTree = SOURCE_ROOT; };
+		963F17081877AF7B00E50B2A /* LBXWelcomeWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXWelcomeWindowController.h; path = ../src/lockbox/LBXWelcomeWindowController.h; sourceTree = "<group>"; };
+		963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LBXWelcomeWindowController.m; path = ../src/lockbox/LBXWelcomeWindowController.m; sourceTree = "<group>"; };
+		963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXWelcomeWindowController.xib; path = ../src/lockbox/LBXWelcomeWindowController.xib; sourceTree = "<group>"; };
 		9644D028182F251600ED4911 /* mount_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mount_mac.mm; path = ../src/lockbox/mount_mac.mm; sourceTree = "<group>"; };
 		9644D02A182F3E4100ED4911 /* logging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logging.h; path = ../src/lockbox/logging.h; sourceTree = "<group>"; };
 		9653052618319A9900676ABE /* recent_paths_storage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = recent_paths_storage.hpp; path = ../src/lockbox/recent_paths_storage.hpp; sourceTree = "<group>"; };
@@ -162,6 +167,9 @@
 				96230551182C708400913551 /* LBXProgressSheetController.mm */,
 				96230552182C708400913551 /* LBXProgressSheetController.xib */,
 				9602BF2D182F5F83003291A9 /* LBXAboutWindow.xib */,
+				963F17081877AF7B00E50B2A /* LBXWelcomeWindowController.h */,
+				963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */,
+				963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -296,6 +304,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
+				963F170C1877AF7B00E50B2A /* LBXWelcomeWindowController.xib in Resources */,
 				9632FB7C182F13BD003C3F2E /* LBXMountLockboxWindowController.xib in Resources */,
 				963F17021877AD6A00E50B2A /* menuBarIcon@2x.png in Resources */,
 				9602BF2E182F5F83003291A9 /* LBXAboutWindow.xib in Resources */,
@@ -349,6 +358,7 @@
 				9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */,
 				96230549182B2E5200913551 /* LBXCreateLockboxWindowController.mm in Sources */,
 				96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */,
+				963F170B1877AF7B00E50B2A /* LBXWelcomeWindowController.m in Sources */,
 				966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */,
 				9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */,
 				9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */,

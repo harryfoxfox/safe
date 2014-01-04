@@ -18,7 +18,8 @@
         <customObject id="-3" userLabel="Application"/>
         <window title="Create New Safe" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" wantsToBeColor="NO" visibleAtLaunch="NO" animationBehavior="default" id="Znk-Aw-m69">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
-            <rect key="contentRect" x="196" y="240" width="303" height="231"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="195" y="241" width="303" height="231"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
             <view key="contentView" id="KDK-Yc-PxA">
                 <rect key="frame" x="0.0" y="0.0" width="303" height="231"/>

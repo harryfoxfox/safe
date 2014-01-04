@@ -19,39 +19,17 @@
 
 @implementation LBXMountLockboxWindowController
 
-- (id)initWithWindow:(NSWindow *)window
-{
-    self = [super initWithWindow:window];
-    if (self) {
-        // Initialization code here.
-    }
-    return self;
-}
-
 - (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
                     fs:(std::shared_ptr<encfs::FsIO>)fs_
                fileURL:(NSURL *)fileURL {
-    NSLog(@"sup start");
-    
     self = [self initWithWindowNibName:@"LBXMountLockboxWindowController"];
     if (self) {
         self.delegate = del;
         self->fs = fs_;
         
-        // load window
-        (void) self.window;
-        
         if (!fileURL) fileURL = [NSURL fileURLWithPath:NSHomeDirectory()];
-        else {
-            // move focus to password
-            [self.window makeFirstResponder:self.passwordSecureTextField];
-        }
-        self.locationPathControl.URL = fileURL;
+        self.fileURL = fileURL;
         
-        self.window.canHide = NO;
-        [self.window center];
-        [self.window makeKeyAndOrderFront:self];
-        self.window.level = NSModalPanelWindowLevel;
         self.window.delegate = self;
     }
     
@@ -68,10 +46,10 @@
 
 - (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del
                     fs:(std::shared_ptr<encfs::FsIO>)fs_
-                  path:(encfs::Path)p {
+                  path:(opt::optional<encfs::Path>)maybePath {
     return [self initWithDelegate:del
                                fs:fs_
-                          fileURL:[NSURL fileURLWithPath:[NSString stringWithUTF8String:p.c_str()]]];
+                          fileURL:maybePath ? [NSURL fileURLWithPath:[NSString stringWithUTF8String:maybePath->c_str()]] : nil];
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
@@ -182,8 +160,16 @@
 - (void)windowDidLoad
 {
     [super windowDidLoad];
-    
-    // Implement this method to handle any initialization after your window controller's window has been loaded from its nib file.
+
+    if (self.fileURL) {
+        self.locationPathControl.URL = self.fileURL;
+        [self.window makeFirstResponder:self.passwordSecureTextField];
+    }
+
+    self.window.canHide = NO;
+    [self.window center];
+    [self.window makeKeyAndOrderFront:self];
+    self.window.level = NSModalPanelWindowLevel;
 }
 
 @end
