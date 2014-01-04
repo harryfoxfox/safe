@@ -20,6 +20,7 @@ if which pngcrush > /dev/null; then
     for I in *.png; do
         pngcrush -ow -reduce -brute -l 9 $I;
     done;
+    cd -
 fi
 
 mv "$DIR" "$DIR.iconset"
