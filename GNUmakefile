@@ -231,16 +231,16 @@ WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 # dependencies
 
-src/lockbox/*.o: Makefile src/lockbox/*.hpp src/lockbox/*.h
+src/lockbox/*.o: GNUmakefile src/lockbox/*.hpp src/lockbox/*.h
 
 src/lockbox/windows_app.rc.o: src/lockbox/windows_app.rc \
 	src/lockbox/windows_app.manifest
 
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
-	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
+	$(WEBDAV_SERVER_STATIC_LIBRARY) GNUmakefile
 
 $(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
-	$(WEBDAV_SERVER_STATIC_LIBRARY) Makefile
+	$(WEBDAV_SERVER_STATIC_LIBRARY) GNUmakefile
 
 # build instructions
 
