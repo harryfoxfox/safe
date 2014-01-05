@@ -336,6 +336,7 @@ public:
         [self.statusItem.image lockFocus];
         [oldImage drawAtPoint:NSMakePoint(0, 0) fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
         [self.statusItem.image unlockFocus];
+        [self.statusItem.image setTemplate:YES];
 
     }
     self.statusItem.highlightMode = YES;
