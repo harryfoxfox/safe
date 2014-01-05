@@ -148,7 +148,8 @@ public:
 }
 
 - (void)restoreLastActive {
-    if (!self.createWindows.count && !self.mountWindows.count && !self.welcomeWindowDelegate) {
+    if (!self.createWindows.count && !self.mountWindows.count && !self.welcomeWindowDelegate &&
+        (!self.aboutWindowController || !self.aboutWindowController.window.isVisible)) {
         [self.lastActiveApp activateWithOptions:NSApplicationActivateIgnoringOtherApps];
     }
 }
@@ -238,7 +239,7 @@ public:
             break;
         }
         case TrayMenuAction::ABOUT_APP: {
-            [self _loadAboutWindowTitle:[NSString stringWithUTF8String:LOCKBOX_DIALOG_ABOUT_TITLE]];
+            [self _loadAboutWindow];
             break;
         }
         case TrayMenuAction::TRIGGER_BREAKPOINT: {
@@ -427,27 +428,15 @@ _Pragma("clang diagnostic pop") \
     return YES;
 }
 
-- (void)_loadAboutWindowTitle:(NSString *)title {
+- (void)_loadAboutWindow {
     [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
 
-    if (!self.aboutWindow) {
-        [NSBundle loadNibNamed:@"LBXAboutWindow" owner:self];
-        self.aboutWindow.delegate = self;
-        self.aboutWindow.level = NSModalPanelWindowLevel;
-        self.aboutWindowText.stringValue = [NSString stringWithUTF8String:LOCKBOX_ABOUT_BLURB];
-        self.aboutWindow.title = title;
+    if (!self.aboutWindowController) {
+        self.aboutWindowController = [LBXAboutWindowController.alloc initWithWindowNibName:@"LBXAboutWindow"];
+        self.aboutWindowController.window.delegate = self;
     }
     
-    [self.aboutWindow makeKeyAndOrderFront:self];
-}
-
-- (IBAction)aboutWindowOK:(NSButton *)sender {
-    [sender.window performClose:sender];
-}
-
-- (IBAction)aboutWindowGetSourceCode:(NSButton *)sender {
-    (void) sender;
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:LOCKBOX_SOURCE_CODE_WEBSITE]]];
+    [self.aboutWindowController showWindow:nil];
 }
 
 - (BOOL)haveStartedAppBefore:(NSURL *)appSupportDir {
@@ -491,14 +480,9 @@ _Pragma("clang diagnostic pop") \
 - (void)windowWillClose:(NSNotification *)notification {
     (void) notification;
     
-    [self.aboutWindow orderOut:self];
-    self.aboutWindow = nil;
+    [self.aboutWindowController.window orderOut:self];
+    self.aboutWindowController = nil;
     [self restoreLastActive];
-
-    // only do the following if this is first launch (i.e. self.statusItem has not been set)
-    if (self.statusItem) return;
-    
-    [self startAppUI];
 }
 
 - (void)computerSleepStateChanged:(NSNotification *)notification {
@@ -632,5 +616,6 @@ _Pragma("clang diagnostic pop") \
         else ++it;
     }
 }
+
 
 @end

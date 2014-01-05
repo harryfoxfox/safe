@@ -5,89 +5,78 @@
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="LBXAppDelegate">
+        <customObject id="-2" userLabel="File's Owner" customClass="LBXAboutWindowController">
             <connections>
-                <outlet property="aboutWindow" destination="1" id="9Q1-yq-HXg"/>
-                <outlet property="aboutWindowText" destination="xEr-tN-Enb" id="x5m-VC-mSM"/>
+                <outlet property="window" destination="1" id="Gnc-Fe-28D"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application"/>
-        <window title="Welcome to Safe!" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" wantsToBeColor="NO" visibleAtLaunch="NO" animationBehavior="default" id="1">
+        <window title="About Safe" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" wantsToBeColor="NO" animationBehavior="default" id="1">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
-            <rect key="contentRect" x="498" y="381" width="423" height="489"/>
+            <rect key="contentRect" x="498" y="381" width="307" height="399"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
             <view key="contentView" id="2">
-                <rect key="frame" x="0.0" y="0.0" width="423" height="489"/>
-                <autoresizingMask key="autoresizingMask"/>
+                <rect key="frame" x="0.0" y="0.0" width="307" height="399"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" placeholderIntrinsicWidth="381" placeholderIntrinsicHeight="infinite" translatesAutoresizingMaskIntoConstraints="NO" id="xEr-tN-Enb">
-                        <rect key="frame" x="18" y="61" width="387" height="408"/>
+                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IgO-BY-U81">
+                        <rect key="frame" x="75" y="46" width="157" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="justified" id="X9K-d0-PKJ">
+                        <buttonCell key="cell" type="push" title="Get Source Code..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="roW-ge-WI4">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
-                            <mutableString key="title">Safe is an application that makes it easy to encrypt your files. Encryption prevents others from reading your files without knowing your password.
-
-You use Safe in the exact same way you would use a normal folder. Behind the scenes it's automatically encrypting your files on your behalf.
-
-Use it to store tax returns, receipts, passwords, or anything else you hold the most private. It also works well with cloud-based storage services.
-
-Safe is entirely composed of free software. Not free in the "free beer" sense but free in the "freedom" sense. All the code that makes up Safe is available for you to read, modify, and distribute at your will.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. USE AT YOUR OWN RISK.
-
-Thanks for using Safe! Hopefully it makes your life just a little bit safer.</mutableString>
+                        </buttonCell>
+                        <connections>
+                            <action selector="getSourceCode:" target="-2" id="LAD-S0-V6z"/>
+                        </connections>
+                    </button>
+                    <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7XK-ld-o0f">
+                        <rect key="frame" x="89" y="251" width="128" height="128"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="output" id="s9d-Rh-uSh"/>
+                    </imageView>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fJf-bi-JEC">
+                        <rect key="frame" x="-2" y="156" width="311" height="99"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Safe" id="dH6-ph-C7Y">
+                            <font key="font" size="72" name="Georgia"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wu9-sn-TFc">
+                        <rect key="frame" x="113" y="93" width="81" height="19"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Version 1.0" id="FKd-8E-8u2">
+                            <font key="font" size="13" name="LucidaGrande"/>
+                            <color key="textColor" name="disabledControlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XGk-Mg-hUA">
+                        <rect key="frame" x="83" y="19" width="140" height="14"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Copyright © Rian Hunter" id="427-Jm-5wh">
+                            <font key="font" metaFont="smallSystem"/>
+                            <color key="textColor" name="disabledControlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gob-kI-cpb">
+                        <rect key="frame" x="96" y="131" width="114" height="17"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Protect your files." id="CwW-0i-Q49">
+                            <font key="font" metaFont="system"/>
                             <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="bTH-fa-k01">
-                        <rect key="frame" x="325" y="13" width="84" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <constraints>
-                            <constraint firstAttribute="width" constant="72" id="qMw-Pz-Qke"/>
-                        </constraints>
-                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="ZEN-cZ-LOI">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                            <string key="keyEquivalent" base64-UTF8="YES">
-DQ
-</string>
-                        </buttonCell>
-                        <connections>
-                            <action selector="aboutWindowOK:" target="-2" id="Fcf-Dh-hTw"/>
-                            <outlet property="nextKeyView" destination="IgO-BY-U81" id="HVN-7N-hDy"/>
-                        </connections>
-                    </button>
-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IgO-BY-U81">
-                        <rect key="frame" x="180" y="13" width="145" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="Get Source Code" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="roW-ge-WI4">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <action selector="aboutWindowGetSourceCode:" target="-2" id="dHU-i3-ZMd"/>
-                            <outlet property="nextKeyView" destination="bTH-fa-k01" id="aah-zj-3Dp"/>
-                        </connections>
-                    </button>
                 </subviews>
-                <constraints>
-                    <constraint firstItem="xEr-tN-Enb" firstAttribute="top" secondItem="2" secondAttribute="top" constant="20" id="3sF-Fm-rnf">
-                        <mutableString key="userLabel">Vertical Space - (20) - Text Field - Safe is an application that makes it easy to encrypt your files. Encryption prevents others from reading your files without knowing your password.  You use Safe in the exact same way you would use a normal folder. Behind the scenes it's automatically encrypting your files on your behalf.  Use it to store tax returns, receipts, passwords, or anything else you hold the most private. It also works well with cloud-based storage services.  Safe is entirely composed of free software. Not free in the "free beer" sense but free in the "freedom" sense. All the code that makes up Safe is available for you to read, modify, and distribute at your will.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. USE AT YOUR OWN RISK.  Thanks for using Safe! Hopefully it makes your life just a little bit safer. - View</mutableString>
-                    </constraint>
-                    <constraint firstAttribute="trailing" secondItem="bTH-fa-k01" secondAttribute="trailing" constant="20" id="5PE-if-dYu"/>
-                    <constraint firstItem="bTH-fa-k01" firstAttribute="top" secondItem="xEr-tN-Enb" secondAttribute="bottom" constant="20" id="I75-lY-dVO"/>
-                    <constraint firstItem="bTH-fa-k01" firstAttribute="leading" secondItem="IgO-BY-U81" secondAttribute="trailing" constant="12" id="N0q-NK-O2h"/>
-                    <constraint firstAttribute="bottom" secondItem="bTH-fa-k01" secondAttribute="bottom" constant="20" id="VJl-R8-VP3"/>
-                    <constraint firstItem="bTH-fa-k01" firstAttribute="top" secondItem="IgO-BY-U81" secondAttribute="top" id="fDK-20-BQi"/>
-                    <constraint firstAttribute="trailing" secondItem="xEr-tN-Enb" secondAttribute="trailing" constant="20" id="r2i-31-zG3"/>
-                    <constraint firstItem="xEr-tN-Enb" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="yYn-cA-oTH"/>
-                </constraints>
             </view>
-            <connections>
-                <outlet property="initialFirstResponder" destination="bTH-fa-k01" id="HHM-tD-jOz"/>
-            </connections>
         </window>
     </objects>
+    <resources>
+        <image name="output" width="512" height="512"/>
+    </resources>
 </document>

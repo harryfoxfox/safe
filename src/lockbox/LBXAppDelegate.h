@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Rian Hunter. All rights reserved.
 //
 
+#import <lockbox/LBXAboutWindowController.h>
 #import <lockbox/LBXCreateLockboxWindowController.h>
 #import <lockbox/LBXMountLockboxWindowController.h>
 #import <lockbox/LBXWelcomeWindowController.h>
@@ -28,13 +29,9 @@
 @property (retain) NSMutableArray *createWindows;
 @property (retain) NSMutableArray *mountWindows;
 @property (retain) NSRunningApplication *lastActiveApp;
-// NSWindow cannot be a weak reference, have to use assign
-@property (assign) IBOutlet NSWindow *aboutWindow;
-@property (weak) IBOutlet NSTextField *aboutWindowText;
 @property (retain) LBXWelcomeWindowController *welcomeWindowDelegate;
+@property (retain) NSWindowController *aboutWindowController;
 
-- (IBAction)aboutWindowOK:(NSButton *)sender;
-- (IBAction)aboutWindowGetSourceCode:(NSButton *)sender;
 - (void)createNewLockbox:(id)sender;
 - (void)mountExistingLockbox:(id)sender;
 - (void)welcomeWindowDone:(id)sender withAction:(welcome_window_action_t)action;

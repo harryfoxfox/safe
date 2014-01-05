@@ -13,10 +13,6 @@
 #import <lockbox/logging.h>
 #import <lockbox/mount_lockbox_dialog_logic.hpp>
 
-@interface LBXMountLockboxWindowController ()
-
-@end
-
 @implementation LBXMountLockboxWindowController
 
 - (id)initWithDelegate:(NSObject <LBXMountLockboxWindowControllerDelegate> *) del

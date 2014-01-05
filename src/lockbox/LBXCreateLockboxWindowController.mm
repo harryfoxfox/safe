@@ -17,10 +17,6 @@
 
 #import <encfs/cipher/MemoryPool.h>
 
-@interface LBXCreateLockboxWindowController ()
-
-@end
-
 @implementation LBXCreateLockboxWindowController
 
 - (id)initWithDelegate:(NSObject <LBXCreateLockboxWindowControllerDelegate> *) del
