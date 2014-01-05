@@ -187,7 +187,7 @@ $(NLSCHECK):
          echo '#include <windows.h>' > /tmp/nlschk/chk.c && \
          echo 'NORM_FORM a = NormalizationC;' >> /tmp/nlschk/chk.c && \
 	 rm -f /tmp/nlschk/chk.o && \
-         $(CC) -o /tmp/nlschk/chk.o -c /tmp/nlschk/chk.c; \
+         $(CC) -o /tmp/nlschk/chk.o -c /tmp/nlschk/chk.c 2>/dev/null >/dev/null; \
          echo > $(NLSCHECK); \
          if [ -e /tmp/nlschk/chk.o ]; then \
          echo '#define LOCKBOX_HAVE_WINNLS' >> $(NLSCHECK); \
