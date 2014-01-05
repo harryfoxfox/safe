@@ -270,4 +270,4 @@ $(EXE_NAME):
 	mv $@.pre $@
 
 .PHONY: dependencies clean libbotan \
-	libprotobuf libtinyxml libencfs libwebdav_server_fs winhttp
+	libprotobuf libtinyxml libencfs libwebdav_server_fs winhttp nlscheck normaliz clean-deps
