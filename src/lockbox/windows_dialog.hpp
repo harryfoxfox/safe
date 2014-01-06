@@ -19,6 +19,7 @@
 #ifndef __lockbox_windows_dialog_hpp
 #define __lockbox_windows_dialog_hpp
 
+#include <type_traits>
 #include <vector>
 
 #include <cstdint>
@@ -50,7 +51,6 @@ namespace _int {
 using _int::byte;
 
 enum class ControlClass : uint16_t {
-  INVALID = 0x0,
   BUTTON = 0x0080,
   EDIT = 0x0081,
   STATIC = 0x0082,
@@ -110,7 +110,7 @@ class DialogItemDesc;
 class TextOrID {
   bool _is_title;
   std::string _title;
-  resource_id_t _rsrc_id;
+  uint16_t _rsrc_id;
 
   void serialize(std::vector<byte> & v) const {
     if (_is_title) {
@@ -136,14 +136,20 @@ public:
     : _is_title(true)
     , _title(title) {}
 
-  TextOrID(resource_id_t rsrc_id)
+  TextOrID(const wchar_t *title)
+    : _is_title(true)
+    , _title(narrow(title)) {}
+
+  template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type * = nullptr>
+  TextOrID(T id)
     : _is_title(false)
-    , _rsrc_id(rsrc_id) {}
+    , _rsrc_id((uint16_t) id) {}
 
   friend class DialogItemDesc;
 };
 
 typedef TextOrID TitleOrResourceID;
+typedef TextOrID ClassNameOrPredefinedID;
 
 class DialogItemDesc {
   DWORD _style;
@@ -153,11 +159,7 @@ class DialogItemDesc {
   short _y;
   short _cx;
   short _cy;
-  bool _is_str_class;
-  // could be a union but i don't feel like writing
-  // a custom destructor right now
-  ControlClass _cls;
-  LPCWSTR _str_cls;
+  ClassNameOrPredefinedID _class_name_or_id;
 
   void serialize(std::vector<byte> & v) const {
     const DLGITEMTEMPLATE text_item = {
@@ -171,16 +173,7 @@ class DialogItemDesc {
     };
     insert_obj(v, sizeof(DWORD), text_item);
 
-    if (_is_str_class) {
-      insert_data(v, sizeof(WORD),
-                  (byte *) _str_cls,
-                  (byte *) (_str_cls + wcslen(_str_cls) + 1));
-    }
-    else {
-      const uint16_t text_item_class[] =
-        {0xffff, serialize_control_class(_cls)};
-      insert_obj(v, sizeof(WORD), text_item_class);
-    }
+    _class_name_or_id.serialize(v);
 
     _title_or_rsrc_id.serialize(v);
 
@@ -188,12 +181,11 @@ class DialogItemDesc {
     insert_obj(v, sizeof(WORD), text_item_creation_data);
   }
 
-private:
+public:
   DialogItemDesc(DWORD style, TitleOrResourceID title,
-                 WORD id,
+                 ClassNameOrPredefinedID cls, WORD id,
                  short x, short y,
-                 short cx, short cy, bool is_str_class,
-                 ControlClass cls, LPCWSTR str_cls)
+                 short cx, short cy)
     : _style(style)
     , _title_or_rsrc_id(std::move(title))
     , _id(id)
@@ -201,25 +193,7 @@ private:
     , _y(y)
     , _cx(cx)
     , _cy(cy)
-    , _is_str_class(is_str_class)
-    , _cls(cls)
-    , _str_cls(str_cls) {}
-
-public:
-  DialogItemDesc(DWORD style, TitleOrResourceID title,
-                 ControlClass cls, WORD id,
-                 short x, short y,
-                 short cx, short cy)
-    : DialogItemDesc(style, std::move(title),
-                     id, x, y, cx, cy, false, cls, L"") {}
-
-  DialogItemDesc(DWORD style, TitleOrResourceID title,
-                 LPCWSTR cls, WORD id,
-                 short x, short y,
-                 short cx, short cy)
-    : DialogItemDesc(style, std::move(title),
-                     id, x, y, cx, cy, true,
-                     ControlClass::INVALID, cls) {}
+    , _class_name_or_id(std::move(cls)) {}
 
   friend class DialogTemplate;
 };
