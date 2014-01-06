@@ -28,6 +28,7 @@
 #include <lockbox/tray_menu.hpp>
 #include <lockbox/tray_menu_win.hpp>
 #include <lockbox/webdav_server.hpp>
+#include <lockbox/welcome_dialog_win.hpp>
 #include <lockbox/windows_async.hpp>
 #include <lockbox/windows_gui_util.hpp>
 #include <lockbox/windows_menu.hpp>
@@ -478,23 +479,38 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
       SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
 
-      if (is_first_run(*wd)) lockbox::win::about_dialog(hwnd, LOCKBOX_DIALOG_WELCOME_TITLE);
-
-      record_app_start(*wd);
+      auto first_run = is_first_run(*wd);
 
       add_tray_icon(hwnd);
 
-      if (wd->recent_mount_paths_store.empty()) {
+      auto choice =
+        lockbox::win::WelcomeDialogChoice::NOTHING;
+      if (first_run) choice = lockbox::win::welcome_dialog(hwnd);
+
+      record_app_start(*wd);
+
+      auto should_bubble = true;
+      // NB: if any of the initial actions were canceled,
+      //     then we should still do an introductory bubble
+      if (choice == lockbox::win::WelcomeDialogChoice::CREATE_NEW_LOCKBOX) {
+        should_bubble = !run_create_dialog(hwnd, *wd);
+      }
+      else if (choice == lockbox::win::WelcomeDialogChoice::MOUNT_EXISTING_LOCKBOX) {
+        should_bubble = !run_mount_dialog(hwnd, *wd);
+      }
+      else if (!wd->recent_mount_paths_store.empty()) {
+        assert(!first_run);
+        // if the user has mounted paths in the past
+        // auto start the mount dialog with the most recently path
+        // populated in the ui
+        should_bubble = run_mount_dialog(hwnd, *wd,
+                                         wd->recent_mount_paths_store.front());
+      }
+
+      if (should_bubble) {
         bubble_msg(hwnd,
                    LOCKBOX_TRAY_ICON_WELCOME_TITLE,
                    LOCKBOX_TRAY_ICON_WELCOME_MSG);
-      }
-      // if the user has mounted paths in the past
-      // auto start the mount dialog with the most recently path
-      // populated in the ui
-      else {
-        run_mount_dialog(hwnd, *wd,
-                         wd->recent_mount_paths_store.front());
       }
 
       // return -1 on failure, CreateWindow* will return NULL
