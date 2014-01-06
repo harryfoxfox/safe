@@ -41,6 +41,8 @@ namespace w32util {
 const DWORD DEFAULT_MODAL_DIALOG_STYLE = (DS_MODALFRAME | WS_POPUP |
                                           WS_SYSMENU | WS_CAPTION);
 
+typedef uint16_t resource_id_t;
+
 namespace _int {
   typedef uint8_t byte;
 }
@@ -103,10 +105,49 @@ insert_obj(std::vector<byte> & v, size_t align, const T & obj) {
 }
 
 class DialogTemplate;
+class DialogItemDesc;
+
+class TextOrID {
+  bool _is_title;
+  std::string _title;
+  resource_id_t _rsrc_id;
+
+  void serialize(std::vector<byte> & v) const {
+    if (_is_title) {
+      auto text_item_title = widen(_title);
+      insert_data(v, sizeof(WORD),
+                  (byte *) text_item_title.c_str(),
+                  (byte *) (text_item_title.c_str() +
+                            text_item_title.size() + 1));
+    }
+    else {
+      const uint16_t text_item_rsrc_id[] =
+        {0xffff, _rsrc_id};
+      insert_obj(v, sizeof(WORD), text_item_rsrc_id);
+    }
+  }
+
+public:
+  TextOrID(std::string title)
+    : _is_title(true)
+    , _title(std::move(title)) {}
+
+  TextOrID(const char *title)
+    : _is_title(true)
+    , _title(title) {}
+
+  TextOrID(resource_id_t rsrc_id)
+    : _is_title(false)
+    , _rsrc_id(rsrc_id) {}
+
+  friend class DialogItemDesc;
+};
+
+typedef TextOrID TitleOrResourceID;
 
 class DialogItemDesc {
   DWORD _style;
-  std::string _title;
+  TitleOrResourceID _title_or_rsrc_id;
   WORD _id;
   short _x;
   short _y;
@@ -141,24 +182,20 @@ class DialogItemDesc {
       insert_obj(v, sizeof(WORD), text_item_class);
     }
 
-    auto text_item_title = widen(_title);
-    insert_data(v, sizeof(WORD),
-                (byte *) text_item_title.c_str(),
-                (byte *) (text_item_title.c_str() +
-                          text_item_title.size() + 1));
+    _title_or_rsrc_id.serialize(v);
 
     const uint16_t text_item_creation_data[] = {0x0};
     insert_obj(v, sizeof(WORD), text_item_creation_data);
   }
 
 private:
-  DialogItemDesc(DWORD style, std::string title,
+  DialogItemDesc(DWORD style, TitleOrResourceID title,
                  WORD id,
                  short x, short y,
                  short cx, short cy, bool is_str_class,
                  ControlClass cls, LPCWSTR str_cls)
     : _style(style)
-    , _title(std::move(title))
+    , _title_or_rsrc_id(std::move(title))
     , _id(id)
     , _x(x)
     , _y(y)
@@ -169,14 +206,14 @@ private:
     , _str_cls(str_cls) {}
 
 public:
-  DialogItemDesc(DWORD style, std::string title,
+  DialogItemDesc(DWORD style, TitleOrResourceID title,
                  ControlClass cls, WORD id,
                  short x, short y,
                  short cx, short cy)
     : DialogItemDesc(style, std::move(title),
                      id, x, y, cx, cy, false, cls, L"") {}
 
-  DialogItemDesc(DWORD style, std::string title,
+  DialogItemDesc(DWORD style, TitleOrResourceID title,
                  LPCWSTR cls, WORD id,
                  short x, short y,
                  short cx, short cy)
@@ -291,7 +328,7 @@ PushButton(std::string text,
            DWORD style = BS_PUSHBUTTON | WS_TABSTOP) {
   //                          DWORD extended_style = 0) {
   return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
-                        std::move(text),
+                        TitleOrResourceID(std::move(text)),
                         ControlClass::BUTTON,
                         id, x, y, width, height);
 }
@@ -303,7 +340,7 @@ DefPushButton(std::string text,
               short width, short height,
               DWORD style = BS_DEFPUSHBUTTON | WS_TABSTOP) {
   return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
-                        std::move(text),
+                        TitleOrResourceID(std::move(text)),
                         ControlClass::BUTTON,
                         id, x, y, width, height);
 }
@@ -315,7 +352,7 @@ CText(std::string text,
       short width, short height,
       DWORD style = SS_CENTER | WS_GROUP) {
   return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
-                        std::move(text),
+                        TitleOrResourceID(std::move(text)),
                         ControlClass::STATIC,
                         id,
                         x, y, width, height);
@@ -328,7 +365,7 @@ LText(std::string text,
       short width, short height,
       DWORD style = SS_LEFT | WS_GROUP) {
   return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
-                        std::move(text),
+                        TitleOrResourceID(std::move(text)),
                         ControlClass::STATIC,
                         id,
                         x, y, width, height);
@@ -340,21 +377,33 @@ EditText(WORD id, short x, short y,
          short width, short height,
          DWORD style = ES_LEFT | WS_BORDER | WS_TABSTOP) {
   return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
-                        "", ControlClass::EDIT,
+                        TitleOrResourceID(""), ControlClass::EDIT,
                         id,
                         x, y, width, height);
 }
 
 inline
 DialogItemDesc
-Control(std::string text, WORD id, LPCWSTR cls_,
+Control(TitleOrResourceID title_or_rsrc_id, WORD id, LPCWSTR cls_,
         DWORD style,
         short x, short y,
         short width, short height) {
   return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
-                        std::move(text), cls_,
+                        title_or_rsrc_id, cls_,
                         id,
                         x, y, width, height);
+}
+
+typedef TitleOrResourceID ResourceID;
+
+inline
+DialogItemDesc
+Icon(ResourceID rsrc, WORD id,
+     short x, short y,
+     short width, short height) {
+  return DialogItemDesc(SS_ICON | SS_REALSIZECONTROL | WS_VISIBLE | WS_CHILD,
+                        rsrc, ControlClass::STATIC,
+                        id, x, y, width, height);
 }
 
 template<class T>
