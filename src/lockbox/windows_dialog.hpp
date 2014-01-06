@@ -132,13 +132,27 @@ public:
     : _is_title(true)
     , _title(std::move(title)) {}
 
-  TextOrID(const char *title)
-    : _is_title(true)
-    , _title(title) {}
+  TextOrID(const char *title) {
+    if (IS_INTRESOURCE(title)) {
+      _is_title = false;
+      _rsrc_id = (uint16_t) (uintptr_t) title;
+    }
+    else {
+      _is_title = true;
+      _title = title;
+    }
+  }
 
-  TextOrID(const wchar_t *title)
-    : _is_title(true)
-    , _title(narrow(title)) {}
+  TextOrID(const wchar_t *title) {
+    if (IS_INTRESOURCE(title)) {
+      _is_title = false;
+      _rsrc_id = (uint16_t) (uintptr_t) title;
+    }
+    else {
+      _is_title = true;
+      _title = narrow(title);
+    }
+  }
 
   template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type * = nullptr>
   TextOrID(T id)
@@ -358,7 +372,7 @@ EditText(WORD id, short x, short y,
 
 inline
 DialogItemDesc
-Control(TitleOrResourceID title_or_rsrc_id, WORD id, LPCWSTR cls_,
+Control(TitleOrResourceID title_or_rsrc_id, WORD id, ClassNameOrPredefinedID cls_,
         DWORD style,
         short x, short y,
         short width, short height) {
