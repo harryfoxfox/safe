@@ -24,6 +24,7 @@
 #include <lockbox/mount_lockbox_dialog_win.hpp>
 #include <lockbox/mount_win.hpp>
 #include <lockbox/recent_paths_storage.hpp>
+#include <lockbox/resources_win.h>
 #include <lockbox/tray_menu.hpp>
 #include <lockbox/tray_menu_win.hpp>
 #include <lockbox/webdav_server.hpp>
@@ -62,7 +63,6 @@
 #include <Shlobj.h>
 
 // TODO:
-// 2) Icons
 // 3) Unmount when webdav server unexpectedly stops (defensive coding)
 
 struct WindowData {
@@ -388,7 +388,8 @@ add_tray_icon(HWND lockbox_main_window) {
   icon_data.uID = LOCKBOX_TRAY_ICON_ID;
   icon_data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
   icon_data.uCallbackMessage = LOCKBOX_TRAY_ICON_MSG;
-  icon_data.hIcon = LoadIconW(NULL, IDI_APPLICATION);
+  icon_data.hIcon = (HICON) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
+                                       IMAGE_ICON, 16, 16, 0);
   icon_data.uVersion = NOTIFYICON_VERSION;
   copy_to_wide_buffer(icon_data.szTip, LOCKBOX_TRAY_ICON_TOOLTIP);
 

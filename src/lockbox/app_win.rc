@@ -1,6 +1,7 @@
 #include <windows.h>
 
 #include "lockbox/product_name.h"
+#include "lockbox/resources_win.h"
 
 // Executable version information.
 VS_VERSION_INFO    VERSIONINFO
@@ -36,6 +37,6 @@ BEGIN
   END
 END
 
-IDI_APP ICON "app_win.ico"
+IDI_LBX_APP ICON "app_win.ico"
 
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "app_win.manifest"
