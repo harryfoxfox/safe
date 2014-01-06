@@ -19,6 +19,14 @@
 #ifndef __windows_lockbox_dialog_common_hpp
 #define __windows_lockbox_dialog_common_hpp
 
+#include <lockbox/mount_win.hpp>
+
+#include <encfs/base/optional.h>
+
+#include <memory>
+
+#include <cassert>
+
 #define ALIGN_LABEL(__NAME, PRECEDING_LABEL)                      \
   const unit_t __NAME ## _LABEL_WIDTH = LABEL_WIDTH; \
   const unit_t __NAME ## _LABEL_HEIGHT = LABEL_HEIGHT; \
@@ -36,6 +44,21 @@
 
 namespace lockbox {
 
+template <typename T>
+T
+receive_dialog_box_data(INT_PTR ret_ptr) {
+  assert(ret_ptr);
+  auto md_ptr = std::unique_ptr<T>((T *) ret_ptr);
+  return std::move(*md_ptr);
+}
+
+template <typename T>
+INT_PTR
+send_dialog_box_data(T data) {
+  return (INT_PTR) new T(std::move(data));
+}
+
+
 inline
 opt::optional<lockbox::win::MountDetails>
 receive_mount_details(INT_PTR ret_ptr) {
@@ -49,6 +72,7 @@ INT_PTR
 send_mount_details(opt::optional<lockbox::win::MountDetails> maybe_mount_details) {
   return (INT_PTR) new lockbox::win::MountDetails(std::move(*maybe_mount_details));
 }
+
 
 }
 

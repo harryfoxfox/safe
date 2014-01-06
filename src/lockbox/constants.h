@@ -76,6 +76,15 @@ enum {
                                                       )
 #define LOCKBOX_TRAY_ICON_MAC_WELCOME_MSG ("If you need to use " PRODUCT_NAME_A ", just click on the " PRODUCT_NAME_A " menu bar icon.")
 
+#define LOCKBOX_DIALOG_WELCOME_TEXT \
+    (PRODUCT_NAME_A " is now running. You can use it by clicking " \
+     "the " PRODUCT_NAME_A " icon in the tray. Get started by clicking " \
+     "one of the actions below:")
+#define LOCKBOX_DIALOG_WELCOME_CREATE_BUTTON \
+  ("Create New " ENCRYPTED_STORAGE_NAME_A "...")
+#define LOCKBOX_DIALOG_WELCOME_MOUNT_BUTTON \
+  ("Mount Existing " ENCRYPTED_STORAGE_NAME_A "...")
+
 #define LOCKBOX_ABOUT_BLURB (                                           \
   PRODUCT_NAME_A " is an application that makes it easy to encrypt your files. " \
   "Encryption prevents others from reading your " \
