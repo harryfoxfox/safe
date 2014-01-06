@@ -172,7 +172,11 @@ set_default_dialog_font(HWND hwnd) {
     EnumChildWindows(hwnd, _set_default_dialog_font_enum_windows_callback,
                      (LPARAM) handle_font);
   if (!success_enum_child_windows) {
-    throw std::runtime_error("Error doing EnumChildWindows()");
+    if (GetLastError()) throw windows_error();
+    else {
+      auto success_delete_object = DeleteObject(handle_font);
+      if (!success_delete_object) throw windows_error();
+    }
   }
 }
 
