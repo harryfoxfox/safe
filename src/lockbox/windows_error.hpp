@@ -73,7 +73,7 @@ last_error_message() {
 inline
 std::runtime_error
 windows_error() {
-  return std::runtime_error("windows error to go here");
+  return std::runtime_error(last_error_message());
 }
 
 }
