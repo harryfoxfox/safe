@@ -390,7 +390,7 @@ add_tray_icon(HWND lockbox_main_window) {
   icon_data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
   icon_data.uCallbackMessage = LOCKBOX_TRAY_ICON_MSG;
   icon_data.hIcon = (HICON) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
-                                       IMAGE_ICON, 16, 16, 0);
+                                       IMAGE_ICON, 16, 16, LR_SHARED);
   icon_data.uVersion = NOTIFYICON_VERSION;
   copy_to_wide_buffer(icon_data.szTip, LOCKBOX_TRAY_ICON_TOOLTIP);
 
