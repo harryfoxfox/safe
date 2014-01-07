@@ -29,6 +29,7 @@ enum {
 };
 
 #define LOCKBOX_SOURCE_CODE_WEBSITE "http://github.com/rianhunter/safe"
+#define LOCKBOX_SEND_FEEDBACK_WEBSITE "http://github.com/rianhunter/safe/issues"
 
 /* UI Strings follow */
 
@@ -94,5 +95,7 @@ enum {
 #define LOCKBOX_DIALOG_ABOUT_TAGLINE "Protect your files."
 #define LOCKBOX_DIALOG_ABOUT_VERSION "Version 1.0"
 #define LOCKBOX_DIALOG_ABOUT_BYLINE (PRODUCT_NAME_A " is free software.")
+
+#define LOCKBOX_TRAY_ICON_SEND_FEEDBACK "Send Feedback..."
 
 #endif

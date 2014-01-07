@@ -291,6 +291,10 @@ public:
             [self openMountDialogForPath:recent_paths[menu_action_arg]];
             break;
         }
+        case TrayMenuAction::SEND_FEEDBACK: {
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:LOCKBOX_SEND_FEEDBACK_WEBSITE]]];
+            break;
+        }
         default: {
             /* should never happen */
             assert(false);

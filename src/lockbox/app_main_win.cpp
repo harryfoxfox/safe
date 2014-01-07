@@ -353,6 +353,10 @@ dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT select
     run_mount_dialog(lockbox_main_window, wd, path);
     break;
   }
+  case TrayMenuAction::SEND_FEEDBACK: {
+    w32util::open_url_in_browser(lockbox_main_window, LOCKBOX_SEND_FEEDBACK_WEBSITE);
+    break;
+  }
   default: {
     /* should never happen */
     assert(false);

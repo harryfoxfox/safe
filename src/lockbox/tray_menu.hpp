@@ -39,6 +39,7 @@ enum class TrayMenuAction : uint16_t {
   TEST_BUBBLE,
   TRIGGER_BREAKPOINT,
   QUIT_APP,
+  SEND_FEEDBACK,
 };
 
 typedef uint16_t tray_menu_action_arg_t;
@@ -144,6 +145,8 @@ populate_tray_menu(Menu & menu,
 
   // About Bitvault
   menu.append_item("About " PRODUCT_NAME_A, TrayMenuAction::ABOUT_APP);
+
+  menu.append_item(LOCKBOX_TRAY_ICON_SEND_FEEDBACK, TrayMenuAction::SEND_FEEDBACK);
 
 #ifndef NDEBUG
   // Test Bubble
