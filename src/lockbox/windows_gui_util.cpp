@@ -141,6 +141,17 @@ center_window_in_monitor(HWND hwnd) {
   }
 }
 
+void
+get_message_font(LOGFONT *lpfn) {
+  NONCLIENTMETRICSW metrics;
+  lockbox::zero_object(metrics);
+  metrics.cbSize = sizeof(metrics);
+  auto success = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS,
+                                       sizeof(metrics), &metrics, 0);
+  if (!success) throw windows_error();
+  *lpfn = metrics.lfMessageFont;
+}
+
 CALLBACK
 static
 BOOL
@@ -153,17 +164,10 @@ _set_default_dialog_font_enum_windows_callback(HWND hwnd, LPARAM lParam) {
 
 void
 set_default_dialog_font(HWND hwnd) {
-  NONCLIENTMETRICSW metrics;
-  lockbox::zero_object(metrics);
-  metrics.cbSize = sizeof(metrics);
-  auto success = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS,
-                                       sizeof(metrics), &metrics, 0);
-  if (!success) throw std::runtime_error("Error doing SystemParametersInfo()");
-
-  auto handle_font = CreateFontIndirect(&metrics.lfMessageFont);
-  if (!handle_font) {
-    throw std::runtime_error("Error doing CreateFontIndirect()");
-  }
+  LOGFONT message_font;
+  get_message_font(&message_font);
+  auto handle_font = CreateFontIndirect(&message_font);
+  if (!handle_font) throw windows_error();
 
   // set the font on all the dialog's children
   static_assert(sizeof(LPARAM) >= sizeof(handle_font),

@@ -42,6 +42,9 @@ void
 center_window_in_monitor(HWND hwnd);
 
 void
+get_message_font(LOGFONT *lpfn);
+
+void
 set_default_dialog_font(HWND hwnd);
 
 void
