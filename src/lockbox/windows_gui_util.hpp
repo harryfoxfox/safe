@@ -62,6 +62,9 @@ securely_read_text_field(HWND text_wnd, bool clear = true);
 opt::optional<std::string>
 get_folder_dialog(HWND owner);
 
+void
+open_url_in_browser(HWND owner, std::string url);
+
 }
 
 #endif

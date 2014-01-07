@@ -30,6 +30,7 @@
 #include <string>
 
 #include <windows.h>
+#include <shellapi.h>
 #include <Shlobj.h>
 
 namespace w32util {
@@ -280,6 +281,15 @@ get_folder_dialog(HWND owner) {
     }
     else return opt::nullopt;
   }
+}
+
+void
+open_url_in_browser(HWND owner, std::string url) {
+  auto ret_shell2 =
+    (int) ShellExecuteW(owner, L"open",
+                        w32util::widen(url).c_str(),
+                        NULL, NULL, SW_SHOWNORMAL);
+  if (ret_shell2 <= 32) throw w32util::windows_error();
 }
 
 }
