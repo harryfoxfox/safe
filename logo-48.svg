@@ -393,7 +393,7 @@
        xlink:href="#linearGradient5384"
        id="radialGradient3827"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(0.82706062,0,0,0.61500531,1.3428106,468.6933)"
+       gradientTransform="matrix(0.40866553,0,0,0.41555357,12.804676,471.72527)"
        cx="27.611296"
        cy="11.710496"
        fx="27.611296"
@@ -446,15 +446,15 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="11.041667"
-     inkscape:cx="24"
+     inkscape:zoom="12.416667"
+     inkscape:cx="23.919463"
      inkscape:cy="24"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:document-units="px"
      inkscape:grid-bbox="true"
-     inkscape:window-width="1042"
-     inkscape:window-height="748"
+     inkscape:window-width="1181"
+     inkscape:window-height="814"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
@@ -473,7 +473,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -506,7 +506,7 @@
        sodipodi:cy="33.121773"
        sodipodi:rx="11.394834"
        sodipodi:ry="11.394834"
-       d="m 45.933579,33.121773 a 11.394834,11.394834 0 1 1 -22.789667,0 11.394834,11.394834 0 1 1 22.789667,0 z"
+       d="m 45.933579,33.121773 c 0,6.293193 -5.10164,11.394833 -11.394833,11.394833 -6.293193,0 -11.394834,-5.10164 -11.394834,-11.394833 0,-6.293193 5.101641,-11.394834 11.394834,-11.394834 6.293193,0 11.394833,5.101641 11.394833,11.394834 z"
        transform="matrix(0.83371318,0,0,0.83371318,-4.7958652,460.3864)"
        inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
        inkscape:export-xdpi="6.7580395"
@@ -519,15 +519,15 @@
        sodipodi:cy="30.760147"
        sodipodi:rx="5.1365314"
        sodipodi:ry="5.1365314"
-       d="m 34.597785,30.760147 a 5.1365314,5.1365314 0 1 1 -10.273062,0 5.1365314,5.1365314 0 1 1 10.273062,0 z"
+       d="m 34.597785,30.760147 c 0,2.836828 -2.299703,5.136531 -5.136531,5.136531 -2.836828,0 -5.136531,-2.299703 -5.136531,-5.136531 0,-2.836828 2.299703,-5.136531 5.136531,-5.136531 2.836828,0 5.136531,2.299703 5.136531,5.136531 z"
        transform="matrix(0.8760564,0,0,0.8760564,-1.8097202,461.05238)"
        inkscape:export-filename="/Users/rian/repos/lockbox-project/lockbox-product/logo-16-2.png"
        inkscape:export-xdpi="6.7580395"
        inkscape:export-ydpi="6.7580395" />
     <path
        id="path3856"
-       style="fill:url(#radialGradient3827);fill-opacity:1;stroke:#000000;stroke-width:0.279;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 23.999999,477.86068 -0.93034,-1.36067 -0.930338,-1.36068 1.860678,0 1.860679,0 -0.930339,1.36068 z"
+       style="fill:url(#radialGradient3827);fill-opacity:1;stroke:#000000;stroke-width:0.16121061;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 24,477.91957 -0.459698,-0.91939 -0.459697,-0.9194 0.919395,0 0.919395,0 -0.459698,0.9194 z"
        inkscape:connector-curvature="0" />
     <rect
        style="fill:#000132;fill-opacity:1;fill-rule:nonzero;stroke:none"
