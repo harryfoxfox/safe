@@ -164,6 +164,13 @@ _set_default_dialog_font_enum_windows_callback(HWND hwnd, LPARAM lParam) {
 
 void
 set_default_dialog_font(HWND hwnd) {
+  // if there are no children, then don't create a font
+  auto child = GetWindow(hwnd, GW_CHILD);
+  if (!child) {
+    if (GetLastError()) throw windows_error();
+    else return;
+  }
+
   LOGFONT message_font;
   get_message_font(&message_font);
   auto handle_font = CreateFontIndirect(&message_font);
@@ -172,16 +179,8 @@ set_default_dialog_font(HWND hwnd) {
   // set the font on all the dialog's children
   static_assert(sizeof(LPARAM) >= sizeof(handle_font),
                 "LPARAM is too small or handle_font is too large");
-  auto success_enum_child_windows =
-    EnumChildWindows(hwnd, _set_default_dialog_font_enum_windows_callback,
-                     (LPARAM) handle_font);
-  if (!success_enum_child_windows) {
-    if (GetLastError()) throw windows_error();
-    else {
-      auto success_delete_object = DeleteObject(handle_font);
-      if (!success_delete_object) throw windows_error();
-    }
-  }
+  EnumChildWindows(hwnd, _set_default_dialog_font_enum_windows_callback,
+                   (LPARAM) handle_font);
 }
 
 void
