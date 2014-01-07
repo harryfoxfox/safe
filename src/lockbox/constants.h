@@ -93,6 +93,6 @@ enum {
 
 #define LOCKBOX_DIALOG_ABOUT_TAGLINE "Protect your files."
 #define LOCKBOX_DIALOG_ABOUT_VERSION "Version 1.0"
-#define LOCKBOX_DIALOG_ABOUT_BYLINE "Safe is Free Software"
+#define LOCKBOX_DIALOG_ABOUT_BYLINE (PRODUCT_NAME_A " is free software.")
 
 #endif
