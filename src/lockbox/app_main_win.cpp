@@ -58,10 +58,10 @@
 
 #include <windows.h>
 #include <windowsx.h>
-#include <CommCtrl.h>
-#include <Shellapi.h>
+#include <commctrl.h>
+#include <shellapi.h>
 #include <dbt.h>
-#include <Shlobj.h>
+#include <shlobj.h>
 
 // TODO:
 // 3) Unmount when webdav server unexpectedly stops (defensive coding)

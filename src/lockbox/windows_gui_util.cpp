@@ -31,7 +31,7 @@
 
 #include <windows.h>
 #include <shellapi.h>
-#include <Shlobj.h>
+#include <shlobj.h>
 
 namespace w32util {
 

@@ -32,7 +32,7 @@
 
 #include <lockbox/lean_windows.h>
 
-#include <CommCtrl.h>
+#include <commctrl.h>
 
 namespace w32util {
 
