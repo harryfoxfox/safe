@@ -231,6 +231,10 @@ public:
     : _pt_size(pt_size)
     , _name(std::move(name)) {}
 
+  DWORD get_style() const {
+    return _name == "MS Shell Dlg" ? DS_SHELLFONT : DS_SETFONT;
+  }
+
   friend class DialogDesc;
 };
 
@@ -245,7 +249,7 @@ class DialogDesc {
 
   void serialize(std::vector<byte> & v, WORD num_items) const {
     const DLGTEMPLATE dialog_header = {
-      .style = _style | (_font ? DS_SETFONT : 0),
+      .style = _style | (_font ? _font->get_style() : 0),
       .dwExtendedStyle = 0,
       .cdit = num_items,
       .x = _x,
