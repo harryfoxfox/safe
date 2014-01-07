@@ -157,7 +157,7 @@ run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
 
   // create cfs for webdav backend
   const bool destroy_fs_on_delete = false;
-  const auto cfs = fs_dynamic_new((fs_handle_t) fs_io.get(), &fsio_ops,
+  const auto cfs = fs_dynamic_new((void *) fs_io.get(), &fsio_ops,
                                   destroy_fs_on_delete);
   if (!cfs) throw std::runtime_error("Couldn't create backend fs");
   auto _destroy_cfs =
