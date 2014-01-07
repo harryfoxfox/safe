@@ -483,6 +483,19 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
       add_tray_icon(hwnd);
 
+      // Set app icons (window icon and alt+tab icon)
+      // NB: we only need to set this on top-level windows,
+      //     dialogs that use this window as a parent derive
+      //     this property
+      SendMessage(hwnd, WM_SETICON,
+                  ICON_SMALL,
+                  (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
+                                      IMAGE_ICON, 16, 16, LR_SHARED));
+      SendMessage(hwnd, WM_SETICON,
+                  ICON_BIG,
+                  (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
+                                      IMAGE_ICON, 32, 32, LR_SHARED));
+
       auto choice =
         lockbox::win::WelcomeDialogChoice::NOTHING;
       if (first_run) choice = lockbox::win::welcome_dialog(hwnd);
