@@ -29,7 +29,6 @@
 #include <cassert>
 
 #include <windows.h>
-#include <shellapi.h>
 
 namespace lockbox { namespace win {
 
@@ -58,16 +57,6 @@ typedef lockbox::ManagedResource<HFONT, DeleteObjectDestroyer> ManagedFontHandle
 struct AboutDialogCtx {
   ManagedFontHandle logo_text_font;
 };
-
-static
-bool
-open_src_code(HWND owner) {
-  auto ret_shell2 =
-    (int) ShellExecuteW(owner, L"open",
-                        w32util::widen(LOCKBOX_SOURCE_CODE_WEBSITE).c_str(),
-                        NULL, NULL, SW_SHOWNORMAL);
-  return ret_shell2 > 32;
-}
 
 CALLBACK
 static
@@ -111,8 +100,12 @@ about_dialog_proc(HWND hwnd, UINT Message,
   case WM_COMMAND: {
     switch (LOWORD(wParam)) {
     case IDC_GET_SOURCE_CODE: {
-      auto success = open_src_code(hwnd);
-      if (!success) lbx_log_error("Error opening source website");
+      try {
+        w32util::open_url_in_browser(hwnd, LOCKBOX_SOURCE_CODE_WEBSITE);
+      }
+      catch (...) {
+        lbx_log_error("Error opening source website");
+      }
       return TRUE;
     }
     case IDOK: case IDCANCEL: {
