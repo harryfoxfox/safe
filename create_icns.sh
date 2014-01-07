@@ -12,7 +12,7 @@ if ! which "$PATH_TO_INKSCAPE" > /dev/null && [ -d /Applications/Inkscape.app ];
 fi
 
 function to_png () {
-    "$PATH_TO_INKSCAPE" "$1" "--export-width=$2" "--export-height=$2" "--export-png=$3"
+    "$PATH_TO_INKSCAPE" "$1" "--export-width=$2" "--export-height=$2" "--export-png=$3" --without-gui
 }
 
 if [ "$1" = to_png ]; then
