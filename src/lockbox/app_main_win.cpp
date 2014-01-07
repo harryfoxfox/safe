@@ -394,7 +394,7 @@ add_tray_icon(HWND lockbox_main_window) {
   icon_data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
   icon_data.uCallbackMessage = LOCKBOX_TRAY_ICON_MSG;
   icon_data.hIcon = (HICON) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
-                                       IMAGE_ICON, 16, 16, 0);
+                                       IMAGE_ICON, 16, 16, LR_SHARED);
   icon_data.uVersion = NOTIFYICON_VERSION;
   copy_to_wide_buffer(icon_data.szTip, LOCKBOX_TRAY_ICON_TOOLTIP);
 
@@ -486,6 +486,19 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       auto first_run = is_first_run(*wd);
 
       add_tray_icon(hwnd);
+
+      // Set app icons (window icon and alt+tab icon)
+      // NB: we only need to set this on top-level windows,
+      //     dialogs that use this window as a parent derive
+      //     this property
+      SendMessage(hwnd, WM_SETICON,
+                  ICON_SMALL,
+                  (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
+                                      IMAGE_ICON, 16, 16, LR_SHARED));
+      SendMessage(hwnd, WM_SETICON,
+                  ICON_BIG,
+                  (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
+                                      IMAGE_ICON, 32, 32, LR_SHARED));
 
       auto choice =
         lockbox::win::WelcomeDialogChoice::NOTHING;

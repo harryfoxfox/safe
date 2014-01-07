@@ -388,6 +388,10 @@ Control(TitleOrResourceID title_or_rsrc_id, WORD id, ClassNameOrPredefinedID cls
 
 typedef TitleOrResourceID ResourceID;
 
+#ifndef SS_REALSIZECONTROL
+#define SS_REALSIZECONTROL 0x00000040
+#endif
+
 inline
 DialogItemDesc
 Icon(ResourceID rsrc, WORD id,
