@@ -15,6 +15,11 @@ function to_png () {
     "$PATH_TO_INKSCAPE" "$1" "--export-width=$2" "--export-height=$2" "--export-png=$3"
 }
 
+if [ "$1" = to_png ]; then
+    to_png "$2" "$3" "$4"
+    exit 0
+fi
+
 if [ "$1" = menuBarIcon ]; then 
     to_png logo-16-bw.svg 16 "$DIR/icon_16x16.png"
     to_png logo-32-bw.svg 32 "$DIR/icon_16x16@2x.png"
