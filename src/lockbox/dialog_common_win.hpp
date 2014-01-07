@@ -20,6 +20,7 @@
 #define __windows_lockbox_dialog_common_hpp
 
 #include <lockbox/mount_win.hpp>
+#include <lockbox/windows_error.hpp>
 
 #include <encfs/base/optional.h>
 
@@ -42,7 +43,7 @@
                                         __NAME ## _LABEL_WIDTH + FORM_H_SPACING); \
   const unit_t __NAME ## _ENTRY_TOP = __NAME ## _LABEL_TOP + LABEL_TO_ENTRY_V_OFFSET
 
-namespace lockbox {
+namespace lockbox { namespace win {
 
 template <typename T>
 T
@@ -73,7 +74,26 @@ send_mount_details(opt::optional<lockbox::win::MountDetails> maybe_mount_details
   return (INT_PTR) new lockbox::win::MountDetails(std::move(*maybe_mount_details));
 }
 
+inline
+void
+draw_icon_item(LPDRAWITEMSTRUCT pDIS, LPCWSTR icon_resource) {
+  auto width = pDIS->rcItem.right - pDIS->rcItem.left;
+  auto height = pDIS->rcItem.bottom - pDIS->rcItem.top;
 
+  auto icon_handle = (HICON) LoadImage(GetModuleHandle(NULL),
+                                       icon_resource, IMAGE_ICON,
+                                       width, height,
+                                       0);
+  if (!icon_handle) throw w32util::windows_error();
+  auto _release_icon =
+    lockbox::create_deferred(DestroyIcon, icon_handle);
+
+  auto success = DrawIconEx(pDIS->hDC, pDIS->rcItem.left, pDIS->rcItem.top,
+                            icon_handle, width, height,
+                            0, NULL, DI_NORMAL);
+  if (!success) throw w32util::windows_error();
 }
+
+}}
 
 #endif
