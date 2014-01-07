@@ -26,7 +26,7 @@
 namespace lockbox { namespace win {
 
 void
-about_dialog(HWND hwnd, std::string title);
+about_dialog(HWND hwnd);
 
 }}
 

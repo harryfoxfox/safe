@@ -316,7 +316,7 @@ dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT select
     break;
   }
   case TrayMenuAction::ABOUT_APP: {
-    lockbox::win::about_dialog(lockbox_main_window, LOCKBOX_DIALOG_ABOUT_TITLE);
+    lockbox::win::about_dialog(lockbox_main_window);
     break;
   }
   case TrayMenuAction::TRIGGER_BREAKPOINT: {

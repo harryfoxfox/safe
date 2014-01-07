@@ -19,7 +19,9 @@
 #include <lockbox/about_dialog_win.hpp>
 
 #include <lockbox/constants.h>
+#include <lockbox/dialog_common_win.hpp>
 #include <lockbox/logging.h>
+#include <lockbox/resources_win.h>
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_gui_util.hpp>
 #include <lockbox/windows_string.hpp>
@@ -32,8 +34,29 @@
 namespace lockbox { namespace win {
 
 enum {
-  IDC_BLURB = 1000,
+  IDC_LOGO = 100,
+  IDC_LOGO_TEXT,
+  IDC_TAGLINE,
+  IDC_VERSION,
   IDC_GET_SOURCE_CODE,
+  IDC_BYLINE,
+};
+
+enum {
+  LOGO_TEXT_HEIGHT_DIALOG_UNITS=36,
+};
+
+struct DeleteObjectDestroyer {
+  void operator()(HGDIOBJ a) {
+    auto ret = DeleteObject(a);
+    if (!ret) throw std::runtime_error("couldn't free!");
+  }
+};
+
+typedef lockbox::ManagedResource<HFONT, DeleteObjectDestroyer> ManagedFontHandle;
+
+struct AboutDialogCtx {
+  ManagedFontHandle logo_text_font;
 };
 
 static
@@ -50,115 +73,41 @@ CALLBACK
 static
 INT_PTR
 about_dialog_proc(HWND hwnd, UINT Message,
-                  WPARAM wParam, LPARAM /*lParam*/) {
+                  WPARAM wParam, LPARAM lParam) {
+  const auto ctx = (AboutDialogCtx *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
+  (void) ctx;
 
   switch (Message) {
   case WM_INITDIALOG: {
-    w32util::set_default_dialog_font(hwnd);
-
-    // position everything
-    typedef unsigned unit_t;
-
-    // compute size of about string
-    auto text_hwnd = GetDlgItem(hwnd, IDC_BLURB);
-    if (!text_hwnd) throw w32util::windows_error();
-
-    const unit_t BLURB_TEXT_WIDTH = 300;
-
-    const unit_t BUTTON_WIDTH_CREATELB_DLG = 35;
-    const unit_t BUTTON_WIDTH_GET_SOURCE_CODELB_DLG = 50;
-    const unit_t BUTTON_HEIGHT_DLG = 14;
-    const unit_t BUTTON_H_SPACING_DLG = 2;
-
-    RECT r;
-    lockbox::zero_object(r);
-    r.left = BUTTON_WIDTH_GET_SOURCE_CODELB_DLG;
-    r.right = BUTTON_WIDTH_CREATELB_DLG;
-    r.top = BUTTON_HEIGHT_DLG;
-    auto success_map = MapDialogRect(hwnd, &r);
-    if (!success_map) throw w32util::windows_error();
-
-    const unit_t BUTTON_WIDTH_GET_SOURCE_CODELB = r.left;
-    const unit_t BUTTON_WIDTH_CREATELB = r.right;
-    const unit_t BUTTON_HEIGHT = r.top;
-
-    lockbox::zero_object(r);
-    r.left = BUTTON_H_SPACING_DLG;
-    auto success_map_2 = MapDialogRect(hwnd, &r);
-    if (!success_map_2) throw w32util::windows_error();
-
-    const unit_t BUTTON_H_SPACING = r.left;
-
-    auto blurb_text = w32util::widen(LOCKBOX_ABOUT_BLURB);
-
-    // get necessary height to contain the text at the desired
-    // `BLURB_TEXT_WIDTH` via DrawText()
-    auto dc = GetDC(text_hwnd);
-    if (!dc) throw w32util::windows_error();
-    auto _release_dc_1 = lockbox::create_deferred(ReleaseDC, text_hwnd, dc);
-
-    auto hfont = (HFONT) SendMessage(text_hwnd, WM_GETFONT, 0, 0);
-    if (!hfont) return FALSE;
-    auto font_dc = SelectObject(dc, hfont);
-    if (!font_dc) throw w32util::windows_error();
-
-    auto w = BLURB_TEXT_WIDTH;
-    RECT rect;
-    lockbox::zero_object(rect);
-    rect.right = w;
-    auto h = DrawText(dc, blurb_text.data(), blurb_text.size(), &rect,
-                      DT_CALCRECT | DT_NOCLIP | DT_LEFT | DT_WORDBREAK);
-    if (!h) throw w32util::windows_error();
-    w = rect.right;
-
-    auto margin = 8;
-    const unit_t DIALOG_WIDTH = margin + w + margin;
-    const unit_t DIALOG_HEIGHT =
-      margin + h + margin + BUTTON_HEIGHT + margin;
-
-    // set up text window
-    auto success_set_wtext = SetWindowText(text_hwnd, blurb_text.c_str());
-    if (!success_set_wtext) throw w32util::windows_error();
-    auto set_client_area_1 = w32util::SetClientSizeInLogical(text_hwnd, true,
-                                                             margin, margin,
-                                                             w, h);
-    if (!set_client_area_1) throw w32util::windows_error();
-
-    // align "Get Source Code" button
-    auto get_source_code_hwnd = GetDlgItem(hwnd, IDC_GET_SOURCE_CODE);
-    if (!get_source_code_hwnd) throw w32util::windows_error();
-
-    w32util::SetClientSizeInLogical(get_source_code_hwnd, true,
-                                    DIALOG_WIDTH -
-                                    margin - BUTTON_WIDTH_CREATELB -
-                                    BUTTON_H_SPACING - BUTTON_WIDTH_GET_SOURCE_CODELB,
-                                    margin + h + margin,
-                                    BUTTON_WIDTH_GET_SOURCE_CODELB, BUTTON_HEIGHT);
-
-    // align "OK" button
-    auto ok_hwnd = GetDlgItem(hwnd, IDOK);
-    if (!ok_hwnd) throw w32util::windows_error();
-
-    w32util::SetClientSizeInLogical(ok_hwnd, true,
-                                    DIALOG_WIDTH -
-                                    margin - BUTTON_WIDTH_CREATELB,
-                                    margin + h + margin,
-                                    BUTTON_WIDTH_CREATELB, BUTTON_HEIGHT);
-
-    // set focus on "Ok" button
-    PostMessage(hwnd, WM_NEXTDLGCTL, (WPARAM) ok_hwnd, TRUE);
-
-    // set up about window (size + position)
-    auto set_client_area_2 = w32util::SetClientSizeInLogical(hwnd, true, 0, 0,
-                                                             DIALOG_WIDTH,
-                                                             DIALOG_HEIGHT);
-    if (!set_client_area_2) throw w32util::windows_error();
+    const auto ctx = (AboutDialogCtx *) lParam;
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) ctx);
 
     w32util::center_window_in_monitor(hwnd);
 
+    RECT r = {0, 0, 0, LOGO_TEXT_HEIGHT_DIALOG_UNITS};
+    auto success = MapDialogRect(hwnd, &r);
+    if (!success) throw w32util::windows_error();
+
+    // font for logo text
+    auto font = CreateFontW(-r.bottom, 0,
+                            0, 0, FW_MEDIUM,
+                            FALSE, FALSE,
+                            FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                            CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
+                            DEFAULT_PITCH, L"Georgia");
+    if (!font) throw w32util::windows_error();
+    ctx->logo_text_font.reset(font);
+
+    SendDlgItemMessage(hwnd, IDC_LOGO_TEXT, WM_SETFONT,
+                       (WPARAM) font, (LPARAM) 0);
+
     return TRUE;
   }
-
+  case WM_DRAWITEM: {
+    auto pDIS = (LPDRAWITEMSTRUCT) lParam;
+    if (pDIS->CtlID == IDC_LOGO) draw_icon_item(pDIS, IDI_LBX_APP);
+    return TRUE;
+  }
   case WM_COMMAND: {
     switch (LOWORD(wParam)) {
     case IDC_GET_SOURCE_CODE: {
@@ -178,7 +127,6 @@ about_dialog_proc(HWND hwnd, UINT Message,
   }
 
   case WM_DESTROY: {
-    w32util::cleanup_default_dialog_font(hwnd);
     // we don't actually handle this
     return FALSE;
   }
@@ -190,26 +138,136 @@ about_dialog_proc(HWND hwnd, UINT Message,
   assert(false);
 }
 
+LONG
+compute_point_size_of_logfont(HWND hwnd, const LOGFONT *lplf) {
+  assert(lplf->lfHeight < 0);
+  auto hDC = GetDC(hwnd);
+  assert(GetMapMode(hDC) == MM_TEXT);
+  if (!hDC) throw w32util::windows_error();
+  auto _release_dc_1 =
+    lockbox::create_deferred(ReleaseDC, hwnd, hDC);
+  return MulDiv(-lplf->lfHeight, 72,
+                GetDeviceCaps(hDC, LOGPIXELSY));
+}
+
+SIZE
+compute_base_units_of_logfont(HWND hwnd, const LOGFONT *lplf) {
+  // LOGFONT already gives us the height of the font
+  // we just need to compute the average width
+  auto handle_font = CreateFontIndirect(lplf);
+  if (!handle_font) throw w32util::windows_error();
+  auto _free_handle_font =
+    lockbox::create_deferred(DeleteObject, handle_font);
+
+  auto hDC = GetDC(hwnd);
+  if (!hDC) throw w32util::windows_error();
+  auto _free_hDC = lockbox::create_deferred(ReleaseDC, hwnd, hDC);
+
+  SIZE out;
+  auto old_object = SelectObject(hDC, handle_font);
+  if (!old_object) throw w32util::windows_error();
+  auto _restore_object = lockbox::create_deferred(SelectObject, hDC, old_object);
+
+  TEXTMETRIC tm;
+  auto success_1 = GetTextMetrics(hDC, &tm);
+  if (!success_1) throw w32util::windows_error();
+
+  auto success =
+    GetTextExtentPoint32W(hDC,
+                          L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+                          52, &out);
+  if (!success) throw w32util::windows_error();
+
+  auto baseunit_x = (out.cx / 26 + 1) / 2;
+  auto baseunit_y = tm.tmHeight;
+
+  return {baseunit_x, baseunit_y};
+}
+
 void
-about_dialog(HWND hwnd, std::string title) {
+about_dialog(HWND hwnd) {
   using namespace w32util;
+
+  LOGFONT message_font;
+  get_message_font(&message_font);
+
+  auto desired_point = compute_point_size_of_logfont(hwnd, &message_font);
+  auto base_units = compute_base_units_of_logfont(hwnd, &message_font);
+
+  lbx_log_error("base units: 0x%x, %ld %ld, point_size: %d",
+                (unsigned) GetDialogBaseUnits(),
+                (long) base_units.cx, (long) base_units.cy,
+                (int) desired_point);
+  typedef unsigned unit_t;
+
+  const unit_t FONT_HEIGHT = 8;
+  const unit_t TOP_MARGIN = 8;
+  const unit_t BOTTOM_MARGIN = 8;
+
+  const unit_t DIALOG_WIDTH = 154;
+
+  const unit_t LOGO_WIDTH = MulDiv(128, 4, base_units.cx);
+  const unit_t LOGO_HEIGHT = MulDiv(128, 8, base_units.cy);
+  const unit_t LOGO_LEFT = center_offset(DIALOG_WIDTH, LOGO_WIDTH);
+  const unit_t LOGO_TOP = TOP_MARGIN;
+
+  const unit_t LOGO_TEXT_WIDTH = DIALOG_WIDTH;
+  const unit_t LOGO_TEXT_HEIGHT = LOGO_TEXT_HEIGHT_DIALOG_UNITS;
+  const unit_t LOGO_TEXT_LEFT = 0;
+  const unit_t LOGO_TEXT_TOP = LOGO_TOP + LOGO_HEIGHT + 4;
+
+  const unit_t TAGLINE_WIDTH = DIALOG_WIDTH;
+  const unit_t TAGLINE_HEIGHT = 8;
+  const unit_t TAGLINE_LEFT = 0;
+  const unit_t TAGLINE_TOP = LOGO_TEXT_TOP + LOGO_TEXT_HEIGHT + 8;
+
+  const unit_t VERSION_WIDTH = DIALOG_WIDTH;
+  const unit_t VERSION_HEIGHT = FONT_HEIGHT;
+  const unit_t VERSION_LEFT = 0;
+  const unit_t VERSION_TOP = TAGLINE_TOP + TAGLINE_HEIGHT + 8;
+
+  const unit_t SOURCE_WIDTH = 73;
+  const unit_t SOURCE_HEIGHT = 12;
+  const unit_t SOURCE_LEFT = center_offset(DIALOG_WIDTH, SOURCE_WIDTH);
+  const unit_t SOURCE_TOP = VERSION_TOP + VERSION_HEIGHT + 8;
+
+  const unit_t BYLINE_WIDTH = DIALOG_WIDTH;
+  const unit_t BYLINE_HEIGHT = 8;
+  const unit_t BYLINE_LEFT = 0;
+  const unit_t BYLINE_TOP = SOURCE_TOP + SOURCE_HEIGHT + 8;
+
+  const unit_t DIALOG_HEIGHT = BYLINE_TOP + BYLINE_HEIGHT + BOTTOM_MARGIN;
 
   const auto dlg =
     DialogTemplate(DialogDesc(DEFAULT_MODAL_DIALOG_STYLE | WS_VISIBLE,
-                              title, 0, 0, 500, 500),
+                              "About Safe", 0, 0, DIALOG_WIDTH, DIALOG_HEIGHT,
+                              FontDescription(desired_point, narrow(message_font.lfFaceName))),
                    {
-                     LText("", IDC_BLURB,
-                           0, 0, 0, 0),
-                     PushButton("Get Source Code", IDC_GET_SOURCE_CODE,
-                                0, 0, 0, 0),
-                     DefPushButton("OK", IDOK,
-                                   0, 0, 0, 0),
+                     CText(PRODUCT_NAME_A, IDC_LOGO_TEXT,
+                           LOGO_TEXT_LEFT, LOGO_TEXT_TOP,
+                           LOGO_TEXT_WIDTH, LOGO_TEXT_HEIGHT),
+                     Control("", IDC_LOGO, ControlClass::STATIC,
+                             SS_OWNERDRAW, LOGO_LEFT, LOGO_TOP,
+                             LOGO_WIDTH, LOGO_HEIGHT),
+                     CText(LOCKBOX_DIALOG_ABOUT_TAGLINE, IDC_TAGLINE,
+                           TAGLINE_LEFT, TAGLINE_TOP,
+                           TAGLINE_WIDTH, TAGLINE_HEIGHT),
+                     CText(LOCKBOX_DIALOG_ABOUT_VERSION, IDC_VERSION,
+                           VERSION_LEFT, VERSION_TOP,
+                           VERSION_WIDTH, VERSION_HEIGHT),
+                     PushButton("Get Source Code...", IDC_GET_SOURCE_CODE,
+                                SOURCE_LEFT, SOURCE_TOP,
+                                SOURCE_WIDTH, SOURCE_HEIGHT),
+                     CText(LOCKBOX_DIALOG_ABOUT_BYLINE, IDC_BYLINE,
+                           BYLINE_LEFT, BYLINE_TOP,
+                           BYLINE_WIDTH, BYLINE_HEIGHT),
                    }
                    );
 
-  DialogBoxIndirect(GetModuleHandle(NULL),
-                    dlg.get_data(),
-                    hwnd, about_dialog_proc);
+  AboutDialogCtx ctx;
+  DialogBoxIndirectParam(GetModuleHandle(NULL),
+                         dlg.get_data(),
+                         hwnd, about_dialog_proc, (LPARAM) &ctx);
 }
 
 }}
