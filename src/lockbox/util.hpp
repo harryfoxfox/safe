@@ -1,6 +1,8 @@
 #ifndef _lockbox_util_hpp
 #define _lockbox_util_hpp
 
+#include <lockbox/logging.h>
+
 #include <encfs/base/optional.h>
 
 #include <functional>
@@ -120,7 +122,9 @@ class ManagedResource {
       try {
         F()(*todel);
       }
-      catch (...) {}
+      catch (...) {
+        lbx_log_error("Failed to free resource, leaking...");
+      }
       delete todel;
     }
   };
