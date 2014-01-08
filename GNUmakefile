@@ -16,13 +16,16 @@
 
 EXE_NAME := Safe.exe
 
+OUT_DIR ?= out
+
 DAVFUSE_ROOT := $(CURDIR)/../davfuse
 ENCFS_ROOT := $(CURDIR)/../encfs
 BOTAN_ROOT := $(CURDIR)/encfs-dependencies/botan
 TINYXML_ROOT := $(CURDIR)/encfs-dependencies/tinyxml
 PROTOBUF_ROOT := $(CURDIR)/../protobuf
-HEADERS_ROOT := $(CURDIR)/out/headers
-DEPS_INSTALL_ROOT := $(CURDIR)/out/deps
+
+HEADERS_ROOT = $(CURDIR)/$(OUT_DIR)/headers
+DEPS_INSTALL_ROOT = $(CURDIR)/$(OUT_DIR)/deps
 
 ifdef IS_WIN_CROSS
  WINDRES = $(IS_WIN_CROSS)-windres
@@ -112,7 +115,7 @@ libencfs: clean
 	@cd $(ENCFS_ROOT); make clean
 	@cd $(ENCFS_ROOT); PATH="$(DEPS_INSTALL_ROOT)/bin:$$PATH" make -j$(PROCS) encfs-base encfs-cipher encfs-fs
 #	copy all encfs headers into our build headers dir
-	@find $(ENCFS_ROOT) -name '*.h' | (while read F; do ROOT=$(ENCFS_ROOT); NEWF=$$(echo $$F | sed "s|^$$ROOT|out/deps/include/encfs|"); mkdir -p $$(dirname "$$NEWF"); cp $$F $$NEWF; done)
+	@find $(ENCFS_ROOT) -name '*.h' | (while read F; do ROOT=$(ENCFS_ROOT); NEWF=$$(echo $$F | sed "s|^$$ROOT|$(OUT_DIR)/deps/include/encfs|"); mkdir -p $$(dirname "$$NEWF"); cp $$F $$NEWF; done)
 #       create archive
 # TODO: it would probably be better if the encfs build system did this
 	@mkdir -p $(DEPS_INSTALL_ROOT)/lib
@@ -171,7 +174,7 @@ libtinyxml: clean
 	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
 
-NLSCHECK := $(CURDIR)/out/deps/include/lockbox_nlscheck.h
+NLSCHECK := $(CURDIR)/$(OUT_DIR)/deps/include/lockbox_nlscheck.h
 $(NLSCHECK):
 	@mkdir -p /tmp/nlschk && \
          echo '#include <windows.h>' > /tmp/nlschk/chk.c && \
@@ -185,7 +188,7 @@ $(NLSCHECK):
 
 nlscheck: $(NLSCHECK)
 
-NORMALIZ_DEP := $(CURDIR)/out/deps/lib/libnormaliz.a
+NORMALIZ_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libnormaliz.a
 $(NORMALIZ_DEP): $(CURDIR)/normaliz.def
 	$(DLLTOOL) -k -d $^ -l $@
 
@@ -198,7 +201,7 @@ dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),normaliz nlscheck,)
 
 clean-deps:
-	rm -rf out
+	rm -rf $(OUT_DIR)
 
 clean:
 	rm -f src/lockbox/*.o

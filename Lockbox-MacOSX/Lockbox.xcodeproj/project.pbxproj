@@ -333,7 +333,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $SRCROOT/..\n\n# add cmake to path\nPATH=\"/usr/local/bin:$PATH\"\n\n# set up compiler environment\n\n# TODO: derive from xcode settings\nCC=clang\nCXX=clang++\n\nif [ \"$CLANG_CXX_LIBRARYx\" != x ]; then\n    CXXFLAGS=\"$CXXFLAGS -stdlib=$CLANG_CXX_LIBRARY\"\nfi\n\nif [ \"$GCC_GENERATE_DEBUGGING_SYMBOLS\" = YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -g\"\n    CFLAGS=\"$CFLAGS -g\"\nfi\n\nfor DEF in $GCC_PREPROCESSOR_DEFINITIONS; do\n    CXXFLAGS=\"$CXXFLAGS -D$DEF\"\n    CFLAGS=\"$CFLAGS -D$DEF\"\ndone\n\nif [ \"$GCC_OPTIMIZATION_LEVELx\" != x ]; then\n    CXXFLAGS=\"$CXXFLAGS -O$GCC_OPTIMIZATION_LEVEL\"\n    CFLAGS=\"$CFLAGS -O$GCC_OPTIMIZATION_LEVEL\"\nfi\n\nif [ \"$LLVM_LTO\" = YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -emit-llvm\"\n    CFLAGS=\"$CFLAGS -emit-llvm\"\nfi\n\nif [ \"$LLVM_VECTORIZE_LOOPS\" != YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -fno-vectorize\"\n    CFLAGS=\"$CFLAGS -fno-vectorize\"\nfi\n\nexport CXXFLAGS CFLAGS CPPFLAGS CC CXX\n\nenv > ~/yo.txt\n\nif ! ./are_dependencies_up_to_date.sh; then\n    make clean-deps\n    make dependencies\nfi";
+			shellScript = "cd $SRCROOT/..\n\n# add cmake to path\nPATH=\"/usr/local/bin:$PATH\"\n\n# set up compiler environment\n\n# TODO: derive from xcode settings\nCC=clang\nCXX=clang++\n\nif [ \"$CLANG_CXX_LIBRARYx\" != x ]; then\n    CXXFLAGS=\"$CXXFLAGS -stdlib=$CLANG_CXX_LIBRARY\"\nfi\n\nif [ \"$GCC_GENERATE_DEBUGGING_SYMBOLS\" = YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -g\"\n    CFLAGS=\"$CFLAGS -g\"\nfi\n\nfor DEF in $GCC_PREPROCESSOR_DEFINITIONS; do\n    CXXFLAGS=\"$CXXFLAGS -D$DEF\"\n    CFLAGS=\"$CFLAGS -D$DEF\"\ndone\n\nif [ \"$GCC_OPTIMIZATION_LEVELx\" != x ]; then\n    CXXFLAGS=\"$CXXFLAGS -O$GCC_OPTIMIZATION_LEVEL\"\n    CFLAGS=\"$CFLAGS -O$GCC_OPTIMIZATION_LEVEL\"\nfi\n\nif [ \"$LLVM_LTO\" = YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -emit-llvm\"\n    CFLAGS=\"$CFLAGS -emit-llvm\"\nfi\n\nif [ \"$LLVM_VECTORIZE_LOOPS\" != YES ]; then\n    CXXFLAGS=\"$CXXFLAGS -fno-vectorize\"\n    CFLAGS=\"$CFLAGS -fno-vectorize\"\nfi\n\nexport CXXFLAGS CFLAGS CPPFLAGS CC CXX\n\nenv > ~/yo.txt\n\nOUT_DIR=\"Xcode-$CONFIGURATION-out\"\nif ! ./are_dependencies_up_to_date.sh \".\" \"$OUT_DIR\"; then\n    make \"OUT_DIR=$OUT_DIR\" clean-deps\n    make \"OUT_DIR=$OUT_DIR\" dependencies\nfi";
 		};
 		96FCB3F4185716E400FB2839 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -431,15 +431,16 @@
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					$SRCROOT/../out/deps/include,
-					$SRCROOT/../src,
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/../src",
+					"$(SRCROOT)/../Xcode-Debug-out/deps/include",
 				);
-				LIBRARY_SEARCH_PATHS = $SRCROOT/../out/deps/lib;
-				LLVM_VECTORIZE_LOOPS = YES;
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../Xcode-Debug-out/deps/lib";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = "$SRCROOT/../out/deps/include/encfs $SRCROOT/../out/deps/include/davfuse $SRCROOT/../out/deps/include/encfs/base";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../Xcode-Debug-out/deps/include/encfs $(SRCROOT)/../Xcode-Debug-out/deps/include/davfuse $(SRCROOT)/../Xcode-Debug-out/deps/include/encfs/base";
 			};
 			name = Debug;
 		};
@@ -479,16 +480,18 @@
 				GCC_WARN_UNUSED_PARAMETER = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					$SRCROOT/../out/deps/include,
-					$SRCROOT/../src,
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/../src",
+					"$(SRCROOT)/../Xcode-Release-out/deps/include",
 				);
-				LIBRARY_SEARCH_PATHS = $SRCROOT/../out/deps/lib;
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../Xcode-Release-out/deps/lib";
 				LLVM_LTO = YES;
 				LLVM_VECTORIZE_LOOPS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = "$SRCROOT/../out/deps/include/encfs $SRCROOT/../out/deps/include/davfuse $SRCROOT/../out/deps/include/encfs/base";
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../Xcode-Release-out/deps/include/encfs $(SRCROOT)/../Xcode-Release-out/deps/include/davfuse $(SRCROOT)/../Xcode-Release-out/deps/include/encfs/base";
 			};
 			name = Release;
 		};
@@ -502,10 +505,6 @@
 				GCC_PREFIX_HEADER = "Lockbox/Lockbox-Prefix.pch";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "Lockbox/Lockbox-Info.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SRCROOT)/../out/deps/lib\"",
-				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
@@ -524,10 +523,6 @@
 				GCC_PREFIX_HEADER = "Lockbox/Lockbox-Prefix.pch";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "Lockbox/Lockbox-Info.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SRCROOT)/../out/deps/lib\"",
-				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
