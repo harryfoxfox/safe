@@ -347,7 +347,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "strip -u -r \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"\nexec upx --best --ultra-brute \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"";
+			shellScript = "strip -u -r \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"\n\nUPX=$(which upx)\nif [ -z \"$UPX\"] && [ -x /usr/local/bin/upx ]; then\n    UPX=/usr/local/bin/upx\nfi\n\nexec \"$UPX\" --best --ultra-brute \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
