@@ -171,16 +171,6 @@ libtinyxml: clean
 	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
 
-WINHTTP_DEP := $(CURDIR)/out/deps/lib/libwinhttp.a
-$(WINHTTP_DEP): $(CURDIR)/winhttp.def
-	$(DLLTOOL) -k -d $^ -l $@
-
-WINHTTP_DEP2 := $(CURDIR)/out/deps/include/winhttp.h
-$(WINHTTP_DEP2): $(CURDIR)/winhttp.h
-	cp $^ $@
-
-winhttp: $(WINHTTP_DEP2) $(WINHTTP_DEP)
-
 NLSCHECK := $(CURDIR)/out/deps/include/lockbox_nlscheck.h
 $(NLSCHECK):
 	@mkdir -p /tmp/nlschk && \
@@ -205,7 +195,7 @@ dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
  libencfs \
  libwebdav_server_fs \
- $(if $(IS_WIN_TARGET),winhttp normaliz nlscheck,)
+ $(if $(IS_WIN_TARGET),normaliz nlscheck,)
 
 clean-deps:
 	rm -rf out
@@ -264,10 +254,10 @@ $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
- -lole32 -lcomctl32 -lwinhttp -lnormaliz
+ -lole32 -lcomctl32 -lnormaliz
 	$(if $(RELEASE),$(STRIP) -s $@.pre,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@.pre,)
 	mv $@.pre $@
 
 .PHONY: dependencies clean libbotan \
-	libprotobuf libtinyxml libencfs libwebdav_server_fs winhttp nlscheck normaliz clean-deps
+	libprotobuf libtinyxml libencfs libwebdav_server_fs nlscheck normaliz clean-deps

@@ -9,6 +9,8 @@
 #ifndef __Lockbox__mac_mount
 #define __Lockbox__mac_mount
 
+#include <lockbox/webdav_server.hpp>
+
 #include <encfs/fs/FileUtils.h>
 #include <encfs/fs/FsIO.h>
 #include <encfs/cipher/MemoryPool.h>
@@ -29,6 +31,7 @@ class MountDetails {
     bool is_mounted;
     std::shared_ptr<MountEvent> mount_event;
     encfs::Path source_path;
+    lockbox::WebdavServerHandle ws;
 
 public:
     MountDetails(port_t listen_port_,
@@ -36,14 +39,16 @@ public:
                  pthread_t thread_handle_,
                  std::string mount_point_,
                  std::shared_ptr<MountEvent> mount_event_,
-                 encfs::Path source_path_)
+                 encfs::Path source_path_,
+                 lockbox::WebdavServerHandle ws_)
     : listen_port(listen_port_)
     , name(std::move(name_))
     , thread_handle(thread_handle_)
     , mount_point(std::move(mount_point_))
     , is_mounted(true)
     , mount_event(std::move(mount_event_))
-    , source_path(std::move(source_path_)) {}
+    , source_path(std::move(source_path_))
+    , ws(std::move(ws_)) {}
 
     // copy is not allowed
     MountDetails(const MountDetails &) = delete;

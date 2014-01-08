@@ -114,21 +114,89 @@ static const FsOperations fsio_ops = {
 };
 
 struct RunningCallbackCtx {
-  socket_t send_sock;
-  socket_t recv_sock;
+  webdav_server_t ws;
+  ManagedSocket send_socket;
+  ManagedSocket recv_socket;
   event_loop_handle_t loop;
-  std::function<void(event_loop_handle_t)> fn;
+  std::function<void(WebdavServerHandle)> fn;
 };
+
+CXX_STATIC_ATTR
+static
+EVENT_HANDLER_DEFINE(_webdav_serv_handle_action, ev_type, ev, ud) {
+  (void) ev_type;
+  (void) ev;
+  auto ctx = (RunningCallbackCtx *) ud;
+
+  auto received_stop = false;
+  while (true) {
+    char buf[32];
+    auto amt_read = recv(ctx->recv_socket.get(), buf, sizeof(buf), 0);
+    if (amt_read == SOCKET_ERROR) {
+      if (last_socket_error() == SOCKET_EAGAIN ||
+          last_socket_error() == SOCKET_EWOULDBLOCK) break;
+      /* TODO: handle more gracefully */
+      else throw std::runtime_error("failed to call recv");
+    }
+
+    assert(amt_read >= 0);
+    for (size_t i = 0; i < (size_t) amt_read; ++i) {
+      switch (buf[i]) {
+      case '0': {
+        webdav_server_stop(ctx->ws);
+        received_stop = true;
+        break;
+      }
+      case '1': {
+        webdav_server_disconnect_existing_clients(ctx->ws);
+        break;
+      }
+      default: {
+        /* should never happen */
+        assert(false);
+        lbx_log_error("Random code received: %c", buf[i]);
+      }
+      }
+    }
+  }
+
+  if (received_stop) return;
+
+  auto success = event_loop_socket_watch_add(ctx->loop, ctx->recv_socket.get(),
+                                             create_stream_events(true, false),
+                                             _webdav_serv_handle_action,
+                                             &ctx,
+                                             NULL);
+  // TODO: handle error more gracefully
+  if (!success) throw std::runtime_error("error adding socket watch");
+}
 
 CXX_STATIC_ATTR
 static
 EVENT_HANDLER_DEFINE(_when_server_runs, ev_type, ev, ud) {
   (void) ev_type;
   (void) ev;
-  RunningCallbackCtx *ctx = (RunningCallbackCtx *) ud;
-  closesocket(ctx->send_sock);
-  closesocket(ctx->recv_sock);
-  ctx->fn(ctx->loop);
+  auto ctx = (RunningCallbackCtx *) ud;
+
+  /* set up callback */
+  auto success = event_loop_socket_watch_add(ctx->loop, ctx->recv_socket.get(),
+                                             create_stream_events(true, false),
+                                             _webdav_serv_handle_action,
+                                             ud, NULL);
+  // TODO: handle error more gracefully
+  if (!success) throw std::runtime_error("error adding socket watch");
+
+  ctx->fn(WebdavServerHandle(ctx->send_socket));
+}
+
+void WebdavServerHandle::signal_stop() const {
+  auto ret_send = send(_send_socket.get(), "0", 1, 0);
+  if (ret_send == -1) throw std::runtime_error("error calling send()");
+}
+
+void WebdavServerHandle::signal_disconnect_all_clients() const {
+  auto ret_send = send(_send_socket.get(), "1", 1, 0);
+  if (ret_send == -1) throw std::runtime_error("error calling send");
 }
 
 CXX_STATIC_ATTR
@@ -138,7 +206,7 @@ run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                   ipv4_t ipaddr,
                   port_t port,
                   const std::string & mount_name,
-                  std::function<void(event_loop_handle_t)> when_done) {
+                  std::function<void(WebdavServerHandle)> when_done) {
   // create event loop (implemented by file descriptors)
   auto loop = event_loop_default_new();
   if (!loop) throw std::runtime_error("Couldn't create event loop");
@@ -194,16 +262,21 @@ run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
 
   // now set up callback
   socket_t sv[2];
-  auto ret_socketpair = localhost_socketpair(sv);
-  if (ret_socketpair) throw std::runtime_error("Couldnt create socketpair!");
-  auto ret_send = send(sv[0], "1", 1, 0);
-  if (ret_send == -1) {
-    throw std::runtime_error("couldn't set up startup callback");
-  }
-  auto ctx = RunningCallbackCtx {sv[0], sv[1], loop, std::move(when_done)};
+  auto ret = localhost_socketpair(sv);
+  if (ret < 0) throw std::runtime_error("error calling localhost_socketpair");
+
+  auto success = set_socket_non_blocking(sv[0]);
+  if (!success) throw std::runtime_error("error calling set_socket_non_blocking");
+
+  auto success_2 = set_socket_non_blocking(sv[1]);
+  if (!success_2) throw std::runtime_error("error calling set_socket_non_blocking");
+
+  auto ctx = RunningCallbackCtx {server,
+                                 ManagedSocket(sv[0]), ManagedSocket(sv[1]),
+                                 loop, std::move(when_done)};
+  auto timeout = EventLoopTimeout {0, 0};
   auto success_add_watch =
-    event_loop_socket_watch_add(loop, sv[1], create_stream_events(true, false),
-                                _when_server_runs, &ctx, NULL);
+    event_loop_timeout_add(loop, &timeout, _when_server_runs, &ctx, NULL);
   if (!success_add_watch) {
     throw std::runtime_error("couldn't set up startup callback");
   }

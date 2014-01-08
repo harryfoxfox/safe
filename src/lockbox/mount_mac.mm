@@ -8,10 +8,11 @@
 
 #import <lockbox/mount_mac.hpp>
 
-#import <lockbox/fs.hpp>
+#import <lockbox/mount_common.hpp>
 #import <lockbox/util.hpp>
 #import <lockbox/webdav_server.hpp>
 
+#import <encfs/base/optional.h>
 #import <encfs/fs/FsIO.h>
 
 #import <davfuse/util_sockets.h>
@@ -32,26 +33,13 @@ namespace lockbox { namespace mac {
 
 class MountEvent;
     
-struct ServerThreadParams {
-    std::shared_ptr<MountEvent> event;
-    // the control-block of std::shared_ptr is thread-safe
-    // (i.e. multiple threads of control can have a copy of a root shared_ptr)
-    // a single std::shared_ptr is not thread-safe, this use-case doesn't apply to us
-    // for proper operation the encfs::FsIO implementation used
-    // must be thread-safe as well, the mac native fs is thread-safe so that isn't a concern
-    std::shared_ptr<encfs::FsIO> native_fs;
-    encfs::Path encrypted_container_path;
-    encfs::EncfsConfig encfs_config;
-    encfs::SecureMem password;
-    std::string mount_name;
-};
-    
 class MountEvent {
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     bool msg_sent;
     bool error;
     port_t listen_port;
+    opt::optional<WebdavServerHandle> ws;
     
 public:
     MountEvent()
@@ -60,7 +48,7 @@ public:
     , msg_sent(false) {}
     
     void
-    send_mount_success(port_t listen_port_) {
+    set_mount_success(port_t listen_port_, WebdavServerHandle ws_) {
         auto ret_lock = pthread_mutex_lock(&mutex);
         if (ret_lock) throw std::runtime_error("pthread_mutex_lock");
         
@@ -70,12 +58,13 @@ public:
         
         error = false;
         listen_port = listen_port_;
+        ws = std::move(ws_);
         msg_sent = true;
         pthread_cond_signal(&cond);
     }
     
     void
-    send_mount_fail() {
+    set_mount_fail() {
         auto ret_lock = pthread_mutex_lock(&mutex);
         if (ret_lock) throw std::runtime_error("pthread_mutex_lock");
         
@@ -89,11 +78,11 @@ public:
     }
     
     void
-    send_thread_done() {
+    set_thread_done() {
     }
     
-    opt::optional<port_t>
-    wait_for_mount_msg() {
+    opt::optional<std::pair<port_t, WebdavServerHandle>>
+    wait_for_mount_event() {
         auto ret_lock = pthread_mutex_lock(&mutex);
         if (ret_lock) throw std::runtime_error("pthread_mutex_lock");
         
@@ -106,7 +95,7 @@ public:
         
         return (error
                 ? opt::nullopt
-                : opt::make_optional(listen_port));
+                : opt::make_optional(std::make_pair(std::move(listen_port), std::move(*ws))));
     }
 };
 
@@ -118,46 +107,18 @@ escape_double_quotes(std::string mount_name) {
 
 static
 std::string
-webdav_mount_quit_url(port_t listen_port, std::string name) {
-    (void) name;
-    return std::string("http://localhost:") + std::to_string(listen_port) + WEBDAV_SERVER_QUIT_URL;
-}
-    
-static
-std::string
-webdav_mount_disconnect_url(port_t listen_port, std::string name) {
-    (void) name;
-    return std::string("http://localhost:") + std::to_string(listen_port) + WEBDAV_SERVER_DISCONNECT_URL;
-}
-
-static
-std::string
 webdav_mount_url(port_t listen_port, std::string name) {
     return std::string("http://localhost:") + std::to_string(listen_port) + "/" + name + "/";
 }
     
 void
 MountDetails::signal_stop() const {
-    auto quit_url = webdav_mount_quit_url(listen_port, name);
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
-                   ^{
-                       NSString *requestUrl = [NSString stringWithUTF8String:quit_url.c_str()];
-                       NSMutableURLRequest *postRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:requestUrl]];
-                       [postRequest setHTTPMethod:@"POST"];
-                       [NSURLConnection sendSynchronousRequest:postRequest returningResponse:nil error:nil];
-                   });
+    ws.signal_stop();
 }
     
 void
 MountDetails::disconnect_clients() const {
-    auto disconnect_url = webdav_mount_disconnect_url(listen_port, name);
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
-                   ^{
-                       NSString *requestUrl = [NSString stringWithUTF8String:disconnect_url.c_str()];
-                       NSMutableURLRequest *postRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:requestUrl]];
-                       [postRequest setHTTPMethod:@"POST"];
-                       [NSURLConnection sendSynchronousRequest:postRequest returningResponse:nil error:nil];
-                   });
+    ws.signal_disconnect_all_clients();
 }
    
 void
@@ -242,41 +203,8 @@ static
 void *
 mount_thread_fn(void *p) {
     // TODO: catch all exceptions since this is a top-level
-        
-    auto params = std::unique_ptr<ServerThreadParams>((ServerThreadParams *) p);
-        
-    std::srand(std::time(nullptr));
-        
-    auto enc_fs =
-    lockbox::create_enc_fs(std::move(params->native_fs),
-                           params->encrypted_container_path,
-                           std::move(params->encfs_config),
-                           std::move(params->password));
-    
-    // we only listen on localhost
-    auto ip_addr = LOCALHOST_IP;
-    auto listen_port =
-    find_random_free_listen_port(ip_addr,
-                                 PRIVATE_PORT_START, PRIVATE_PORT_END);
-
-    bool sent_signal = false;
-    auto our_callback = [&] (event_loop_handle_t /*loop*/) {
-        params->event->send_mount_success(listen_port);
-        sent_signal = true;
-    };
-        
-    lockbox::run_webdav_server(std::move(enc_fs),
-                               std::move(params->encrypted_container_path),
-                               ip_addr,
-                               listen_port,
-                               std::move(params->mount_name),
-                               our_callback);
-    
-    if (!sent_signal) params->event->send_mount_fail();
-
-    params->event->send_thread_done();
-        
-    // server is done, possible unmount
+    auto params = std::unique_ptr<ServerThreadParams<MountEvent>>((ServerThreadParams<MountEvent> *) p);
+    mount_thread_fn(std::move(params));
     return NULL;
 }
     
@@ -294,7 +222,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     auto mount_name = encrypted_container_path.basename();
     
     // create thread details
-    auto thread_params = new ServerThreadParams {
+    auto thread_params = new ServerThreadParams<MountEvent> {
         event,
         native_fs,
         encrypted_container_path,
@@ -324,9 +252,12 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     if (ret) throw std::runtime_error("pthread_create");
     
     // wait for server to run
-    auto listen_port = event->wait_for_mount_msg();
-    if (!listen_port) throw std::runtime_error("failed to mount!");
-    
+    auto maybe_listen_port_ws_handle = event->wait_for_mount_event();
+    if (!maybe_listen_port_ws_handle) throw std::runtime_error("failed to mount!");
+
+    auto listen_port = maybe_listen_port_ws_handle->first;
+    auto webdav_server_handle = std::move(maybe_listen_port_ws_handle->second);
+
     // mount new drive
     
     // first attempt to use preferred name
@@ -350,15 +281,16 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
 
     std::ostringstream os;
     os << "mount_webdav -S -v \"" << escape_double_quotes(mount_name) << "\" \"" <<
-    escape_double_quotes(webdav_mount_url(*listen_port, mount_name)) << "\" \"" << mount_point << "\"";
+    escape_double_quotes(webdav_mount_url(listen_port, mount_name)) << "\" \"" << mount_point << "\"";
     auto mount_command = os.str();
     
     auto ret_system = system(mount_command.c_str());
     if (ret_system) throw std::runtime_error("running mount command failed");
 
     // return new mount details with thread info
-    return MountDetails(*listen_port, std::move(mount_name),
-                        thread, mount_point, event, encrypted_container_path);
+    return MountDetails(listen_port, std::move(mount_name),
+                        thread, mount_point, event, encrypted_container_path,
+                        std::move(webdav_server_handle));
 }
     
 }}

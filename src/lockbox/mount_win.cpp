@@ -18,62 +18,19 @@
 
 #include <lockbox/mount_win.hpp>
 
-#include <lockbox/fs.hpp>
+#include <lockbox/mount_common.hpp>
 #include <lockbox/util.hpp>
 #include <lockbox/webdav_server.hpp>
 #include <lockbox/windows_string.hpp>
 
-#include <davfuse/util_sockets.h>
-#include <davfuse/webdav_server.h>
+#include <encfs/fs/FileUtils.h>
+#include <encfs/fs/FsIO.h>
 
 #include <sstream>
 #include <stdexcept>
 #include <string>
 
-#include <ctime>
-
-#include <winhttp.h>
-
 namespace lockbox { namespace win {
-
-static
-void
-_post_http(const std::string & host, port_t port, const std::string & path) {
-  // Use WinHttpOpen to obtain a session handle.
-  auto session =
-    WinHttpOpen(L"WinHTTP Example/1.0",
-                WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-                WINHTTP_NO_PROXY_NAME,
-                WINHTTP_NO_PROXY_BYPASS, 0);
-  if (!session) throw std::runtime_error("Couldn't create session");
-  auto _destroy_session =
-    lockbox::create_destroyer(session, WinHttpCloseHandle);
-
-  // Specify an HTTP server.
-  auto connect =
-    WinHttpConnect(session, w32util::widen(host).c_str(), port, 0);
-  if (!connect) throw std::runtime_error("Couldn't create connection");
-  auto _destroy_connect =
-    lockbox::create_destroyer(connect, WinHttpCloseHandle);
-
-  // Create an HTTP request handle.
-  auto request =
-    WinHttpOpenRequest(connect, L"POST",
-                       w32util::widen(path).c_str(),
-                       NULL, WINHTTP_NO_REFERER,
-                       WINHTTP_DEFAULT_ACCEPT_TYPES,
-                       0);
-  if (!request) throw std::runtime_error("Couldn't create requestr");
-  auto _destroy_request =
-    lockbox::create_destroyer(request, WinHttpCloseHandle);
-
-  // Send a request.
-  auto result = WinHttpSendRequest(request,
-                                   WINHTTP_NO_ADDITIONAL_HEADERS, 0,
-                                   WINHTTP_NO_REQUEST_DATA, 0,
-                                   0, 0);
-  if (!result) throw std::runtime_error("failure to send request!");
-}
 
 bool
 MountDetails::is_still_mounted() const {
@@ -94,8 +51,7 @@ MountDetails::signal_stop() const {
   // thread is done, we out
   if (exit_code != STILL_ACTIVE) return;
 
-  // have to send http signal to stop
-  _post_http("localhost", _listen_port, WEBDAV_SERVER_QUIT_URL);
+  _ws.signal_stop();
 }
 
 void
@@ -121,7 +77,7 @@ MountDetails::open_mount() const {
 
 void
 MountDetails::disconnect_clients() const {
-  _post_http("localhost", _listen_port, WEBDAV_SERVER_DISCONNECT_URL);
+  _ws.signal_disconnect_all_clients();
 }
 
 static
@@ -150,9 +106,10 @@ class MountEvent {
   bool _msg_sent;
   bool _error;
   port_t _listen_port;
+  opt::optional<WebdavServerHandle> _ws;
 
   void
-  _set_mount_status(port_t listen_port, bool error) {
+  _set_mount_status(port_t listen_port, opt::optional<WebdavServerHandle> ws, bool error) {
     EnterCriticalSection(&_cs);
     auto _deferred_unlock = lockbox::create_deferred(LeaveCriticalSection, &_cs);
 
@@ -163,13 +120,15 @@ class MountEvent {
 
     _error = error;
     _listen_port = listen_port;
+    _ws = std::move(ws);
     _msg_sent = true;
   }
 
 public:
   MountEvent()
     : _msg_sent(false)
-    , _error(false) {
+    , _error(false)
+    , _ws(opt::nullopt) {
     auto event = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (!event) throw w32util::windows_error();
     _event.reset(event);
@@ -177,21 +136,21 @@ public:
   }
 
   void
-  set_mount_success(port_t listen_port) {
-    _set_mount_status(listen_port, false);
+  set_mount_success(port_t listen_port, WebdavServerHandle ws) {
+    _set_mount_status(listen_port, std::move(ws), false);
   }
 
   void
   set_mount_fail() {
-    _set_mount_status(0, true);
+    _set_mount_status(0, opt::nullopt, true);
   }
 
   void
   set_thread_done() {
   }
 
-  opt::optional<port_t>
-  wait_for_mount_event() const {
+  opt::optional<std::pair<port_t, WebdavServerHandle>>
+  wait_for_mount_event() {
     auto res = WaitForSingleObject(_event.get(), INFINITE);
     if (res != WAIT_OBJECT_0) throw w32util::windows_error();
 
@@ -200,17 +159,8 @@ public:
     assert(_msg_sent);
     return (_error
             ? opt::nullopt
-            : opt::make_optional(_listen_port));
+            : opt::make_optional(std::make_pair(std::move(_listen_port), std::move(*_ws))));
   }
-};
-
-struct ServerThreadParams {
-  std::shared_ptr<MountEvent> mount_event_p;
-  std::shared_ptr<encfs::FsIO> native_fs;
-  encfs::Path encrypted_directory_path;
-  encfs::EncfsConfig encfs_config;
-  encfs::SecureMem password;
-  std::string mount_name;
 };
 
 WINAPI
@@ -218,45 +168,11 @@ static
 DWORD
 mount_thread(LPVOID params_) {
   // TODO: catch all exceptions, since this is a top-level
-
   auto params =
-    std::unique_ptr<ServerThreadParams>((ServerThreadParams *) params_);
-
-  std::srand(std::time(nullptr));
-
-  auto enc_fs =
-    lockbox::create_enc_fs(std::move(params->native_fs),
-                           params->encrypted_directory_path,
-                           std::move(params->encfs_config),
-                           std::move(params->password));
-
-  // we only listen on localhost
-  auto ip_addr = LOCALHOST_IP;
-  auto listen_port =
-    find_random_free_listen_port(ip_addr, PRIVATE_PORT_START, PRIVATE_PORT_END);
-
-  bool sent_signal = false;
-
-  auto our_callback = [&] (event_loop_handle_t /*loop*/) {
-    params->mount_event_p->set_mount_success(listen_port);
-    sent_signal = true;
-  };
-
-  lockbox::run_webdav_server(std::move(enc_fs),
-                             std::move(params->encrypted_directory_path),
-                             ip_addr,
-                             listen_port,
-                             std::move(params->mount_name),
-                             our_callback);
-
-  if (!sent_signal) params->mount_event_p->set_mount_fail();
-
-  params->mount_event_p->set_thread_done();
-
-  // server is done, possible unmount
+    std::unique_ptr<ServerThreadParams<MountEvent>>((ServerThreadParams<MountEvent> *) params_);
+  lockbox::mount_thread_fn(std::move(params));
   return 0;
 }
-
 
 MountDetails
 mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
@@ -266,7 +182,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
   auto mount_name = encrypted_container_path.basename();
 
   auto mount_event_p = std::make_shared<MountEvent>();
-  auto thread_params = new ServerThreadParams {
+  auto thread_params = new ServerThreadParams<MountEvent> {
     mount_event_p,
     native_fs,
     encrypted_container_path,
@@ -283,11 +199,12 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     throw std::runtime_error("couldn't create mount thread");
   }
 
-  auto maybe_listen_port = mount_event_p->wait_for_mount_event();
-  if (!maybe_listen_port) throw std::runtime_error("mount failed");
+  auto maybe_listen_port_ws_handle = mount_event_p->wait_for_mount_event();
+  if (!maybe_listen_port_ws_handle) throw std::runtime_error("mount failed");
 
   // server is now running, now we can ask the OS to mount it
-  auto listen_port = *maybe_listen_port;
+  auto listen_port = maybe_listen_port_ws_handle->first;
+  auto webdav_server_handle = std::move(maybe_listen_port_ws_handle->second);
   auto drive_letter = find_free_drive_letter();
 
   std::ostringstream os;
@@ -306,7 +223,8 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                             mount_name,
                             std::move(thread_handle),
                             listen_port,
-                            encrypted_container_path);
+                            encrypted_container_path,
+                            std::move(webdav_server_handle));
 
   // there is a race condition here, the user (or something else) could have
   // unmounted the drive immediately after we mounted it,

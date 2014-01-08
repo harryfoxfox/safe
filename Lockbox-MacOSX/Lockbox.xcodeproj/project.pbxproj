@@ -93,6 +93,7 @@
 		96597DFD1878B0F500073EC9 /* menuBarIconTemplate.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = menuBarIconTemplate.icns; sourceTree = SOURCE_ROOT; };
 		96597DFF1878D9B700073EC9 /* LBXAboutWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXAboutWindowController.h; path = ../src/lockbox/LBXAboutWindowController.h; sourceTree = "<group>"; };
 		96597E001878D9B700073EC9 /* LBXAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LBXAboutWindowController.m; path = ../src/lockbox/LBXAboutWindowController.m; sourceTree = "<group>"; };
+		96597E02187CDD1E00073EC9 /* mount_common.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mount_common.hpp; path = ../src/lockbox/mount_common.hpp; sourceTree = "<group>"; };
 		966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = create_lockbox_dialog_logic.cpp; path = ../src/lockbox/create_lockbox_dialog_logic.cpp; sourceTree = "<group>"; };
 		966ED387184F2F3100463408 /* create_lockbox_dialog_logic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = create_lockbox_dialog_logic.hpp; path = ../src/lockbox/create_lockbox_dialog_logic.hpp; sourceTree = "<group>"; };
 		966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mount_lockbox_dialog_logic.cpp; path = ../src/lockbox/mount_lockbox_dialog_logic.cpp; sourceTree = "<group>"; };
@@ -127,6 +128,7 @@
 		9610175F182A1407001D50E8 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				96597E02187CDD1E00073EC9 /* mount_common.hpp */,
 				96A7AEAB185473030003AEE5 /* constants.h */,
 				96F36ABE185470B500DEE145 /* fs.cpp */,
 				96F36ABF185470B500DEE145 /* fs.hpp */,

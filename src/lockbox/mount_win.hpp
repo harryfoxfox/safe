@@ -20,6 +20,7 @@
 #define __Lockbox__mount_win
 
 #include <lockbox/util.hpp>
+#include <lockbox/webdav_server.hpp>
 
 #include <encfs/fs/FileUtils.h>
 #include <encfs/fs/FsIO.h>
@@ -70,18 +71,21 @@ private:
   ManagedThreadHandle _thread_handle;
   port_t _listen_port;
   encfs::Path _source_path;
+  lockbox::WebdavServerHandle _ws;
 
 public:
   MountDetails(DriveLetter drive_letter,
                std::string name,
                ManagedThreadHandle thread_handle,
                port_t listen_port,
-               encfs::Path source_path)
+               encfs::Path source_path,
+               lockbox::WebdavServerHandle ws)
     : _drive_letter(drive_letter)
     , _name(std::move(name))
     , _thread_handle(std::move(thread_handle))
     , _listen_port(listen_port)
-    , _source_path(std::move(source_path)) {}
+    , _source_path(std::move(source_path))
+    , _ws(std::move(ws)) {}
 
   const std::string &
   get_mount_name() const { return _name; }

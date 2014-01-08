@@ -19,13 +19,16 @@
 #ifndef _lockbox_webdav_server_hpp
 #define _lockbox_webdav_server_hpp
 
+#include <lockbox/util.hpp>
+
 #include <encfs/fs/FsIO.h>
 
-#include <davfuse/event_loop.h>
+#include <davfuse/sockets.h>
 #include <davfuse/util_sockets.h>
 
 #include <functional>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #ifndef _CXX_STATIC_BUILD
@@ -33,6 +36,30 @@
 #endif
 
 namespace lockbox {
+
+struct SocketDestroyer {
+  void operator()(socket_t s) {
+    auto ret = closesocket(s);
+    if (ret == SOCKET_ERROR) throw std::runtime_error("failure to close socket");
+  }
+};
+
+typedef ManagedResource<socket_t, SocketDestroyer> ManagedSocket;
+
+/* NB: this handle is thread safe */
+class WebdavServerHandle {
+  ManagedSocket _send_socket;
+
+public:
+  WebdavServerHandle(ManagedSocket send_socket)
+    : _send_socket(std::move(send_socket)) {}
+
+  WebdavServerHandle(WebdavServerHandle &&) = default;
+  WebdavServerHandle &operator=(WebdavServerHandle &&) = default;
+
+  void signal_stop() const;
+  void signal_disconnect_all_clients() const;
+};
 
 CXX_STATIC_ATTR
 bool
@@ -49,7 +76,7 @@ run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                   ipv4_t ipaddr,
                   port_t port,
                   const std::string & mount_name,
-                  std::function<void(event_loop_handle_t)> when_done);
+                  std::function<void(WebdavServerHandle)> when_done);
 
 }
 
