@@ -36,11 +36,24 @@
 		96597E011878D9B700073EC9 /* LBXAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 96597E001878D9B700073EC9 /* LBXAboutWindowController.m */; };
 		966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */; };
 		966ED38D184F2F3100463408 /* mount_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */; };
+		9682AA5718832205008A3DB7 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682AA5618832205008A3DB7 /* IOKit.framework */; };
+		9682AA59188373BF008A3DB7 /* mount_webdav_interpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */; };
 		96A3459B188139B7005AE884 /* mount_webdav_interpose.c in Sources */ = {isa = PBXBuildFile; fileRef = 96A3459A188139B7005AE884 /* mount_webdav_interpose.c */; };
+		96A3459C1881C3AF005AE884 /* libmount_webdav_interpose.dylib in Resources */ = {isa = PBXBuildFile; fileRef = 96A34596188139A3005AE884 /* libmount_webdav_interpose.dylib */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
 		96F36AC2185470B500DEE145 /* fs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36ABE185470B500DEE145 /* fs.cpp */; };
 		96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36AC0185470B500DEE145 /* webdav_server.cpp */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		96A3459D1881F181005AE884 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 963D099B17A1D89D00AEE673 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 96A34595188139A3005AE884;
+			remoteInfo = mount_webdav_interpose;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		9602BF2D182F5F83003291A9 /* LBXAboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXAboutWindow.xib; path = ../src/lockbox/LBXAboutWindow.xib; sourceTree = "<group>"; };
@@ -100,6 +113,8 @@
 		966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mount_lockbox_dialog_logic.cpp; path = ../src/lockbox/mount_lockbox_dialog_logic.cpp; sourceTree = "<group>"; };
 		966ED38A184F2F3100463408 /* mount_lockbox_dialog_logic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mount_lockbox_dialog_logic.hpp; path = ../src/lockbox/mount_lockbox_dialog_logic.hpp; sourceTree = "<group>"; };
 		966ED38B184F2F3100463408 /* product_name.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = product_name.h; path = ../src/lockbox/product_name.h; sourceTree = "<group>"; };
+		9682AA5618832205008A3DB7 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mount_webdav_interpose.h; path = ../src/lockbox/mount_webdav_interpose.h; sourceTree = "<group>"; };
 		96974443185422000042FA6C /* tray_menu.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = tray_menu.hpp; path = ../src/lockbox/tray_menu.hpp; sourceTree = "<group>"; };
 		96A34596188139A3005AE884 /* libmount_webdav_interpose.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmount_webdav_interpose.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		96A3459A188139B7005AE884 /* mount_webdav_interpose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mount_webdav_interpose.c; path = ../src/lockbox/mount_webdav_interpose.c; sourceTree = "<group>"; };
@@ -116,6 +131,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9682AA5718832205008A3DB7 /* IOKit.framework in Frameworks */,
 				96358D3A182AFE4D00BE18E8 /* Security.framework in Frameworks */,
 				96358D34182AFE2600BE18E8 /* libencfs.a in Frameworks */,
 				96358D36182AFE2600BE18E8 /* libprotobuf.a in Frameworks */,
@@ -138,6 +154,7 @@
 		9610175F182A1407001D50E8 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */,
 				96A3459A188139B7005AE884 /* mount_webdav_interpose.c */,
 				96597E02187CDD1E00073EC9 /* mount_common.hpp */,
 				96A7AEAB185473030003AEE5 /* constants.h */,
@@ -213,6 +230,7 @@
 		963D09A517A1D89D00AEE673 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9682AA5618832205008A3DB7 /* IOKit.framework */,
 				96358D39182AFE4D00BE18E8 /* Security.framework */,
 				963D09A617A1D89D00AEE673 /* Cocoa.framework */,
 				963D09C417A1D89D00AEE673 /* SenTestingKit.framework */,
@@ -263,6 +281,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9682AA59188373BF008A3DB7 /* mount_webdav_interpose.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -282,6 +301,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				96A3459E1881F181005AE884 /* PBXTargetDependency */,
 			);
 			name = Lockbox;
 			productName = Lockbox;
@@ -347,6 +367,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				96A3459C1881C3AF005AE884 /* libmount_webdav_interpose.dylib in Resources */,
 				963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */,
 				963F170C1877AF7B00E50B2A /* LBXWelcomeWindowController.xib in Resources */,
 				9632FB7C182F13BD003C3F2E /* LBXMountLockboxWindowController.xib in Resources */,
@@ -426,6 +447,14 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		96A3459E1881F181005AE884 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 96A34595188139A3005AE884 /* mount_webdav_interpose */;
+			targetProxy = 96A3459D1881F181005AE884 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
 		963D09AF17A1D89D00AEE673 /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
@@ -470,7 +499,6 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
 				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
-				GCC_WARN_PEDANTIC = YES;
 				GCC_WARN_SHADOW = YES;
 				GCC_WARN_SIGN_COMPARE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
@@ -521,7 +549,6 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
 				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
-				GCC_WARN_PEDANTIC = YES;
 				GCC_WARN_SHADOW = YES;
 				GCC_WARN_SIGN_COMPARE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
@@ -639,6 +666,7 @@
 				96A34599188139A3005AE884 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
