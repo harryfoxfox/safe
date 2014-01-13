@@ -1,3 +1,25 @@
+/*
+ Lockbox: Encrypted File System
+ Copyright (C) 2014 Rian Hunter <rian@alum.mit.edu>
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation, either version 2 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+ 
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+
+#define _ISOC99_SOURCE
+
+#include <lockbox/mount_webdav_interpose.h>
+
 #include <dlfcn.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,8 +31,7 @@
 #include <unistd.h>
 
 #include <sys/param.h>
-
-#define RAMDISK_MOUNT_ROOT_ENV "SAFE_RAMDISK_MOUNT_ROOT"
+#include <sys/mount.h>
 
 static
 bool
@@ -80,7 +101,7 @@ sandbox_init(const char *profile, uint64_t flags, char **errorbuf) {
     return -1;
   }
 
-  char *mount_root = getenv(RAMDISK_MOUNT_ROOT_ENV);
+  char *mount_root = getenv(SAFE_RAMDISK_MOUNT_ROOT_ENV);
   if (!mount_root) {
     //fprintf(stderr, "no mount root!\n");
     return original_sandbox_init(profile, flags, errorbuf);
@@ -131,8 +152,16 @@ mkstemp(char *template) {
     (int (*)(char *)) dlsym(RTLD_NEXT, "mkstemp");
   if (!original_mkstemp) return -1;
 
-  char *mount_root = getenv(RAMDISK_MOUNT_ROOT_ENV);
+  char *mount_root = getenv(SAFE_RAMDISK_MOUNT_ROOT_ENV);
   if (mount_root && strstr(template, ".webdavcache.")) {
+    /* check mount dev is the same */
+    struct statfs mount_fs_stat;
+    int ret = statfs(mount_root, &mount_fs_stat);
+    if (ret < 0) return -1;
+
+    char *mount_device = getenv(SAFE_RAMDISK_MOUNT_DEV_ENV);
+    if (!mount_device || strcmp(mount_fs_stat.f_mntfromname, mount_device)) return -1;
+
     /* change location to be the ramdisk */
     snprintf(template, MAXPATHLEN, "%s/webdav.XXXXXX", mount_root);
   }
