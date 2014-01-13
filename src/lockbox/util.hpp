@@ -38,6 +38,9 @@ class CDestroyer<F(T)> {
   bool is_valid;
 
 public:
+  CDestroyer()
+    : is_valid(false) {}
+
   CDestroyer(F f_, T arg_)
     : f(std::move(f_))
     , data(std::move(arg_))
