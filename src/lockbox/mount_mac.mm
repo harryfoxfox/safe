@@ -410,7 +410,7 @@ get_ram_disk_handle() {
     return RamDiskHandle();
 }
 
-const char *const DEV_PREFIX = "dev";
+const char *const DEV_PREFIX = "/dev/";
     
 static
 std::string
