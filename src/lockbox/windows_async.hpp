@@ -34,6 +34,15 @@
 
 #include <commctrl.h>
 
+#ifndef PBM_SETMARQUEE
+#define PBM_SETMARQUEE (WM_USER + 10)
+#endif
+
+#ifndef PBS_MARQUEE
+#define PBS_MARQUEE 8
+#endif
+
+
 namespace w32util {
 
 const int IDC_PROGRESS = 2;
