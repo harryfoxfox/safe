@@ -151,7 +151,7 @@ libbotan: clean
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make install
 
 libprotobuf: clean
-	@cd $(PROTOBUF_ROOT); if [ ! -e configure ]; then ./autogen.sh; fi
+	@cd $(PROTOBUF_ROOT); ./autogen.sh
 # first build protobuf protoc
 	@cd $(PROTOBUF_ROOT); unset CC CXX CPPFLAGS CFLAGS CXXFLAGS AR RANLIB; ./configure --prefix=$(DEPS_INSTALL_ROOT) $(if $(IS_WIN_CROSS),--target $(IS_WIN_CROSS),) --disable-shared
 	@cd $(PROTOBUF_ROOT); unset CC CXX CPPFLAGS CFLAGS CXXFLAGS AR RANLIB; make clean
