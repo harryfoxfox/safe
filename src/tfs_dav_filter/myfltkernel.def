@@ -1,0 +1,8 @@
+LIBRARY ntoskrnl.exe
+EXPORTS
+FltRegisterFilter@12
+FltStartFiltering@4
+FltUnregisterFilter@4
+FltUnregisterFilter@4
+FltRequestOperationStatusCallback@12
+FltGetIrpName@4
