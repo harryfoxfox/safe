@@ -63,6 +63,10 @@
 #include <dbt.h>
 #include <shlobj.h>
 
+#ifndef GW_ENABLEDPOPUP
+#define GW_ENABLEDPOPUP 6
+#endif
+
 // TODO:
 // 3) Unmount when webdav server unexpectedly stops (defensive coding)
 
