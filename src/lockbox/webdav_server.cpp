@@ -129,7 +129,7 @@ EVENT_HANDLER_DEFINE(_webdav_serv_handle_action, ev_type, ev, ud) {
   auto ctx = (RunningCallbackCtx *) ud;
 
   auto received_stop = false;
-  while (true) {
+  while (!received_stop) {
     char buf[32];
     auto amt_read = recv(ctx->recv_socket.get(), buf, sizeof(buf), 0);
     if (amt_read == SOCKET_ERROR) {
