@@ -114,7 +114,12 @@ escape_double_quotes(std::string mount_name) {
 static
 std::string
 webdav_mount_url(port_t listen_port, std::string name) {
-    return std::string("http://localhost:") + std::to_string(listen_port) + "/" + name + "/";
+    // NB: use "127.0.0.1" here instead of "localhost"
+    //     windows prefers ipv6 by default and we aren't
+    //     listening on ipv6, so that will slow down connections
+    // NB: we do this on mac too since the common code now
+    //     uses "127.0.0.1"
+    return std::string("http://127.0.0.1:") + std::to_string(listen_port) + "/" + name + "/";
 }
 
 void

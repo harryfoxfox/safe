@@ -241,7 +241,10 @@ run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
 
   // create server
   std::ostringstream build_uri_root;
-  build_uri_root << "http://localhost:" << port << "/";
+  // NB: use "127.0.0.1" here instead of "localhost"
+  //     windows prefers ipv6 by default and we aren't
+  //     listening on ipv6, so that will slow down connections
+  build_uri_root << "http://127.0.0.1:" << port << "/";
   auto public_uri_root = std::move(build_uri_root).str();
   auto internal_root = "/" + mount_name;
   const auto encoded_internal_root =
