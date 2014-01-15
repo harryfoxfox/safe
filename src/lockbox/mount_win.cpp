@@ -211,7 +211,10 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
   os << "use " << drive_letter <<
     // we wrap the url in quotes since it could have a space, etc.
     // we don't urlencode it because windows will do that for us
-    ": \"http://localhost:" << listen_port << "/" <<
+    // NB: use "127.0.0.1" here instead of "localhost"
+    //     windows prefers ipv6 by default and we aren't
+    //     listening on ipv6, so that will slow down connections
+    ": \"http://127.0.0.1:" << listen_port << "/" <<
     lockbox::escape_double_quotes(mount_name) << "\"";
   auto ret_shell1 = (int) ShellExecuteW(NULL, L"open",
                                         L"c:\\windows\\system32\\net.exe",

@@ -16,7 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <ntoskrnl_cxx.hpp>
+#include <ntoskrnl_cpp.hpp>
 
 #include <fltkernel.h>
 
@@ -26,6 +26,8 @@ NTSTATUS
 NTAPI
 DriverEntry(PDRIVER_OBJECT DriverObject,
             PUNICODE_STRING RegistryPath) {
+  char yo[] = "hello world!";
+  DbgPrint(yo);
   return STATUS_SUCCESS;
 }
 
