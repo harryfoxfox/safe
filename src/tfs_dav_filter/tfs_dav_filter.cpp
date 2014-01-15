@@ -16,7 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <ntoskrnl_cxx.hpp>
+#include <ntoskrnl_cpp.hpp>
 
 #include <fltkernel.h>
 
