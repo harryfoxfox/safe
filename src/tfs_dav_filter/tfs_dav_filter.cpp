@@ -26,6 +26,8 @@ NTSTATUS
 NTAPI
 DriverEntry(PDRIVER_OBJECT DriverObject,
             PUNICODE_STRING RegistryPath) {
+  char yo[] = "hello world!";
+  DbgPrint(yo);
   return STATUS_SUCCESS;
 }
 
