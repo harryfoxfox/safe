@@ -14,10 +14,14 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
+include config.mk
+
+DLLTOOL ?= dlltool
+
 SRC_CPP = tfs_dav_filter.cpp
 OBJ = ${SRC_CPP:.cpp=.cpp.o}
 
-CPPFLAGS += -I$(CURDIR)
+CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE)
 CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11
 
 all: tfs_dav_filter.sys
@@ -54,9 +58,16 @@ tfs_dav_filter.sys: $(OBJ) libmyntoskrnl.a libmyfltmgr.a
 		$(OBJ) \
 		-lmyntoskrnl -lmyfltmgr -lgcc
 
+elevate.exe: elevate.c
+	$(CC) -mconsole -Wall -Werror -o $@ $^
+
+install: tfs_dav_filter.sys elevate.exe
+	elevate.exe reinstall.bat
+
 clean:
 	rm -f tfs_dav_filter.sys
 	rm -f $(OBJ)
 	rm -f libmyntoskrnl.a libmyfltmrg.a
+	rm -f elevate.exe
 
-.PHONY: clean
+.PHONY: clean install
