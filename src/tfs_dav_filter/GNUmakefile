@@ -26,6 +26,8 @@ CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-st
 
 all: tfs_dav_filter.sys
 
+tfs_dav_filter.cpp: ntoskrnl_cpp.hpp fltkernel.h
+
 %.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
