@@ -22,7 +22,7 @@ SRC_CPP = tfs_dav_filter.cpp
 OBJ = ${SRC_CPP:.cpp=.cpp.o}
 
 CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE)
-CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11
+CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror
 
 all: tfs_dav_filter.sys
 
