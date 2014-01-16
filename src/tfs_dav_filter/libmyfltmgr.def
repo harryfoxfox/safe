@@ -1,0 +1,5 @@
+LIBRARY FLTMGR.SYS
+EXPORTS
+FltRegisterFilter@12
+FltStartFiltering@4
+FltUnregisterFilter@4

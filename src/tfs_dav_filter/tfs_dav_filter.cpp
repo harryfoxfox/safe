@@ -20,16 +20,68 @@
 
 #include <fltkernel.h>
 
-extern "C" {
+namespace tfs_dav_filter {
 
+bool
+log(const char *fmt) {
+  auto ret = DbgPrint((char *) fmt);
+  return ret == STATUS_SUCCESS;
+}
+
+const auto & log_info = log;
+const auto & log_error = log;
+
+PFLT_FILTER g_handle;
+
+NTSTATUS
+NTAPI
+unload(FLT_FILTER_UNLOAD_FLAGS flagS) {
+  FltUnregisterFilter(tfs_dav_filter::g_handle);
+  log_info("goodbyte world!");
+  return STATUS_SUCCESS;
+}
+
+const
+FLT_REGISTRATION
+registration = {
+  sizeof(registration),
+  FLT_REGISTRATION_VERSION,
+  0,
+  nullptr,
+  nullptr,
+  unload,
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr,
+};
+  
+}
+
+extern "C"
 NTSTATUS
 NTAPI
 DriverEntry(PDRIVER_OBJECT DriverObject,
             PUNICODE_STRING RegistryPath) {
-  char yo[] = "hello world!";
-  DbgPrint(yo);
-  return STATUS_SUCCESS;
+  tfs_dav_filter::log_info("hello world!");
+
+  auto res = FltRegisterFilter(DriverObject,
+			       &tfs_dav_filter::registration,
+			       &tfs_dav_filter::g_handle);
+  if (!NT_SUCCESS(res)) {
+    tfs_dav_filter::log_error("couldn't register filter...");
+    return res;
+  }
+
+  auto res_start = FltStartFiltering(tfs_dav_filter::g_handle);
+  if (!NT_SUCCESS(res_start)) {
+    FltUnregisterFilter(tfs_dav_filter::g_handle);
+  }
+
+  return res_start;
 }
 
-}
 

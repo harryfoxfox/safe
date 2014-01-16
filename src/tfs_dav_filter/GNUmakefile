@@ -25,17 +25,17 @@ all: tfs_dav_filter.sys
 %.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-libmyfltkernel.a: myfltkernel.def
+%.a: %.def
 	$(DLLTOOL) -k -d $^ -l $@
 
-tfs_dav_filter.sys: $(OBJ) libmyfltkernel.a
+tfs_dav_filter.sys: $(OBJ) libmyntoskrnl.a libmyfltmgr.a
 	$(CC) 	-Wl,--base-file,base.tmp \
 		-Wl,--entry,_DriverEntry@8 \
 		-nostartfiles -nostdlib  -static-libgcc \
 		-o junk.tmp \
 		-L$(CURDIR) \
 		$(OBJ) \
-		-lntoskrnl -lmyfltkernel -lgcc
+		-lmyntoskrnl -lmyfltmgr -lgcc
 	-rm -f junk.tmp
 
 	$(DLLTOOL) --dllname $@ --base-file base.tmp --output-exp ${@:.sys=.exp}
@@ -47,15 +47,16 @@ tfs_dav_filter.sys: $(OBJ) libmyfltkernel.a
 		-Wl,--section-alignment,0x1000 \
 		-Wl,--entry,_DriverEntry@8 \
 		-Wl,${@:.sys=.exp} \
-		-mdll -nostartfiles -nostdlib -static-libgcc \
+		-mdll \
+		-nostartfiles -nostdlib -static-libgcc \
 		-o $@ \
 		-L$(CURDIR) \
 		$(OBJ) \
-		-lntoskrnl -lmyfltkernel -lgcc
+		-lmyntoskrnl -lmyfltmgr -lgcc
 
 clean:
 	rm -f tfs_dav_filter.sys
 	rm -f $(OBJ)
-	rm -f libmyfltkernel.a
+	rm -f libmyntoskrnl.a libmyfltmrg.a
 
 .PHONY: clean
