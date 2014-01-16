@@ -126,7 +126,9 @@ typedef enum _FLT_POSTOP_CALLBACK_STATUS {
 #define IRP_MJ_PREPARE_MDL_WRITE                     0xee
 #define IRP_MJ_MDL_WRITE_COMPLETE                    0xed
 #define IRP_MJ_VOLUME_MOUNT                          0xec
+#ifdef FLT_MGR_LONGHORN
 #define IRP_MJ_VOLUME_DISMOUNT                       0xeb
+#endif
 #define IRP_MJ_OPERATION_END                         0x80
 
 #define FLT_REGISTRATION_VERSION_0200  0x0200
@@ -154,6 +156,10 @@ typedef ULONG FLT_FILE_NAME_OPTIONS;
     #define FLT_FILE_NAME_DO_NOT_CACHE                  0x02000000
 
 /* structures and unions */
+
+#if !defined(_AMD64_) && !defined(_IA64_)
+#include <pshpack4.h>
+#endif
 
 typedef union _FLT_PARAMETERS {
   union {
@@ -190,6 +196,10 @@ typedef union _FLT_PARAMETERS {
     } Direct;
   } FileSystemControl;
 } FLT_PARAMETERS, *PFLT_PARAMETERS;
+
+#if !defined(_AMD64_) && !defined(_IA64_)
+#include <poppack.h>
+#endif
 
 typedef struct _FLT_IO_PARAMETER_BLOCK {
   ULONG          IrpFlags;
