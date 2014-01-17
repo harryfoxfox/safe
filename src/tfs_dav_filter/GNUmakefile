@@ -66,6 +66,9 @@ elevate.exe: elevate.c
 install: tfs_dav_filter.sys elevate.exe
 	elevate.exe reinstall.bat
 
+reload: tfs_dav_filter.sys elevate.exe
+	elevate.exe reload.bat
+
 clean:
 	rm -f tfs_dav_filter.sys
 	rm -f $(OBJ)
