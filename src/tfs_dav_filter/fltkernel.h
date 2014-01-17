@@ -55,6 +55,7 @@ typedef ULONG FLT_OPERATION_REGISTRATION_FLAGS;
 typedef USHORT FLT_REGISTRATION_FLAGS;
 typedef USHORT FLT_CONTEXT_REGISTRATION_FLAGS;
 typedef ULONG FLT_NORMALIZE_NAME_FLAGS;
+typedef USHORT FLT_FILE_NAME_PARSED_FLAGS;
 
 typedef enum _FLT_FILESYSTEM_TYPE {
   FLT_FSTYPE_UNKNOWN,
@@ -244,6 +245,19 @@ typedef struct _FLT_NAME_CONTROL {
   UNICODE_STRING Name;
 } FLT_NAME_CONTROL, *PFLT_NAME_CONTROL;
 
+typedef struct _FLT_FILE_NAME_INFORMATION {
+  USHORT                     Size;
+  FLT_FILE_NAME_PARSED_FLAGS NamesParsed;
+  FLT_FILE_NAME_OPTIONS      Format;
+  UNICODE_STRING             Name;
+  UNICODE_STRING             Volume;
+  UNICODE_STRING             Share;
+  UNICODE_STRING             Extension;
+  UNICODE_STRING             Stream;
+  UNICODE_STRING             FinalComponent;
+  UNICODE_STRING             ParentDir;
+} FLT_FILE_NAME_INFORMATION, *PFLT_FILE_NAME_INFORMATION;
+
 /* function pointer types */
 
 /* these help with documentation */
@@ -397,6 +411,20 @@ PCHAR
 NTAPI
 FltGetIrpName(
   _In_  UCHAR IrpMajorCode
+);
+
+NTSTATUS
+NTAPI
+FltGetFileNameInformation(
+  _In_ PFLT_CALLBACK_DATA CallbackData,
+  _In_ FLT_FILE_NAME_OPTIONS NameOptions,
+  _Out_ PFLT_FILE_NAME_INFORMATION *FileNameInformation
+);
+
+VOID
+NTAPI
+FltReleaseFileNameInformation (
+  _In_ PFLT_FILE_NAME_INFORMATION FileNameInformation
 );
 
 #define FLT_ASSERT ASSERT

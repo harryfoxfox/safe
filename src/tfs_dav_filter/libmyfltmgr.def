@@ -3,3 +3,5 @@ EXPORTS
 FltRegisterFilter@12
 FltStartFiltering@4
 FltUnregisterFilter@4
+FltGetFileNameInformation@12
+FltReleaseFileNameInformation@4
