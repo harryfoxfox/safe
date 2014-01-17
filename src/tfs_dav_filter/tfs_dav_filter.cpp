@@ -20,18 +20,16 @@
 
 #include <fltkernel.h>
 
+// define a macro for now,
+// other options include using a variadic template
+// or figuration out stdarg in windows kernel space
+// these are better options for type-safety reasons
+#define log(...) (STATUS_SUCCESS == DbgPrint((char *) __VA_ARGS__))
+#define log_debug log
+#define log_info log
+#define log_error log
+
 namespace tfs_dav_filter {
-
-static
-bool
-log(const char *fmt) {
-  auto ret = DbgPrint((char *) fmt);
-  return ret == STATUS_SUCCESS;
-}
-
-const auto & log_debug = log;
-const auto & log_info = log;
-const auto & log_error = log;
 
 PFLT_FILTER g_handle;
 
@@ -496,13 +494,13 @@ NTSTATUS
 NTAPI
 DriverEntry(PDRIVER_OBJECT DriverObject,
             PUNICODE_STRING RegistryPath) {
-  tfs_dav_filter::log_info("hello world!");
+  log_info("hello world!");
 
   auto res = FltRegisterFilter(DriverObject,
 			       &tfs_dav_filter::registration,
 			       &tfs_dav_filter::g_handle);
   if (!NT_SUCCESS(res)) {
-    tfs_dav_filter::log_error("couldn't register filter...");
+    log_error("couldn't register filter...");
     return res;
   }
 
