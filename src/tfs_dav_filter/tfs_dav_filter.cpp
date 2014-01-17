@@ -18,6 +18,8 @@
 
 #include <tfs_dav_filter/ntoskrnl_cpp.hpp>
 
+#include <lockbox/deferred.hpp>
+
 #include <fltkernel.h>
 
 // define a macro for now,
@@ -48,7 +50,32 @@ NTAPI
 create(PFLT_CALLBACK_DATA args,
        PCFLT_RELATED_OBJECTS related_objcts,
        PVOID *completion_ctx) {
-  log_debug("create");
+  PFLT_FILE_NAME_INFORMATION name_info = NULL;
+
+  auto status = FltGetFileNameInformation(args,
+					  FLT_FILE_NAME_NORMALIZED,
+					  &name_info);
+  if (!NT_SUCCESS(status)) {
+    args->IoStatus.Status = status;
+    return FLT_PREOP_COMPLETE;
+  }
+  auto _free_name_info =
+    lockbox::create_deferred(FltReleaseFileNameInformation, name_info);
+
+  ANSI_STRING ansi_string;
+  RtlInitAnsiString(&ansi_string, NULL);
+  auto status2 = RtlUnicodeStringToAnsiString(&ansi_string,
+					      &name_info->Name,
+					      TRUE);
+  if (!NT_SUCCESS(status2)) {
+    args->IoStatus.Status = status2;
+    return FLT_PREOP_COMPLETE;
+  }
+  auto _free_ansi_string =
+    lockbox::create_deferred(RtlFreeAnsiString, &ansi_string);
+  
+  log_debug("creating: %s", ansi_string.Buffer);
+
   return FLT_PREOP_SUCCESS_NO_CALLBACK;
 }
 
