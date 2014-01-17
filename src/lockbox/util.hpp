@@ -1,6 +1,7 @@
 #ifndef _lockbox_util_hpp
 #define _lockbox_util_hpp
 
+#include <lockbox/deferred.hpp>
 #include <lockbox/logging.h>
 
 #include <encfs/base/optional.h>
@@ -26,85 +27,12 @@ make_error_message(std::string title, std::string msg) {
   return ErrorMessage {std::move(title), std::move(msg)};
 }
 
-// this little class allows us to get C++ RAII with C based data structures
-template <class FNRET>
-class CDestroyer;
-
-// CDestroyer of one argument also serves a managed handle object
-template <class F, class T>
-class CDestroyer<F(T)> {
-  F f;
-  T data;
-  bool is_valid;
-
-public:
-  CDestroyer()
-    : is_valid(false) {}
-
-  CDestroyer(F f_, T arg_)
-    : f(std::move(f_))
-    , data(std::move(arg_))
-    , is_valid(true) {}
-
-  CDestroyer(CDestroyer && cd)
-    : f(std::move(cd.f))
-    , data(std::move(cd.data))
-    , is_valid(cd.is_valid) {
-    cd.is_valid = false;
-  }
-
-  CDestroyer &operator=(CDestroyer && cd) {
-    if (this != &cd) {
-      this->~CDestroyer();
-      new (this) CDestroyer(std::move(cd));
-    }
-    return *this;
-  }
-
-  ~CDestroyer() { if (is_valid) f(data); }
-};
-
-template <class F, class T, class V>
-class CDestroyer<F(T,V)> {
-  F f;
-  T a1;
-  V a2;
-  bool is_valid;
-
-public:
-  CDestroyer(F f_, T t, V v)
-    : f(f_)
-    , a1(std::move(t))
-    , a2(std::move(v))
-    , is_valid(true) {}
-
-  CDestroyer(CDestroyer && cd)
-    : f(std::move(cd.f))
-    , a1(std::move(cd.a1))
-    , a2(std::move(cd.a2))
-    , is_valid(cd.is_valid) {
-    cd.is_valid = false;
-  }
-
-  CDestroyer &operator=(CDestroyer && cd) {
-    if (this != &cd) {
-      this->~CDestroyer();
-      new (this) CDestroyer(std::move(cd));
-    }
-    return *this;
-  }
-
-  ~CDestroyer() { if (is_valid) f(a1, a2); }
-};
+  template <class T>
+  using CDestroyer = CDeferred<T>;
 
 template <class Destroyer, class T>
 CDestroyer<Destroyer(T)> create_destroyer(T t, Destroyer f) {
   return CDestroyer<Destroyer(T)>(std::move(f), std::move(t));
-}
-
-template <class Destroyer, class... Args>
-CDestroyer<Destroyer(Args...)> create_deferred(Destroyer f, Args ...args) {
-  return CDestroyer<Destroyer(Args...)>(std::move(f), std::move(args)...);
 }
 
 template <class T>
