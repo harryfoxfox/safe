@@ -16,7 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <ntoskrnl_cpp.hpp>
+#include <tfs_dav_filter/ntoskrnl_cpp.hpp>
 
 #include <fltkernel.h>
 
