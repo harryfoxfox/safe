@@ -566,6 +566,23 @@ registration = {
   
 }
 
+#ifdef __GNUC__
+extern "C"
+NTSTATUS
+NTAPI
+DriverEntry(PDRIVER_OBJECT DriverObject,
+            PUNICODE_STRING RegistryPath) __attribute__ ((section ("INIT")));
+#endif
+
+#ifdef ALLOC_PRAGMA
+extern "C"
+NTSTATUS
+NTAPI
+DriverEntry(PDRIVER_OBJECT DriverObject,
+            PUNICODE_STRING RegistryPath);
+#pragma alloc_text(INIT, DriverEntry)
+#endif
+
 extern "C"
 NTSTATUS
 NTAPI
