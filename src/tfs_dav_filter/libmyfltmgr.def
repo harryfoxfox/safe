@@ -5,3 +5,5 @@ FltStartFiltering@4
 FltUnregisterFilter@4
 FltGetFileNameInformation@12
 FltReleaseFileNameInformation@4
+FltParseFileNameInformation@4
+

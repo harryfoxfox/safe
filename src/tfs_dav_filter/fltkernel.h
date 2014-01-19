@@ -427,6 +427,12 @@ FltReleaseFileNameInformation (
   _In_ PFLT_FILE_NAME_INFORMATION FileNameInformation
 );
 
+NTSTATUS
+NTAPI
+FltParseFileNameInformation(
+  _Inout_  PFLT_FILE_NAME_INFORMATION FileNameInformation
+);
+
 #define FLT_ASSERT ASSERT
 
 #ifdef __cplusplus

@@ -4,3 +4,4 @@ DbgPrint
 RtlInitAnsiString@8
 RtlUnicodeStringToAnsiString@12
 RtlFreeAnsiString@4
+RtlUpcaseUnicodeChar@4

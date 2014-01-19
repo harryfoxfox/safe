@@ -36,6 +36,54 @@ namespace tfs_dav_filter {
 PFLT_FILTER g_handle;
 
 static
+bool
+caseequals(PCUNICODE_STRING a, PCUNICODE_STRING b) {
+  if (a->Length != b->Length) return false;
+
+  for (size_t i = 0; i < a->Length / sizeof(a->Buffer[0]); ++i) {
+    if (RtlUpcaseUnicodeChar(a->Buffer[i]) !=
+	RtlUpcaseUnicodeChar(b->Buffer[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+static
+bool
+caseendswith(PCUNICODE_STRING a, PCUNICODE_STRING b) {
+  if (b->Length > a->Length) return false;
+
+  UNICODE_STRING temp;
+  temp.Length = b->Length;
+  temp.MaximumLength = b->MaximumLength;
+  temp.Buffer = &a->Buffer[(a->Length - b->Length) /
+			   sizeof(a->Buffer[0])];
+
+  return caseequals(&temp, b);
+}
+
+static
+bool
+is_dav_tfs_cache_directory(PCUNICODE_STRING volume_path) {
+  UNICODE_STRING suffix = {
+    sizeof(L"\\TfsStore\\Tfs_DAV\\") - sizeof(L'\0'),
+    sizeof(L"\\TfsStore\\Tfs_DAV\\") - sizeof(L'\0'),
+    (wchar_t *) L"\\TfsStore\\Tfs_DAV\\",
+  };
+
+  if (volume_path->Length &&
+      L'\\' != volume_path->Buffer[volume_path->Length /
+				   sizeof(volume_path->Buffer[0]) - 1]) {
+    suffix.Length -= sizeof(L'\\');
+    suffix.MaximumLength -= sizeof(L'\\');
+  }
+
+  return caseendswith(volume_path, &suffix);
+}
+
+static
 NTSTATUS
 NTAPI
 unload(FLT_FILTER_UNLOAD_FLAGS flagS) {
@@ -53,28 +101,30 @@ create(PFLT_CALLBACK_DATA args,
   PFLT_FILE_NAME_INFORMATION name_info = NULL;
 
   auto status = FltGetFileNameInformation(args,
-					  FLT_FILE_NAME_NORMALIZED,
+					  FLT_FILE_NAME_OPENED |
+					  FLT_FILE_NAME_QUERY_DEFAULT,
 					  &name_info);
   if (!NT_SUCCESS(status)) {
+    log_error("Error while doing FltGetFileNameInformation: 0x%x",
+	      (unsigned) status);
     args->IoStatus.Status = status;
+    args->IoStatus.Information = 0;
     return FLT_PREOP_COMPLETE;
   }
   auto _free_name_info =
     lockbox::create_deferred(FltReleaseFileNameInformation, name_info);
 
-  ANSI_STRING ansi_string;
-  RtlInitAnsiString(&ansi_string, NULL);
-  auto status2 = RtlUnicodeStringToAnsiString(&ansi_string,
-					      &name_info->Name,
-					      TRUE);
-  if (!NT_SUCCESS(status2)) {
-    args->IoStatus.Status = status2;
+  auto status1 = FltParseFileNameInformation(name_info);
+  if (!NT_SUCCESS(status1)) {
+    log_error("Error while doing FltParseFileNameInformation: 0x%x",
+	      (unsigned) status);
+    args->IoStatus.Status = status;
+    args->IoStatus.Information = 0;
     return FLT_PREOP_COMPLETE;
   }
-  auto _free_ansi_string =
-    lockbox::create_deferred(RtlFreeAnsiString, &ansi_string);
-  
-  log_debug("creating: %s", ansi_string.Buffer);
+
+  log_debug("creating in a dav tfs cache directory %d",
+  	    is_dav_tfs_cache_directory(&name_info->ParentDir));
 
   return FLT_PREOP_SUCCESS_NO_CALLBACK;
 }
