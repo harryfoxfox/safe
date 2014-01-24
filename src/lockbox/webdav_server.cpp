@@ -165,7 +165,7 @@ EVENT_HANDLER_DEFINE(_webdav_serv_handle_action, ev_type, ev, ud) {
   auto success = event_loop_socket_watch_add(ctx->loop, ctx->recv_socket.get(),
                                              create_stream_events(true, false),
                                              _webdav_serv_handle_action,
-                                             &ctx,
+                                             ud,
                                              NULL);
   // TODO: handle error more gracefully
   if (!success) throw std::runtime_error("error adding socket watch");
