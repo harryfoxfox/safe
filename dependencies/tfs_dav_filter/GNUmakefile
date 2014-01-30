@@ -93,6 +93,8 @@ safe_ramdisk.sys: $(SAFE_RAMDISK_OBJ) libmyntoskrnl.a
 		-L$(CURDIR) \
 		$(SAFE_RAMDISK_OBJ) \
 		-lmyntoskrnl -lhal -lgcc
+# TODO: use stampinf or similar tool to make this automatic
+	@echo "New safe_ramdisk.sys made, make sure to tweak DriverVer in the safe_ramdisk.inf"
 
 elevate.exe: elevate.c
 	$(CC) -mconsole -Wall -Werror -o $@ $^
