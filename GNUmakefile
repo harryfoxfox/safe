@@ -20,8 +20,8 @@ OUT_DIR ?= out
 
 DAVFUSE_ROOT := $(CURDIR)/../davfuse
 ENCFS_ROOT := $(CURDIR)/../encfs
-BOTAN_ROOT := $(CURDIR)/encfs-dependencies/botan
-TINYXML_ROOT := $(CURDIR)/encfs-dependencies/tinyxml
+BOTAN_ROOT := $(CURDIR)/dependencies/botan
+TINYXML_ROOT := $(CURDIR)/dependencies/tinyxml
 PROTOBUF_ROOT := $(CURDIR)/../protobuf
 
 HEADERS_ROOT = $(CURDIR)/$(OUT_DIR)/headers
