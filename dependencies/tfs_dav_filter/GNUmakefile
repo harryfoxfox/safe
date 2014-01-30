@@ -18,17 +18,20 @@ include config.mk
 
 DLLTOOL ?= dlltool
 
-SRC_CPP = tfs_dav_filter.cpp
+SAFE_SIMREP_SRC_C = safe_simrep.c
 SAFE_RAMDISK_SRC_CPP = ramdisk.cpp
 
-OBJ = ${SRC_CPP:.cpp=.cpp.o}
+SAFE_SIMREP_OBJ = ${SAFE_SIMREP_SRC_C:.c=.c.o}
 SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
+
+SAFE_RAMDISK_TARGET = safe_ramdisk.sys
+SAFE_SIMREP_TARGET = safe.sys
 
 CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/../../src $(if $(RELEASE),,-DDBG)
 CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror $(if $(RELEASE),-Os -flto,)
 CFLAGS ?= $(CPPFLAGS) -Wall -Werror $(if $(RELEASE),-Os -flto,)
 
-all: safe_ramdisk.sys tfs_dav_filter.sys
+all: $(SAFE_RAMDISK_TARGET) $(SAFE_SIMREP_TARGET)
 
 tfs_dav_filter.cpp: ntoskrnl_cpp.hpp fltkernel.h
 ramdisk.cpp: ntoskrnl_cpp.hpp
@@ -36,17 +39,20 @@ ramdisk.cpp: ntoskrnl_cpp.hpp
 %.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+%.c.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 %.a: %.def
 	$(DLLTOOL) -k -d $^ -l $@
 
-tfs_dav_filter.sys: $(OBJ) libmyntoskrnl.a libmyfltmgr.a
+$(SAFE_SIMREP_TARGET): $(SAFE_SIMREP_OBJ) libmyntoskrnl.a libmyfltmgr.a
 	$(CC) 	-Wl,--base-file,base.tmp \
 		-Wl,--entry,_DriverEntry@8 \
 		-nostartfiles -nostdlib  -static-libgcc \
 		-o junk.tmp \
 		$(CFLAGS) \
 		-L$(CURDIR) \
-		$(OBJ) \
+		$(SAFE_SIMREP_OBJ) \
 		-lmyntoskrnl -lmyfltmgr -lgcc
 	-rm -f junk.tmp
 
@@ -64,10 +70,10 @@ tfs_dav_filter.sys: $(OBJ) libmyntoskrnl.a libmyfltmgr.a
 		-o $@ \
 		$(CFLAGS) \
 		-L$(CURDIR) \
-		$(OBJ) \
+		$(SAFE_SIMREP_OBJ) \
 		-lmyntoskrnl -lmyfltmgr -lgcc
 
-safe_ramdisk.sys: $(SAFE_RAMDISK_OBJ) libmyntoskrnl.a
+$(SAFE_RAMDISK_TARGET): $(SAFE_RAMDISK_OBJ) libmyntoskrnl.a
 	$(CC) 	-Wl,--base-file,base.tmp \
 		-Wl,--entry,_DriverEntry@8 \
 		-nostartfiles -nostdlib  -static-libgcc \
@@ -102,14 +108,14 @@ elevate.exe: elevate.c
 install_non_pnp_device.exe: install_non_pnp_device.c
 	$(CC) -mconsole -Wall -Werror -std=c99 -o $@ $^ -lsetupapi -lnewdev
 
-reload: tfs_dav_filter.sys elevate.exe \
-	install_non_pnp_device.exe safe_ramdisk.sys
+reload: $(SAFE_SIMREP_TARGET) elevate.exe \
+	install_non_pnp_device.exe $(SAFE_RAMDISK_TARGET)
 	elevate.exe reload.bat
 
 clean:
-	rm -f tfs_dav_filter.sys safe_ramdisk.sys
-	rm -f $(OBJ) $(SAFE_RAMDISK_OBJ)
+	rm -f $(SAFE_SIMREP_TARGET) $(SAFE_RAMDISK_TARGET)
+	rm -f $(SAFE_SIMREP_OBJ) $(SAFE_RAMDISK_OBJ)
 	rm -f libmyntoskrnl.a libmyfltmrg.a
-	rm -f elevate.exe
+	rm -f elevate.exe install_non_pnp_device.exe
 
 .PHONY: clean install
