@@ -24,7 +24,7 @@ SAFE_RAMDISK_SRC_CPP = ramdisk.cpp
 OBJ = ${SRC_CPP:.cpp=.cpp.o}
 SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
 
-CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/.. $(if $(RELEASE),,-DDBG)
+CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/../../src $(if $(RELEASE),,-DDBG)
 CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror $(if $(RELEASE),-Os -flto,)
 CFLAGS ?= $(CPPFLAGS) -Wall -Werror $(if $(RELEASE),-Os -flto,)
 

@@ -3,6 +3,7 @@
 
 #include <lockbox/deferred.hpp>
 #include <lockbox/logging.h>
+#include <lockbox/low_util.hpp>
 
 #include <encfs/base/optional.h>
 
@@ -177,12 +178,6 @@ T
 create_bit_mask(size_t num_bits_to_mask) {
   assert(num_bits_to_mask <= numbits<T>::value);
   return ((T) 1 << num_bits_to_mask) - 1;
-}
-
-template<typename T, size_t N>
-constexpr size_t
-numelementsf(T (&)[N]) {
-  return N;
 }
 
 }

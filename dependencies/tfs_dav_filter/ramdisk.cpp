@@ -23,7 +23,7 @@
   See the LICENSE file for copying info.
  */
 
-#include <tfs_dav_filter/ntoskrnl_cpp.hpp>
+#include "ntoskrnl_cpp.hpp"
 
 #include <lockbox/deferred.hpp>
 #include <lockbox/low_util.hpp>
@@ -420,7 +420,7 @@ DiskControlBlock::dequeue_request() noexcept {
       };
       
       auto status =
-	KeWaitForMultipleObjects(numelementsf(wait_objects),
+	KeWaitForMultipleObjects(lockbox::numelementsf(wait_objects),
 				 (PVOID *) wait_objects,
 				 WaitAny,
 				 Executive,
