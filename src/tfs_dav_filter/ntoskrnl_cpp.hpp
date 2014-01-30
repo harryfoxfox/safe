@@ -33,4 +33,22 @@ void operator delete[] (void *, void *) throw() { }
 
 #endif
 
+namespace std {
+
+#undef min
+
+template <class T>
+const T &
+min(const T & a, const T & b) {
+  return a > b ? b : a;
+}
+
+}
+
+typedef UCHAR uint8_t;
+typedef USHORT uint16_t;
+typedef UINT uint32_t;
+
+#define assert ASSERT
+
 #endif

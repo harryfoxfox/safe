@@ -1,0 +1,44 @@
+[Version]
+Signature = "$WINDOWS NT$"
+Class     = "Safe RAMDisk"
+ClassGuid = {168F02BC-933F-4E2E-B3E1-E30E84F0DC05}
+Provider  = "Rian Hunter"
+DriverVer = 01/28/2014,1.0.0.2
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[ClassInstall32]
+Addreg=SafeRAMDiskClassReg
+
+[SampleClassReg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+[Manufacturer]
+"Rian Hunter" = RAMDiskDevice
+
+[RAMDiskDevice]
+%Description% = RAMDiskInstall, root\saferamdisk
+
+[RAMDiskInstall.NT]
+CopyFiles = RAMDiskCopyfiles
+
+[RAMDiskCopyfiles]
+safe_ramdisk.sys
+
+[RAMDiskInstall.NT.Services]
+AddService = SafeRamDisk, 2, RAMDiskServiceInst
+
+[RAMDiskServiceInst]
+ServiceType   = 1 ; Driver
+StartType     = 0 ; start at book
+ErrorControl  = 1 ; normal error handling
+DisplayName   = %SVCDescription%
+ServiceBinary = %12%\safe_ramdisk.sys
+
+[Strings]
+ClassName       = "Safe RAMDisk"
+Description     = "Safe RAMDisk"
+SVCDescription  = "Safe RAMDisk"
+

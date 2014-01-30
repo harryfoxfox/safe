@@ -78,6 +78,11 @@ public:
     return *this;
   }
 
+  void
+  cancel() {
+    is_valid = false;
+  }
+
   ~CDeferred() { if (is_valid) f(data); }
 };
 

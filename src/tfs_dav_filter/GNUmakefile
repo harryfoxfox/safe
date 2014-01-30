@@ -19,14 +19,19 @@ include config.mk
 DLLTOOL ?= dlltool
 
 SRC_CPP = tfs_dav_filter.cpp
+SAFE_RAMDISK_SRC_CPP = ramdisk.cpp
+
 OBJ = ${SRC_CPP:.cpp=.cpp.o}
+SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
 
-CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/..
-CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror
+CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/.. $(if $(RELEASE),,-DDBG)
+CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror $(if $(RELEASE),-Os -flto,)
+CFLAGS ?= $(CPPFLAGS) -Wall -Werror $(if $(RELEASE),-Os -flto,)
 
-all: tfs_dav_filter.sys
+all: safe_ramdisk.sys tfs_dav_filter.sys
 
 tfs_dav_filter.cpp: ntoskrnl_cpp.hpp fltkernel.h
+ramdisk.cpp: ntoskrnl_cpp.hpp
 
 %.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
@@ -39,6 +44,7 @@ tfs_dav_filter.sys: $(OBJ) libmyntoskrnl.a libmyfltmgr.a
 		-Wl,--entry,_DriverEntry@8 \
 		-nostartfiles -nostdlib  -static-libgcc \
 		-o junk.tmp \
+		$(CFLAGS) \
 		-L$(CURDIR) \
 		$(OBJ) \
 		-lmyntoskrnl -lmyfltmgr -lgcc
@@ -56,22 +62,51 @@ tfs_dav_filter.sys: $(OBJ) libmyntoskrnl.a libmyfltmgr.a
 		-mdll \
 		-nostartfiles -nostdlib -static-libgcc \
 		-o $@ \
+		$(CFLAGS) \
 		-L$(CURDIR) \
 		$(OBJ) \
 		-lmyntoskrnl -lmyfltmgr -lgcc
 
+safe_ramdisk.sys: $(SAFE_RAMDISK_OBJ) libmyntoskrnl.a
+	$(CC) 	-Wl,--base-file,base.tmp \
+		-Wl,--entry,_DriverEntry@8 \
+		-nostartfiles -nostdlib  -static-libgcc \
+		-o junk.tmp \
+		$(CFLAGS) \
+		-L$(CURDIR) \
+		$(SAFE_RAMDISK_OBJ) \
+		-lmyntoskrnl -lhal -lgcc
+	-rm -f junk.tmp
+
+	$(DLLTOOL) --dllname $@ --base-file base.tmp --output-exp ${@:.sys=.exp}
+	-rm -f base.tmp
+
+	$(CC)	-Wl,--subsystem,native \
+		-Wl,--image-base,0x10000 \
+		-Wl,--file-alignment,0x1000 \
+		-Wl,--section-alignment,0x1000 \
+		-Wl,--entry,_DriverEntry@8 \
+		-Wl,${@:.sys=.exp} \
+		-nostartfiles -nostdlib -static-libgcc \
+		-o $@ \
+		$(CFLAGS) \
+		-L$(CURDIR) \
+		$(SAFE_RAMDISK_OBJ) \
+		-lmyntoskrnl -lhal -lgcc
+
 elevate.exe: elevate.c
 	$(CC) -mconsole -Wall -Werror -o $@ $^
 
-install: tfs_dav_filter.sys elevate.exe
-	elevate.exe reinstall.bat
+install_non_pnp_device.exe: install_non_pnp_device.c
+	$(CC) -mconsole -Wall -Werror -std=c99 -o $@ $^ -lsetupapi -lnewdev
 
-reload: tfs_dav_filter.sys elevate.exe
+reload: tfs_dav_filter.sys elevate.exe \
+	install_non_pnp_device.exe safe_ramdisk.sys
 	elevate.exe reload.bat
 
 clean:
-	rm -f tfs_dav_filter.sys
-	rm -f $(OBJ)
+	rm -f tfs_dav_filter.sys safe_ramdisk.sys
+	rm -f $(OBJ) $(SAFE_RAMDISK_OBJ)
 	rm -f libmyntoskrnl.a libmyfltmrg.a
 	rm -f elevate.exe
 
