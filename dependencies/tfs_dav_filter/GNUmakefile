@@ -53,7 +53,7 @@ $(SAFE_SIMREP_TARGET): $(SAFE_SIMREP_OBJ) libmyntoskrnl.a libmyfltmgr.a
 		$(CFLAGS) \
 		-L$(CURDIR) \
 		$(SAFE_SIMREP_OBJ) \
-		-lmyntoskrnl -lmyfltmgr -lgcc
+		-lmyntoskrnl -lmyfltmgr -lhal -lgcc
 	-rm -f junk.tmp
 
 	$(DLLTOOL) --dllname $@ --base-file base.tmp --output-exp ${@:.sys=.exp}
@@ -71,7 +71,7 @@ $(SAFE_SIMREP_TARGET): $(SAFE_SIMREP_OBJ) libmyntoskrnl.a libmyfltmgr.a
 		$(CFLAGS) \
 		-L$(CURDIR) \
 		$(SAFE_SIMREP_OBJ) \
-		-lmyntoskrnl -lmyfltmgr -lgcc
+		-lmyntoskrnl -lmyfltmgr -lhal -lgcc
 
 $(SAFE_RAMDISK_TARGET): $(SAFE_RAMDISK_OBJ) libmyntoskrnl.a
 	$(CC) 	-Wl,--base-file,base.tmp \

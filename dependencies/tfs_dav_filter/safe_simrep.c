@@ -1,3 +1,16 @@
+/*
+  Safe SimRep:
+  Redirect FS requests from
+  %WINDIR%\SystemProfiles\LocalService\AppData\Local\Temp\TfsStore\Tfs_DAV
+  to the Safe RAMDisk
+
+  Copyright (C) 2014 Rian Hunter
+
+  Portions of this source file were derived from the Microsoft sample:
+  "SimRep File System Minifilter Driver." This source file is provided
+  under the same terms as that sample. See the LICENSE file for
+  copying info.
+*/
 /*++
 
 Copyright (c) 1999 - 2002  Microsoft Corporation
@@ -62,10 +75,12 @@ Environment:
 //  Enabled warnings
 //
 
+#ifdef _MSC_VER
 #pragma warning(error:4100)     //  Enable-Unreferenced formal parameter
 #pragma warning(error:4101)     //  Enable-Unreferenced local variable
 #pragma warning(error:4061)     //  Enable-missing enumeration in switch statement
 #pragma warning(error:4505)     //  Enable-identify dead functions
+#endif
 
 //
 //  Includes
@@ -81,12 +96,71 @@ Environment:
 #include <fltKernel.h>
 
 
+// MinGW32 compatibility
+#ifndef _In_reads_bytes_
+#define _In_reads_bytes_(a)
+#endif
+
+#ifndef _Out_opt_
+#define _Out_opt_
+#endif
+
+#ifndef _Flt_CompletionContext_Outptr_
+#define _Flt_CompletionContext_Outptr_
+#endif
+
+#ifndef _When_
+#define _When_(...)
+#endif
+
+#ifndef _Out_writes_bytes_
+#define _Out_writes_bytes_(a)
+#endif
+
+
+// define DRIVER_INITIALIZE only if we're on a low version of
+// mingw32-w64 or we're on regular mingw32
+#if ((defined(__MINGW64_MAJOR_VERSION) && __MINGW64_MAJOR_VERSION < 3) || \
+     (!defined(__MINGW64_MAJOR_VERSION) && defined(__MINGW_MAJOR_VERSION)))
+typedef NTSTATUS
+(NTAPI DRIVER_INITIALIZE)(
+  IN struct _DRIVER_OBJECT *DriverObject,
+  IN PUNICODE_STRING RegistryPath);
+typedef DRIVER_INITIALIZE *PDRIVER_INITIALIZE;
+
+#define OBJ_KERNEL_HANDLE       0x00000200
+#define OBJ_NAME_PATH_SEPARATOR           ((WCHAR)L'\\')
+
+#define ClearFlag(f, m) ((f) &= ~(m))
+#define SetFlag(f, m) ((f) |= (m))
+#define IO_REPARSE 0x0
+
+#define BooleanFlagOn(f, m) ((BOOLEAN) ((f) & (m)))
+
+#define IO_IGNORE_SHARE_ACCESS_CHECK    0x0800
+
+#endif
+
+#ifdef __MINGW_MAJOR_VERSION
+#define DrvRtPoolNxOptIn 0
+#define ExInitializeDriverRuntime(a) 
+#define Add2Ptr(p, a) ((PVOID) ((PUCHAR) (p) + (a)))
+#endif
+
+#ifndef NT_ASSERT
+#define NT_ASSERT ASSERT
+#endif
+
+#ifndef NT_ASSERTMSG
+#define NT_ASSERTMSG ASSERTMSG
+#endif
+
 //
 //  Memory Pool Tags
 //
 
-#define SIMREP_STRING_TAG            'tSpR'
-#define SIMREP_REG_TAG               'eRpR'
+#define SIMREP_STRING_TAG            0x74537052 //'tSpR'
+#define SIMREP_REG_TAG               0x65527052 //'eRpR'
 
 //
 // Constants
@@ -238,6 +312,7 @@ typedef struct _SIMREP_GLOBAL_DATA {
 
 DRIVER_INITIALIZE DriverEntry;
 NTSTATUS
+NTAPI
 DriverEntry (
     _In_ PDRIVER_OBJECT DriverObject,
     _In_ PUNICODE_STRING RegistryPath
@@ -252,11 +327,13 @@ VOID SimRepFreeGlobals(
     );
 
 NTSTATUS
+NTAPI
 SimRepUnload (
     FLT_FILTER_UNLOAD_FLAGS Flags
     );
 
 NTSTATUS
+NTAPI
 SimRepInstanceSetup (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_SETUP_FLAGS Flags,
@@ -265,6 +342,7 @@ SimRepInstanceSetup (
     );
 
 NTSTATUS
+NTAPI
 SimRepInstanceQueryTeardown (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_QUERY_TEARDOWN_FLAGS Flags
@@ -275,6 +353,7 @@ SimRepInstanceQueryTeardown (
 //
 
 FLT_PREOP_CALLBACK_STATUS
+NTAPI
 SimRepPreCreate (
     _Inout_ PFLT_CALLBACK_DATA Cbd,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -282,6 +361,7 @@ SimRepPreCreate (
     );
 
 FLT_PREOP_CALLBACK_STATUS
+NTAPI
 SimRepPreNetworkQueryOpen (
     _Inout_ PFLT_CALLBACK_DATA Cbd,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -293,6 +373,7 @@ SimRepPreNetworkQueryOpen (
 //
 
 FLT_PREOP_CALLBACK_STATUS
+NTAPI
 SimRepPreSetInformation (
     _Inout_ PFLT_CALLBACK_DATA Cbd,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -344,6 +425,7 @@ SimRepMungeName(
 //
 
 NTSTATUS
+NTAPI
 SimRepGenerateFileName (
     _In_ PFLT_INSTANCE Instance,
     _In_ PFILE_OBJECT FileObject,
@@ -356,6 +438,7 @@ SimRepGenerateFileName (
     );
 
 NTSTATUS
+NTAPI
 SimRepNormalizeNameComponent (
     _In_ PFLT_INSTANCE Instance,
     _In_ PCUNICODE_STRING ParentDirectory,
@@ -532,10 +615,13 @@ SIMREP_GLOBAL_DATA Globals;
 //  Filter driver initialization and unload routines
 //
 
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4152) // nonstandard extension, function/data pointer conversion in expression
+#endif
 
 NTSTATUS
+NTAPI
 DriverEntry (
     _In_ PDRIVER_OBJECT DriverObject,
     _In_ PUNICODE_STRING RegistryPath
@@ -662,7 +748,9 @@ DriverEntryCleanup:
 
     return status;
 }
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 
 NTSTATUS 
 SimRepSetConfiguration( 
@@ -977,6 +1065,7 @@ Return Value:
 }
 
 NTSTATUS
+NTAPI
 SimRepUnload (
     FLT_FILTER_UNLOAD_FLAGS Flags
     )
@@ -1021,6 +1110,7 @@ Return Value:
 //
 
 NTSTATUS
+NTAPI
 SimRepInstanceSetup (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_SETUP_FLAGS Flags,
@@ -1087,6 +1177,7 @@ Return Value:
 
 
 NTSTATUS
+NTAPI
 SimRepInstanceQueryTeardown (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _In_ FLT_INSTANCE_QUERY_TEARDOWN_FLAGS Flags
@@ -1128,6 +1219,7 @@ Return Value:
 
 
 FLT_PREOP_CALLBACK_STATUS
+NTAPI
 SimRepPreNetworkQueryOpen (
     _Inout_ PFLT_CALLBACK_DATA Cbd,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -1353,6 +1445,7 @@ SimRepPreNetworkQueryOpenCleanup:
 
 
 FLT_PREOP_CALLBACK_STATUS
+NTAPI
 SimRepPreCreate (
     _Inout_ PFLT_CALLBACK_DATA Cbd,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -1689,6 +1782,7 @@ SimRepPreCreateCleanup:
 
 
 FLT_PREOP_CALLBACK_STATUS
+NTAPI
 SimRepPreSetInformation (
     _Inout_ PFLT_CALLBACK_DATA Cbd,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -2403,6 +2497,7 @@ Return Value:
 //
 
 NTSTATUS
+NTAPI
 SimRepGenerateFileName (
     _In_ PFLT_INSTANCE Instance,
     _In_ PFILE_OBJECT FileObject,
@@ -2556,6 +2651,7 @@ SimRepGenerateFileNameCleanup:
 
 
 NTSTATUS
+NTAPI
 SimRepNormalizeNameComponent (
     _In_ PFLT_INSTANCE Instance,
     _In_ PCUNICODE_STRING ParentDirectory,
@@ -2662,9 +2758,9 @@ Return Value:
             
     status = ObReferenceObjectByHandle( directoryHandle,
                                         FILE_LIST_DIRECTORY | SYNCHRONIZE, // DesiredAccess
-                                        *IoFileObjectType,
+                                        *(POBJECT_TYPE *) IoFileObjectType,
                                         KernelMode,
-                                        &directoryFileObject,
+                                        (PVOID *) &directoryFileObject,
                                         NULL );
 
 

@@ -156,6 +156,21 @@ typedef ULONG FLT_FILE_NAME_OPTIONS;
     #define FLT_FILE_NAME_REQUEST_FROM_CURRENT_PROVIDER 0x01000000
     #define FLT_FILE_NAME_DO_NOT_CACHE                  0x02000000
 
+#define FLTFL_OPERATION_REGISTRATION_SKIP_PAGING_IO     0x00000001
+#define FLTFL_INSTANCE_SETUP_AUTOMATIC_ATTACHMENT       0x00000001
+#define STATUS_FLT_DO_NOT_ATTACH                        0xc01c000f
+
+#define FLTFL_CALLBACK_DATA_IRP_OPERATION               0x00000001
+#define FLTFL_CALLBACK_DATA_FAST_IO_OPERATION           0x00000002
+#define FLTFL_CALLBACK_DATA_FS_FILTER_OPERATION         0x00000004
+
+#define FLTFL_FILE_NAME_PARSED_FINAL_COMPONENT          0x00000001
+#define FLTFL_FILE_NAME_PARSED_EXTENSION                0x00000002
+#define FLTFL_FILE_NAME_PARSED_STREAM                   0x00000004
+#define FLTFL_FILE_NAME_PARSED_PARENT_DIR               0x00000008
+  
+#define FLTFL_NORMALIZE_NAME_CASE_SENSITIVE             0x00000001
+
 /* structures and unions */
 
 #if !defined(_AMD64_) && !defined(_IA64_)
@@ -163,6 +178,35 @@ typedef ULONG FLT_FILE_NAME_OPTIONS;
 #endif
 
 typedef union _FLT_PARAMETERS {
+  struct {
+    PIO_SECURITY_CONTEXT     SecurityContext;
+    ULONG                    Options;
+    USHORT POINTER_ALIGNMENT FileAttributes;
+    USHORT                   ShareAccess;
+    USHORT POINTER_ALIGNMENT EaLength;
+    PVOID                    EaBuffer;
+    LARGE_INTEGER            AllocationSize;
+  } Create;
+
+  union {
+    struct {
+      ULONG                   Length;
+      PUNICODE_STRING         FileName;
+      FILE_INFORMATION_CLASS  FileInformationClass;
+      ULONG POINTER_ALIGNMENT FileIndex;
+      PVOID                   DirectoryBuffer;
+      PMDL                    MdlAddress;
+    } QueryDirectory;
+    struct {
+      ULONG                   Length;
+      ULONG POINTER_ALIGNMENT CompletionFilter;
+      ULONG                   Spare1;
+      ULONG POINTER_ALIGNMENT Spare2;
+      PVOID                   DirectoryBuffer;
+      PMDL                    MdlAddress;
+    } NotifyDirectory;
+  } DirectoryControl;
+
   union {
     struct {
       PVPB           Vpb;
@@ -196,6 +240,26 @@ typedef union _FLT_PARAMETERS {
       PMDL                    OutputMdlAddress;
     } Direct;
   } FileSystemControl;
+
+  struct {
+    PIRP                           Irp;
+    PFILE_NETWORK_OPEN_INFORMATION NetworkInformation;
+  } NetworkQueryOpen;
+
+  struct {
+    ULONG                                    Length;
+    FILE_INFORMATION_CLASS POINTER_ALIGNMENT FileInformationClass;
+    PFILE_OBJECT                             ParentOfTarget;
+    union {
+      struct {
+        BOOLEAN ReplaceIfExists;
+        BOOLEAN AdvanceOnly;
+      };
+      ULONG  ClusterCount;
+      HANDLE DeleteHandle;
+    };
+    PVOID                                    InfoBuffer;
+  } SetFileInformation;
 } FLT_PARAMETERS, *PFLT_PARAMETERS;
 
 #if !defined(_AMD64_) && !defined(_IA64_)
@@ -265,6 +329,7 @@ typedef struct _FLT_FILE_NAME_INFORMATION {
 #define _In_opt_
 #define _In_
 #define _Out_
+#define _Out_opt_
 
 typedef FLT_PREOP_CALLBACK_STATUS (NTAPI *PFLT_PRE_OPERATION_CALLBACK)(
   _Inout_  PFLT_CALLBACK_DATA Data,
@@ -388,7 +453,6 @@ FltRegisterFilter(
  _Out_  PFLT_FILTER *RetFilter
 );
 
-
 NTSTATUS
 NTAPI
 FltStartFiltering(
@@ -433,7 +497,99 @@ FltParseFileNameInformation(
   _Inout_  PFLT_FILE_NAME_INFORMATION FileNameInformation
 );
 
+PVOID
+NTAPI
+FltGetRoutineAddress(
+  _In_  PCSTR FltMgrRoutineName
+);
+
+NTSTATUS
+NTAPI
+FltGetDestinationFileNameInformation(
+ _In_      PFLT_INSTANCE Instance,
+ _In_      PFILE_OBJECT FileObject,
+ _In_opt_  HANDLE RootDirectory,
+ _In_      PWSTR FileName,
+ _In_      ULONG FileNameLength,
+ _In_      FLT_FILE_NAME_OPTIONS NameOptions,
+ _Out_     PFLT_FILE_NAME_INFORMATION *RetFileNameInformation
+);
+
+NTSTATUS
+NTAPI
+FltSetInformationFile(
+  _In_ PFLT_INSTANCE Instance,
+  _In_ PFILE_OBJECT FileObject,
+  _In_ PVOID FileInformation,
+  _In_ ULONG Length,
+  _In_ FILE_INFORMATION_CLASS FileInformationClass
+);
+
+NTSTATUS
+NTAPI
+FltGetFileNameInformationUnsafe(
+  _In_      PFILE_OBJECT FileObject,
+  _In_opt_  PFLT_INSTANCE Instance,
+  _In_      FLT_FILE_NAME_OPTIONS NameOptions,
+  _Out_     PFLT_FILE_NAME_INFORMATION *FileNameInformation
+);
+
+NTSTATUS
+NTAPI
+FltCheckAndGrowNameControl(
+  _Inout_  PFLT_NAME_CONTROL NameCtrl,
+  _In_     USHORT NewSize
+);
+
+NTSTATUS
+NTAPI
+FltCreateFile(
+  _In_      PFLT_FILTER Filter,
+  _In_opt_  PFLT_INSTANCE Instance,
+  _Out_     PHANDLE FileHandle,
+  _In_      ACCESS_MASK DesiredAccess,
+  _In_      POBJECT_ATTRIBUTES ObjectAttributes,
+  _Out_     PIO_STATUS_BLOCK IoStatusBlock,
+  _In_opt_  PLARGE_INTEGER AllocationSize,
+  _In_      ULONG FileAttributes,
+  _In_      ULONG ShareAccess,
+  _In_      ULONG CreateDisposition,
+  _In_      ULONG CreateOptions,
+  _In_      PVOID EaBuffer,
+  _In_      ULONG EaLength,
+  _In_      ULONG Flags
+);
+
+NTSTATUS
+NTAPI
+FltClose(
+  _In_  HANDLE FileHandle
+);
+
+NTSTATUS
+NTAPI
+FltAllocateCallbackData(
+  _In_      PFLT_INSTANCE Instance,
+  _In_opt_  PFILE_OBJECT FileObject,
+  _Out_     PFLT_CALLBACK_DATA *RetNewCallbackData
+);
+
+VOID
+NTAPI
+FltPerformSynchronousIo(
+  _Inout_  PFLT_CALLBACK_DATA CallbackData
+);
+
+VOID
+NTAPI
+FltFreeCallbackData(
+  _In_  PFLT_CALLBACK_DATA CallbackData
+);
+
 #define FLT_ASSERT ASSERT
+#define FLTAPI NTAPI
+
+#define FLT_IS_FASTIO_OPERATION(a) ((a)->Flags & FLTFL_CALLBACK_DATA_FAST_IO_OPERATION)
 
 #ifdef __cplusplus
 }

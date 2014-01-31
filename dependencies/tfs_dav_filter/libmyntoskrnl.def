@@ -42,3 +42,14 @@ PoCallDriver@8
 PoStartNextPowerIrp@4
 IoDetachDevice@4
 RtlAssert@16
+ExInitializeDriverRuntime@4
+MmGetSystemRoutineAddress@4
+ZwOpenKey@12
+ZwQueryValueKey@24
+ExAllocatePoolWithTag@12
+ExFreePoolWithTag@8
+ExFreePool@4
+IoFileObjectType
+RtlAppendUnicodeStringToString@8
+RtlCopyUnicodeString@8
+RtlPrefixUnicodeString@12

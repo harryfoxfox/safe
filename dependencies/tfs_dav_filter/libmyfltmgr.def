@@ -6,4 +6,13 @@ FltUnregisterFilter@4
 FltGetFileNameInformation@12
 FltReleaseFileNameInformation@4
 FltParseFileNameInformation@4
-
+FltGetRoutineAddress@4
+FltGetDestinationFileNameInformation@28
+FltSetInformationFile@20
+FltGetFileNameInformationUnsafe@16
+FltCheckAndGrowNameControl@8
+FltCreateFile@56
+FltClose@4
+FltAllocateCallbackData@12
+FltPerformSynchronousIo@4
+FltFreeCallbackData@4
