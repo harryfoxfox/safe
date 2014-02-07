@@ -26,10 +26,10 @@
 /* These are default version of placement new, they
    should be available globally by the compiler but this is
    not the case with g++ */
-void *operator new (size_t, void *p) throw() { return p ; }
-void *operator new[] (size_t, void *p) throw() { return p ; }
-void operator delete (void *, void *) throw() { }
-void operator delete[] (void *, void *) throw() { }
+inline void *operator new (size_t, void *p) throw() { return p ; }
+inline void *operator new[] (size_t, void *p) throw() { return p ; }
+inline void operator delete (void *, void *) throw() { }
+inline void operator delete[] (void *, void *) throw() { }
 
 #endif
 

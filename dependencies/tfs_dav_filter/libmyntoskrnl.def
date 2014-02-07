@@ -53,3 +53,16 @@ IoFileObjectType
 RtlAppendUnicodeStringToString@8
 RtlCopyUnicodeString@8
 RtlPrefixUnicodeString@12
+memmove
+RtlCompareMemory@12
+ZwOpenSymbolicLinkObject@12
+ZwQuerySymbolicLinkObject@12
+IoCreateUnprotectedSymbolicLink@8
+KeInitializeMutex@8
+ZwOpenFile@24
+ZwFsControlFile@40
+RtlEqualUnicodeString@12
+ZwSetInformationFile@20
+KeWaitForMutexObject@20
+KeReleaseMutex@8
+ZwCreateFile@44

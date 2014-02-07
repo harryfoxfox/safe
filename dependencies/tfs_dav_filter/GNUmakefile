@@ -18,23 +18,18 @@ include config.mk
 
 DLLTOOL ?= dlltool
 
-SAFE_SIMREP_SRC_C = safe_simrep.c
-SAFE_RAMDISK_SRC_CPP = ramdisk.cpp
-
-SAFE_SIMREP_OBJ = ${SAFE_SIMREP_SRC_C:.c=.c.o}
+SAFE_RAMDISK_SRC_CPP = ramdisk.cpp nt_helpers.cpp ramdisk_device.cpp ramdisk_control_device.cpp io_device.cpp
 SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
 
 SAFE_RAMDISK_TARGET = safe_ramdisk.sys
-SAFE_SIMREP_TARGET = safe.sys
 
 CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/../../src $(if $(RELEASE),,-DDBG)
 CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror $(if $(RELEASE),-Os -flto,)
 CFLAGS ?= $(CPPFLAGS) -Wall -Werror $(if $(RELEASE),-Os -flto,)
 
-all: $(SAFE_RAMDISK_TARGET) $(SAFE_SIMREP_TARGET)
+all: $(SAFE_RAMDISK_TARGET)
 
-tfs_dav_filter.cpp: ntoskrnl_cpp.hpp fltkernel.h
-ramdisk.cpp: ntoskrnl_cpp.hpp
+*.o: *.hpp
 
 %.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
@@ -44,34 +39,6 @@ ramdisk.cpp: ntoskrnl_cpp.hpp
 
 %.a: %.def
 	$(DLLTOOL) -k -d $^ -l $@
-
-$(SAFE_SIMREP_TARGET): $(SAFE_SIMREP_OBJ) libmyntoskrnl.a libmyfltmgr.a
-	$(CC) 	-Wl,--base-file,base.tmp \
-		-Wl,--entry,_DriverEntry@8 \
-		-nostartfiles -nostdlib  -static-libgcc \
-		-o junk.tmp \
-		$(CFLAGS) \
-		-L$(CURDIR) \
-		$(SAFE_SIMREP_OBJ) \
-		-lmyntoskrnl -lmyfltmgr -lhal -lgcc
-	-rm -f junk.tmp
-
-	$(DLLTOOL) --dllname $@ --base-file base.tmp --output-exp ${@:.sys=.exp}
-	-rm -f base.tmp
-
-	$(CC)	-Wl,--subsystem,native \
-		-Wl,--image-base,0x10000 \
-		-Wl,--file-alignment,0x1000 \
-		-Wl,--section-alignment,0x1000 \
-		-Wl,--entry,_DriverEntry@8 \
-		-Wl,${@:.sys=.exp} \
-		-mdll \
-		-nostartfiles -nostdlib -static-libgcc \
-		-o $@ \
-		$(CFLAGS) \
-		-L$(CURDIR) \
-		$(SAFE_SIMREP_OBJ) \
-		-lmyntoskrnl -lmyfltmgr -lhal -lgcc
 
 $(SAFE_RAMDISK_TARGET): $(SAFE_RAMDISK_OBJ) libmyntoskrnl.a
 	$(CC) 	-Wl,--base-file,base.tmp \

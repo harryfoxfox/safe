@@ -94,6 +94,9 @@ class CDeferred<F(T,V)> {
   bool is_valid;
 
 public:
+  CDeferred()
+    : is_valid(false) {}
+
   CDeferred(F f_, T t, V v)
     : f(f_)
     , a1(_int::move(t))
@@ -117,6 +120,11 @@ public:
   }
 
   ~CDeferred() { if (is_valid) f(a1, a2); }
+
+  void
+  cancel() {
+    is_valid = false;
+  }
 };
 
 template <class Destroyer, class... Args>
