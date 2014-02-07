@@ -89,10 +89,10 @@ class RAMDiskDevice : public IODevice {
   NTSTATUS
   _irp_read_or_write(PIRP irp) noexcept;
 
-  RemoveLockGuard
-  create_remove_lock_guard();
+  NTSTATUS
+  create_remove_lock_guard(RemoveLockGuard *);
 
-  void
+  NTSTATUS
   acquire_remove_lock();
 
   void

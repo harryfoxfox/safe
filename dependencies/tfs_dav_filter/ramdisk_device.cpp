@@ -47,15 +47,22 @@ RAMDiskDevice::_free_remove_lock(RAMDiskDevice *dcb) {
   dcb->release_remove_lock();
 }
 
-RAMDiskDevice::RemoveLockGuard
-RAMDiskDevice::create_remove_lock_guard() {
-  this->acquire_remove_lock();
-  return lockbox::create_deferred(_free_remove_lock, this);
+NTSTATUS
+RAMDiskDevice::create_remove_lock_guard(RAMDiskDevice::RemoveLockGuard *out) {
+  auto status = this->acquire_remove_lock();
+  if (!NT_SUCCESS(status)) return status;
+  *out = lockbox::create_deferred(_free_remove_lock, this);
+  return STATUS_SUCCESS;
 }
 
-void
+NTSTATUS
 RAMDiskDevice::acquire_remove_lock() {
-  IoAcquireRemoveLock(&this->remove_lock, 0);
+  auto status = IoAcquireRemoveLock(&this->remove_lock, 0);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("IoAcquireRemoveLock error: %s (0x%x)\n",
+		 nt_status_to_string(status), status);
+  }
+  return status;
 }
 
 void
@@ -348,7 +355,12 @@ RAMDiskDevice::_irp_read_or_write(PIRP irp) noexcept {
     return standard_complete_irp(irp, STATUS_INVALID_DEVICE_STATE);
   }
 
-  auto remove_lock_guard = this->create_remove_lock_guard();
+  RAMDiskDevice::RemoveLockGuard remove_lock_guard;
+  auto status = this->create_remove_lock_guard(&remove_lock_guard);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("Error calling create_remove_lock_guard\n");
+    return standard_complete_irp(irp, status);
+  }
 
   auto io_stack = IoGetCurrentIrpStackLocation(irp);
   nt_log_debug("%s_irp\n",
@@ -380,7 +392,12 @@ RAMDiskDevice::irp_device_control(PIRP irp) noexcept {
     return standard_complete_irp(irp, STATUS_INVALID_DEVICE_STATE);
   }
 
-  auto remove_lock_guard = this->create_remove_lock_guard();
+  RAMDiskDevice::RemoveLockGuard remove_lock_guard;
+  auto status0 = this->create_remove_lock_guard(&remove_lock_guard);
+  if (!NT_SUCCESS(status0)) {
+    nt_log_error("Error calling create_remove_lock_guard\n");
+    return standard_complete_irp(irp, status0);
+  }
 
   auto io_stack = IoGetCurrentIrpStackLocation(irp);
   auto ioctl = io_stack->Parameters.DeviceIoControl.IoControlCode;
@@ -445,7 +462,12 @@ NTSTATUS
 RAMDiskDevice::irp_pnp(PIRP irp) {
   PAGED_CODE();
 
-  auto remove_lock_guard = this->create_remove_lock_guard();
+  RAMDiskDevice::RemoveLockGuard remove_lock_guard;
+  auto status = this->create_remove_lock_guard(&remove_lock_guard);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("Error calling create_remove_lock_guard\n");
+    return standard_complete_irp(irp, status);
+  }
 
   auto io_stack = IoGetCurrentIrpStackLocation(irp);
   switch (io_stack->MinorFunction) {
@@ -491,13 +513,20 @@ RAMDiskDevice::irp_pnp(PIRP irp) {
     // We must release resources allocated during
     // IRP_MN_START_DEVICE on IRP_MN_STOP_DEVICE
     // since we allocate nothing on IRP_MN_START_DEVICE, do nothing
+    auto old_pnp_state = this->get_pnp_state();
     this->set_pnp_state(PnPState::STOPPED);
 
     // NB: we have to wait for all outstanding IRPs to finish 
     //     (since PnPState::STOPPED has been set we are guaranteed
     //      no new IRPs will commence)
     this->release_remove_lock_and_wait();
-    this->acquire_remove_lock();
+    auto status = this->acquire_remove_lock();
+    if (!NT_SUCCESS(status)) {
+      nt_log_error("Error acquiring remove lock, resetting pnp state "
+		   "and completing IRP");
+      this->set_pnp_state(old_pnp_state);
+      return standard_complete_irp(irp, status);
+    }
 
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoSkipCurrentIrpStackLocation(irp);
