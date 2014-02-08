@@ -17,6 +17,7 @@
 include config.mk
 
 DLLTOOL ?= dlltool
+STRIP ?= strip
 
 SAFE_RAMDISK_SRC_CPP = ramdisk.cpp nt_helpers.cpp ramdisk_device.cpp tfs_dav_reparse_engage.cpp io_device.cpp ramdisk_control_device.cpp
 SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
@@ -66,6 +67,7 @@ $(SAFE_RAMDISK_TARGET): $(SAFE_RAMDISK_OBJ) libmyntoskrnl.a
 		-L$(CURDIR) \
 		$(SAFE_RAMDISK_OBJ) \
 		-lmyntoskrnl -lhal -lgcc
+	$(if $(RELEASE),$(STRIP) -s $@,)
 # TODO: use stampinf or similar tool to make this automatic
 	@echo "New safe_ramdisk.sys made, make sure to tweak DriverVer in the safe_ramdisk.inf"
 
