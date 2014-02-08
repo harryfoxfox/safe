@@ -217,9 +217,7 @@ does_tfs_dav_link_already_exists(PUNICODE_STRING path_to_tfs_dav,
 			    DELETE | SYNCHRONIZE,
 			    &attributes,
 			    &io_status_block,
-			    FILE_SHARE_READ
-			    | FILE_SHARE_WRITE
-			    | FILE_SHARE_DELETE,
+			    FILE_SHARE_READ | FILE_SHARE_WRITE,
 			    FILE_DIRECTORY_FILE
 			    | FILE_OPEN_FOR_BACKUP_INTENT
 			    | FILE_SYNCHRONOUS_IO_ALERT
@@ -408,7 +406,7 @@ create_new_tfs_dav_link(PUNICODE_STRING path_to_tfs_dav,
 			     &io_status_block,
 			     nullptr,
 			     FILE_ATTRIBUTE_NORMAL,
-			     0,
+			     FILE_SHARE_READ | FILE_SHARE_WRITE,
 			     FILE_OPEN_IF,
 			     FILE_DIRECTORY_FILE
 			     | FILE_OPEN_REPARSE_POINT
