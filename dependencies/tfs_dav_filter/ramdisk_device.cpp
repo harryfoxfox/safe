@@ -762,7 +762,14 @@ delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept {
 NTSTATUS
 create_ramdisk_device(PDRIVER_OBJECT driver_object,
 		      PDEVICE_OBJECT physical_device_object) {
+  static bool g_device_exists;
+
   nt_log_debug("creating new disk device!");
+
+  if (g_device_exists) {
+    nt_log_info("not creating a new device, one already exists");
+    return STATUS_DEVICE_ALREADY_ATTACHED;
+  }
 
   // TODO: We really should register device interface classes
   // http://msdn.microsoft.com/en-us/library/windows/hardware/ff549506%28v=vs.85%29.aspx
@@ -819,6 +826,8 @@ create_ramdisk_device(PDRIVER_OBJECT driver_object,
   // Cancel deferred delete device call since we succeeded
   _delete_device_object.cancel();
   device_object->Flags &= ~DO_DEVICE_INITIALIZING;
+
+  g_device_exists = true;
 
   return STATUS_SUCCESS;
 }
