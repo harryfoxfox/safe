@@ -494,6 +494,7 @@ RAMDiskDevice::_irp_read_or_write(PIRP irp) noexcept {
   auto io_stack = IoGetCurrentIrpStackLocation(irp);
   nt_log_debug("%s_irp\n",
 	       io_stack->MajorFunction == IRP_MJ_READ ? "read" : "write");
+  (void) io_stack;
 
   IoMarkIrpPending(irp);
 
