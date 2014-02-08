@@ -484,7 +484,7 @@ RAMDiskDevice::irp_close(PIRP irp) noexcept {
 }
 
 NTSTATUS
-RAMDiskDevice::irp_cleanup(PIRP irp) noexcept {
+RAMDiskDevice::control_device_cleanup(PIRP irp) noexcept {
   IoMarkIrpPending(irp);
   this->queue_request(irp);
   return STATUS_PENDING;

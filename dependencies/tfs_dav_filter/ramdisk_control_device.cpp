@@ -80,7 +80,7 @@ RAMDiskControlDevice::irp_close(PIRP irp) noexcept {
 
 NTSTATUS
 RAMDiskControlDevice::irp_cleanup(PIRP irp) noexcept {
-  return _dcb->irp_cleanup(irp);
+  return _dcb->control_device_cleanup(irp);
 }
 
 NTSTATUS

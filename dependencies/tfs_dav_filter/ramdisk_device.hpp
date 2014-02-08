@@ -128,9 +128,6 @@ public:
   irp_close(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
   NTSTATUS
-  irp_cleanup(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
-
-  NTSTATUS
   irp_read(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
   NTSTATUS
@@ -147,6 +144,9 @@ public:
 
   NTSTATUS
   irp_system_control(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
+
+  NTSTATUS
+  control_device_cleanup(PIRP irp) noexcept;
 
   friend VOID NTAPI worker_thread_bootstrap(PVOID ctx) noexcept;
   friend
