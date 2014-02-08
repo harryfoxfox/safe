@@ -52,8 +52,13 @@ check_parameter_size(PIO_STACK_LOCATION io_stack, size_t s) noexcept;
 #define NT_LOG_PREFIX ""
 #endif
 
+#ifdef DBG
 #define nt_log(...) (STATUS_SUCCESS == \
 		     DbgPrint((char *) NT_LOG_PREFIX __VA_ARGS__))
+#else
+#define nt_log(...)
+#endif
+
 #define nt_log_debug nt_log
 #define nt_log_info nt_log
 #define nt_log_error nt_log
