@@ -27,6 +27,7 @@
 
 #include "ntoskrnl_cpp.hpp"
 #include "nt_helpers.hpp"
+#include "ramdisk_control_device.hpp"
 #include "ramdisk_ioctl.h"
 #include "tfs_dav_reparse_engage.hpp"
 
@@ -43,10 +44,8 @@ namespace safe_nt {
 
 #ifdef _WIN64
 const size_t MEM_SIZE = 4096 * 1024 * 1024;
-const WCHAR DOS_DEVICE_NAME[] = L"\\DosDevices\\Global\\SafeDos";
 #else
 const size_t MEM_SIZE = 100 * 1024 * 1024;
-const WCHAR DOS_DEVICE_NAME[] = L"\\DosDevices\\SafeDos";
 #endif
 
 const ULONG REMOVE_LOCK_TAG = 0x02051986UL;
@@ -97,7 +96,8 @@ void
 format_fat32(void *mem, size_t memsize, PDISK_GEOMETRY pgeom,
 	     PUCHAR ppartition_type);
 
-RAMDiskDevice::RAMDiskDevice(PDEVICE_OBJECT lower_device_object,
+RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
+			     PDEVICE_OBJECT lower_device_object,
 			     NTSTATUS *out) noexcept {
   this->image_buffer = nullptr;
   this->thread_ref = nullptr;
@@ -130,6 +130,14 @@ RAMDiskDevice::RAMDiskDevice(PDEVICE_OBJECT lower_device_object,
 			 1, 0);
 
   this->pnp_state = PnPState::NOT_STARTED;
+
+  auto status5 = 
+    create_ramdisk_control_device(driver_object, this,
+				  &this->control_device);
+  if (!NT_SUCCESS(status5)) {
+    *out = status5;
+    return;
+  }
 
   // Start Read / Write Thread handler
   // NB: we need to dispatch some IRPs to another thread
@@ -172,6 +180,10 @@ RAMDiskDevice::~RAMDiskDevice() noexcept {
 		   (unsigned) status);
     }
     ObDereferenceObject(this->thread_ref);
+  }
+
+  if (this->control_device) {
+    delete_ramdisk_control_device(this->control_device);
   }
 
   // free image buffer
@@ -757,11 +769,6 @@ delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept {
   nt_log_debug("deleting device!\n");
   auto dcb = get_disk_control_block(device_object);
   dcb->~RAMDiskDevice();
-  {
-    UNICODE_STRING sym_link;
-    RtlInitUnicodeString(&sym_link, DOS_DEVICE_NAME);
-    IoDeleteSymbolicLink(&sym_link);
-  }
   IoDeleteDevice(device_object);
 }
 
@@ -814,19 +821,13 @@ create_ramdisk_device(PDRIVER_OBJECT driver_object,
 
   // Initialize our disk device runtime
   NTSTATUS status3;
-  new (device_object->DeviceExtension) RAMDiskDevice(lower_device, &status3);
+  new (device_object->DeviceExtension) RAMDiskDevice(driver_object,
+						     lower_device,
+						     &status3);
   if (!NT_SUCCESS(status3)) {
     nt_log_error("Error while calling RAMDiskDevice.init: 0x%x\n",
 		 (unsigned) status3);
     return status3;
-  }
-
-  {
-    // Create device symlink
-    UNICODE_STRING symbolic_link_name;
-    RtlInitUnicodeString(&symbolic_link_name, DOS_DEVICE_NAME);
-    auto status5 = IoCreateSymbolicLink(&symbolic_link_name, &device_name);
-    if (!NT_SUCCESS(status5)) return status5;
   }
 
   // Cancel deferred delete device call since we succeeded

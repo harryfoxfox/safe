@@ -40,7 +40,7 @@ qd(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
 
 extern "C" {
 
-typedef safe_nt::RAMDiskDevice qt;
+typedef safe_nt::IODevice qt;
 
 static
 NTSTATUS

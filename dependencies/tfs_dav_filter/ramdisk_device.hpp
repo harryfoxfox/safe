@@ -72,6 +72,8 @@ class RAMDiskDevice : public IODevice {
   IO_REMOVE_LOCK remove_lock;
   PnPState pnp_state;
 
+  PDEVICE_OBJECT control_device;
+
   SIZE_T
   get_image_size() const noexcept;
 
@@ -112,7 +114,8 @@ class RAMDiskDevice : public IODevice {
     return pnp_state;
   }
 
-  RAMDiskDevice(PDEVICE_OBJECT lower_device_object,
+  RAMDiskDevice(PDRIVER_OBJECT driver_object,
+		PDEVICE_OBJECT lower_device_object,
 		NTSTATUS *status) noexcept;
 
   ~RAMDiskDevice() noexcept;
