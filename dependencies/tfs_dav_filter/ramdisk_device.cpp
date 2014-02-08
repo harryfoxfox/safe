@@ -41,11 +41,16 @@
 
 namespace safe_nt {
 
+#ifdef _WIN64
+const size_t MEM_SIZE = 4096 * 1024 * 1024;
+const WCHAR DOS_DEVICE_NAME[] = L"\\DosDevices\\Global\\SafeDos";
+#else
 const size_t MEM_SIZE = 100 * 1024 * 1024;
+const WCHAR DOS_DEVICE_NAME[] = L"\\DosDevices\\SafeDos";
+#endif
+
 const ULONG REMOVE_LOCK_TAG = 0x02051986UL;
 const auto DISK_CONTROL_BLOCK_MAGIC = (uint32_t) 0x02051986UL;
-
-const WCHAR DOS_DEVICE_NAME[] = L"\\DosDevices\\SafeDos";
 
 void
 RAMDiskDevice::_free_remove_lock(RAMDiskDevice *dcb) {
