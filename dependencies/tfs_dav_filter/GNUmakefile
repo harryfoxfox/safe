@@ -23,7 +23,7 @@ SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
 
 SAFE_RAMDISK_TARGET = safe_ramdisk.sys
 
-CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/../../src $(if $(RELEASE),,-DDBG)
+CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/../../src $(if $(RELEASE),-DIO_DEVICE_VIRTUAL= -DIO_DEVICE_OVERRIDE=,-DDBG)
 CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror $(if $(RELEASE),-Os -flto,)
 CFLAGS ?= $(CPPFLAGS) -Wall -Werror $(if $(RELEASE),-Os -flto,)
 

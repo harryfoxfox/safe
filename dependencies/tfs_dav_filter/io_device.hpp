@@ -26,41 +26,49 @@
 
 namespace safe_nt {
 
+#ifndef IO_DEVICE_VIRTUAL
+#define IO_DEVICE_VIRTUAL virtual
+#endif
+
+#ifndef IO_DEVICE_OVERRIDE
+#define IO_DEVICE_OVERRIDE override
+#endif
+
 class IODevice {
 public:
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_create(PIRP irp) noexcept;
 
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_cleanup(PIRP irp) noexcept;
 
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_close(PIRP irp) noexcept;
 
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_read(PIRP irp) noexcept;
 
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_write(PIRP irp) noexcept;
 
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_device_control(PIRP irp) noexcept;
 
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_pnp(PIRP irp) noexcept;
 
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_power(PIRP irp) noexcept;
 
-  virtual
+  IO_DEVICE_VIRTUAL
   NTSTATUS
   irp_system_control(PIRP irp) noexcept;
 };

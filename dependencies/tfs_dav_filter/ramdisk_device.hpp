@@ -118,41 +118,32 @@ class RAMDiskDevice : public IODevice {
   ~RAMDiskDevice() noexcept;
 
 public:
-  virtual
   NTSTATUS
-  irp_create(PIRP irp) noexcept override;
+  irp_create(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
-  virtual
   NTSTATUS
-  irp_close(PIRP irp) noexcept override;
+  irp_close(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
-  virtual
   NTSTATUS
-  irp_cleanup(PIRP irp) noexcept override;
+  irp_cleanup(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
-  virtual
   NTSTATUS
-  irp_read(PIRP irp) noexcept override;
+  irp_read(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
-  virtual
   NTSTATUS
-  irp_write(PIRP irp) noexcept override;
+  irp_write(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
-  virtual
   NTSTATUS
-  irp_device_control(PIRP irp) noexcept override;
+  irp_device_control(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
-  virtual
   NTSTATUS
-  irp_pnp(PIRP irp) noexcept override;
+  irp_pnp(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
-  virtual
   NTSTATUS
-  irp_power(PIRP irp) noexcept override;
+  irp_power(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
-  virtual
   NTSTATUS
-  irp_system_control(PIRP irp) noexcept override;
+  irp_system_control(PIRP irp) noexcept IO_DEVICE_OVERRIDE;
 
   friend VOID NTAPI worker_thread_bootstrap(PVOID ctx) noexcept;
   friend

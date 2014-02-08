@@ -30,56 +30,58 @@
 #include <ntdddisk.h>
 #include <ntifs.h>
 
-template<NTSTATUS (safe_nt::IODevice::*p)(PIRP)>
+template<class DeviceType, NTSTATUS (DeviceType::*p)(PIRP)>
 static
 NTSTATUS
 qd(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  auto dev = static_cast<safe_nt::IODevice *>(DeviceObject->DeviceExtension);
+  auto dev = static_cast<DeviceType *>(DeviceObject->DeviceExtension);
   return (dev->*p)(Irp);
 }
 
 extern "C" {
 
+typedef safe_nt::RAMDiskDevice qt;
+
 static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchCreate(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  return qd<&safe_nt::IODevice::irp_create>(DeviceObject, Irp);
+  return qd<qt, &qt::irp_create>(DeviceObject, Irp);
 }
 
 static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchClose(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  return qd<&safe_nt::IODevice::irp_close>(DeviceObject, Irp);
+  return qd<qt, &qt::irp_close>(DeviceObject, Irp);
 }
 
 static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchCleanup(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  return qd<&safe_nt::IODevice::irp_cleanup>(DeviceObject, Irp);
+  return qd<qt, &qt::irp_cleanup>(DeviceObject, Irp);
 }
 
 static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchRead(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  return qd<&safe_nt::IODevice::irp_read>(DeviceObject, Irp);
+  return qd<qt, &qt::irp_read>(DeviceObject, Irp);
 }
 
 static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchWrite(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  return qd<&safe_nt::IODevice::irp_write>(DeviceObject, Irp);
+  return qd<qt, &qt::irp_write>(DeviceObject, Irp);
 }
 
 static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchDeviceControl(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  return qd<&safe_nt::IODevice::irp_device_control>(DeviceObject, Irp);
+  return qd<qt, &qt::irp_device_control>(DeviceObject, Irp);
 }
 
 static
@@ -89,7 +91,7 @@ SafeRamDiskDispatchPnP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
   // save minor function for dispatching pnp, stack location may become
   // invalidated by IoSkipCurrentIrpStackLocation
   auto minor_function = IoGetCurrentIrpStackLocation(Irp)->MinorFunction;
-  auto status = qd<&safe_nt::IODevice::irp_pnp>(DeviceObject, Irp);
+  auto status = qd<qt, &qt::irp_pnp>(DeviceObject, Irp);
   nt_log_debug("IRP_MJ_PNP %s (0x%x) -> %s (0x%x)",
 	       safe_nt::pnp_minor_function_to_string(minor_function),
 	       minor_function,
@@ -105,14 +107,14 @@ static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchPower(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  return qd<&safe_nt::IODevice::irp_power>(DeviceObject, Irp);
+  return qd<qt, &qt::irp_power>(DeviceObject, Irp);
 }
 
 static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchSystemControl(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-  return qd<&safe_nt::IODevice::irp_system_control>(DeviceObject, Irp);
+  return qd<qt, &qt::irp_system_control>(DeviceObject, Irp);
 }
 
 static
