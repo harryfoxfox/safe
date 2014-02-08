@@ -19,8 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+#include <mountdev.h>
 #include <ntifs.h>
 #include <ntdddisk.h>
+#include <ntddstor.h>
+#include <ntddvol.h>
 
 namespace safe_nt {
 
@@ -39,9 +42,10 @@ ioctl_to_string(ULONG ioctl) {
     __R(IOCTL_STORAGE_QUERY_PROPERTY);
     //    __R(IOCTL_STORAGE_GET_HOTPLUG_INFO);
     __R(IOCTL_STORAGE_GET_DEVICE_NUMBER);
-    //__R(IOCTL_MOUNTDEV_QUERY_DEVICE_NAME);
-    //__R(IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS);
-    //__R(IOCTL_VOLUME_GET_GTP_ATTRIBUTES);
+    __R(IOCTL_MOUNTDEV_QUERY_DEVICE_NAME);
+    __R(IOCTL_MOUNTDEV_QUERY_UNIQUE_ID);
+    __R(IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS);
+    __R(IOCTL_VOLUME_GET_GPT_ATTRIBUTES);
   default: return "unknown!";
   }
 #undef __R
@@ -63,6 +67,9 @@ pnp_minor_function_to_string(UCHAR minor) {
     __R(IRP_MN_QUERY_DEVICE_RELATIONS);
     __R(IRP_MN_FILTER_RESOURCE_REQUIREMENTS);
     __R(IRP_MN_DEVICE_ENUMERATED);
+    __R(IRP_MN_QUERY_CAPABILITIES);
+    __R(IRP_MN_QUERY_PNP_DEVICE_STATE);
+    __R(IRP_MN_QUERY_LEGACY_BUS_INFORMATION);
     default: return "unknown";
   }
 #undef __R
