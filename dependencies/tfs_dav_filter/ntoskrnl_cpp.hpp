@@ -17,7 +17,7 @@
  */
 
 #ifndef __tfs_dav_store_ntoskernel_cxx_hpp
-#define __tfs_dav_store_ntoskernel_h
+#define __tfs_dav_store_ntoskernel_cxx_hpp
 
 #include <ntifs.h>
 

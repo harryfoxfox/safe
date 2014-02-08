@@ -23,6 +23,7 @@
 #define __safe_ramdisk_device_hpp
 
 #include "io_device.hpp"
+#include "ntoskrnl_cpp.hpp"
 
 #include <lockbox/deferred.hpp>
 
@@ -127,6 +128,10 @@ public:
 
   virtual
   NTSTATUS
+  irp_cleanup(PIRP irp) noexcept override;
+
+  virtual
+  NTSTATUS
   irp_read(PIRP irp) noexcept override;
 
   virtual
@@ -153,8 +158,7 @@ public:
   friend
   NTSTATUS
   create_ramdisk_device(PDRIVER_OBJECT driver_object,
-			PDEVICE_OBJECT physical_device_object,
-			PDEVICE_OBJECT *) noexcept;
+			PDEVICE_OBJECT physical_device_object) noexcept;
   friend void delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept;
 };
 
@@ -162,8 +166,7 @@ const WCHAR RAMDISK_DEVICE_NAME[] = L"\\Device\\SafeRamDisk";
 
 NTSTATUS
 create_ramdisk_device(PDRIVER_OBJECT driver_object,
-		      PDEVICE_OBJECT physical_device_object,
-		      PDEVICE_OBJECT *out) noexcept;
+		      PDEVICE_OBJECT physical_device_object) noexcept;
 
 void
 delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept;

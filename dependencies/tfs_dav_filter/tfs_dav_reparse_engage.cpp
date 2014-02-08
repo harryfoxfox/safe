@@ -19,20 +19,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include "ramdisk_control_device.hpp"
+#include "tfs_dav_reparse_engage.hpp"
 
 #include "ntoskrnl_cpp.hpp"
 #include "nt_helpers.hpp"
 #include "ramdisk_device.hpp"
-#include "ramdisk_ioctl.h"
 
 #include <lockbox/deferred.hpp>
 
 #include <ntifs.h>
-#include <mountdev.h>
 
 #ifndef OBJ_KERNEL_HANDLE
 #define OBJ_KERNEL_HANDLE       0x00000200
+#endif
+
+#ifndef OBJ_FORCE_ACCESS_CHECK
+#define OBJ_FORCE_ACCESS_CHECK 0x00000400L
 #endif
 
 // NB: some versions of MinGW32 screws this up
@@ -49,18 +51,6 @@ template <class T>
 void *
 add_ptr(T *a, size_t amt) {
   return (void *) (((uint8_t *)a) + amt);
-}
-
-static
-void
-set_engaged(PFILE_OBJECT file_object, bool engaged) {
-  file_object->FsContext = (PVOID) engaged;
-}
-
-static
-bool
-get_engaged(PFILE_OBJECT file_object) {
-  return (bool) file_object->FsContext;
 }
 
 static
@@ -110,6 +100,13 @@ query_value_key_allocate(HANDLE KeyHandle,
 
   _free_key_value_information.cancel();
 
+  return STATUS_SUCCESS;
+}
+
+static
+NTSTATUS
+free_unicode_string(PUNICODE_STRING us) {
+  ExFreePoolWithTag(us->Buffer, FREE_UNICODE_STRING_TAG);
   return STATUS_SUCCESS;
 }
 
@@ -199,6 +196,28 @@ get_path_to_tfs_dav(PUNICODE_STRING path_to_tfs_dav) {
 
 static
 NTSTATUS
+set_delete_on_close(HANDLE file_handle) {
+  FILE_DISPOSITION_INFORMATION file_dispo_info;
+  memset(&file_dispo_info, 0, sizeof(file_dispo_info));
+  file_dispo_info.DoDeleteFile = TRUE;
+
+  IO_STATUS_BLOCK io_status_block_2;
+  auto status3 = ZwSetInformationFile(file_handle,
+				      &io_status_block_2,
+				      (PVOID) &file_dispo_info,
+				      sizeof(file_dispo_info),
+				      FileDispositionInformation);
+  if (!NT_SUCCESS(status3)) {
+    nt_log_error("Error while calling ZwSetInformationFile: %s (0x%x)",
+		 nt_status_to_string(status3), status3);
+    return status3;
+  }
+
+  return STATUS_SUCCESS;
+}
+
+static
+NTSTATUS
 does_tfs_dav_link_already_exists(PUNICODE_STRING path_to_tfs_dav,
 				 PUNICODE_STRING intended_target,
 				 PHANDLE reparse_handle) {
@@ -221,8 +240,7 @@ does_tfs_dav_link_already_exists(PUNICODE_STRING path_to_tfs_dav,
 			    FILE_DIRECTORY_FILE
 			    | FILE_OPEN_FOR_BACKUP_INTENT
 			    | FILE_SYNCHRONOUS_IO_ALERT
-			    | FILE_OPEN_REPARSE_POINT
-			    | FILE_DELETE_ON_CLOSE);
+			    | FILE_OPEN_REPARSE_POINT);
   if (!NT_SUCCESS(status2) &&
       io_status_block.Information != FILE_DOES_NOT_EXIST) {
     nt_log_error("Error while calling ZwOpenFile(\"%wZ\"): %s (0x%x)",
@@ -271,6 +289,10 @@ does_tfs_dav_link_already_exists(PUNICODE_STRING path_to_tfs_dav,
   reparse_point_target.MaximumLength = reparse_point_target.Length;
 
   if (RtlEqualUnicodeString(intended_target, &reparse_point_target, TRUE)) {
+    // set delete on close
+    auto status4 = set_delete_on_close(existing_tfs_dav_handle);
+    if (!NT_SUCCESS(status4)) return status4;
+
     *reparse_handle = existing_tfs_dav_handle;
     _close_file.cancel();
   }
@@ -292,7 +314,6 @@ rename_tfs_dav_directory(PUNICODE_STRING path_to_tfs_dav, RenameDirection dir) {
     UNICODE_STRING new_tfs_dav_path_suffix;
     RtlInitUnicodeString(&new_tfs_dav_path_suffix, L"-SafeBackup");
 
-
     new_tfs_dav_path.MaximumLength = (new_tfs_dav_path_suffix.Length
 				      + path_to_tfs_dav->Length);
     new_tfs_dav_path.Length = 0;
@@ -310,6 +331,9 @@ rename_tfs_dav_directory(PUNICODE_STRING path_to_tfs_dav, RenameDirection dir) {
     RtlCopyUnicodeString(&new_tfs_dav_path, path_to_tfs_dav);
     RtlAppendUnicodeStringToString(&new_tfs_dav_path, &new_tfs_dav_path_suffix);
   }
+
+  auto _free_new_tfs_dav_path =
+    lockbox::create_deferred(free_unicode_string, &new_tfs_dav_path);
 
   PUNICODE_STRING source_path, dest_path;
 
@@ -331,29 +355,35 @@ rename_tfs_dav_directory(PUNICODE_STRING path_to_tfs_dav, RenameDirection dir) {
 
   HANDLE existing_tfs_dav_handle;
   IO_STATUS_BLOCK io_status_block;
-  auto status2 = ZwOpenFile(&existing_tfs_dav_handle,
-			    DELETE | SYNCHRONIZE,
-			    &attributes,
-			    &io_status_block,
-			    FILE_SHARE_READ
-			    | FILE_SHARE_WRITE
-			    | FILE_SHARE_DELETE,
-			    FILE_DIRECTORY_FILE
-			    | FILE_SYNCHRONOUS_IO_ALERT
-			    | FILE_OPEN_FOR_BACKUP_INTENT
-			    | FILE_OPEN_REPARSE_POINT);
-  if (!NT_SUCCESS(status2) &&
-      io_status_block.Information == FILE_DOES_NOT_EXIST) {
-    nt_log_error("Error while calling ZwOpenFile(\"%wZ\"): %s (0x%x)",
-		 source_path, nt_status_to_string(status2), status2);
-    return status2;
+  auto status2 = ZwCreateFile(&existing_tfs_dav_handle,
+			      DELETE | SYNCHRONIZE,
+			      &attributes,
+			      &io_status_block,
+			      nullptr,
+			      FILE_ATTRIBUTE_NORMAL,
+			      FILE_SHARE_READ
+			      | FILE_SHARE_WRITE
+			      | FILE_SHARE_DELETE,
+			      FILE_OPEN_IF,
+			      FILE_DIRECTORY_FILE
+			      | FILE_SYNCHRONOUS_IO_ALERT
+			      | FILE_OPEN_FOR_BACKUP_INTENT
+			      | FILE_OPEN_REPARSE_POINT,
+			      NULL, 0);
+  if (!NT_SUCCESS(status2)) {
+    if (io_status_block.Information == FILE_DOES_NOT_EXIST) {
+      // file doesn't exist, no need to do anything
+      nt_log_debug("File \"%wZ\" didn't exist so not renaming", source_path);
+      return STATUS_SUCCESS;
+    }
+    else {
+      nt_log_error("Error while calling ZwOpenFile(\"%wZ\"): %s (0x%x)",
+		   source_path, nt_status_to_string(status2), status2);
+      return status2;
+    }
   }
 
-  // file doesn't exist, no need to do anything
-  if (io_status_block.Information == FILE_DOES_NOT_EXIST) return STATUS_SUCCESS;
-
   auto _close_file = lockbox::create_deferred(ZwClose, existing_tfs_dav_handle);
-
 
   // issue rename
   {
@@ -469,62 +499,11 @@ create_new_tfs_dav_link(PUNICODE_STRING path_to_tfs_dav,
   return STATUS_SUCCESS;
 }
 
-static
 NTSTATUS
-free_unicode_string(PUNICODE_STRING us) {
-  ExFreePoolWithTag(us->Buffer, FREE_UNICODE_STRING_TAG);
-  return STATUS_SUCCESS;
-}
-
-RAMDiskControlDevice::RAMDiskControlDevice(NTSTATUS *out) noexcept
-  : _engage_count(0)
-  , _reparse_handle(nullptr) {
-  KeInitializeMutex(&_engage_mutex, 0);
-  *out = STATUS_SUCCESS;
-}
-
-RAMDiskControlDevice::~RAMDiskControlDevice() noexcept {
-  // we should not be destructing the device if there are handles open
-  // and if there aren't any handles open we shouldn't be engaged
-  assert(!_engage_count);
-  assert(!_reparse_handle);
-}
-
-NTSTATUS
-RAMDiskControlDevice::_create_engage_lock_guard(RAMDiskControlDevice::EngageLockGuard *out) {
-  // NB: we allow both User APCs (Alertable = TRUE) and
-  //     thread termination signals (WaitMode = UserMode) since we are
-  //     running in the context of the user thread that called us
-  auto status = KeWaitForMutexObject(&_engage_mutex, Executive,
-				     UserMode, TRUE, nullptr);
-  if (!NT_SUCCESS(status)) {
-    nt_log_error("Error while calling KeWaitForMutexObject: %s (0x%x)",
-		 nt_status_to_string(status), status);
-    return status;
-  }
-
-  *out = lockbox::create_deferred(KeReleaseMutex, &_engage_mutex, FALSE);
-
-  return STATUS_SUCCESS;
-}
-
-NTSTATUS
-RAMDiskControlDevice::_engage() {
+engage_reparse_point(PHANDLE reparse_handle) {
   PAGED_CODE();
 
-  // Acquire engage mutex
-  RAMDiskControlDevice::EngageLockGuard engage_lock_guard;
-  auto status = _create_engage_lock_guard(&engage_lock_guard);
-  if (!NT_SUCCESS(status)) return status;
-
-  // check engage count, if not zero then just increment
-  if (_engage_count) {
-    nt_log_debug("RAM disk was already engaged, incrementing engage count");
-    _engage_count += 1;
-    return STATUS_SUCCESS;
-  }
-
-  nt_log_info("Engage count is going to non-zero, engaging reparse point...");
+  nt_log_info("Engaging reparse point...");
 
   // get path to Tfs_DAV
   UNICODE_STRING path_to_tfs_dav;
@@ -535,17 +514,34 @@ RAMDiskControlDevice::_engage() {
     lockbox::create_deferred(free_unicode_string, &path_to_tfs_dav);
 
   // get reparse point target
+  UNICODE_STRING device_name;
+  RtlInitUnicodeString(&device_name, RAMDISK_DEVICE_NAME);
+  
+  UNICODE_STRING trailing_slash;
+  RtlInitUnicodeString(&trailing_slash, L"\\");
+
+  uint8_t reparse_point_target_buf[device_name.Length
+				   + trailing_slash.Length];
   UNICODE_STRING reparse_point_target;
-  RtlInitUnicodeString(&reparse_point_target,
-		       RAMDISK_DEVICE_NAME);
+  {
+    reparse_point_target.Buffer = (PWSTR) reparse_point_target_buf;
+    reparse_point_target.Length = 0;
+    reparse_point_target.MaximumLength = sizeof(reparse_point_target_buf);
+
+    RtlCopyUnicodeString(&reparse_point_target, &device_name);
+    RtlAppendUnicodeStringToString(&reparse_point_target, &trailing_slash);
+  }
+
+  nt_log_debug("Reparse point target: \"%wZ\"",
+	       &reparse_point_target);
 
   // check if link already exists
   auto status2 = does_tfs_dav_link_already_exists(&path_to_tfs_dav,
 						  &reparse_point_target,
-						  &_reparse_handle);
+						  reparse_handle);
   if (!NT_SUCCESS(status2)) return status2;
 
-  if (!_reparse_handle) {
+  if (!*reparse_handle) {
     // rename old entry if it exists
     auto status3 = rename_tfs_dav_directory(&path_to_tfs_dav,
 					    RenameDirection::FORWARDS);
@@ -563,13 +559,12 @@ RAMDiskControlDevice::_engage() {
     // create new link
     auto status4 = create_new_tfs_dav_link(&path_to_tfs_dav,
 					   &reparse_point_target,
-					   &_reparse_handle);
+					   reparse_handle);
     if (!NT_SUCCESS(status4)) return status4;
   }
   else nt_log_debug("RAM disk reparse point already existed...");
     
-  assert(_reparse_handle);
-  _engage_count += 1;
+  assert(*reparse_handle);
 
   nt_log_info("Engage complete");
 
@@ -577,29 +572,11 @@ RAMDiskControlDevice::_engage() {
 }
 
 NTSTATUS
-RAMDiskControlDevice::_disengage() {
+disengage_reparse_point(HANDLE reparse_handle) {
   PAGED_CODE();
 
-  // Acquire engage mutex
-  RAMDiskControlDevice::EngageLockGuard engage_lock_guard;
-  auto status0 = _create_engage_lock_guard(&engage_lock_guard);
-  if (!NT_SUCCESS(status0)) return status0;
-
-  if (!_engage_count) return STATUS_INVALID_PARAMETER;
-
-  assert(_reparse_handle);
-
-  // there are still people engaged, just return after decrementing
-  if (_engage_count > 1) {
-    nt_log_debug("Engage count was >1, just decrementing instead of disengaging");
-    _engage_count -= 1;
-    return STATUS_SUCCESS;
-  }
-
-  nt_log_info("Engage count is going to zero, disengaging reparse point...");
-
   // close handle to dav link
-  auto status = ZwClose(_reparse_handle);
+  auto status = ZwClose(reparse_handle);
   if (!NT_SUCCESS(status)) {
     // NB: if we fail to close the handle, we won't be able to
     //     delete/move the directory and restore the old directory
@@ -607,14 +584,9 @@ RAMDiskControlDevice::_disengage() {
     return status;
   }
 
-  _reparse_handle = nullptr;
-
   // NB: at this point,
   //     the reparse point has been closed and deleted since it was opened
   //     with FILE_DELETE_ON_CLOSE
-
-  // decrement the engage count
-  _engage_count -= 1;
 
   // NB: we no long consider ourselves engaged
   //     if we fail in any of the following operations _engage will
@@ -651,139 +623,6 @@ RAMDiskControlDevice::_disengage() {
   nt_log_info("Disengage complete");
 
   return STATUS_SUCCESS;
-}
-
-NTSTATUS
-RAMDiskControlDevice::irp_create(PIRP irp) {
-  nt_log_debug("RAMDiskControlDevice::irp_create called");
-
-  // http://msdn.microsoft.com/en-us/library/windows/hardware/ff563633(v=vs.85).aspx
-  auto io_stack = IoGetCurrentIrpStackLocation(irp);
-
-  // Create always succeeds unless we are in the middle
-  // of shutting down or a user tried to open a file
-  // on the device, e.g. \\device\ramdisk\foo.txt
-  auto status = io_stack->FileObject->FileName.Length
-    ? STATUS_INVALID_PARAMETER
-    : STATUS_SUCCESS;
-
-  set_engaged(io_stack->FileObject, false);
-
-  return standard_complete_irp(irp, status);
-}
-
-NTSTATUS
-RAMDiskControlDevice::irp_cleanup(PIRP irp) {
-  nt_log_debug("RAMDiskControlDevice::irp_cleanup called");
-
-  auto io_stack = IoGetCurrentIrpStackLocation(irp);
-
-  NTSTATUS status;
-  if (get_engaged(io_stack->FileObject)) {
-    status = _disengage();
-    if (NT_SUCCESS(status)) {
-      set_engaged(io_stack->FileObject, false);
-    }
-  }
-  else {
-    status = STATUS_SUCCESS;
-  }
-
-  return standard_complete_irp(irp, status);
-}
-
-NTSTATUS
-RAMDiskControlDevice::irp_close(PIRP irp) {
-  nt_log_debug("RAMDiskControlDevice::irp_close called");
-
-  return standard_complete_irp(irp, STATUS_SUCCESS);
-}
-
-NTSTATUS
-RAMDiskControlDevice::irp_device_control(PIRP irp) {
-  nt_log_debug("RAMDiskControlDevice::irp_device_control called");
-
-  auto io_stack = IoGetCurrentIrpStackLocation(irp);
-
-  NTSTATUS status;
-  switch (io_stack->Parameters.DeviceIoControl.IoControlCode) {
-  case IOCTL_SAFE_RAMDISK_ENGAGE: {
-    status = _engage();
-    if (NT_SUCCESS(status)) set_engaged(io_stack->FileObject, true);
-    else nt_log_error("Calling _engage failed");
-    break;
-  }
-  case IOCTL_SAFE_RAMDISK_DISENGAGE: {
-    status = _disengage();
-    if (NT_SUCCESS(status)) set_engaged(io_stack->FileObject, false);
-    else  nt_log_error("Calling _disengage failed");
-    break;
-  }
-  default: {
-    status = STATUS_INVALID_DEVICE_REQUEST;
-    break;
-  }
-  }
-
-  return standard_complete_irp(irp, status);
-}
-
-NTSTATUS
-create_control_device(PDRIVER_OBJECT driver_object,
-		      PDEVICE_OBJECT ramdisk_device,
-		      PDEVICE_OBJECT *out) {
-  UNICODE_STRING ctl_device_name;
-  RtlInitUnicodeString(&ctl_device_name, RAMDISK_CTL_DEVICE_NAME_W);
-
-  PDEVICE_OBJECT device_object;
-  auto status = IoCreateDevice(driver_object,
-			       sizeof(RAMDiskControlDevice),
-			       &ctl_device_name,
-			       FILE_DEVICE_SAFE_RAMDISK_CTL,
-			       0,
-			       FALSE,
-			       &device_object);
-  if (!NT_SUCCESS(status)) {
-    nt_log_error("Error while doing IoCreateDevice: %s (0x%x)",
-		 nt_status_to_string(status),
-		 status);
-    return status;
-  }
-  auto _delete_device_object =
-    lockbox::create_deferred(delete_control_device, device_object);
-
-  NTSTATUS status3;
-  new (device_object->DeviceExtension) RAMDiskControlDevice(&status3);
-  if (!NT_SUCCESS(status3)) return status3;
-
-  UNICODE_STRING sym_link;
-  RtlInitUnicodeString(&sym_link, RAMDISK_CTL_SYMLINK_NAME_W);
-  auto status2 = IoCreateUnprotectedSymbolicLink(&sym_link, &ctl_device_name);
-  if (!NT_SUCCESS(status2)) {
-    nt_log_error("Error while doing IoCreateUnprotectedSymbolicLink: %s (0x%x)",
-		 nt_status_to_string(status2),
-		 status2);
-    return status2;
-  }
-
-  _delete_device_object.cancel();
-  device_object->Flags &= ~DO_DEVICE_INITIALIZING;
-
-  *out = device_object;
-
-  return STATUS_SUCCESS;
-}
-
-void
-delete_control_device(PDEVICE_OBJECT device_object) {
-  auto dev = static_cast<RAMDiskControlDevice *>(device_object->DeviceExtension);
-  dev->~RAMDiskControlDevice();
-
-  UNICODE_STRING sym_link;
-  RtlInitUnicodeString(&sym_link, RAMDISK_CTL_SYMLINK_NAME_W);
-  IoDeleteSymbolicLink(&sym_link);
-
-  IoDeleteDevice(device_object);
 }
 
 }

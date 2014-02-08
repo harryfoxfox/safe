@@ -23,9 +23,12 @@
   See the LICENSE file for copying info.
  */
 
+#include "ramdisk_device.hpp"
+
 #include "ntoskrnl_cpp.hpp"
 #include "nt_helpers.hpp"
-#include "ramdisk_device.hpp"
+#include "ramdisk_ioctl.h"
+#include "tfs_dav_reparse_engage.hpp"
 
 #include <lockbox/deferred.hpp>
 #include <lockbox/low_util.hpp>
@@ -41,6 +44,8 @@ namespace safe_nt {
 const size_t MEM_SIZE = 100 * 1024 * 1024;
 const ULONG REMOVE_LOCK_TAG = 0x02051986UL;
 const auto DISK_CONTROL_BLOCK_MAGIC = (uint32_t) 0x02051986UL;
+
+const WCHAR DOS_DEVICE_NAME[] = L"\\DosDevices\\SafeDos";
 
 void
 RAMDiskDevice::_free_remove_lock(RAMDiskDevice *dcb) {
@@ -235,11 +240,26 @@ RAMDiskDevice::get_partition_type() const noexcept {
   return PARTITION_FAT32;
 }
   
+static
+void
+set_engaged(PFILE_OBJECT file_object, bool engaged) {
+  file_object->FsContext = (PVOID) engaged;
+}
+
+static
+bool
+get_engaged(PFILE_OBJECT file_object) {
+  return (bool) file_object->FsContext;
+}
+
 VOID
 RAMDiskDevice::worker_thread() noexcept {
   auto dcb = this;
 
   nt_log_info("Worker thread, rock and roll!\n");
+
+  auto engage_count = 0;
+  HANDLE reparse_handle = nullptr;
   
   while (true) {
     auto irp = dcb->dequeue_request();
@@ -247,12 +267,35 @@ RAMDiskDevice::worker_thread() noexcept {
     // Got terminate message
     if (!irp) break;
 
+    nt_log_debug("Got new request!\n");
+
     // queue a remove lock to be freed after this request is done
     auto _free_lock =
       lockbox::create_deferred(_free_remove_lock, this);
 
     // service request
     auto io_stack = IoGetCurrentIrpStackLocation(irp);
+
+    // helper function for disengage
+    auto disengage_with_count = [&] () {
+      NTSTATUS status = STATUS_SUCCESS;
+      
+      assert(engage_count);
+
+      if (engage_count == 1)  {
+	assert(reparse_handle);
+	status = disengage_reparse_point(reparse_handle);
+	if (NT_SUCCESS(status)) reparse_handle = nullptr;
+      }
+	  
+      if (NT_SUCCESS(status)) {
+	engage_count -= 1;
+	set_engaged(io_stack->FileObject, false);
+      }
+
+      return status;
+    };
+
     switch (io_stack->MajorFunction) {
     case IRP_MJ_READ: case IRP_MJ_WRITE: {
       // NB: io_stack->Parameters.Write is the exact same structure as
@@ -304,6 +347,75 @@ RAMDiskDevice::worker_thread() noexcept {
 
       break;
     }
+
+    case IRP_MJ_DEVICE_CONTROL: {
+      auto ioctl = io_stack->Parameters.DeviceIoControl.IoControlCode;
+
+      nt_log_debug("async device_control_irp: IOCTL: %s (0x%x)\n",
+		   ioctl_to_string(ioctl),
+		   (unsigned) ioctl);
+
+      switch (ioctl) {
+      case IOCTL_SAFE_RAMDISK_ENGAGE: {
+	NTSTATUS status = STATUS_SUCCESS;
+	
+	if (get_engaged(io_stack->FileObject)) {
+	  status = STATUS_INVALID_DEVICE_STATE;
+	}
+	else {
+	  if (engage_count == 0) {
+	    status = engage_reparse_point(&reparse_handle);
+	  }
+	  
+	  if (NT_SUCCESS(status)) {
+	    engage_count += 1;
+	    set_engaged(io_stack->FileObject, true);
+	  }
+	}
+	
+	irp->IoStatus.Status = status;
+	break;
+      }
+	 
+      case IOCTL_SAFE_RAMDISK_DISENGAGE: {
+	irp->IoStatus.Status = get_engaged(io_stack->FileObject)
+	  ? disengage_with_count()
+	  : STATUS_INVALID_DEVICE_STATE;
+	break;
+      }
+
+      default: {
+	irp->IoStatus.Status = STATUS_DRIVER_INTERNAL_ERROR;
+	break;
+      }
+      }
+      
+      {
+	auto status = irp->IoStatus.Status;
+	if (NT_SUCCESS(status)) {
+	  nt_log_debug("Success for async IOCTL");
+	}
+	else {
+	  nt_log_debug("Error for async IOCTL: %s (0x%x)",
+		       nt_status_to_string(status), status);
+	}
+      }
+
+      break;
+    }
+
+    case IRP_MJ_CLEANUP: {
+      // we don't acquire the remove lock during cleanup
+      _free_lock.cancel();
+
+      NTSTATUS status = STATUS_SUCCESS;
+      if (get_engaged(io_stack->FileObject)) {
+	status = disengage_with_count();
+      }
+      irp->IoStatus.Status = status;
+      break;
+    }
+
     default: {
       irp->IoStatus.Status = STATUS_DRIVER_INTERNAL_ERROR;
       break;
@@ -317,6 +429,11 @@ RAMDiskDevice::worker_thread() noexcept {
 		      IO_DISK_INCREMENT :
 		      IO_NO_INCREMENT);
   }
+
+  // the thread should not die without all file handles being
+  // closed
+  assert(!engage_count);
+  assert(!reparse_handle);
 
   nt_log_debug("Thread dying, goodbyte!\n");
 }
@@ -347,6 +464,13 @@ RAMDiskDevice::irp_close(PIRP irp) noexcept {
   PAGED_CODE();
   // http://msdn.microsoft.com/en-us/library/windows/hardware/ff563633(v=vs.85).aspx
   return standard_complete_irp(irp, STATUS_SUCCESS);
+}
+
+NTSTATUS
+RAMDiskDevice::irp_cleanup(PIRP irp) noexcept {
+  IoMarkIrpPending(irp);
+  this->queue_request(irp);
+  return STATUS_PENDING;
 }
 
 NTSTATUS
@@ -432,18 +556,42 @@ RAMDiskDevice::irp_device_control(PIRP irp) noexcept {
     break;
   }
 
+  case IOCTL_SAFE_RAMDISK_ENGAGE:
+  case IOCTL_SAFE_RAMDISK_DISENGAGE: {
+    IoMarkIrpPending(irp);
+
+    this->queue_request(irp);
+
+    // cancel release of remove lock, this will happen in thread
+    remove_lock_guard.cancel();
+
+    status = STATUS_PENDING;
+    break;
+  }
+
   default: {
-    nt_log_debug("ERROR: IOCTL not supported!");
     status = STATUS_INVALID_DEVICE_REQUEST;
     break;
   }
   }
 
-  ASSERT(status != STATUS_PENDING);
+  if (status != STATUS_PENDING) {
+    if (NT_SUCCESS(status)) {
+      nt_log_debug("Success for IOCTL");
+    }
+    else {
+      nt_log_debug("Error for IOCTL: %s (0x%x)",
+		   nt_status_to_string(status), status);
+    }
 
-  if (!NT_SUCCESS(status)) irp->IoStatus.Information = 0;
-  irp->IoStatus.Status = status;
-  IoCompleteRequest(irp, IO_NO_INCREMENT);
+    if (!NT_SUCCESS(status)) irp->IoStatus.Information = 0;
+    irp->IoStatus.Status = status;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+  }
+  else {
+    nt_log_debug("Pending for IOCTL");
+  }
+
   return status;
 }
 
@@ -603,18 +751,17 @@ delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept {
   nt_log_debug("deleting device!\n");
   auto dcb = get_disk_control_block(device_object);
   dcb->~RAMDiskDevice();
-#ifdef DBG
-  UNICODE_STRING sym_link;
-  RtlInitUnicodeString(&sym_link, L"\\DosDevices\\G:");
-  IoDeleteSymbolicLink(&sym_link);
-#endif
+  {
+    UNICODE_STRING sym_link;
+    RtlInitUnicodeString(&sym_link, DOS_DEVICE_NAME);
+    IoDeleteSymbolicLink(&sym_link);
+  }
   IoDeleteDevice(device_object);
 }
 
 NTSTATUS
 create_ramdisk_device(PDRIVER_OBJECT driver_object,
-		      PDEVICE_OBJECT physical_device_object,
-		      PDEVICE_OBJECT *out) {
+		      PDEVICE_OBJECT physical_device_object) {
   nt_log_debug("creating new disk device!");
 
   // TODO: We really should register device interface classes
@@ -661,19 +808,17 @@ create_ramdisk_device(PDRIVER_OBJECT driver_object,
     return status3;
   }
 
-#ifdef DBG
-  // Create device symlink
-  UNICODE_STRING symbolic_link_name;
-  RtlInitUnicodeString(&symbolic_link_name, L"\\DosDevices\\G:");
-  auto status5 = IoCreateSymbolicLink(&symbolic_link_name, &device_name);
-  if (!NT_SUCCESS(status5)) return status5;
-#endif
+  {
+    // Create device symlink
+    UNICODE_STRING symbolic_link_name;
+    RtlInitUnicodeString(&symbolic_link_name, DOS_DEVICE_NAME);
+    auto status5 = IoCreateSymbolicLink(&symbolic_link_name, &device_name);
+    if (!NT_SUCCESS(status5)) return status5;
+  }
 
   // Cancel deferred delete device call since we succeeded
   _delete_device_object.cancel();
   device_object->Flags &= ~DO_DEVICE_INITIALIZING;
-
-  *out = device_object;
 
   return STATUS_SUCCESS;
 }

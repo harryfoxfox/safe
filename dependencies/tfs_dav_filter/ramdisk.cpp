@@ -23,7 +23,6 @@
 #include "io_device.hpp"
 #include "nt_helpers.hpp"
 #include "ramdisk_device.hpp"
-#include "ramdisk_control_device.hpp"
 
 #include <lockbox/deferred.hpp>
 #include <lockbox/low_util.hpp>
@@ -84,10 +83,6 @@ SafeRamDiskDispatchDeviceControl(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
 }
 
 static
-PDEVICE_OBJECT
-g_ramdisk_control_device = nullptr;
-
-static
 NTSTATUS
 NTAPI
 SafeRamDiskDispatchPnP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
@@ -101,10 +96,6 @@ SafeRamDiskDispatchPnP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
 	       safe_nt::nt_status_to_string(status),
 	       status);
   if (IRP_MN_REMOVE_DEVICE == minor_function) {
-    if (g_ramdisk_control_device) {
-      nt_log_debug("Deleting control device: %p", g_ramdisk_control_device);
-      safe_nt::delete_control_device(g_ramdisk_control_device);
-    }
     safe_nt::delete_ramdisk_device(DeviceObject);
   }
   return status;
@@ -129,30 +120,8 @@ NTSTATUS
 NTAPI
 SafeRamDiskAddDevice(PDRIVER_OBJECT DriverObject, 
 		     PDEVICE_OBJECT PhysicalDeviceObject) {
-  // First Create Ramdisk Device
-  PDEVICE_OBJECT ramdisk_device;
-  auto status = 
-    safe_nt::create_ramdisk_device(DriverObject, PhysicalDeviceObject,
-				   &ramdisk_device);
-  if (!NT_SUCCESS(status)) {
-    nt_log_error("Error while create_ramdisk_device\n");
-    return status;
-  }
-
-  auto _delete_ramdisk_device =
-    lockbox::create_deferred(safe_nt::delete_ramdisk_device, ramdisk_device);
-
-  // Create Control Device for Ramdisk
-  auto status2 = safe_nt::create_control_device(DriverObject, ramdisk_device,
-						&g_ramdisk_control_device);
-  if (!NT_SUCCESS(status2)) {
-    nt_log_error("Error while create_control_device\n");
-    return status2;
-  }
-
-  _delete_ramdisk_device.cancel();
-
-  return STATUS_SUCCESS;
+  return safe_nt::create_ramdisk_device(DriverObject,
+					PhysicalDeviceObject);
 }
 
 static

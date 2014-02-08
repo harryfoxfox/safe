@@ -18,7 +18,7 @@ include config.mk
 
 DLLTOOL ?= dlltool
 
-SAFE_RAMDISK_SRC_CPP = ramdisk.cpp nt_helpers.cpp ramdisk_device.cpp ramdisk_control_device.cpp io_device.cpp
+SAFE_RAMDISK_SRC_CPP = ramdisk.cpp nt_helpers.cpp ramdisk_device.cpp tfs_dav_reparse_engage.cpp io_device.cpp
 SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
 
 SAFE_RAMDISK_TARGET = safe_ramdisk.sys
