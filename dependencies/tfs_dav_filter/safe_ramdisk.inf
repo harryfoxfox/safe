@@ -14,6 +14,7 @@ Addreg=SafeRAMDiskClassReg
 [SampleClassReg]
 HKR,,,0,%ClassName%
 HKR,,Icon,,-5
+HKR,,NoDisplayClass,,1
 
 [Manufacturer]
 "Rian Hunter" = RAMDiskDevice
