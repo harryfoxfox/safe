@@ -23,11 +23,13 @@
 
 #include "ntoskrnl_cpp.hpp"
 #include "nt_helpers.hpp"
+#include "ramdisk_device.hpp"
 #include "ramdisk_ioctl.h"
 
 #include <lockbox/deferred.hpp>
 
 #include <ntifs.h>
+#include <mountdev.h>
 
 #ifndef OBJ_KERNEL_HANDLE
 #define OBJ_KERNEL_HANDLE       0x00000200
@@ -198,6 +200,7 @@ get_path_to_tfs_dav(PUNICODE_STRING path_to_tfs_dav) {
 static
 NTSTATUS
 does_tfs_dav_link_already_exists(PUNICODE_STRING path_to_tfs_dav,
+				 PUNICODE_STRING intended_target,
 				 PHANDLE reparse_handle) {
   *reparse_handle = nullptr;
 
@@ -269,10 +272,7 @@ does_tfs_dav_link_already_exists(PUNICODE_STRING path_to_tfs_dav,
   reparse_point_target.Length = reparse_data->MountPointReparseBuffer.SubstituteNameLength;
   reparse_point_target.MaximumLength = reparse_point_target.Length;
 
-  UNICODE_STRING intended_target;
-  RtlInitUnicodeString(&intended_target, L"\\??\\G:\\");
-
-  if (RtlEqualUnicodeString(&intended_target, &reparse_point_target, TRUE)) {
+  if (RtlEqualUnicodeString(intended_target, &reparse_point_target, TRUE)) {
     *reparse_handle = existing_tfs_dav_handle;
     _close_file.cancel();
   }
@@ -390,7 +390,9 @@ rename_tfs_dav_directory(PUNICODE_STRING path_to_tfs_dav, RenameDirection dir) {
 
 static
 NTSTATUS
-create_new_tfs_dav_link(PUNICODE_STRING path_to_tfs_dav, PHANDLE out_handle) {
+create_new_tfs_dav_link(PUNICODE_STRING path_to_tfs_dav,
+			PUNICODE_STRING reparse_point_target,
+			PHANDLE out_handle) {
   OBJECT_ATTRIBUTES attributes;
   InitializeObjectAttributes(&attributes,
 			     path_to_tfs_dav,
@@ -422,11 +424,8 @@ create_new_tfs_dav_link(PUNICODE_STRING path_to_tfs_dav, PHANDLE out_handle) {
 
   auto _close_file = lockbox::create_deferred(ZwClose, tfs_dav_handle);
 
-  UNICODE_STRING reparse_point_target;
-  RtlInitUnicodeString(&reparse_point_target, L"\\??\\G:\\");
-
   const size_t total_size =
-    8 + 8 + reparse_point_target.Length + 2 * sizeof(WCHAR);
+    8 + 8 + reparse_point_target->Length + 2 * sizeof(WCHAR);
   uint8_t reparse_data_buffer[total_size];
   memset(reparse_data_buffer, 0, sizeof(reparse_data_buffer));
   auto reparse_data = (PREPARSE_DATA_BUFFER) reparse_data_buffer;
@@ -436,16 +435,16 @@ create_new_tfs_dav_link(PUNICODE_STRING path_to_tfs_dav, PHANDLE out_handle) {
   //     at the end, my best guess is that we pretend the reparse
   //     point is null-terminated and have a place for PrintNameOffset
   //     to start (even though its length = 0)
-  reparse_data->ReparseDataLength = (8 + reparse_point_target.Length
+  reparse_data->ReparseDataLength = (8 + reparse_point_target->Length
 				     + 2 * sizeof(WCHAR));
   reparse_data->MountPointReparseBuffer.SubstituteNameLength =
-    reparse_point_target.Length;
+    reparse_point_target->Length;
   reparse_data->MountPointReparseBuffer.PrintNameOffset =
-    reparse_point_target.Length + sizeof(WCHAR);
+    reparse_point_target->Length + sizeof(WCHAR);
 
   memcpy(reparse_data->MountPointReparseBuffer.PathBuffer,
-	 reparse_point_target.Buffer,
-	 reparse_point_target.Length);
+	 reparse_point_target->Buffer,
+	 reparse_point_target->Length);
   
   IO_STATUS_BLOCK io_status_block_2;
   auto status2 = ZwFsControlFile(tfs_dav_handle,
@@ -537,8 +536,14 @@ RAMDiskControlDevice::_engage() {
   auto _free_tfs_path =
     lockbox::create_deferred(free_unicode_string, &path_to_tfs_dav);
 
+  // get reparse point target
+  UNICODE_STRING reparse_point_target;
+  RtlInitUnicodeString(&reparse_point_target,
+		       RAMDISK_DEVICE_NAME);
+
   // check if link already exists
   auto status2 = does_tfs_dav_link_already_exists(&path_to_tfs_dav,
+						  &reparse_point_target,
 						  &_reparse_handle);
   if (!NT_SUCCESS(status2)) return status2;
 
@@ -558,7 +563,9 @@ RAMDiskControlDevice::_engage() {
     }
     
     // create new link
-    auto status4 = create_new_tfs_dav_link(&path_to_tfs_dav, &_reparse_handle);
+    auto status4 = create_new_tfs_dav_link(&path_to_tfs_dav,
+					   &reparse_point_target,
+					   &_reparse_handle);
     if (!NT_SUCCESS(status4)) return status4;
   }
   else nt_log_debug("RAM disk reparse point already existed...");

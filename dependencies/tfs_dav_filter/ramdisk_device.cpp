@@ -639,7 +639,7 @@ create_ramdisk_device(PDRIVER_OBJECT driver_object,
   // Create Disk Device
   PDEVICE_OBJECT device_object;
   UNICODE_STRING device_name;
-  RtlInitUnicodeString(&device_name, L"\\Device\\SafeRamDisk");
+  RtlInitUnicodeString(&device_name, RAMDISK_DEVICE_NAME);
   auto status2 = IoCreateDevice(driver_object,
 				sizeof(RAMDiskDevice),
 				&device_name,

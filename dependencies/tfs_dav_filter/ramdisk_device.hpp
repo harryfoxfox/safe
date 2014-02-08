@@ -158,6 +158,8 @@ public:
   friend void delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept;
 };
 
+const WCHAR RAMDISK_DEVICE_NAME[] = L"\\Device\\SafeRamDisk";
+
 NTSTATUS
 create_ramdisk_device(PDRIVER_OBJECT driver_object,
 		      PDEVICE_OBJECT physical_device_object,
