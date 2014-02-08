@@ -513,20 +513,7 @@ RAMDiskDevice::irp_pnp(PIRP irp) {
     // We must release resources allocated during
     // IRP_MN_START_DEVICE on IRP_MN_STOP_DEVICE
     // since we allocate nothing on IRP_MN_START_DEVICE, do nothing
-    auto old_pnp_state = this->get_pnp_state();
     this->set_pnp_state(PnPState::STOPPED);
-
-    // NB: we have to wait for all outstanding IRPs to finish 
-    //     (since PnPState::STOPPED has been set we are guaranteed
-    //      no new IRPs will commence)
-    this->release_remove_lock_and_wait();
-    auto status = this->acquire_remove_lock();
-    if (!NT_SUCCESS(status)) {
-      nt_log_error("Error acquiring remove lock, resetting pnp state "
-		   "and completing IRP");
-      this->set_pnp_state(old_pnp_state);
-      return standard_complete_irp(irp, status);
-    }
 
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoSkipCurrentIrpStackLocation(irp);
@@ -565,18 +552,17 @@ RAMDiskDevice::irp_pnp(PIRP irp) {
   case IRP_MN_REMOVE_DEVICE: {
     this->set_pnp_state(PnPState::DELETED);
 
-    // NB: we have to wait for all outstanding IRPs to finish 
-    //     (since PnPState::DELETED has been set we are guaranteed
-    //      no new IRPs will commence)
-    this->release_remove_lock_and_wait();
-    remove_lock_guard.cancel();
-
     // we don't have to wait for the underlying driver's
     // completion for IRP_MN_REMOVE_DEVICE, we can just asynchronously
     // pass it down
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoSkipCurrentIrpStackLocation(irp);
     auto status = IoCallDriver(this->lower_device_object, irp);
+
+    // NB: we have to wait for all outstanding IRPs to finish 
+    // http://msdn.microsoft.com/en-us/library/windows/hardware/ff565504%28v=vs.85%29.aspx
+    remove_lock_guard.cancel();
+    this->release_remove_lock_and_wait();
 
     // we would delete the device here, but we rely on our
     // caller to do that
