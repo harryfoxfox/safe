@@ -23,6 +23,7 @@ ENCFS_ROOT := $(CURDIR)/../encfs
 BOTAN_ROOT := $(CURDIR)/dependencies/botan
 TINYXML_ROOT := $(CURDIR)/dependencies/tinyxml
 PROTOBUF_ROOT := $(CURDIR)/../protobuf
+SAFE_RAMDISK_ROOT := $(CURDIR)/dependencies/tfs_dav_filter
 
 HEADERS_ROOT = $(CURDIR)/$(OUT_DIR)/headers
 DEPS_INSTALL_ROOT = $(CURDIR)/$(OUT_DIR)/deps
@@ -194,11 +195,18 @@ $(NORMALIZ_DEP): $(CURDIR)/normaliz.def
 
 normaliz: $(NORMALIZ_DEP)
 
+safe_ramdisk:
+	@echo "Building Safe RAMDisk"
+	@cd $(SAFE_RAMDISK_ROOT); cp $(if $(IS_WIN),config-win.mk,config-mac.mk) config.mk
+	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE) clean safe_ramdisk.sys
+	@mkdir -p $(OUT_DIR)/safe_ramdisk
+	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.{sys,inf} $(OUT_DIR)/safe_ramdisk
+
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
  libencfs \
  libwebdav_server_fs \
- $(if $(IS_WIN_TARGET),normaliz nlscheck,)
+ $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk,)
 
 clean-deps:
 	rm -rf $(OUT_DIR)
@@ -263,4 +271,4 @@ $(EXE_NAME):
 	mv $@.pre $@
 
 .PHONY: dependencies clean libbotan \
-	libprotobuf libtinyxml libencfs libwebdav_server_fs nlscheck normaliz clean-deps
+	libprotobuf libtinyxml libencfs libwebdav_server_fs nlscheck normaliz clean-deps safe_ramdisk
