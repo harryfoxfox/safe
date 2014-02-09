@@ -25,6 +25,8 @@ TINYXML_ROOT := $(CURDIR)/dependencies/tinyxml
 PROTOBUF_ROOT := $(CURDIR)/../protobuf
 SAFE_RAMDISK_ROOT := $(CURDIR)/dependencies/tfs_dav_filter
 
+RESOURCES_ROOT = $(CURDIR)/resources
+DYN_RESOURCES_ROOT = $(CURDIR)/$(OUT_DIR)/resources
 HEADERS_ROOT = $(CURDIR)/$(OUT_DIR)/headers
 DEPS_INSTALL_ROOT = $(CURDIR)/$(OUT_DIR)/deps
 
@@ -199,8 +201,8 @@ safe_ramdisk:
 	@echo "Building Safe RAMDisk"
 	@cd $(SAFE_RAMDISK_ROOT); cp $(if $(IS_WIN),config-win.mk,config-mac.mk) config.mk
 	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE) clean safe_ramdisk.sys
-	@mkdir -p $(OUT_DIR)/safe_ramdisk
-	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.{sys,inf} $(OUT_DIR)/safe_ramdisk
+	@mkdir -p $(DYN_RESOURCES_ROOT)
+	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.{sys,inf} $(DYN_RESOURCES_ROOT)
 
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
@@ -234,6 +236,8 @@ WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 src/lockbox/*.o: GNUmakefile src/lockbox/*.hpp src/lockbox/*.h
 
+src/lockbox/*.rc.o: $(RESOURCES_DIR)/*
+
 src/lockbox/windows_app.rc.o: src/lockbox/windows_app.rc \
 	src/lockbox/windows_app.manifest
 
@@ -252,7 +256,7 @@ $(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(CXX) $(MY_CPPFLAGS) $(MY_CXXFLAGS) -c -o $@ $<
 
 %.rc.o: %.rc
-	$(WINDRES) -I./src -i $< -o $@
+	$(WINDRES) -I$(RESOURCES_ROOT) -I$(DYN_RESOURCES_ROOT) -I./src -i $< -o $@
 
 test_encfs_main:
 	$(CXX) -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
