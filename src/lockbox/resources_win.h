@@ -21,12 +21,25 @@
 
 #include <lockbox/lean_windows.h>
 
-#define _IDI_LBX_APP 101
+/*
+  Naming conventions lifted from:
+  http://en.wikibooks.org/wiki/Windows_Programming/Resource_Script_Reference#Identifiers
+*/
 
 #ifdef RC_INVOKED
-#define IDI_LBX_APP _IDI_LBX_APP
+#define DEFRSRC(a) a
 #else
-#define IDI_LBX_APP MAKEINTRESOURCEW(_IDI_LBX_APP)
+#define DEFRSRC(a) MAKEINTRESOURCEW(a)
 #endif
+
+#define IDI_LBX_APP DEFRSRC(101)
+#define ID_LBX_RD_INF DEFRSRC(102)
+#define ID_LBX_RD_SYS32 DEFRSRC(103)
+
+/*
+  256 because 1-255 are reserved:
+  http://msdn.microsoft.com/en-us/library/windows/desktop/aa381054%28v=vs.85%29.aspx
+ */
+#define LBX_BIN_RSRC 256
 
 #endif

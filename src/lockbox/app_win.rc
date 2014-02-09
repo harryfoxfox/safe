@@ -3,6 +3,9 @@
 #include "lockbox/product_name.h"
 #include "lockbox/resources_win.h"
 
+// Wonderfully guided by:
+// http://www.transmissionzero.co.uk/computing/win32-apps-with-mingw/
+
 // Executable version information.
 VS_VERSION_INFO    VERSIONINFO
 FILEVERSION        1,0,0,0
@@ -38,5 +41,7 @@ BEGIN
 END
 
 IDI_LBX_APP ICON "app_win.ico"
+ID_LBX_RD_INF LBX_BIN_RSRC "safe_ramdisk.inf"
+ID_LBX_RD_SYS32 LBX_BIN_RSRC "safe_ramdisk.sys"
 
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "app_win.manifest"
