@@ -41,8 +41,8 @@ SetClientSizeInLogical(HWND hwnd, bool set_pos,
 void
 center_window_in_monitor(HWND hwnd);
 
-void
-get_message_font(LOGFONT *lpfn);
+LOGFONT
+get_message_font();
 
 void
 set_default_dialog_font(HWND hwnd);
@@ -64,6 +64,12 @@ get_folder_dialog(HWND owner);
 
 void
 open_url_in_browser(HWND owner, std::string url);
+
+LONG
+compute_point_size_of_logfont(HWND hwnd, const LOGFONT & lplf);
+
+SIZE
+compute_base_units_of_logfont(HWND hwnd, const LOGFONT & lplf);
 
 }
 

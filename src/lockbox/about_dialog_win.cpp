@@ -131,61 +131,13 @@ about_dialog_proc(HWND hwnd, UINT Message,
   assert(false);
 }
 
-LONG
-compute_point_size_of_logfont(HWND hwnd, const LOGFONT *lplf) {
-  assert(lplf->lfHeight < 0);
-  auto hDC = GetDC(hwnd);
-  assert(GetMapMode(hDC) == MM_TEXT);
-  if (!hDC) throw w32util::windows_error();
-  auto _release_dc_1 =
-    lockbox::create_deferred(ReleaseDC, hwnd, hDC);
-  return MulDiv(-lplf->lfHeight, 72,
-                GetDeviceCaps(hDC, LOGPIXELSY));
-}
-
-SIZE
-compute_base_units_of_logfont(HWND hwnd, const LOGFONT *lplf) {
-  // LOGFONT already gives us the height of the font
-  // we just need to compute the average width
-  auto handle_font = CreateFontIndirect(lplf);
-  if (!handle_font) throw w32util::windows_error();
-  auto _free_handle_font =
-    lockbox::create_deferred(DeleteObject, handle_font);
-
-  auto hDC = GetDC(hwnd);
-  if (!hDC) throw w32util::windows_error();
-  auto _free_hDC = lockbox::create_deferred(ReleaseDC, hwnd, hDC);
-
-  SIZE out;
-  auto old_object = SelectObject(hDC, handle_font);
-  if (!old_object) throw w32util::windows_error();
-  auto _restore_object = lockbox::create_deferred(SelectObject, hDC, old_object);
-
-  TEXTMETRIC tm;
-  auto success_1 = GetTextMetrics(hDC, &tm);
-  if (!success_1) throw w32util::windows_error();
-
-  auto success =
-    GetTextExtentPoint32W(hDC,
-                          L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-                          52, &out);
-  if (!success) throw w32util::windows_error();
-
-  auto baseunit_x = (out.cx / 26 + 1) / 2;
-  auto baseunit_y = tm.tmHeight;
-
-  return {baseunit_x, baseunit_y};
-}
-
 void
 about_dialog(HWND hwnd) {
   using namespace w32util;
 
-  LOGFONT message_font;
-  get_message_font(&message_font);
-
-  auto desired_point = compute_point_size_of_logfont(hwnd, &message_font);
-  auto base_units = compute_base_units_of_logfont(hwnd, &message_font);
+  auto message_font = get_message_font();
+  auto desired_point = compute_point_size_of_logfont(hwnd, message_font);
+  auto base_units = compute_base_units_of_logfont(hwnd, message_font);
 
   lbx_log_error("base units: 0x%x, %ld %ld, point_size: %d",
                 (unsigned) GetDialogBaseUnits(),

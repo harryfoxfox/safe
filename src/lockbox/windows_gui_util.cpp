@@ -142,15 +142,15 @@ center_window_in_monitor(HWND hwnd) {
   }
 }
 
-void
-get_message_font(LOGFONT *lpfn) {
+LOGFONT
+get_message_font() {
   NONCLIENTMETRICSW metrics;
   lockbox::zero_object(metrics);
   metrics.cbSize = sizeof(metrics);
   auto success = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS,
                                        sizeof(metrics), &metrics, 0);
   if (!success) throw windows_error();
-  *lpfn = metrics.lfMessageFont;
+  return std::move(metrics.lfMessageFont);
 }
 
 CALLBACK
@@ -172,8 +172,7 @@ set_default_dialog_font(HWND hwnd) {
     else return;
   }
 
-  LOGFONT message_font;
-  get_message_font(&message_font);
+  auto message_font = get_message_font();
   auto handle_font = CreateFontIndirect(&message_font);
   if (!handle_font) throw windows_error();
 
@@ -290,6 +289,52 @@ open_url_in_browser(HWND owner, std::string url) {
                         w32util::widen(url).c_str(),
                         NULL, NULL, SW_SHOWNORMAL);
   if (ret_shell2 <= 32) throw w32util::windows_error();
+}
+
+LONG
+compute_point_size_of_logfont(HWND hwnd, const LOGFONT & lplf) {
+  assert(lplf.lfHeight < 0);
+  auto hDC = GetDC(hwnd);
+  assert(GetMapMode(hDC) == MM_TEXT);
+  if (!hDC) throw w32util::windows_error();
+  auto _release_dc_1 =
+    lockbox::create_deferred(ReleaseDC, hwnd, hDC);
+  return MulDiv(-lplf.lfHeight, 72,
+                GetDeviceCaps(hDC, LOGPIXELSY));
+}
+
+SIZE
+compute_base_units_of_logfont(HWND hwnd, const LOGFONT & lplf) {
+  // LOGFONT already gives us the height of the font
+  // we just need to compute the average width
+  auto handle_font = CreateFontIndirect(&lplf);
+  if (!handle_font) throw w32util::windows_error();
+  auto _free_handle_font =
+    lockbox::create_deferred(DeleteObject, handle_font);
+
+  auto hDC = GetDC(hwnd);
+  if (!hDC) throw w32util::windows_error();
+  auto _free_hDC = lockbox::create_deferred(ReleaseDC, hwnd, hDC);
+
+  SIZE out;
+  auto old_object = SelectObject(hDC, handle_font);
+  if (!old_object) throw w32util::windows_error();
+  auto _restore_object = lockbox::create_deferred(SelectObject, hDC, old_object);
+
+  TEXTMETRIC tm;
+  auto success_1 = GetTextMetrics(hDC, &tm);
+  if (!success_1) throw w32util::windows_error();
+
+  auto success =
+    GetTextExtentPoint32W(hDC,
+                          L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+                          52, &out);
+  if (!success) throw w32util::windows_error();
+
+  auto baseunit_x = (out.cx / 26 + 1) / 2;
+  auto baseunit_y = tm.tmHeight;
+
+  return {baseunit_x, baseunit_y};
 }
 
 }

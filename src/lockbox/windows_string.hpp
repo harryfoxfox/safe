@@ -102,6 +102,14 @@ narrow(const std::wstring & s) {
   return narrow(s.data(), s.size());
 }
 
+inline
+size_t
+num_characters(const std::string & s) {
+  // TODO: we should be counting utf-8 characters
+  // but just over-estimate for now
+  return s.size();
+}
+
 }
 
 #endif

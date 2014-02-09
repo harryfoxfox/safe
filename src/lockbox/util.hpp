@@ -109,14 +109,15 @@ template<typename T,
 class IntegralIterator {
 private:
   T _val;
+
 public:
   IntegralIterator(T start_val) : _val(std::move(start_val)) {}
 
   T & operator*() { return _val; }
   IntegralIterator & operator++() { ++_val; return *this; }
-  IntegralIterator operator++(int) const { return IntegralIterator(_val++); }
+  IntegralIterator operator++(int) { return IntegralIterator(_val++); }
   IntegralIterator & operator--() { --_val; return *this; }
-  IntegralIterator operator--(int) const { return IntegralIterator(_val--); }
+  IntegralIterator operator--(int) { return IntegralIterator(_val--); }
 
   bool operator==(const IntegralIterator & other) const {
     return _val == other._val;
@@ -139,6 +140,144 @@ public:
   IntegralIterator<T> end() const { return IntegralIterator<T>(_max); }
 };
 
+template<typename Iterator>
+class EnumerateIterator {
+  typedef size_t size_type;
+
+  size_type _idx;
+  Iterator _iterator;
+
+public:
+  struct EnumerateContainer {
+    size_type index;
+    decltype(*std::declval<Iterator>()) value;
+  };
+
+  EnumerateIterator(size_type idx,
+                    Iterator iterator)
+    : _idx(std::move(idx))
+    , _iterator(std::move(iterator)) {}
+
+  EnumerateContainer operator*() {
+    return {_idx, *_iterator};
+  }
+
+  EnumerateIterator & operator++() {
+    ++_idx; ++_iterator;
+    return *this;
+  }
+  EnumerateIterator operator++(int) {
+    return EnumerateIterator(_idx++, _iterator++);
+  }
+
+  EnumerateIterator & operator--() {
+    --_idx; --_iterator;
+    return *this;
+  }
+
+  EnumerateIterator operator-(int a) {
+    return EnumerateIterator(_idx - a, _iterator - a);    
+  }
+  
+  EnumerateIterator operator--(int) {
+    return EnumerateIterator(_idx--, _iterator--);
+  }
+
+  bool operator==(const EnumerateIterator & other) const {
+    return _idx == other._idx && _iterator == other._iterator;
+  }
+
+  bool operator!=(const EnumerateIterator & other) const {
+    return !(*this == other);
+  }
+};
+
+template<typename RangeType>
+class Enumerate {
+  typedef decltype(std::declval<RangeType>().begin()) BeginIterator;
+  typedef decltype(std::declval<RangeType>().end()) EndIterator;
+
+  BeginIterator _begin;
+  EndIterator _end;
+  
+public:
+  template<typename R>
+  explicit Enumerate(R && rt)
+    : _begin(std::forward<R>(rt).begin())
+    , _end(std::forward<R>(rt).end()) {}
+
+  EnumerateIterator<BeginIterator>
+  begin() const {
+    return EnumerateIterator<BeginIterator>(0, _begin);
+  }
+
+  EnumerateIterator<EndIterator>
+  end() const {
+    return EnumerateIterator<EndIterator>(_end - _begin, _end);
+  }
+};
+
+template<typename Iterator>
+class ReversedIterator {
+  Iterator _iterator;
+
+public:
+  ReversedIterator(Iterator iterator)
+    : _iterator(std::move(iterator)) {}
+
+  decltype(*(std::declval<Iterator>() - 1)) operator*() {
+    return *(_iterator - 1);
+  }
+
+  ReversedIterator & operator++() {
+    --_iterator;
+    return *this;
+  }
+  ReversedIterator operator++(int) {
+    return ReversedIterator(_iterator--);
+  }
+
+  ReversedIterator & operator--() {
+    ++_iterator;
+    return *this;
+  }
+  
+  ReversedIterator operator--(int) {
+    return ReversedIterator(_iterator++);
+  }
+
+  bool operator==(const ReversedIterator & other) const {
+    return _iterator == other._iterator;
+  }
+
+  bool operator!=(const ReversedIterator & other) const {
+    return !(*this == other);
+  }
+};
+
+template<typename RangeType>
+class Reversed {
+  typedef decltype(std::declval<RangeType>().begin()) BeginIterator;
+  typedef decltype(std::declval<RangeType>().end()) EndIterator;
+
+  BeginIterator _begin;
+  EndIterator _end;
+  
+public:
+  template<typename R>
+  explicit Reversed(R && rt)
+    : _begin(std::forward<R>(rt).begin())
+    , _end(std::forward<R>(rt).end()) {}
+
+  ReversedIterator<EndIterator> begin() const {
+    return ReversedIterator<EndIterator>(_end);
+  }
+
+  ReversedIterator<BeginIterator> end() const {
+    return ReversedIterator<BeginIterator>(_begin);
+  }
+};
+
 }
 
 /* works like a python range(), e.g.
@@ -150,6 +289,18 @@ template<typename T>
 _int::Range<T>
 range(T max) {
   return _int::Range<T>(max);
+}
+
+template<typename RangeType>
+_int::Enumerate<typename std::decay<RangeType>::type>
+enumerate(RangeType && r) {
+  return _int::Enumerate<typename std::decay<RangeType>::type>(std::forward<RangeType>(r));
+}
+
+template<typename RangeType>
+_int::Reversed<typename std::decay<RangeType>::type>
+reversed(RangeType && r) {
+  return _int::Reversed<typename std::decay<RangeType>::type>(std::forward<RangeType>(r));
 }
 
 template<typename T>
