@@ -422,7 +422,8 @@ add_tray_icon(HWND lockbox_main_window) {
 static
 bool
 is_first_run(const WindowData & wd) {
-  return !encfs::file_exists(wd.native_fs, wd.first_run_cookie_path);
+  return (!encfs::file_exists(wd.native_fs, wd.first_run_cookie_path) &&
+          wd->recent_mount_paths_store.empty());
 }
 
 static
