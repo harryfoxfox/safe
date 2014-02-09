@@ -23,8 +23,10 @@
 #include <lockbox/logging.h>
 #include <lockbox/mount_lockbox_dialog_win.hpp>
 #include <lockbox/mount_win.hpp>
+#include <lockbox/ramdisk_win.hpp>
 #include <lockbox/recent_paths_storage.hpp>
 #include <lockbox/resources_win.h>
+#include <lockbox/system_changes_dialog_win.hpp>
 #include <lockbox/tray_menu.hpp>
 #include <lockbox/tray_menu_win.hpp>
 #include <lockbox/webdav_server.hpp>
@@ -423,7 +425,7 @@ static
 bool
 is_first_run(const WindowData & wd) {
   return (!encfs::file_exists(wd.native_fs, wd.first_run_cookie_path) &&
-          wd->recent_mount_paths_store.empty());
+          wd.recent_mount_paths_store.empty());
 }
 
 static
@@ -505,9 +507,27 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
                                       IMAGE_ICON, 32, 32, LR_SHARED));
 
+      bool installed_kernel_driver = false;
+      if (lockbox::win::need_to_install_kernel_driver()) {
+	// We need to install the kernel driver
+	// Thank user for starting program and let them know
+	// we have to make some changes before starting the program
+	auto choice = lockbox::win::system_changes_dialog(hwnd);
+	if (choice == lockbox::win::SystemChangesChoice::QUIT) {
+          PostMessage(hwnd, WM_CLOSE, 0, 0);
+	  return 0;
+	}
+
+	assert(choice == lockbox::win::SystemChangesChoice::OK);
+
+	lockbox::win::install_kernel_driver();
+	installed_kernel_driver = true;
+      }
+
       auto choice =
         lockbox::win::WelcomeDialogChoice::NOTHING;
-      if (first_run) choice = lockbox::win::welcome_dialog(hwnd);
+      if (first_run) choice = lockbox::win::welcome_dialog(hwnd,
+                                                           installed_kernel_driver);
 
       record_app_start(*wd);
 

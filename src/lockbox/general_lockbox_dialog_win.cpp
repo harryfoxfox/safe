@@ -40,6 +40,7 @@ enum {
 
 struct GeneralLockboxDialogCtx {
   generic_choices_type choices;
+  opt::optional<ButtonAction<generic_choice_type>> close_action;
 };
 
 CALLBACK
@@ -54,6 +55,13 @@ general_lockbox_dialog_proc(HWND hwnd, UINT Message,
     const auto new_ctx = (decltype(ctx)) lParam;
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) new_ctx);
     w32util::center_window_in_monitor(hwnd);
+
+    // disable close button if there is no close action
+    if (!new_ctx->close_action) {
+      EnableMenuItem(GetSystemMenu(hwnd, FALSE), SC_CLOSE,
+                     MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+    }
+
     return TRUE;
   }
   case WM_DRAWITEM: {
@@ -63,10 +71,21 @@ general_lockbox_dialog_proc(HWND hwnd, UINT Message,
   }
   case WM_COMMAND: {
     auto command = LOWORD(wParam);
-    assert(command >= IDC_BUTTON_BASE);
-    auto choice_idx = command - IDC_BUTTON_BASE;
-    auto choice_number = (generic_choice_type) ctx->choices[choice_idx].value;
-    EndDialog(hwnd, send_dialog_box_data(choice_number));
+    opt::optional<generic_choice_type> choice_number;
+    if (command == IDCANCEL) {
+      if (ctx->close_action) {
+        choice_number = (*ctx->close_action)();
+      }
+    }
+    else {
+      assert(command >= IDC_BUTTON_BASE);
+      const auto & choice = ctx->choices[command - IDC_BUTTON_BASE];
+      choice_number = choice.fn();
+    }
+
+    if (choice_number) {
+      EndDialog(hwnd, send_dialog_box_data(*choice_number));
+    }
     break;
   }
   default:
@@ -79,7 +98,8 @@ _int::generic_choice_type
 generic_general_lockbox_dialog(HWND hwnd,
                                std::string title,
                                std::string msg,
-                               _int::generic_choices_type choices) {
+                               _int::generic_choices_type choices,
+                               opt::optional<ButtonAction<generic_choice_type>> close_action) {
   using namespace w32util;
 
   auto message_font = get_message_font();
@@ -112,7 +132,9 @@ generic_general_lockbox_dialog(HWND hwnd,
   const unit_t BUTTON_SPACING = 4;
 
   auto button_width = [] (const std::string & msg) {
-    return num_characters(msg) * 4;
+    auto width = num_characters(msg) * 4;
+    auto MIN_BUTTON_WIDTH = (decltype(width)) 10 * 4;
+    return std::max(width, MIN_BUTTON_WIDTH);
   };
 
   // RANT: this should be a fold over a map
@@ -171,7 +193,10 @@ generic_general_lockbox_dialog(HWND hwnd,
                                               narrow(message_font.lfFaceName))),
                    controls);
 
-  GeneralLockboxDialogCtx ctx = { std::move(choices) };
+  GeneralLockboxDialogCtx ctx = {
+    std::move(choices),
+    std::move(close_action),
+  };
   auto ret = DialogBoxIndirectParam(GetModuleHandle(NULL),
                                     dlg.get_data(),
                                     hwnd, general_lockbox_dialog_proc,

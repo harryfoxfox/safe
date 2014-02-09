@@ -26,12 +26,14 @@
 #include <lockbox/windows_dialog.hpp>
 #include <lockbox/windows_gui_util.hpp>
 
+#include <encfs/base/optional.h>
+
 #include <windows.h>
 
 namespace lockbox { namespace win {
 
 WelcomeDialogChoice
-welcome_dialog(HWND hwnd) {
+welcome_dialog(HWND hwnd, bool installed_kernel_driver) {
   std::vector<Choice<WelcomeDialogChoice>> choices = {
     {LOCKBOX_DIALOG_WELCOME_CREATE_BUTTON,
      WelcomeDialogChoice::CREATE_NEW_LOCKBOX},
@@ -39,10 +41,20 @@ welcome_dialog(HWND hwnd) {
      WelcomeDialogChoice::MOUNT_EXISTING_LOCKBOX},
   };
 
+  auto close_action =
+    ButtonAction<WelcomeDialogChoice>([]() {
+        return WelcomeDialogChoice::NOTHING;
+      });
+
   const auto & c = &general_lockbox_dialog<WelcomeDialogChoice,
                                            decltype(choices)>;
-  return c(hwnd, "Welcome to Safe!", LOCKBOX_DIALOG_WELCOME_TEXT,
-           std::move(choices));
+  return c(hwnd, "Welcome to Safe!",
+           installed_kernel_driver
+           ? LOCKBOX_DIALOG_WELCOME_TEXT_POST_DRIVER_INSTALL
+           : LOCKBOX_DIALOG_WELCOME_TEXT,
+           std::move(choices),
+           close_action
+           );
 }
 
 }}

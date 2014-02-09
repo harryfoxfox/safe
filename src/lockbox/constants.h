@@ -28,8 +28,9 @@ enum {
   LOCKBOX_RECENTLY_USED_PATHS_MENU_NUM_ITEMS=10,
 };
 
-#define LOCKBOX_SOURCE_CODE_WEBSITE "http://github.com/rianhunter/safe"
-#define LOCKBOX_SEND_FEEDBACK_WEBSITE "http://github.com/rianhunter/safe/issues"
+#define LOCKBOX_SOURCE_CODE_WEBSITE "http://getsafe.org/app/get_source_code"
+#define LOCKBOX_SEND_FEEDBACK_WEBSITE "http://getsafe.org/app/send_feedback"
+#define LOCKBOX_WINDOWS_SYSTEM_CHANGES_INFO_WEBSITE "http://getsafe.org/app/system_changes_more_info"
 
 /* UI Strings follow */
 
@@ -78,9 +79,13 @@ enum {
 #define LOCKBOX_TRAY_ICON_MAC_WELCOME_MSG ("If you need to use " PRODUCT_NAME_A ", just click on the " PRODUCT_NAME_A " menu bar icon.")
 
 #define LOCKBOX_DIALOG_WELCOME_TEXT \
-    (PRODUCT_NAME_A " is now running. You can use it by clicking " \
-     "the " PRODUCT_NAME_A " icon in the tray. Get started by clicking " \
-     "one of the actions below:")
+  (PRODUCT_NAME_A " is now running. You can use it by clicking "        \
+   "the " PRODUCT_NAME_A " icon in the tray. Get started by clicking "  \
+   "one of the actions below:")
+#define LOCKBOX_DIALOG_WELCOME_TEXT_POST_DRIVER_INSTALL \
+  ("Congrats! Your system is now configured to use " PRODUCT_NAME_A ". " \
+   "Get started by clicking one of the actions below:")
+
 #define LOCKBOX_DIALOG_WELCOME_CREATE_BUTTON \
   ("Create New " ENCRYPTED_STORAGE_NAME_A "...")
 #define LOCKBOX_DIALOG_WELCOME_MOUNT_BUTTON \

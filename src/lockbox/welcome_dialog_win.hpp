@@ -30,7 +30,7 @@ enum class WelcomeDialogChoice {
 };
 
 WelcomeDialogChoice
-welcome_dialog(HWND hwnd);
+welcome_dialog(HWND hwnd, bool installed_kernel_driver);
 
 }}
 
