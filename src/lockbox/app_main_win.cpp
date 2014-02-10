@@ -438,10 +438,102 @@ record_app_start(WindowData & wd) {
                          open_for_write, should_create);
 }
 
+static
+bool
+is_app_running_as_admin() {
+  SID_IDENTIFIER_AUTHORITY nt_authority = SECURITY_NT_AUTHORITY;
+  PSID administrators_group = nullptr;
+  auto success = AllocateAndInitializeSid(&nt_authority,
+                                          2, 
+                                          SECURITY_BUILTIN_DOMAIN_RID, 
+                                          DOMAIN_ALIAS_RID_ADMINS, 
+                                          0, 0, 0, 0, 0, 0, 
+                                          &administrators_group);
+  if (!success) throw w32util::windows_error();
+
+  auto _free_administrators_group_sid =
+    lockbox::create_deferred(FreeSid, administrators_group);
+
+  BOOL is_running_as_admin = FALSE;
+  auto success2 = CheckTokenMembership(nullptr,
+                                       administrators_group,
+                                       &is_running_as_admin);
+  if (!success2) throw w32util::windows_error();
+
+  return is_running_as_admin;
+}
+
+enum {
+  INSTALL_KERNEL_DRIVER_SUCCESS,
+  INSTALL_KERNEL_DRIVER_SUCCESS_RESTART,
+  INSTALL_KERNEL_DRIVER_ERROR,
+};
+
+const WCHAR INSTALL_KERNEL_DRIVER_CMDLINE_W[] = L"/install_kernel_driver";
+
+static
+bool
+install_kernel_driver_as_admin(HWND hwnd) {
+  // NB: disable this shortcut for now since
+  //     we need a window up during the driver install to
+  //     not lose focus
+  if (false && is_app_running_as_admin()) {
+    return lockbox::win::install_kernel_driver();
+  }
+  
+  // we have to start ourselves with a special flag
+  WCHAR application_path[MAX_PATH + 1];
+  const auto num_chars = lockbox::numelementsf(application_path);
+  auto ret = GetModuleFileName(nullptr, application_path, num_chars);
+  if (!ret ||
+      (num_chars == ret &&
+       GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+    throw w32util::windows_error();
+  }
+
+  SHELLEXECUTEINFOW shex;
+  lockbox::zero_object(shex);
+  shex.cbSize = sizeof(shex);
+  shex.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
+  shex.lpVerb = L"runas";
+  shex.lpFile = application_path;
+  shex.lpParameters = INSTALL_KERNEL_DRIVER_CMDLINE_W;
+  shex.nShow = SW_SHOWNORMAL;
+
+  lbx_log_debug("Executing admin child, our pid is: %u",
+                (unsigned) GetCurrentProcessId());
+
+  auto success = ShellExecuteExW(&shex);
+  if (!success) throw w32util::windows_error();
+
+  if (!shex.hProcess) throw w32util::windows_error();
+
+  auto _close_process_handle =
+    lockbox::create_deferred(CloseHandle, shex.hProcess);
+
+  // NB: we must keep a window up while performing the driver install,
+  //     otherwise we'll lose focus
+  w32util::modal_until_object(hwnd,
+                              "Making System Changes",
+                              "Making System Changes...",
+                              shex.hProcess);
+
+  DWORD exit_code;
+  auto success2 = GetExitCodeProcess(shex.hProcess, &exit_code);
+  if (!success2) throw w32util::windows_error();
+
+  switch (exit_code) {
+  case INSTALL_KERNEL_DRIVER_SUCCESS: return false;
+  case INSTALL_KERNEL_DRIVER_SUCCESS_RESTART: return true;
+  default: throw std::runtime_error("installing driver failed");
+  }
+}
+
 #define NO_FALLTHROUGH(c) assert(false); case c
 
-CALLBACK
+static
 LRESULT
+CALLBACK
 main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
   const auto wd = (WindowData *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
   const auto TASKBAR_CREATED_MSG = wd ? wd->TASKBAR_CREATED_MSG : 0;
@@ -520,7 +612,9 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	assert(choice == lockbox::win::SystemChangesChoice::OK);
 
-	lockbox::win::install_kernel_driver();
+	auto must_restart = install_kernel_driver_as_admin(hwnd);
+        // XXX: fix this
+        if (must_restart) throw std::runtime_error("must restart!");
 	installed_kernel_driver = true;
       }
 
@@ -773,16 +867,45 @@ exit_if_not_single_app_instance(std::function<int(DWORD)> on_exit) {
   }
 }
 
-WINAPI
+static
 int
-WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
-        LPSTR /*lpCmdLine*/, int nCmdShow) {
-  // TODO: catch all exceptions, since this is a top-level
-
+winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
+              LPSTR lpCmdLine, int nCmdShow) {
   // TODO: de-initialize
   log_printer_default_init();
   logging_set_global_level(LOG_DEBUG);
-  lbx_log_debug("Hello world!");
+  lbx_log_debug("Hello world! CmdLine: %s", lpCmdLine);
+
+  bool run_install_driver = false;
+  {
+    int argc;
+    auto wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    if (!wargv) throw w32util::windows_error();
+
+    auto _free_wargv = lockbox::create_deferred(LocalFree, wargv);
+
+    run_install_driver =
+      (argc == 2 &&
+       !wcscmp(wargv[1], INSTALL_KERNEL_DRIVER_CMDLINE_W));
+  }
+
+  if (run_install_driver) {
+    int toret = INSTALL_KERNEL_DRIVER_ERROR;
+    try {
+      auto restart_required = lockbox::win::install_kernel_driver();
+      toret = restart_required
+        ? INSTALL_KERNEL_DRIVER_SUCCESS_RESTART
+        : INSTALL_KERNEL_DRIVER_SUCCESS;
+    }
+    catch (const std::exception & err) {
+      lbx_log_error("Failure to install driver to %s", err.what());
+    }
+
+    lbx_log_debug("installing driver is finished, status was: 0x%x",
+                  (unsigned) toret);
+
+    return toret;
+  }
 
   // TODO: de-initialize
   auto ret_ole = OleInitialize(NULL);
@@ -920,4 +1043,18 @@ WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   if (ret_getmsg == -1) throw std::runtime_error("getmessage failed!");
 
   return msg.wParam;
+}
+
+WINAPI
+int
+WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+        LPSTR lpCmdLine, int nCmdShow) {
+  try {
+    return winmain_inner(hInstance, hPrevInstance,
+                         lpCmdLine, nCmdShow);
+  }
+  catch (const std::exception & err) {
+    lbx_log_critical("Uncaught exception: %s", err.what());
+    return 0;
+  }
 }

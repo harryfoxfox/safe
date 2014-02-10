@@ -163,6 +163,41 @@ modal_until_message(HWND parent, std::string title, std::string ui_msg,
 
 WINAPI
 inline
+void
+modal_until_object(HWND parent, std::string title, std::string ui_msg,
+                   HANDLE obj) {
+  auto dialog_wnd = create_waiting_modal(parent,
+                                         std::move(title),
+                                         std::move(ui_msg));
+  if (!dialog_wnd) throw w32util::windows_error();
+
+  auto _destroy_dialog_wnd = lockbox::create_destroyer(dialog_wnd, DestroyWindow);
+
+  // disable window
+  decltype(lockbox::create_deferred(EnableWindow, parent, TRUE)) _renable;
+  if (parent) {
+    EnableWindow(parent, FALSE);
+    _renable = lockbox::create_deferred(EnableWindow, parent, TRUE);
+  }
+
+  // loop
+  while (true) {
+    auto ret = MsgWaitForMultipleObjects(1, &obj, TRUE, INFINITE, QS_ALLEVENTS);
+    if (ret == WAIT_OBJECT_0) break;
+    if (ret != WAIT_OBJECT_0 + 1) throw w32util::windows_error();
+
+    MSG getmsg;
+    while (PeekMessageW(&getmsg, NULL, 0, 0, PM_REMOVE)) {
+      if (!IsDialogMessage(dialog_wnd, &getmsg)) {
+        TranslateMessage(&getmsg);
+        DispatchMessage(&getmsg);
+      }
+    }
+  }
+}
+
+WINAPI
+inline
 DWORD
 _modal_call_thread_proc(LPVOID param) {
   auto fn = (std::function<void()> *) param;

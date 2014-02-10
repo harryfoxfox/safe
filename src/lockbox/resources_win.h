@@ -40,6 +40,6 @@
   256 because 1-255 are reserved:
   http://msdn.microsoft.com/en-us/library/windows/desktop/aa381054%28v=vs.85%29.aspx
  */
-#define LBX_BIN_RSRC 256
+#define LBX_BIN_RSRC DEFRSRC(256)
 
 #endif
