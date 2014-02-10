@@ -19,7 +19,9 @@
 #ifndef __Lockbox__mount_win
 #define __Lockbox__mount_win
 
+#include <lockbox/ramdisk_win.hpp>
 #include <lockbox/util.hpp>
+#include <lockbox/util_win.hpp>
 #include <lockbox/webdav_server.hpp>
 
 #include <encfs/fs/FileUtils.h>
@@ -31,27 +33,11 @@
 #include <iostream>
 #include <string>
 
-#include <windows.h>
+#include <lockbox/lean_windows.h>
 
 namespace lockbox { namespace win {
 
-struct CloseHandleDeleter {
-  void operator()(HANDLE a) {
-    auto ret = CloseHandle(a);
-    if (!ret) throw std::runtime_error("couldn't free!");
-  }
-};
-
-class ManagedThreadHandle :
-  public lockbox::ManagedResource<HANDLE, CloseHandleDeleter> {
-public:
-  ManagedThreadHandle(HANDLE a) :
-    lockbox::ManagedResource<HANDLE, CloseHandleDeleter>(std::move(a)) {}
-
-  operator bool() const {
-    return (bool) get();
-  }
-};
+typedef ManagedHandle ManagedThreadHandle;
 
 inline
 ManagedThreadHandle
@@ -72,6 +58,7 @@ private:
   port_t _listen_port;
   encfs::Path _source_path;
   lockbox::WebdavServerHandle _ws;
+  RAMDiskHandle _ramdisk_handle;
 
 public:
   MountDetails(DriveLetter drive_letter,
@@ -79,13 +66,15 @@ public:
                ManagedThreadHandle thread_handle,
                port_t listen_port,
                encfs::Path source_path,
-               lockbox::WebdavServerHandle ws)
+               lockbox::WebdavServerHandle ws,
+               RAMDiskHandle ramdisk_handle)
     : _drive_letter(drive_letter)
     , _name(std::move(name))
     , _thread_handle(std::move(thread_handle))
     , _listen_port(listen_port)
     , _source_path(std::move(source_path))
-    , _ws(std::move(ws)) {}
+    , _ws(std::move(ws))
+    , _ramdisk_handle(std::move(ramdisk_handle)) {}
 
   const std::string &
   get_mount_name() const { return _name; }

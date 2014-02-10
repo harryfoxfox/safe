@@ -28,8 +28,8 @@ make_error_message(std::string title, std::string msg) {
   return ErrorMessage {std::move(title), std::move(msg)};
 }
 
-  template <class T>
-  using CDestroyer = CDeferred<T>;
+template <class T>
+using CDestroyer = CDeferred<T>;
 
 template <class Destroyer, class T>
 CDestroyer<Destroyer(T)> create_destroyer(T t, Destroyer f) {

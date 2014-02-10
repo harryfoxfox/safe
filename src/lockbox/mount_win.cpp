@@ -20,6 +20,7 @@
 
 #include <lockbox/mount_common.hpp>
 #include <lockbox/util.hpp>
+#include <lockbox/util_win.hpp>
 #include <lockbox/webdav_server.hpp>
 #include <lockbox/windows_string.hpp>
 
@@ -29,6 +30,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+
+#include <windows.h>
+#include <shellapi.h>
 
 namespace lockbox { namespace win {
 
@@ -102,7 +106,7 @@ find_free_drive_letter() {
 
 class MountEvent {
   mutable CRITICAL_SECTION _cs;
-  lockbox::ManagedResource<HANDLE, CloseHandleDeleter> _event;
+  ManagedHandle _event;
   bool _msg_sent;
   bool _error;
   port_t _listen_port;
@@ -181,6 +185,8 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                       const encfs::SecureMem & password) {
   auto mount_name = encrypted_container_path.basename();
 
+  auto ramdisk_handle = engage_ramdisk();
+
   auto mount_event_p = std::make_shared<MountEvent>();
   auto thread_params = new ServerThreadParams<MountEvent> {
     mount_event_p,
@@ -227,7 +233,8 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                             std::move(thread_handle),
                             listen_port,
                             encrypted_container_path,
-                            std::move(webdav_server_handle));
+                            std::move(webdav_server_handle),
+                            std::move(ramdisk_handle));
 
   // there is a race condition here, the user (or something else) could have
   // unmounted the drive immediately after we mounted it,

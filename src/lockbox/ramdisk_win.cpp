@@ -253,4 +253,32 @@ install_kernel_driver() {
   return restart_required;
 }
 
+RAMDiskHandle
+engage_ramdisk() {
+  // check if we can access the ramdisk
+  auto hFile = CreateFileW(L"\\\\.\\" RAMDISK_CTL_DOSNAME_W,
+                           0, 0,
+                           NULL,
+                           OPEN_EXISTING,
+                           0,
+                           NULL);
+  if (hFile == INVALID_HANDLE_VALUE) throw w32util::windows_error();
+
+  auto toret = RAMDiskHandle(hFile);
+
+  // TODO: could refactor RAMDiskHandle to have an engage method
+  DWORD dw;
+  auto success = DeviceIoControl(hFile,
+				 IOCTL_SAFE_RAMDISK_ENGAGE,
+				 NULL,
+				 0,
+				 NULL,
+				 0,
+				 &dw,
+				 NULL);
+  if (!success) throw w32util::windows_error();
+
+  return toret;
+}
+
 }}

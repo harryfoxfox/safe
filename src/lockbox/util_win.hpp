@@ -16,24 +16,40 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef __Lockbox__ramdisk_win_hpp
-#define __Lockbox__ramdisk_win_hpp
+#ifndef __Lockbox__common_win
+#define __Lockbox__common_win
 
-#include <lockbox/util_win.hpp>
+#include <lockbox/util.hpp>
+
+#include <stdexcept>
+
+#include <lockbox/lean_windows.h>
 
 namespace lockbox { namespace win {
 
-bool
-need_to_install_kernel_driver();
+namespace _int {
 
-bool
-install_kernel_driver();
+struct CloseHandleDeleter {
+  void operator()(HANDLE a) {
+    auto ret = CloseHandle(a);
+    if (!ret) throw std::runtime_error("couldn't free!");
+  }
+};
 
-typedef ManagedHandle RAMDiskHandle;
+}
 
-RAMDiskHandle
-engage_ramdisk();
+typedef ManagedResource<HANDLE, _int::CloseHandleDeleter> _ManagedHandleBase;
+
+class ManagedHandle : public _ManagedHandleBase {
+public:
+  using _ManagedHandleBase::_ManagedHandleBase;
+
+  operator bool() const {
+    return (bool) get();
+  }
+};
 
 }}
+
 
 #endif
