@@ -27,10 +27,13 @@
 namespace safe_nt {
 
 #ifdef _WIN64
-const WCHAR DOS_DEVICE_NAME[] = L"\\DosDevices\\Global\\SafeDos";
+#define DOS_DEVICES_PREFIX_W L"\\DosDevices\\Global\\"
 #else
-const WCHAR DOS_DEVICE_NAME[] = L"\\DosDevices\\SafeDos";
+#define DOS_DEVICES_PREFIX_W L"\\DosDevices\\"
 #endif
+
+const WCHAR DOS_DEVICE_NAME[] = (DOS_DEVICES_PREFIX_W
+                                 RAMDISK_CTL_DOSNAME_W);
 
 class RAMDiskControlDevice : public IODevice {
   RAMDiskDevice *_dcb;

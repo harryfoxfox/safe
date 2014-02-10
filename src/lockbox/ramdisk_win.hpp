@@ -24,7 +24,7 @@ namespace lockbox { namespace win {
 bool
 need_to_install_kernel_driver();
 
-void
+bool
 install_kernel_driver();
 
 }}

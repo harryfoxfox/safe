@@ -203,6 +203,8 @@ safe_ramdisk:
 	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE) clean safe_ramdisk.sys
 	@mkdir -p $(DYN_RESOURCES_ROOT)
 	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.{sys,inf} $(DYN_RESOURCES_ROOT)
+	@mkdir -p $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
+	@cp $(SAFE_RAMDISK_ROOT)/ramdisk_ioctl.h $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
 
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
@@ -272,7 +274,7 @@ $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
- -lole32 -lcomctl32 -lnormaliz
+ -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev
 	$(if $(RELEASE),$(STRIP) -s $@.pre,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@.pre,)
 	mv $@.pre $@
