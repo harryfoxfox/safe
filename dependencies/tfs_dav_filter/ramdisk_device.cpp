@@ -37,17 +37,18 @@
 #include <ntdddisk.h>
 #include <ntddk.h>
 
-// TODO: investigate storing memory in a "section", i.e. ZwCreateSection
-//       this is to avoid taking up mapping space in the kernel
-//       (assuming that sections are unmapped even in the kernel)
+#ifndef OBJ_KERNEL_HANDLE
+#define OBJ_KERNEL_HANDLE       0x00000200
+#endif
 
 namespace safe_nt {
 
-#ifdef _WIN64
-const size_t MEM_SIZE = 4096ULL * 1024ULL * 1024ULL;
-#else
-const size_t MEM_SIZE = 100ULL * 1024ULL * 1024ULL;
-#endif
+// this is the max amount we're willing to commit
+// this is a function of the page file size
+// 512MB is a conservative guess
+// (assuming page files range from 1024MB to 4096MB)
+// this does limit the size of files you can store in your safe
+const auto MEM_SIZE = 512ULL * 1024ULL * 1024ULL;
 
 #if !defined(__MINGW64_VERSION_MAJOR) && defined(__MINGW32_MAJOR_VERSION)
 
@@ -59,6 +60,10 @@ const size_t MEM_SIZE = 100ULL * 1024ULL * 1024ULL;
 #define ExInterlockedInsertTailList ExfInterlockedInsertTailList
 #define ExInterlockedRemoveHeadList ExfInterlockedRemoveHeadList
 
+#endif
+
+#ifndef ZwCurrentProcess
+#define ZwCurrentProcess() ((HANDLE)(LONG_PTR) -1)
 #endif
 
 const ULONG REMOVE_LOCK_TAG = 0x02051986UL;
@@ -105,31 +110,57 @@ worker_thread_bootstrap(PVOID ctx) noexcept {
 }
 
 static
-void
-format_fat32(void *mem, size_t memsize, PDISK_GEOMETRY pgeom,
+NTSTATUS
+write_section(HANDLE section, size_t offset,
+              const void *data, size_t data_size);
+
+static
+NTSTATUS
+read_section(HANDLE section, size_t offset,
+             void *data, size_t to_transfer);
+
+static
+NTSTATUS
+format_fat32(HANDLE section, size_t memsize, PDISK_GEOMETRY pgeom,
 	     PUCHAR ppartition_type);
 
 RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
 			     PDEVICE_OBJECT lower_device_object,
 			     NTSTATUS *out) noexcept {
-  this->image_buffer = nullptr;
   this->thread_ref = nullptr;
   this->lower_device_object = lower_device_object;
 
   this->image_size = MEM_SIZE;
-  auto status3 = ZwAllocateVirtualMemory(NtCurrentProcess(),
-					 &this->image_buffer,
-					 0,
-					 &this->image_size,
-					 MEM_COMMIT,
-					 PAGE_READWRITE);
+
+  this->section_handle = nullptr;
+  OBJECT_ATTRIBUTES attributes;
+  InitializeObjectAttributes(&attributes,
+			     nullptr,
+			     OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+			     nullptr,
+			     nullptr);
+  LARGE_INTEGER section_size;
+  section_size.QuadPart = (LONGLONG) this->image_size;
+  auto status3 = ZwCreateSection(&this->section_handle,
+                                 SECTION_ALL_ACCESS,
+                                 &attributes,
+                                 &section_size,
+                                 PAGE_READWRITE,
+                                 SEC_RESERVE,
+                                 nullptr);
   if (!NT_SUCCESS(status3)) {
+    nt_log_error("Error while doing ZwCreateSection: %s (0x%x)",
+                 nt_status_to_string(status3), status3);
     *out = status3;
     return;
   }
 
-  format_fat32(this->image_buffer, this->image_size,
-	       &this->geom, &this->partition_type);
+  auto status42 = format_fat32(this->section_handle, this->image_size,
+                              &this->geom, &this->partition_type);
+  if (!NT_SUCCESS(status42)) {
+    *out = status42;
+    return;
+  }
 
   InitializeListHead(&this->list_head);
   KeInitializeSpinLock(&this->list_lock);
@@ -200,15 +231,13 @@ RAMDiskDevice::~RAMDiskDevice() noexcept {
   }
 
   // free image buffer
-  if (this->image_buffer) {
-    SIZE_T free_size = 0;
-    auto status = ZwFreeVirtualMemory(NtCurrentProcess(),
-				      &this->image_buffer,
-				      &free_size, MEM_RELEASE);
+  if (this->section_handle) {
+    auto status = ZwClose(this->section_handle);
     if (!NT_SUCCESS(status)) {
       nt_log_error("couldn't free disk virtual memory: 0x%x\n",
 		   (unsigned) status);
     }
+    else this->section_handle = nullptr;
   }
 
   if (this->lower_device_object) {
@@ -331,18 +360,19 @@ RAMDiskDevice::worker_thread() noexcept {
       //     so just use Read
 
       auto system_buffer =
-	(PUCHAR) MmGetSystemAddressForMdlSafe(irp->MdlAddress,
-					      NormalPagePriority);
+        (PUCHAR) MmGetSystemAddressForMdlSafe(irp->MdlAddress,
+                                              NormalPagePriority);
       if (!system_buffer) {
-	irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
-	irp->IoStatus.Information = 0;
-	break;
+        irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
+        irp->IoStatus.Information = 0;
+        break;
       }
 
       SIZE_T to_transfer;
       assert(io_stack->Parameters.Read.ByteOffset.QuadPart >= 0);
       if ((decltype(dcb->get_image_size())) io_stack->Parameters.Read.ByteOffset.QuadPart <
 	  dcb->get_image_size()) {
+
 	SIZE_T vm_offset = io_stack->Parameters.Read.ByteOffset.QuadPart;
 	static_assert(sizeof(SIZE_T) >= sizeof(io_stack->Parameters.Read.Length),
 		      "SIZE_T is too small!");
@@ -350,20 +380,23 @@ RAMDiskDevice::worker_thread() noexcept {
 			       dcb->get_image_size() - vm_offset);
 
 	nt_log_debug("%s AT %lu -> %lu\n",
-		  io_stack->MajorFunction == IRP_MJ_READ ? "READ" : "WRITE",
-		  (unsigned long) vm_offset, (unsigned long) to_transfer);
+                     io_stack->MajorFunction == IRP_MJ_READ ? "READ" : "WRITE",
+                     (unsigned long) vm_offset, (unsigned long) to_transfer);
+        NTSTATUS status2;
 	if (io_stack->MajorFunction == IRP_MJ_READ) {
-	  RtlCopyMemory(system_buffer,
-			static_cast<UINT8 *>(dcb->image_buffer) +
-			vm_offset,
-			to_transfer);
+          status2 = read_section(this->section_handle, vm_offset,
+                                 system_buffer, to_transfer);
 	}
 	else {
-	  RtlCopyMemory(static_cast<UINT8 *>(dcb->image_buffer) +
-			vm_offset,
-			system_buffer,
-			to_transfer);
+          status2 = write_section(this->section_handle, vm_offset,
+                                  system_buffer, to_transfer);
 	}
+
+        if (!NT_SUCCESS(status2)) {
+          irp->IoStatus.Status = status2;
+          irp->IoStatus.Information = 0;
+          break;
+        }
       }
       else to_transfer = 0;
 
@@ -859,8 +892,8 @@ ceil_divide(T num, T denom) {
 }
 
 static
-void
-format_fat32(void *mem, size_t memsize, PDISK_GEOMETRY pgeom,
+NTSTATUS
+format_fat32(HANDLE section, size_t memsize, PDISK_GEOMETRY pgeom,
 	     PUCHAR ppartition_type) {
   const auto FAT_ID = 0xF8UL; // hard disk
   const auto BYTES_PER_SECTOR = 512UL;
@@ -972,7 +1005,9 @@ format_fat32(void *mem, size_t memsize, PDISK_GEOMETRY pgeom,
     static_assert(sizeof(boot_sector) == BYTES_PER_SECTOR,
 		  "boot sector is too large");
 
-    memcpy(mem, &boot_sector, BYTES_PER_SECTOR);
+    auto status = write_section(section, 0,
+                                &boot_sector, BYTES_PER_SECTOR);
+    if (!NT_SUCCESS(status)) return status;
   }
 
   {
@@ -999,19 +1034,99 @@ format_fat32(void *mem, size_t memsize, PDISK_GEOMETRY pgeom,
     static_assert(sizeof(fs_info_sector) == BYTES_PER_SECTOR,
 		  "boot sector is too large");
 
-    memcpy((uint8_t *) mem + BYTES_PER_SECTOR, &fs_info_sector,
-	   BYTES_PER_SECTOR);
+    auto status = write_section(section, BYTES_PER_SECTOR,
+                                &fs_info_sector, BYTES_PER_SECTOR);
+    if (!NT_SUCCESS(status)) return status;
   }
 
-  const auto fat = (uint32_t *) ((uint8_t *) mem +
-				 BYTES_PER_SECTOR * 2);
   static_assert(!(FAT_ID >> 8), "FAT ID is larger than 1 bytes");
-  fat[0] = (0xffffff00) | FAT_ID;
-  fat[1] = 0xffffffff;
-  // this is the cluster where the root directory entry
-  // starts, 0xffffffff means "last cluster in file"
-  fat[2] = 0xffffffff;
+  uint32_t fat[3] = {
+    (0xffffff00) | FAT_ID,
+    0xffffffff,
+    // this is the cluster where the root directory entry
+    // starts, 0xffffffff means "last cluster in file"
+    0xffffffff,
+  };
+
+  return write_section(section, BYTES_PER_SECTOR * 2,
+                       fat, sizeof(fat));
 }
+
+template<class T, class U>
+T
+align_down(T addr, U gran) {
+  return addr - addr % gran;
+}
+
+static
+NTSTATUS
+read_write_section(HANDLE section, size_t offset,
+                   void *data, size_t to_transfer,
+                   bool should_write) {
+  const auto ALLOCATION_GRANULARITY = 64 * 1024;
+
+  PUCHAR ramdisk_base_buffer = nullptr;
+
+  // NB: must round down to align with ALLOCATION_GRANULARITY
+  // (docs says this is done for us but that is a lie,
+  //  if you don't manually round, it'll return
+  //  STATUS_MAPPED_ALIGNMENT)
+
+  LARGE_INTEGER section_offset;
+  section_offset.QuadPart = align_down(offset, ALLOCATION_GRANULARITY);
+  
+  auto aligned_diff = offset - section_offset.QuadPart;
+  SIZE_T to_transfer_copy = to_transfer + aligned_diff;
+
+  auto status =
+    ZwMapViewOfSection(section,
+                       ZwCurrentProcess(),
+                       (PVOID *) &ramdisk_base_buffer,
+                       0, to_transfer_copy,
+                       &section_offset,
+                       &to_transfer_copy,
+                       ViewUnmap, 0,
+                       PAGE_READWRITE);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("Error while doing ZwMapViewOfSection: %s (0x%x)",
+                 nt_status_to_string(status), status);
+    return status;
+  }
+    
+  auto _unmap_view =
+    lockbox::create_deferred(ZwUnmapViewOfSection,
+                             section, ramdisk_base_buffer);
+
+  auto ramdisk_buffer = ramdisk_base_buffer + aligned_diff;
+
+  if (should_write) {
+    memcpy(ramdisk_buffer, data, to_transfer);
+  }
+  else {
+    memcpy(data, ramdisk_buffer, to_transfer);
+  }
+
+  return STATUS_SUCCESS;
+}
+
+static
+NTSTATUS
+read_section(HANDLE section, size_t offset,
+             void *data, size_t to_transfer) {
+  return read_write_section(section, offset,
+                            const_cast<void *>(data), to_transfer,
+                            false);
+}
+
+static
+NTSTATUS
+write_section(HANDLE section, size_t offset,
+              const void *data, size_t to_transfer) {
+  return read_write_section(section, offset,
+                            const_cast<void *>(data), to_transfer,
+                            true);
+}
+
 
 }
 

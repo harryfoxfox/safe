@@ -66,3 +66,6 @@ ZwSetInformationFile@20
 KeWaitForMutexObject@20
 KeReleaseMutex@8
 ZwCreateFile@44
+ZwCreateSection@28
+ZwMapViewOfSection@40
+ZwUnmapViewOfSection@8

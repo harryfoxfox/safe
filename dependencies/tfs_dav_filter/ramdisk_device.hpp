@@ -28,7 +28,7 @@
 #include <lockbox/deferred.hpp>
 
 #include <ntdddisk.h>
-#include <ntifs.h>
+#include <ntddk.h>
 
 namespace safe_nt {
 
@@ -54,7 +54,7 @@ class RAMDiskDevice : public IODevice {
 
   PDEVICE_OBJECT lower_device_object;
 
-  void *image_buffer;
+  HANDLE section_handle;
   SIZE_T image_size;
   DISK_GEOMETRY geom;
 
