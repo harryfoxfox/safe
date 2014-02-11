@@ -1182,7 +1182,7 @@ read_registry_alloc_size(PUNICODE_STRING registry_path,
   UNICODE_STRING value_name;
   RtlInitUnicodeString(&value_name, L"RAMDiskSize");
 
-  UCHAR buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(DWORD)];
+  UCHAR buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
   auto value = (PKEY_VALUE_PARTIAL_INFORMATION) &buffer;
   ULONG value_length = sizeof(buffer);
 
@@ -1206,7 +1206,7 @@ read_registry_alloc_size(PUNICODE_STRING registry_path,
   }
   
   if (value->Type != REG_DWORD) {
-    *out = (SIZE_T) *((PDWORD) value->Data);
+    *out = (SIZE_T) *((PULONG) value->Data);
   }
   else {
     nt_log_info("Data is registry is bad, using default ramdisk size");

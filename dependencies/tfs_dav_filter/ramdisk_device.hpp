@@ -73,7 +73,7 @@ class RAMDiskDevice : public IODevice {
   PnPState pnp_state;
 
   PDEVICE_OBJECT control_device;
-  DWORD engage_count;
+  ULONG engage_count;
 
   SIZE_T
   get_image_size() const noexcept;
