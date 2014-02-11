@@ -150,7 +150,9 @@ DriverEntry(PDRIVER_OBJECT DriverObject,
   DriverObject->MajorFunction[IRP_MJ_PNP] = SafeRamDiskDispatchPnP;
   DriverObject->MajorFunction[IRP_MJ_POWER] = SafeRamDiskDispatchPower;
   DriverObject->MajorFunction[IRP_MJ_SYSTEM_CONTROL] = SafeRamDiskDispatchSystemControl;
-  DriverObject->DriverExtension->AddDevice = (PVOID) SafeRamDiskAddDevice;
+  DriverObject->DriverExtension->AddDevice =
+    (decltype(DriverObject->DriverExtension->AddDevice))
+    SafeRamDiskAddDevice;
   DriverObject->DriverUnload = SafeRamDiskUnload;
 
   nt_log_debug("Loading done, returning control...");

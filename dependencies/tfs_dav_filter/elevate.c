@@ -4,6 +4,7 @@
 */
 
 #define _UNICODE
+#define UNICODE
 #define NTDDI_VERSION NTDDI_LONGHORN
 
 #include <assert.h>
@@ -13,7 +14,10 @@
 #include <windows.h>
 #include <shellapi.h>
 
+#ifndef _countof
 #define _countof(a) (sizeof(a) / sizeof(a[0]))
+#endif
+
 #define _ASSERTE assert
 #define __in
 
@@ -79,12 +83,20 @@ INT Launch(
 
 	_ASSERTE( Shex.hProcess );
 		
+	INT ret = EXIT_SUCCESS;
 	if ( Wait )
 	{
-		WaitForSingleObject( Shex.hProcess, INFINITE );
+		DWORD ret2 = 
+		  WaitForSingleObject( Shex.hProcess, INFINITE );
+		if (ret2 == WAIT_OBJECT_0) {
+		  DWORD exit_code;
+		  BOOL success = GetExitCodeProcess(Shex.hProcess, &exit_code);
+		  ret = success ? exit_code : EXIT_FAILURE;
+		}
+		else ret = EXIT_FAILURE;
 	}
 	CloseHandle( Shex.hProcess );
-	return EXIT_SUCCESS;
+	return ret;
 }
 
 INT DispatchCommand(

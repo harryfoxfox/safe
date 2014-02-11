@@ -1,1 +1,1 @@
-DDKINCLUDE = /mingw/include/ddk
+DDKINCLUDE ?= /mingw/include/ddk

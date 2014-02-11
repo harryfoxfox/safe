@@ -48,6 +48,7 @@ endif
 IS_WIN := $(shell uname | grep -i mingw)
 
 IS_WIN_TARGET = $(or $(IS_WIN_CROSS),$(IS_WIN))
+IS_WIN64_TARGET := $(if $(IS_WIN_TARGET),$(shell echo 'int main() {return 0;}' | ( $(CC) $(CFLAGS) -x c - -o test.exe && ( objdump -x test.exe; rm test.exe) ) | head -n 2 | grep x86-64),)
 IS_MAC_TARGET = $(if $(IS_WIN_TARGET),,$(shell test `uname` = Darwin && echo 1))
 
 PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),$(if $(shell which sysctl),$(shell sysctl hw.ncpu | awk '{print $$2}'),1))
@@ -148,7 +149,7 @@ libbotan: clean
          --no-optimizations --prefix=$(DEPS_INSTALL_ROOT) \
          --disable-shared \
          $(if $(shell test $(CXX) == clang++ && echo 1),--cc=clang,--cc-bin=c++) \
-         $(if $(IS_WIN_TARGET),--os=mingw --cpu=x86,) --with-tr1=none
+         $(if $(IS_WIN_TARGET),--os=mingw $(if $(IS_WIN64_TARGET),,--cpu=x86),) --with-tr1=none
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make clean
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make -j$(PROCS)
 	@cd $(BOTAN_ROOT); PATH="/tmp/botan_path:$$PATH" make install
@@ -197,20 +198,27 @@ $(NORMALIZ_DEP): $(CURDIR)/normaliz.def
 
 normaliz: $(NORMALIZ_DEP)
 
+# this isn't run by default since we use the prebuild versions in "resources/"
+# but can be run manually, then upon build of Safe.exe, we'll pull in
+# the locally built version
 safe_ramdisk:
 	@echo "Building Safe RAMDisk"
-	@cd $(SAFE_RAMDISK_ROOT); cp $(if $(IS_WIN),config-win.mk,config-mac.mk) config.mk
+	@cd $(SAFE_RAMDISK_ROOT); cp $(if $(IS_WIN),$(if $(IS_WIN64_TARGET),config-win64.mk,config-win.mk),config-mac.mk) config.mk
 	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE) clean safe_ramdisk.sys
+
 	@mkdir -p $(DYN_RESOURCES_ROOT)
-	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.{sys,inf} $(DYN_RESOURCES_ROOT)
+	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.inf $(DYN_RESOURCES_ROOT)
+	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk$(if $(IS_WIN64_TARGET),_x64,).sys $(DYN_RESOURCES_ROOT)
+
+safe_ramdisk_headers:
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
-	@cp $(SAFE_RAMDISK_ROOT)/ramdisk_ioctl.h $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
+	cp $(SAFE_RAMDISK_ROOT)/ramdisk_ioctl.h $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
 
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
  libencfs \
  libwebdav_server_fs \
- $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk,)
+ $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk_headers,)
 
 clean-deps:
 	rm -rf $(OUT_DIR)
@@ -261,7 +269,7 @@ $(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(CXX) $(MY_CPPFLAGS) $(MY_CXXFLAGS) -c -o $@ $<
 
 %.rc.o: %.rc
-	$(WINDRES) -I$(RESOURCES_ROOT) -I$(DYN_RESOURCES_ROOT) -I./src -i $< -o $@
+	$(WINDRES) -I$(DYN_RESOURCES_ROOT) -I$(RESOURCES_ROOT) -I./src -i $< -o $@
 
 test_encfs_main:
 	$(CXX) -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \

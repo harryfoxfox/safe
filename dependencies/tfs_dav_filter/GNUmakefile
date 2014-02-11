@@ -22,11 +22,22 @@ STRIP ?= strip
 SAFE_RAMDISK_SRC_CPP = ramdisk.cpp nt_helpers.cpp ramdisk_device.cpp tfs_dav_reparse_engage.cpp io_device.cpp ramdisk_control_device.cpp
 SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
 
-SAFE_RAMDISK_TARGET = safe_ramdisk.sys
-
 CPPFLAGS ?= -I$(CURDIR) -I$(DDKINCLUDE) -I$(CURDIR)/../../src $(if $(RELEASE),,-DDBG)
 CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror $(if $(RELEASE),-Os -flto,)
 CFLAGS ?= $(CPPFLAGS) -Wall -Werror $(if $(RELEASE),-Os -flto,)
+
+ifdef IS_64BIT_BUILD
+EXTRA_LDFLAGS = -Wl,--entry,DriverEntry
+SAFE_RAMDISK_TARGET = safe_ramdisk_x64.sys
+
+else
+USE_CUSTOM_NTOSKERNEL_DEF = YES
+EXTRA_LDFLAGS = -Wl,--image-base,0x10000 \
+		-Wl,--file-alignment,0x1000 \
+		-Wl,--section-alignment,0x1000 \
+		-Wl,--entry,_DriverEntry@8
+SAFE_RAMDISK_TARGET = safe_ramdisk.sys
+endif
 
 all: $(SAFE_RAMDISK_TARGET)
 
@@ -41,32 +52,30 @@ all: $(SAFE_RAMDISK_TARGET)
 %.a: %.def
 	$(DLLTOOL) -k -d $^ -l $@
 
-$(SAFE_RAMDISK_TARGET): $(SAFE_RAMDISK_OBJ) libmyntoskrnl.a
+$(SAFE_RAMDISK_TARGET): $(SAFE_RAMDISK_OBJ) $(if $(USE_CUSTOM_NTOSKERNEL_DEF),libmyntoskrnl.a,)
 	$(CC) 	-Wl,--base-file,base.tmp \
-		-Wl,--entry,_DriverEntry@8 \
+                $(EXTRA_LDFLAGS) \
+		-Wl,--entry,$(ENTRY) \
 		-nostartfiles -nostdlib  -static-libgcc \
 		-o junk.tmp \
 		$(CFLAGS) \
 		-L$(CURDIR) \
 		$(SAFE_RAMDISK_OBJ) \
-		-lmyntoskrnl -lhal -lgcc
+		$(if $(USE_CUSTOM_NTOSKERNEL_DEF),-lmyntoskrnl,-lntoskrnl) -lhal -lgcc
 	-rm -f junk.tmp
 
 	$(DLLTOOL) --dllname $@ --base-file base.tmp --output-exp ${@:.sys=.exp}
 	-rm -f base.tmp
 
 	$(CC)	-Wl,--subsystem,native \
-		-Wl,--image-base,0x10000 \
-		-Wl,--file-alignment,0x1000 \
-		-Wl,--section-alignment,0x1000 \
-		-Wl,--entry,_DriverEntry@8 \
+		$(EXTRA_LDFLAGS) \
 		-Wl,${@:.sys=.exp} \
 		-nostartfiles -nostdlib -static-libgcc \
 		-o $@ \
 		$(CFLAGS) \
 		-L$(CURDIR) \
 		$(SAFE_RAMDISK_OBJ) \
-		-lmyntoskrnl -lhal -lgcc
+		$(if $(USE_CUSTOM_NTOSKERNEL_DEF),-lmyntoskrnl,-lntoskrnl) -lhal -lgcc
 	$(if $(RELEASE),$(STRIP) -s $@,)
 # TODO: use stampinf or similar tool to make this automatic
 	@echo "New safe_ramdisk.sys made, make sure to tweak DriverVer in the safe_ramdisk.inf"
@@ -79,7 +88,7 @@ install_non_pnp_device.exe: install_non_pnp_device.c
 
 reload: $(SAFE_SIMREP_TARGET) elevate.exe \
 	install_non_pnp_device.exe $(SAFE_RAMDISK_TARGET)
-	elevate.exe reload.bat
+	elevate.exe //wait reload.bat
 
 clean:
 	rm -f $(SAFE_SIMREP_TARGET) $(SAFE_RAMDISK_TARGET)

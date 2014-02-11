@@ -47,7 +47,7 @@ min(const T & a, const T & b) {
 
 typedef UCHAR uint8_t;
 typedef USHORT uint16_t;
-typedef UINT uint32_t;
+typedef ULONG uint32_t;
 
 #define assert ASSERT
 

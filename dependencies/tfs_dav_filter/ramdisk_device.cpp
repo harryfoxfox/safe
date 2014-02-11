@@ -35,17 +35,30 @@
 #include <lockbox/low_util.hpp>
 
 #include <ntdddisk.h>
-#include <ntifs.h>
+#include <ntddk.h>
 
-// our mingw header fixes
-#define WaitAny 1
+// TODO: investigate storing memory in a "section", i.e. ZwCreateSection
+//       this is to avoid taking up mapping space in the kernel
+//       (assuming that sections are unmapped even in the kernel)
 
 namespace safe_nt {
 
 #ifdef _WIN64
-const size_t MEM_SIZE = 4096 * 1024 * 1024;
+const size_t MEM_SIZE = 4096ULL * 1024ULL * 1024ULL;
 #else
-const size_t MEM_SIZE = 100 * 1024 * 1024;
+const size_t MEM_SIZE = 100ULL * 1024ULL * 1024ULL;
+#endif
+
+#if !defined(__MINGW64_VERSION_MAJOR) && defined(__MINGW32_MAJOR_VERSION)
+
+// fix for mingw32
+#define WaitAny 1
+// we explicitly use the Exf- prefix because some MinGW32 versions
+// incorrectly export ExInterlockedInsertTailList as STDCALL
+// when it's really a synonym for FASTCALL ExfInterlockedInsertTailList
+#define ExInterlockedInsertTailList ExfInterlockedInsertTailList
+#define ExInterlockedRemoveHeadList ExfInterlockedRemoveHeadList
+
 #endif
 
 const ULONG REMOVE_LOCK_TAG = 0x02051986UL;
@@ -210,12 +223,9 @@ RAMDiskDevice::get_image_size() const noexcept {
 
 void
 RAMDiskDevice::queue_request(PIRP irp) noexcept {
-  // we explicitly use the Exf- prefix because some MinGW32 versions
-  // incorrectly export ExInterlockedInsertTailList as STDCALL
-  // when it's really a synonym for FASTCALL ExfInterlockedInsertTailList
-  ExfInterlockedInsertTailList(&this->list_head,
-			       &irp->Tail.Overlay.ListEntry,
-			       &this->list_lock);
+  ExInterlockedInsertTailList(&this->list_head,
+			      &irp->Tail.Overlay.ListEntry,
+			      &this->list_lock);
   
   KeSetEvent(&this->request_event, (KPRIORITY) 0, FALSE);
 }
@@ -223,8 +233,8 @@ RAMDiskDevice::queue_request(PIRP irp) noexcept {
 PIRP
 RAMDiskDevice::dequeue_request() noexcept {
   while (true) {
-    auto request = ExfInterlockedRemoveHeadList(&this->list_head,
-						&this->list_lock);
+    auto request = ExInterlockedRemoveHeadList(&this->list_head,
+					       &this->list_lock);
     if (!request) {
       // No request =>
       // wait for a request event or the terminate thread event
@@ -330,10 +340,13 @@ RAMDiskDevice::worker_thread() noexcept {
       }
 
       SIZE_T to_transfer;
-      if (io_stack->Parameters.Read.ByteOffset.QuadPart <
+      assert(io_stack->Parameters.Read.ByteOffset.QuadPart >= 0);
+      if ((decltype(dcb->get_image_size())) io_stack->Parameters.Read.ByteOffset.QuadPart <
 	  dcb->get_image_size()) {
 	SIZE_T vm_offset = io_stack->Parameters.Read.ByteOffset.QuadPart;
-	to_transfer = std::min(io_stack->Parameters.Read.Length,
+	static_assert(sizeof(SIZE_T) >= sizeof(io_stack->Parameters.Read.Length),
+		      "SIZE_T is too small!");
+	to_transfer = std::min((SIZE_T) io_stack->Parameters.Read.Length,
 			       dcb->get_image_size() - vm_offset);
 
 	nt_log_debug("%s AT %lu -> %lu\n",
@@ -935,8 +948,8 @@ format_fat32(void *mem, size_t memsize, PDISK_GEOMETRY pgeom,
       /*.sectors_per_track =*/ SECTORS_PER_TRACK,
       /*.num_heads =*/ TRACKS_PER_CYLINDER,
       /*.hidden_sectors =*/ 0,
-      /*.total_num_sectors_32 =*/ memsize / BYTES_PER_SECTOR,
-      /*.sectors_per_fat_32 =*/ num_sectors_for_fat,
+      /*.total_num_sectors_32 =*/ (uint32_t) (memsize / BYTES_PER_SECTOR),
+      /*.sectors_per_fat_32 =*/ (uint32_t) num_sectors_for_fat,
       /*.mirroring_flags =*/ 0,
       /*.version =*/ 0,
       /*.root_directory_cluster_num =*/ 2,

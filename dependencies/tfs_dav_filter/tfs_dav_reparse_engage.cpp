@@ -199,7 +199,11 @@ NTSTATUS
 set_delete_on_close(HANDLE file_handle) {
   FILE_DISPOSITION_INFORMATION file_dispo_info;
   memset(&file_dispo_info, 0, sizeof(file_dispo_info));
+#ifdef DeleteFile
   file_dispo_info.DoDeleteFile = TRUE;
+#else
+  file_dispo_info.DeleteFile = TRUE;
+#endif
 
   IO_STATUS_BLOCK io_status_block_2;
   auto status3 = ZwSetInformationFile(file_handle,

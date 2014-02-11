@@ -19,8 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <mountdev.h>
 #include <ntifs.h>
+
+#include <mountdev.h>
 #include <ntdddisk.h>
 #include <ntddstor.h>
 #include <ntddvol.h>
