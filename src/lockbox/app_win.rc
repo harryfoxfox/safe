@@ -43,5 +43,6 @@ END
 IDI_LBX_APP ICON "app_win.ico"
 ID_LBX_RD_INF LBX_BIN_RSRC "safe_ramdisk.inf"
 ID_LBX_RD_SYS32 LBX_BIN_RSRC "safe_ramdisk.sys"
+ID_LBX_RD_SYS64 LBX_BIN_RSRC "safe_ramdisk_x64.sys"
 
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "app_win.manifest"

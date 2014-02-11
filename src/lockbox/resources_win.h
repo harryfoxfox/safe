@@ -35,6 +35,7 @@
 #define IDI_LBX_APP DEFRSRC(101)
 #define ID_LBX_RD_INF DEFRSRC(102)
 #define ID_LBX_RD_SYS32 DEFRSRC(103)
+#define ID_LBX_RD_SYS64 DEFRSRC(104)
 
 /*
   256 because 1-255 are reserved:
