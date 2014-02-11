@@ -245,16 +245,17 @@ does_tfs_dav_link_already_exists(PUNICODE_STRING path_to_tfs_dav,
 			    | FILE_OPEN_FOR_BACKUP_INTENT
 			    | FILE_SYNCHRONOUS_IO_ALERT
 			    | FILE_OPEN_REPARSE_POINT);
-  if (!NT_SUCCESS(status2) &&
-      io_status_block.Information != FILE_DOES_NOT_EXIST) {
-    nt_log_error("Error while calling ZwOpenFile(\"%wZ\"): %s (0x%x)",
-		 path_to_tfs_dav,
-		 nt_status_to_string(status2), status2);
-    return status2;
-  }
-
-  if (io_status_block.Information == FILE_DOES_NOT_EXIST) {
-    return STATUS_SUCCESS;
+  if (!NT_SUCCESS(status2)) {
+    if (status2 == STATUS_OBJECT_PATH_NOT_FOUND ||
+	status2 == STATUS_OBJECT_NAME_NOT_FOUND) {
+      return STATUS_SUCCESS;
+    }
+    else {
+      nt_log_error("Error while calling ZwOpenFile(\"%wZ\"): %s (0x%x)",
+		   path_to_tfs_dav,
+		   nt_status_to_string(status2), status2);
+      return status2;
+    }
   }
 
   auto _close_file = lockbox::create_deferred(ZwClose, existing_tfs_dav_handle);
@@ -368,20 +369,21 @@ rename_tfs_dav_directory(PUNICODE_STRING path_to_tfs_dav, RenameDirection dir) {
 			      FILE_SHARE_READ
 			      | FILE_SHARE_WRITE
 			      | FILE_SHARE_DELETE,
-			      FILE_OPEN_IF,
+			      FILE_OPEN,
 			      FILE_DIRECTORY_FILE
 			      | FILE_SYNCHRONOUS_IO_ALERT
 			      | FILE_OPEN_FOR_BACKUP_INTENT
 			      | FILE_OPEN_REPARSE_POINT,
 			      NULL, 0);
   if (!NT_SUCCESS(status2)) {
-    if (io_status_block.Information == FILE_DOES_NOT_EXIST) {
+    if (status2 == STATUS_OBJECT_PATH_NOT_FOUND ||
+	status2 == STATUS_OBJECT_NAME_NOT_FOUND) {
       // file doesn't exist, no need to do anything
       nt_log_debug("File \"%wZ\" didn't exist so not renaming", source_path);
       return STATUS_SUCCESS;
     }
     else {
-      nt_log_error("Error while calling ZwOpenFile(\"%wZ\"): %s (0x%x)",
+      nt_log_error("Error while calling ZwCreateFile(\"%wZ\"): %s (0x%x)",
 		   source_path, nt_status_to_string(status2), status2);
       return status2;
     }
@@ -422,9 +424,61 @@ rename_tfs_dav_directory(PUNICODE_STRING path_to_tfs_dav, RenameDirection dir) {
 
 static
 NTSTATUS
+ensure_parent_dirs_exist(PUNICODE_STRING path_to_tfs_dav) {
+  // path is of the form ...\TfsStore\Tfs_DAV
+  // Create TfsStore
+
+  UNICODE_STRING path_to_tfs_dav_parent = *path_to_tfs_dav;
+
+  // find first '\'
+  auto offset_to_slash = path_to_tfs_dav_parent.Length / sizeof(WCHAR) - 1;
+  while (path_to_tfs_dav_parent.Buffer[offset_to_slash--] != L'\\') {}
+
+  path_to_tfs_dav_parent.Length = (offset_to_slash + 1) * sizeof(WCHAR);
+
+  OBJECT_ATTRIBUTES attributes;
+  InitializeObjectAttributes(&attributes,
+			     &path_to_tfs_dav_parent,
+			     OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+			     nullptr,
+			     nullptr);
+
+  IO_STATUS_BLOCK io_status_block;
+  HANDLE tfs_dav_handle;
+  auto status = ZwCreateFile(&tfs_dav_handle,
+			     GENERIC_READ | SYNCHRONIZE,
+			     &attributes,
+			     &io_status_block,
+			     nullptr,
+			     FILE_ATTRIBUTE_NORMAL,
+			     FILE_SHARE_READ |
+			     FILE_SHARE_WRITE |
+			     FILE_SHARE_DELETE,
+			     FILE_OPEN_IF,
+			     FILE_DIRECTORY_FILE
+			     | FILE_OPEN_FOR_BACKUP_INTENT
+			     | FILE_SYNCHRONOUS_IO_NONALERT,
+			     nullptr, 0);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("Error while calling ZwCreateFile(\"%wZ\"): %s (0x%x)",
+		 &path_to_tfs_dav_parent,
+		 nt_status_to_string(status), status);
+    return status;
+  }
+
+  ZwClose(tfs_dav_handle);
+
+  return STATUS_SUCCESS;
+}
+
+static
+NTSTATUS
 create_new_tfs_dav_link(PUNICODE_STRING path_to_tfs_dav,
 			PUNICODE_STRING reparse_point_target,
 			PHANDLE out_handle) {
+  auto status0 = ensure_parent_dirs_exist(path_to_tfs_dav);
+  if (!NT_SUCCESS(status0)) return status0;
+
   OBJECT_ATTRIBUTES attributes;
   InitializeObjectAttributes(&attributes,
 			     path_to_tfs_dav,

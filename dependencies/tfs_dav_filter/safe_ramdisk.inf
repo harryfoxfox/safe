@@ -3,7 +3,7 @@ Signature = "$WINDOWS NT$"
 Class     = "Safe RAMDisk"
 ClassGuid = {168F02BC-933F-4E2E-B3E1-E30E84F0DC05}
 Provider  = "Rian Hunter"
-DriverVer = 2/14/2014,1.0.2.51
+DriverVer = 2/14/2014,1.0.2.58
 
 [DestinationDirs]
 DefaultDestDir = 12
