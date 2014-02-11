@@ -49,7 +49,7 @@ const int IDC_PROGRESS = 2;
 
 CALLBACK
 inline
-BOOL
+INT_PTR
 _modal_call_dialog_proc(HWND hwnd, UINT Message,
                         WPARAM /*wParam*/, LPARAM /*lParam*/) {
   switch (Message) {

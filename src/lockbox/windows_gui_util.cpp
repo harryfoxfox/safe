@@ -285,9 +285,9 @@ get_folder_dialog(HWND owner) {
 void
 open_url_in_browser(HWND owner, std::string url) {
   auto ret_shell2 =
-    (int) ShellExecuteW(owner, L"open",
-                        w32util::widen(url).c_str(),
-                        NULL, NULL, SW_SHOWNORMAL);
+    (INT_PTR) ShellExecuteW(owner, L"open",
+			    w32util::widen(url).c_str(),
+			    NULL, NULL, SW_SHOWNORMAL);
   if (ret_shell2 <= 32) throw w32util::windows_error();
 }
 

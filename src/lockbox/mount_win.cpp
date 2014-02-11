@@ -62,20 +62,21 @@ void
 MountDetails::unmount() {
   std::ostringstream os;
   os << "use " << _drive_letter <<  ": /delete";
-  auto ret_shell1 = (int) ShellExecuteW(NULL, L"open",
-                                        L"c:\\windows\\system32\\net.exe",
-                                        w32util::widen(os.str()).c_str(),
-                                        NULL, SW_HIDE);
+  auto ret_shell1 =
+    (INT_PTR) ShellExecuteW(NULL, L"open",
+			    L"c:\\windows\\system32\\net.exe",
+			    w32util::widen(os.str()).c_str(),
+			    NULL, SW_HIDE);
   if (ret_shell1 <= 32) throw w32util::windows_error();
 }
 
 void
 MountDetails::open_mount() const {
   auto ret_shell2 =
-    (int) ShellExecuteW(NULL, L"open",
-                        w32util::widen(std::to_string(_drive_letter) +
-                                       ":\\").c_str(),
-                        NULL, NULL, SW_SHOWNORMAL);
+    (INT_PTR) ShellExecuteW(NULL, L"open",
+			    w32util::widen(std::to_string(_drive_letter) +
+					   ":\\").c_str(),
+			    NULL, NULL, SW_SHOWNORMAL);
   if (ret_shell2 <= 32) throw w32util::windows_error();
 }
 
@@ -222,10 +223,11 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     //     listening on ipv6, so that will slow down connections
     ": \"http://127.0.0.1:" << listen_port << "/" <<
     lockbox::escape_double_quotes(mount_name) << "\"";
-  auto ret_shell1 = (int) ShellExecuteW(NULL, L"open",
-                                        L"c:\\windows\\system32\\net.exe",
-                                        w32util::widen(os.str()).c_str(),
-                                        NULL, SW_HIDE);
+  auto ret_shell1 =
+    (INT_PTR) ShellExecuteW(NULL, L"open",
+			    L"c:\\windows\\system32\\net.exe",
+			    w32util::widen(os.str()).c_str(),
+			    NULL, SW_HIDE);
   if (ret_shell1 <= 32) throw w32util::windows_error();
 
   auto toret = MountDetails(drive_letter,
