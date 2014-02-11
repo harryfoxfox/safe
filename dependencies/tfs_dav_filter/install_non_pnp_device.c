@@ -31,7 +31,7 @@
 int main(int argc, char *argv[]) {
   if (argc < 3) {
     fprintf(stderr, "Incorrect arguments!\n");
-    return -1;
+    return EXIT_FAILURE;
   }
 
   PCHAR inf_file_path = argv[1];
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 		     full_inf_file_path, NULL);
   if (!ret_get_full_path) {
     fprintf(stderr, "Failed to get full path for %s\n", inf_file_path);
-    return -1;
+    return EXIT_FAILURE;
   }
 
   CHAR class_name[MAX_CLASS_NAME_LEN];
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
   if (!success) {
     fprintf(stderr, "Failed to get class name/guid for: %s\n",
 	    full_inf_file_path);
-    return -1;
+    return EXIT_FAILURE;
   }
 
   /* don't install device if it already exists */
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 			    NULL, NULL, NULL);
     if (device_info_set == INVALID_HANDLE_VALUE) {
       fprintf(stderr, "Failed to create device info set\n");
-      return -1;
+      return EXIT_FAILURE;
     }
 
     SP_DEVINFO_DATA device_info_data = {
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 					  NULL);
       if (!success_prop) {
 	fprintf(stderr, "Failed to call SetupDiGetDeviceRegistryPropertyA");
-	return -1;
+	return EXIT_FAILURE;
       }
 
       PCHAR bp = buffer;
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
       SetupDiCreateDeviceInfoList(&class_guid, NULL);
     if (device_info_set == INVALID_HANDLE_VALUE) {
       fprintf(stderr, "Failed to create device info set\n");
-      return -1;
+      return EXIT_FAILURE;
     }
 
     SP_DEVINFO_DATA device_info_data = {
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
 			      DICD_GENERATE_ID, &device_info_data);
     if (!success_create_device_info) {
       fprintf(stderr, "Failed to create device info data\n");
-      return -1;
+      return EXIT_FAILURE;
     }
 
     BOOL success_set_hardware_id =
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
 					(DWORD) strlen(hardware_id) + 1);
     if (!success_set_hardware_id) {
       fprintf(stderr, "Failed to set hardware id registry property\n");
-      return -1;
+      return EXIT_FAILURE;
     }
 
     BOOL success_class_installer =
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
 				&device_info_data);
     if (!success_class_installer) {
       fprintf(stderr, "Failed to call class installer\n");
-      return -1;
+      return EXIT_FAILURE;
     }
   }
   else {
@@ -160,11 +160,17 @@ int main(int argc, char *argv[]) {
 
   DWORD INSTALLFLAG_FORCE = 0x1;
   BOOL restart_required;
-  UpdateDriverForPlugAndPlayDevicesA(NULL,
-				     hardware_id,
-				     full_inf_file_path,
-				     INSTALLFLAG_FORCE,
-				     &restart_required);
+  BOOL success_4 =
+    UpdateDriverForPlugAndPlayDevicesA(NULL,
+				       hardware_id,
+				       full_inf_file_path,
+				       INSTALLFLAG_FORCE,
+				       &restart_required);
+  if (!success_4) {
+    fprintf(stderr, "Failed to update driver: %d\n",
+	    (int) GetLastError());
+    return EXIT_FAILURE;
+  }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
