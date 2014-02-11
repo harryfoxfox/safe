@@ -73,6 +73,7 @@ class RAMDiskDevice : public IODevice {
   PnPState pnp_state;
 
   PDEVICE_OBJECT control_device;
+  DWORD engage_count;
 
   SIZE_T
   get_image_size() const noexcept;
@@ -113,6 +114,9 @@ class RAMDiskDevice : public IODevice {
   get_pnp_state() {
     return pnp_state;
   }
+
+  bool
+  ramdisk_is_engaged() noexcept;
 
   RAMDiskDevice(PDRIVER_OBJECT driver_object,
                 PUNICODE_STRING registry_path,

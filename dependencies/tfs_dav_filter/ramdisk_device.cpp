@@ -136,6 +136,7 @@ RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
                              PUNICODE_STRING registry_path,
 			     PDEVICE_OBJECT lower_device_object,
 			     NTSTATUS *out) noexcept {
+  this->engage_count = 0;
   this->thread_ref = nullptr;
   this->lower_device_object = lower_device_object;
 
@@ -309,6 +310,11 @@ UCHAR
 RAMDiskDevice::get_partition_type() const noexcept {
   return PARTITION_FAT32;
 }
+
+bool
+RAMDiskDevice::ramdisk_is_engaged() noexcept {
+  return this->engage_count;
+}
   
 static
 void
@@ -328,7 +334,10 @@ RAMDiskDevice::worker_thread() noexcept {
 
   nt_log_info("Worker thread, rock and roll!\n");
 
-  auto engage_count = 0;
+  // NB: dcb->engage_count can be read by any thread
+  // but is only written by this thread,
+  // therefore we don't really need to use the Interlocked* API
+  
   HANDLE reparse_handle = nullptr;
   
   while (true) {
@@ -350,16 +359,16 @@ RAMDiskDevice::worker_thread() noexcept {
     auto disengage_with_count = [&] () {
       NTSTATUS status = STATUS_SUCCESS;
       
-      assert(engage_count);
+      assert(dcb->engage_count);
 
-      if (engage_count == 1)  {
+      if (dcb->engage_count == 1)  {
 	assert(reparse_handle);
 	status = disengage_reparse_point(reparse_handle);
 	if (NT_SUCCESS(status)) reparse_handle = nullptr;
       }
 	  
       if (NT_SUCCESS(status)) {
-	engage_count -= 1;
+	dcb->engage_count -= 1;
 	set_engaged(io_stack->FileObject, false);
       }
 
@@ -440,12 +449,12 @@ RAMDiskDevice::worker_thread() noexcept {
 	  status = STATUS_INVALID_DEVICE_STATE;
 	}
 	else {
-	  if (engage_count == 0) {
+	  if (dcb->engage_count == 0) {
 	    status = engage_reparse_point(&reparse_handle);
 	  }
 	  
 	  if (NT_SUCCESS(status)) {
-	    engage_count += 1;
+	    dcb->engage_count += 1;
 	    set_engaged(io_stack->FileObject, true);
 	  }
 	}
@@ -509,7 +518,7 @@ RAMDiskDevice::worker_thread() noexcept {
 
   // the thread should not die without all file handles being
   // closed
-  assert(!engage_count);
+  assert(!dcb->engage_count);
   assert(!reparse_handle);
 
   nt_log_debug("Thread dying, goodbyte!\n");
@@ -747,6 +756,12 @@ RAMDiskDevice::irp_pnp(PIRP irp) {
   }
 
   case IRP_MN_QUERY_REMOVE_DEVICE: {
+    if (this->ramdisk_is_engaged()) {
+      irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+      IoCompleteRequest(irp, IO_NO_INCREMENT);
+      return STATUS_UNSUCCESSFUL;
+    }
+
     this->set_pnp_state(PnPState::REMOVE_PENDING);
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoSkipCurrentIrpStackLocation(irp);
