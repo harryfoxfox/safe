@@ -115,6 +115,7 @@ class RAMDiskDevice : public IODevice {
   }
 
   RAMDiskDevice(PDRIVER_OBJECT driver_object,
+                PUNICODE_STRING registry_path,
 		PDEVICE_OBJECT lower_device_object,
 		NTSTATUS *status) noexcept;
 
@@ -152,6 +153,7 @@ public:
   friend
   NTSTATUS
   create_ramdisk_device(PDRIVER_OBJECT driver_object,
+                        PUNICODE_STRING registry_path,
 			PDEVICE_OBJECT physical_device_object) noexcept;
   friend void delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept;
 };
@@ -160,6 +162,7 @@ const WCHAR RAMDISK_DEVICE_NAME[] = L"\\Device\\SafeRamDisk";
 
 NTSTATUS
 create_ramdisk_device(PDRIVER_OBJECT driver_object,
+                      PUNICODE_STRING registry_path,
 		      PDEVICE_OBJECT physical_device_object) noexcept;
 
 void

@@ -48,7 +48,10 @@ namespace safe_nt {
 // 512MB is a conservative guess
 // (assuming page files range from 1024MB to 4096MB)
 // this does limit the size of files you can store in your safe
-const auto MEM_SIZE = 512ULL * 1024ULL * 1024ULL;
+const auto DEFAULT_MEM_SIZE = 512ULL * 1024ULL * 1024ULL;
+
+static_assert(DEFAULT_MEM_SIZE < 4096ULL * 1024ULL * 1024ULL,
+              "DEFAULT MEM SIZE IS TOO LARGE");
 
 #if !defined(__MINGW64_VERSION_MAJOR) && defined(__MINGW32_MAJOR_VERSION)
 
@@ -124,13 +127,24 @@ NTSTATUS
 format_fat32(HANDLE section, size_t memsize, PDISK_GEOMETRY pgeom,
 	     PUCHAR ppartition_type);
 
+static
+NTSTATUS
+read_registry_alloc_size(PUNICODE_STRING registry_path,
+                         SIZE_T *out);
+
 RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
+                             PUNICODE_STRING registry_path,
 			     PDEVICE_OBJECT lower_device_object,
 			     NTSTATUS *out) noexcept {
   this->thread_ref = nullptr;
   this->lower_device_object = lower_device_object;
 
-  this->image_size = MEM_SIZE;
+  auto status2 = read_registry_alloc_size(registry_path,
+                                          &this->image_size);
+  if (!NT_SUCCESS(status2)) {
+    *out = status2;
+    return;
+  }
 
   this->section_handle = nullptr;
   OBJECT_ATTRIBUTES attributes;
@@ -820,6 +834,7 @@ delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept {
 
 NTSTATUS
 create_ramdisk_device(PDRIVER_OBJECT driver_object,
+                      PUNICODE_STRING registry_path,
 		      PDEVICE_OBJECT physical_device_object) {
   static bool g_device_exists;
 
@@ -868,6 +883,7 @@ create_ramdisk_device(PDRIVER_OBJECT driver_object,
   // Initialize our disk device runtime
   NTSTATUS status3;
   new (device_object->DeviceExtension) RAMDiskDevice(driver_object,
+                                                     registry_path,
 						     lower_device,
 						     &status3);
   if (!NT_SUCCESS(status3)) {
@@ -1127,6 +1143,63 @@ write_section(HANDLE section, size_t offset,
                             true);
 }
 
+static
+NTSTATUS
+read_registry_alloc_size(PUNICODE_STRING registry_path,
+                         SIZE_T *out) {
+  OBJECT_ATTRIBUTES attributes;
+  InitializeObjectAttributes(&attributes,
+                             registry_path,
+                             OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+                             NULL,
+                             NULL);
+
+  HANDLE reg_key = nullptr;
+  auto status = ZwOpenKey(&reg_key, KEY_READ, &attributes);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("Error while doing ZwOpenKey: %s (0x%x)",
+                 nt_status_to_string(status), status);
+    return status;
+  }
+
+  auto _close_key = lockbox::create_deferred(ZwClose, reg_key);
+
+  UNICODE_STRING value_name;
+  RtlInitUnicodeString(&value_name, L"RAMDiskSize");
+
+  UCHAR buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(DWORD)];
+  auto value = (PKEY_VALUE_PARTIAL_INFORMATION) &buffer;
+  ULONG value_length = sizeof(buffer);
+
+  ULONG result_length;
+  auto status1 = ZwQueryValueKey(reg_key,
+                                 &value_name,
+                                 KeyValuePartialInformation,
+                                 value,
+                                 value_length,
+                                 &result_length);
+  if (!NT_SUCCESS(status1)) {
+    if (status1 == STATUS_OBJECT_NAME_NOT_FOUND) {
+      nt_log_info("Data is registry is bad, using default ramdisk size");
+      *out = DEFAULT_MEM_SIZE;
+      return STATUS_SUCCESS;
+    }
+
+    nt_log_error("Error while doing ZwQueryValueKey: %s (0x%x)",
+                 nt_status_to_string(status1), status1);
+    return status1;
+  }
+  
+  if (value->Type != REG_DWORD) {
+    *out = (SIZE_T) *((PDWORD) value->Data);
+  }
+  else {
+    nt_log_info("Data is registry is bad, using default ramdisk size");
+    *out = DEFAULT_MEM_SIZE;
+  }
+
+  return STATUS_SUCCESS;
+}
 
 }
 

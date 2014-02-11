@@ -117,12 +117,15 @@ SafeRamDiskDispatchSystemControl(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
   return qd<qt, &qt::irp_system_control>(DeviceObject, Irp);
 }
 
+UNICODE_STRING g_registry_path;
+
 static
 NTSTATUS
 NTAPI
 SafeRamDiskAddDevice(PDRIVER_OBJECT DriverObject, 
 		     PDEVICE_OBJECT PhysicalDeviceObject) {
   return safe_nt::create_ramdisk_device(DriverObject,
+                                        &g_registry_path,
 					PhysicalDeviceObject);
 }
 
@@ -130,6 +133,7 @@ static
 void
 NTAPI
 SafeRamDiskUnload(PDRIVER_OBJECT DriverObject) { 
+  ExFreePoolWithTag((PVOID) g_registry_path.Buffer, 0x19862014);
   nt_log_debug("Unloading driver...");
 }
 
@@ -139,6 +143,19 @@ DriverEntry(PDRIVER_OBJECT DriverObject,
             PUNICODE_STRING RegistryPath) {
   nt_log_info("Safe RAMDisk\n");
   nt_log_info("Built on %s %s\n", __DATE__, __TIME__);
+
+  g_registry_path.Buffer = (PWSTR) ExAllocatePoolWithTag(PagedPool,
+                                                         RegistryPath->Length,
+                                                         0x19862014);
+  if (!g_registry_path.Buffer) {
+    nt_log_info("Allocation for registry_path copy failed");
+    return STATUS_INSUFFICIENT_RESOURCES;
+  }
+
+  memcpy(g_registry_path.Buffer, RegistryPath->Buffer,
+         RegistryPath->Length);
+  g_registry_path.Length = RegistryPath->Length;
+  g_registry_path.MaximumLength = RegistryPath->Length;
 
   // Set up callbacks
   DriverObject->MajorFunction[IRP_MJ_CREATE] = SafeRamDiskDispatchCreate;
