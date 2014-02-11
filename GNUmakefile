@@ -204,7 +204,8 @@ normaliz: $(NORMALIZ_DEP)
 safe_ramdisk:
 	@echo "Building Safe RAMDisk"
 	@cd $(SAFE_RAMDISK_ROOT); cp $(if $(IS_WIN),$(if $(IS_WIN64_TARGET),config-win64.mk,config-win.mk),config-mac.mk) config.mk
-	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE) clean safe_ramdisk.sys
+	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE) clean
+	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE)
 
 	@mkdir -p $(DYN_RESOURCES_ROOT)
 	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.inf $(DYN_RESOURCES_ROOT)
