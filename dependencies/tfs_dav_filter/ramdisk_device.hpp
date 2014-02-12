@@ -55,7 +55,7 @@ class RAMDiskDevice : public IODevice {
   PDEVICE_OBJECT lower_device_object;
 
   HANDLE section_handle;
-  SIZE_T image_size;
+  LARGE_INTEGER image_size;
   DISK_GEOMETRY geom;
 
   UCHAR partition_type;
@@ -75,7 +75,7 @@ class RAMDiskDevice : public IODevice {
   PDEVICE_OBJECT control_device;
   ULONG engage_count;
 
-  SIZE_T
+  ULONGLONG
   get_image_size() const noexcept;
 
   void
@@ -119,8 +119,8 @@ class RAMDiskDevice : public IODevice {
   ramdisk_is_engaged() noexcept;
 
   RAMDiskDevice(PDRIVER_OBJECT driver_object,
-                PUNICODE_STRING registry_path,
 		PDEVICE_OBJECT lower_device_object,
+                PLARGE_INTEGER ramdisk_size,
 		NTSTATUS *status) noexcept;
 
   ~RAMDiskDevice() noexcept;
@@ -157,7 +157,6 @@ public:
   friend
   NTSTATUS
   create_ramdisk_device(PDRIVER_OBJECT driver_object,
-                        PUNICODE_STRING registry_path,
 			PDEVICE_OBJECT physical_device_object) noexcept;
   friend void delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept;
 };
@@ -166,7 +165,6 @@ const WCHAR RAMDISK_DEVICE_NAME[] = L"\\Device\\SafeRamDisk";
 
 NTSTATUS
 create_ramdisk_device(PDRIVER_OBJECT driver_object,
-                      PUNICODE_STRING registry_path,
 		      PDEVICE_OBJECT physical_device_object) noexcept;
 
 void

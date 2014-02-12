@@ -65,6 +65,10 @@ static_assert(DEFAULT_MEM_SIZE < 4096ULL * 1024ULL * 1024ULL,
 
 #endif
 
+#ifndef PLUGPLAY_REGKEY_DRIVER
+#define PLUGPLAY_REGKEY_DRIVER                            2
+#endif
+
 #ifndef ZwCurrentProcess
 #define ZwCurrentProcess() ((HANDLE)(LONG_PTR) -1)
 #endif
@@ -124,28 +128,24 @@ read_section(HANDLE section, size_t offset,
 
 static
 NTSTATUS
-format_fat32(HANDLE section, size_t memsize, PDISK_GEOMETRY pgeom,
+format_fat32(HANDLE section, PLARGE_INTEGER memsize,
+             PDISK_GEOMETRY pgeom,
 	     PUCHAR ppartition_type);
 
-static
-NTSTATUS
-read_registry_alloc_size(PUNICODE_STRING registry_path,
-                         SIZE_T *out);
-
 RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
-                             PUNICODE_STRING registry_path,
-			     PDEVICE_OBJECT lower_device_object,
+                             PDEVICE_OBJECT lower_device_object,
+                             PLARGE_INTEGER ramdisk_size,
 			     NTSTATUS *out) noexcept {
   this->engage_count = 0;
   this->thread_ref = nullptr;
   this->lower_device_object = lower_device_object;
 
-  auto status2 = read_registry_alloc_size(registry_path,
-                                          &this->image_size);
-  if (!NT_SUCCESS(status2)) {
-    *out = status2;
-    return;
-  }
+  this->image_size = *ramdisk_size;
+
+  // Don't surpass the size of an address space
+  this->image_size.QuadPart =
+    std::min((ULONGLONG) this->image_size.QuadPart,
+             1ULL << (sizeof(SIZE_T) * 8));
 
   this->section_handle = nullptr;
   OBJECT_ATTRIBUTES attributes;
@@ -154,12 +154,10 @@ RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
 			     OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
 			     nullptr,
 			     nullptr);
-  LARGE_INTEGER section_size;
-  section_size.QuadPart = (LONGLONG) this->image_size;
   auto status3 = ZwCreateSection(&this->section_handle,
                                  SECTION_ALL_ACCESS,
                                  &attributes,
-                                 &section_size,
+                                 &this->image_size,
                                  PAGE_READWRITE,
                                  SEC_RESERVE,
                                  nullptr);
@@ -170,7 +168,7 @@ RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
     return;
   }
 
-  auto status42 = format_fat32(this->section_handle, this->image_size,
+  auto status42 = format_fat32(this->section_handle, &this->image_size,
                               &this->geom, &this->partition_type);
   if (!NT_SUCCESS(status42)) {
     *out = status42;
@@ -260,9 +258,9 @@ RAMDiskDevice::~RAMDiskDevice() noexcept {
   }
 }
 
-SIZE_T
+ULONGLONG
 RAMDiskDevice::get_image_size() const noexcept {
-  return image_size;
+  return image_size.QuadPart;
 }
 
 void
@@ -399,8 +397,8 @@ RAMDiskDevice::worker_thread() noexcept {
 	SIZE_T vm_offset = io_stack->Parameters.Read.ByteOffset.QuadPart;
 	static_assert(sizeof(SIZE_T) >= sizeof(io_stack->Parameters.Read.Length),
 		      "SIZE_T is too small!");
-	to_transfer = std::min((SIZE_T) io_stack->Parameters.Read.Length,
-			       dcb->get_image_size() - vm_offset);
+	to_transfer = (SIZE_T) std::min((ULONGLONG) io_stack->Parameters.Read.Length,
+                                        dcb->get_image_size() - vm_offset);
 
 	nt_log_debug("%s AT %lu -> %lu\n",
                      io_stack->MajorFunction == IRP_MJ_READ ? "READ" : "WRITE",
@@ -847,9 +845,13 @@ delete_ramdisk_device(PDEVICE_OBJECT device_object) noexcept {
   IoDeleteDevice(device_object);
 }
 
+static
+NTSTATUS
+query_ramdisk_size(PDEVICE_OBJECT device_object,
+                   PLARGE_INTEGER out);
+
 NTSTATUS
 create_ramdisk_device(PDRIVER_OBJECT driver_object,
-                      PUNICODE_STRING registry_path,
 		      PDEVICE_OBJECT physical_device_object) {
   static bool g_device_exists;
 
@@ -887,6 +889,14 @@ create_ramdisk_device(PDRIVER_OBJECT driver_object,
   device_object->Flags |= DO_POWER_PAGABLE;
   device_object->Flags |= DO_DIRECT_IO;
 
+  LARGE_INTEGER ramdisk_size;
+  auto status42 = query_ramdisk_size(physical_device_object,
+                                     &ramdisk_size);
+  if (!NT_SUCCESS(status42)) return status42;
+
+  nt_log_debug("Making ramdisk with size: %llu",
+               (ULONGLONG) ramdisk_size.QuadPart);
+
   // Attach our FDO to the device stack
   auto lower_device =
     IoAttachDeviceToDeviceStack(device_object, physical_device_object);
@@ -898,8 +908,8 @@ create_ramdisk_device(PDRIVER_OBJECT driver_object,
   // Initialize our disk device runtime
   NTSTATUS status3;
   new (device_object->DeviceExtension) RAMDiskDevice(driver_object,
-                                                     registry_path,
 						     lower_device,
+                                                     &ramdisk_size,
 						     &status3);
   if (!NT_SUCCESS(status3)) {
     nt_log_error("Error while calling RAMDiskDevice.init: 0x%x\n",
@@ -924,7 +934,8 @@ ceil_divide(T num, T denom) {
 
 static
 NTSTATUS
-format_fat32(HANDLE section, size_t memsize, PDISK_GEOMETRY pgeom,
+format_fat32(HANDLE section, PLARGE_INTEGER memsize,
+             PDISK_GEOMETRY pgeom,
 	     PUCHAR ppartition_type) {
   const auto FAT_ID = 0xF8UL; // hard disk
   const auto BYTES_PER_SECTOR = 512UL;
@@ -935,14 +946,14 @@ format_fat32(HANDLE section, size_t memsize, PDISK_GEOMETRY pgeom,
   const auto BYTES_PER_FAT_ENTRY = 4UL;
 
   // make sure we have room for at least one fat sector
-  assert(memsize >=
+  assert(memsize->QuadPart >=
 	 (NUM_RESERVED_SECTORS + 1 +
 	  SECTORS_PER_CLUSTER *
 	  ceil_divide(BYTES_PER_SECTOR, BYTES_PER_FAT_ENTRY)) *
 	 BYTES_PER_SECTOR);
 
   auto num_sectors_for_fat =
-    (memsize / BYTES_PER_SECTOR - NUM_RESERVED_SECTORS) /
+    (memsize->QuadPart / BYTES_PER_SECTOR - NUM_RESERVED_SECTORS) /
     (SECTORS_PER_CLUSTER *
      ceil_divide(BYTES_PER_SECTOR, BYTES_PER_FAT_ENTRY) +
      1);
@@ -951,7 +962,7 @@ format_fat32(HANDLE section, size_t memsize, PDISK_GEOMETRY pgeom,
   pgeom->BytesPerSector = BYTES_PER_SECTOR;
   pgeom->SectorsPerTrack = SECTORS_PER_TRACK;
   pgeom->TracksPerCylinder = TRACKS_PER_CYLINDER;
-  pgeom->Cylinders.QuadPart = (memsize / BYTES_PER_SECTOR /
+  pgeom->Cylinders.QuadPart = (memsize->QuadPart / BYTES_PER_SECTOR /
 			       SECTORS_PER_TRACK /
 			       TRACKS_PER_CYLINDER);
   pgeom->MediaType = FixedMedia;
@@ -1012,7 +1023,7 @@ format_fat32(HANDLE section, size_t memsize, PDISK_GEOMETRY pgeom,
       /*.sectors_per_track =*/ SECTORS_PER_TRACK,
       /*.num_heads =*/ TRACKS_PER_CYLINDER,
       /*.hidden_sectors =*/ 0,
-      /*.total_num_sectors_32 =*/ (uint32_t) (memsize / BYTES_PER_SECTOR),
+      /*.total_num_sectors_32 =*/ (uint32_t) (memsize->QuadPart / BYTES_PER_SECTOR),
       /*.sectors_per_fat_32 =*/ (uint32_t) num_sectors_for_fat,
       /*.mirroring_flags =*/ 0,
       /*.version =*/ 0,
@@ -1160,19 +1171,94 @@ write_section(HANDLE section, size_t offset,
 
 static
 NTSTATUS
-read_registry_alloc_size(PUNICODE_STRING registry_path,
-                         SIZE_T *out) {
-  OBJECT_ATTRIBUTES attributes;
-  InitializeObjectAttributes(&attributes,
-                             registry_path,
-                             OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                             NULL,
-                             NULL);
+get_system_commit_limit(PLARGE_INTEGER out) {
+  UNICODE_STRING fn_name;
+  RtlInitUnicodeString(&fn_name, L"ZwQuerySystemInformation");
 
-  HANDLE reg_key = nullptr;
-  auto status = ZwOpenKey(&reg_key, KEY_READ, &attributes);
+  auto func = (decltype(&ZwQuerySystemInformation))
+    MmGetSystemRoutineAddress(&fn_name);
+  if (!func) {
+    nt_log_error("Couldn't find \"%wZ\" using MmGetSystemRoutineAddress",
+                 &fn_name);
+    return STATUS_PROCEDURE_NOT_FOUND;
+  }
+
+  // first get perf info
+  SYSTEM_PERFORMANCE_INFORMATION sys_perf_info;
+  auto status = func(SystemPerformanceInformation,
+                     (PVOID) &sys_perf_info,
+                     sizeof(sys_perf_info),
+                     nullptr);
   if (!NT_SUCCESS(status)) {
-    nt_log_error("Error while doing ZwOpenKey: %s (0x%x)",
+    nt_log_error("Error while doing perf ZwQuerySystemInformation: %s (0x%x)",
+                 nt_status_to_string(status), status);
+    return status;
+  }
+
+  // then get basic info
+  SYSTEM_BASIC_INFORMATION sys_basic_info;
+  auto status2 = func(SystemBasicInformation,
+                      (PVOID) &sys_basic_info,
+                      sizeof(sys_basic_info),
+                      nullptr);
+  if (!NT_SUCCESS(status2)) {
+    nt_log_error("Error while doing basic ZwQuerySystemInformation: %s (0x%x)",
+                 nt_status_to_string(status2), status2);
+    return status2;
+  }
+
+  nt_log_debug("Queried commit limit: %llu, page_size: %llu\n",
+               (long long unsigned) sys_perf_info.TotalCommitLimit,
+               (long long unsigned) sys_basic_info.PhysicalPageSize);
+
+  out->QuadPart = ((ULONGLONG) sys_perf_info.TotalCommitLimit *
+                   (ULONGLONG) sys_basic_info.PhysicalPageSize);
+
+  return STATUS_SUCCESS;
+}
+
+static
+NTSTATUS
+read_registry_alloc_size(PDEVICE_OBJECT device_object,
+                         PLARGE_INTEGER out);
+
+static
+NTSTATUS
+query_ramdisk_size(PDEVICE_OBJECT device_object,
+                   PLARGE_INTEGER out) {
+  // first see if we can find out an appropriate size using
+  // ZwQuerySystemInformation
+  auto status0 = get_system_commit_limit(out);
+  if (NT_SUCCESS(status0)) {
+    nt_log_debug("Queried ramdisk size from system commit limit: %llu",
+                 (ULONGLONG) out->QuadPart);
+    out->QuadPart /= 5ULL;
+    return STATUS_SUCCESS;
+  }
+
+  // if not then try reading the registry
+  auto status = read_registry_alloc_size(device_object, out);
+  if (NT_SUCCESS(status)) {
+    nt_log_debug("Queried ramdisk size from registry : %llu",
+                 (ULONGLONG) out->QuadPart);
+    return STATUS_SUCCESS;
+  }
+
+  // if all else fails, use our default value
+  out->QuadPart = DEFAULT_MEM_SIZE;
+
+  return STATUS_SUCCESS;
+}
+
+static
+NTSTATUS
+read_registry_alloc_size(PDEVICE_OBJECT pdo,
+                         PLARGE_INTEGER out) {
+  HANDLE reg_key;
+  auto status = IoOpenDeviceRegistryKey(pdo, PLUGPLAY_REGKEY_DRIVER,
+                                        KEY_READ, &reg_key);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("Error while doing IoOpenDeviceRegistryKey: %s (0x%x)",
                  nt_status_to_string(status), status);
     return status;
   }
@@ -1180,7 +1266,7 @@ read_registry_alloc_size(PUNICODE_STRING registry_path,
   auto _close_key = lockbox::create_deferred(ZwClose, reg_key);
 
   UNICODE_STRING value_name;
-  RtlInitUnicodeString(&value_name, L"RAMDiskSize");
+  RtlInitUnicodeString(&value_name, SAFE_RAMDISK_SIZE_VALUE_NAME_W);
 
   UCHAR buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
   auto value = (PKEY_VALUE_PARTIAL_INFORMATION) &buffer;
@@ -1194,25 +1280,18 @@ read_registry_alloc_size(PUNICODE_STRING registry_path,
                                  value_length,
                                  &result_length);
   if (!NT_SUCCESS(status1)) {
-    if (status1 == STATUS_OBJECT_NAME_NOT_FOUND) {
-      nt_log_info("Data is registry is bad, using default ramdisk size");
-      *out = DEFAULT_MEM_SIZE;
-      return STATUS_SUCCESS;
-    }
-
     nt_log_error("Error while doing ZwQueryValueKey: %s (0x%x)",
                  nt_status_to_string(status1), status1);
     return status1;
   }
   
   if (value->Type != REG_DWORD) {
-    *out = (SIZE_T) *((PULONG) value->Data);
-  }
-  else {
-    nt_log_info("Data is registry is bad, using default ramdisk size");
-    *out = DEFAULT_MEM_SIZE;
+    nt_log_info("Bad registry type for RAMDiskSize");
+    return STATUS_OBJECT_TYPE_MISMATCH;
   }
 
+  out->QuadPart = *((PULONG) value->Data);
+  
   return STATUS_SUCCESS;
 }
 

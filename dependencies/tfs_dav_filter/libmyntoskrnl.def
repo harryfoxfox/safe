@@ -69,3 +69,4 @@ ZwCreateFile@44
 ZwCreateSection@28
 ZwMapViewOfSection@40
 ZwUnmapViewOfSection@8
+IoOpenDeviceRegistryKey@16
