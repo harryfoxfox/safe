@@ -1137,7 +1137,7 @@ read_write_section(HANDLE section, size_t offset,
     
   auto _unmap_view =
     lockbox::create_deferred(ZwUnmapViewOfSection,
-                             section, ramdisk_base_buffer);
+                             ZwCurrentProcess(), ramdisk_base_buffer);
 
   auto ramdisk_buffer = ramdisk_base_buffer + aligned_diff;
 
