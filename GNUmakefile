@@ -250,7 +250,7 @@ WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
 src/lockbox/*.o: GNUmakefile src/lockbox/*.hpp src/lockbox/*.h
 
-src/lockbox/*.rc.o: $(RESOURCES_DIR)/*
+src/lockbox/*.rc.o: $(RESOURCES_ROOT)/* $(DYN_RESOURCES_ROOT)/*
 
 src/lockbox/windows_app.rc.o: src/lockbox/windows_app.rc \
 	src/lockbox/windows_app.manifest
