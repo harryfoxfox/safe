@@ -117,14 +117,17 @@ store_resource_to_file(LPCWSTR name, LPCWSTR type,
 }
 
 static
-size_t
+ULONGLONG
 query_commit_limit() {
   PERFORMANCE_INFORMATION perf_info;
   perf_info.cb = sizeof(perf_info);
   auto success = GetPerformanceInfo(&perf_info, sizeof(perf_info));
   if (!success) throw w32util::windows_error();
-  return (size_t) (perf_info.CommitLimit * perf_info.PageSize);
-
+  lbx_log_debug("Queried commit limit: %lu, page_size: %lu\n",
+                (long unsigned) perf_info.CommitLimit,
+                (long unsigned) perf_info.PageSize);
+  return ((ULONGLONG) perf_info.CommitLimit *
+          (ULONGLONG) perf_info.PageSize);
 }
 
 static
@@ -135,8 +138,8 @@ create_ramdisk_software_keys(HDEVINFO device_info_set,
   // (the commit limit shouldn't be larger than the largest DWORD
   //  value)
   auto ramdisk_size =
-    (DWORD) (std::min(query_commit_limit(),
-                      (size_t) MAXDWORD) / 5);
+    (DWORD) std::min(query_commit_limit() / 5ULL,
+                     (ULONGLONG) MAXDWORD);
 
   auto hkey = SetupDiCreateDevRegKey(device_info_set,
                                      device_info_data,
