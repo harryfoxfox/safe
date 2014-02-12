@@ -41,4 +41,6 @@
 
 #define RAMDISK_CTL_DOSNAME_W L"SafeDos"
 
+#define SAFE_RAMDISK_SIZE_VALUE_NAME_W L"RAMDiskSize"
+
 #endif

@@ -30,6 +30,7 @@
 
 #include <windows.h>
 #include <setupapi.h>
+#include <psapi.h>
 
 #ifndef MAX_CLASS_NAME_LEN
 #define MAX_CLASS_NAME_LEN 1024
@@ -116,6 +117,48 @@ store_resource_to_file(LPCWSTR name, LPCWSTR type,
 }
 
 static
+size_t
+query_commit_limit() {
+  PERFORMANCE_INFORMATION perf_info;
+  perf_info.cb = sizeof(perf_info);
+  auto success = GetPerformanceInfo(&perf_info, sizeof(perf_info));
+  if (!success) throw w32util::windows_error();
+  return (size_t) (perf_info.CommitLimit * perf_info.PageSize);
+
+}
+
+static
+void
+create_ramdisk_software_keys(HDEVINFO device_info_set,
+                             PSP_DEVINFO_DATA device_info_data) {
+  // we allow the ramdisk to use 1/5 of the commit limit
+  // (the commit limit shouldn't be larger than the largest DWORD
+  //  value)
+  auto ramdisk_size =
+    (DWORD) (std::min(query_commit_limit(),
+                      (size_t) MAXDWORD) / 5);
+
+  auto hkey = SetupDiCreateDevRegKey(device_info_set,
+                                     device_info_data,
+                                     DICS_FLAG_GLOBAL,
+                                     0,
+                                     DIREG_DRV,
+                                     nullptr,
+                                     nullptr);
+  if (hkey == INVALID_HANDLE_VALUE) throw w32util::windows_error();
+
+  auto _close_key = lockbox::create_deferred(RegCloseKey, hkey);
+
+  auto ret = RegSetValueEx(hkey,
+                           SAFE_RAMDISK_SIZE_VALUE_NAME_W,
+                           0,
+                           REG_DWORD,
+                           (BYTE *) &ramdisk_size,
+                           sizeof(ramdisk_size));
+  if (ret != ERROR_SUCCESS) throw w32util::windows_error();
+}
+
+static
 void
 create_ramdisk_device(std::string full_inf_file_path,
                       std::string hardware_id) {
@@ -196,6 +239,8 @@ create_ramdisk_device(std::string full_inf_file_path,
     SetupDiCallClassInstaller(DIF_REGISTERDEVICE, device_info_set,
                               &device_info_data);
   if (!success_class_installer) throw w32util::windows_error();
+
+  create_ramdisk_software_keys(device_info_set, &device_info_data);
 }
 
 extern "C"
