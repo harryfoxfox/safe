@@ -33,26 +33,38 @@ namespace w32util {
 
 inline
 std::wstring
-widen(const std::string & s) {
-  if (s.empty()) return std::wstring();
+widen(const char *s, size_t num_chars) {
+  if (!num_chars) return std::wstring();
 
   /* TODO: are these flags good? */
   const DWORD flags = /*MB_COMPOSITE | */MB_ERR_INVALID_CHARS;
 
   const int required_buffer_size =
     MultiByteToWideChar(CP_UTF8, flags,
-                        s.data(), s.size(), NULL, 0);
+                        s, num_chars, NULL, 0);
   if (!required_buffer_size) throw std::runtime_error("error");
 
   auto out = std::unique_ptr<wchar_t[]>(new wchar_t[required_buffer_size]);
 
   const int new_return =
     MultiByteToWideChar(CP_UTF8, flags,
-                        s.data(), s.size(),
+                        s, num_chars,
                         out.get(), required_buffer_size);
   if (!new_return) throw std::runtime_error("error");
 
   return std::wstring(out.get(), required_buffer_size);
+}
+
+inline
+std::wstring
+widen(const char *s) {
+  return widen(s, strlen(s));
+}
+
+inline
+std::wstring
+widen(const std::string & s) {
+  return widen(s.data(), s.size());
 }
 
 inline
@@ -94,6 +106,12 @@ narrow(const wchar_t *s, size_t num_chars) {
   if (!new_return) throw std::runtime_error("error");
 
   return std::string(out.get(), required_buffer_size);
+}
+
+inline
+std::string
+narrow(const wchar_t *s) {
+  return narrow(s, wcslen(s));
 }
 
 inline
