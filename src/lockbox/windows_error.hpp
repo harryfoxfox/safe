@@ -21,7 +21,10 @@
 
 #include <stdexcept>
 
+#include <lockbox/logging.h>
 #include <lockbox/lean_windows.h>
+
+#include <encfs/base/optional.h>
 
 namespace w32util {
 
@@ -65,16 +68,52 @@ error_message(DWORD err_code) {
 
 inline
 std::string
-last_error_message() {
-  return error_message(GetLastError());
+last_error_message(opt::optional<DWORD> err_code = opt::nullopt) {
+  if (!err_code) err_code = GetLastError();
+  return error_message(*err_code);
 }
 
-// TODO: implement
+// TODO: implement class
 inline
 std::runtime_error
-windows_error() {
-  return std::runtime_error(last_error_message());
+windows_error(opt::optional<DWORD> err_code = opt::nullopt) {
+  return std::runtime_error(last_error_message(std::move(err_code)));
 }
+
+inline
+void
+throw_windows_error() {
+  // NB: for some reason on g++ the last error is reset 
+  //     when called on the same line as "throw"
+  auto err_code = GetLastError();
+  throw windows_error(err_code);
+}
+
+template <class F, class... Args,
+          class ReturnType = typename std::result_of<F(Args...)>::type>
+ReturnType
+check_call(ReturnType bad, F && f, Args && ...args) {
+  auto ret = std::forward<F>(f)(std::forward<Args>(args)...);
+  if (ret == bad) w32util::throw_windows_error();
+  return ret;
+}
+
+template <class F, class... Args>
+HANDLE
+check_invalid_handle(F && f, Args && ...args) {
+  return check_call(INVALID_HANDLE_VALUE,
+                    std::forward<F>(f),
+                    std::forward<Args>(args)...);
+}
+
+template <class F, class... Args>
+void
+check_bool(F && f, Args && ...args) {
+  check_call(FALSE,
+             std::forward<F>(f),
+             std::forward<Args>(args)...);
+}
+
 
 }
 
