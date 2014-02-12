@@ -143,9 +143,11 @@ RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
   this->image_size = *ramdisk_size;
 
   // Don't surpass the size of an address space
-  this->image_size.QuadPart =
-    std::min((ULONGLONG) this->image_size.QuadPart,
-             1ULL << (sizeof(SIZE_T) * 8));
+#ifndef _WIN64
+    this->image_size.QuadPart =
+      std::min((ULONGLONG) this->image_size.QuadPart,
+	       1ULL << (sizeof(SIZE_T) * 8));
+#endif
 
   this->section_handle = nullptr;
   OBJECT_ATTRIBUTES attributes;
@@ -1172,10 +1174,112 @@ write_section(HANDLE section, size_t offset,
 static
 NTSTATUS
 get_system_commit_limit(PLARGE_INTEGER out) {
+  typedef struct {
+    UCHAR Reserved1[4];
+    ULONG MaximumIncrement;
+    ULONG PhysicalPageSize;
+    ULONG NumberOfPhysicalPages;
+    ULONG LowestPhysicalPage;
+    ULONG HighestPhysicalPage;
+    ULONG AllocationGranularity;
+    ULONG_PTR LowestUserAddress;
+    ULONG_PTR HighestUserAddress;
+    ULONG_PTR ActiveProcessors;
+    CCHAR NumberOfProcessors;
+  } MY_SYSTEM_BASIC_INFORMATION;
+
+  typedef struct {
+    LARGE_INTEGER IdleTime;
+    LARGE_INTEGER ReadTransferCount;
+    LARGE_INTEGER WriteTransferCount;
+    LARGE_INTEGER OtherTransferCount;
+    ULONG ReadOperationCount;
+    ULONG WriteOperationCount;
+    ULONG OtherOperationCount;
+    ULONG AvailablePages;
+    ULONG TotalCommittedPages;
+    ULONG TotalCommitLimit;
+    ULONG PeakCommitment;
+    ULONG PageFaults;
+    ULONG WriteCopyFaults;
+    ULONG TransitionFaults;
+    ULONG CacheTransitionFaults;
+    ULONG DemandZeroFaults;
+    ULONG PagesRead;
+    ULONG PageReadIos;
+    ULONG CacheReads;
+    ULONG CacheIos;
+    ULONG PagefilePagesWritten;
+    ULONG PagefilePageWriteIos;
+    ULONG MappedFilePagesWritten;
+    ULONG MappedFilePageWriteIos;
+    ULONG PagedPoolUsage;
+    ULONG NonPagedPoolUsage;
+    ULONG PagedPoolAllocs;
+    ULONG PagedPoolFrees;
+    ULONG NonPagedPoolAllocs;
+    ULONG NonPagedPoolFrees;
+    ULONG TotalFreeSystemPtes;
+    ULONG SystemCodePage;
+    ULONG TotalSystemDriverPages;
+    ULONG TotalSystemCodePages;
+    ULONG SmallNonPagedLookasideListAllocateHits;
+    ULONG SmallPagedLookasideListAllocateHits;
+    ULONG Reserved3;
+    ULONG MmSystemCachePage;
+    ULONG PagedPoolPage;
+    ULONG SystemDriverPage;
+    ULONG FastReadNoWait;
+    ULONG FastReadWait;
+    ULONG FastReadResourceMiss;
+    ULONG FastReadNotPossible;
+    ULONG FastMdlReadNoWait;
+    ULONG FastMdlReadWait;
+    ULONG FastMdlReadResourceMiss;
+    ULONG FastMdlReadNotPossible;
+    ULONG MapDataNoWait;
+    ULONG MapDataWait;
+    ULONG MapDataNoWaitMiss;
+    ULONG MapDataWaitMiss;
+    ULONG PinMappedDataCount;
+    ULONG PinReadNoWait;
+    ULONG PinReadWait;
+    ULONG PinReadNoWaitMiss;
+    ULONG PinReadWaitMiss;
+    ULONG CopyReadNoWait;
+    ULONG CopyReadWait;
+    ULONG CopyReadNoWaitMiss;
+    ULONG CopyReadWaitMiss;
+    ULONG MdlReadNoWait;
+    ULONG MdlReadWait;
+    ULONG MdlReadNoWaitMiss;
+    ULONG MdlReadWaitMiss;
+    ULONG ReadAheadIos;
+    ULONG LazyWriteIos;
+    ULONG LazyWritePages;
+    ULONG DataFlushes;
+    ULONG DataPages;
+    ULONG ContextSwitches;
+    ULONG FirstLevelTbFills;
+    ULONG SecondLevelTbFills;
+    ULONG SystemCalls;
+  } MY_SYSTEM_PERFORMANCE_INFORMATION;
+
+  typedef enum {
+    MySystemBasicInformation = 0,
+    MySystemPerformanceInformation = 2,
+  } MY_SYSTEM_INFORMATION_CLASS;
+
+  typedef NTSTATUS WINAPI
+    (*ZwQuerySystemInformationType)(MY_SYSTEM_INFORMATION_CLASS,
+				    PVOID,
+				    ULONG,
+				    PULONG);
+
   UNICODE_STRING fn_name;
   RtlInitUnicodeString(&fn_name, L"ZwQuerySystemInformation");
 
-  auto func = (decltype(&ZwQuerySystemInformation))
+  auto func = (ZwQuerySystemInformationType)
     MmGetSystemRoutineAddress(&fn_name);
   if (!func) {
     nt_log_error("Couldn't find \"%wZ\" using MmGetSystemRoutineAddress",
@@ -1184,8 +1288,8 @@ get_system_commit_limit(PLARGE_INTEGER out) {
   }
 
   // first get perf info
-  SYSTEM_PERFORMANCE_INFORMATION sys_perf_info;
-  auto status = func(SystemPerformanceInformation,
+  MY_SYSTEM_PERFORMANCE_INFORMATION sys_perf_info;
+  auto status = func(MySystemPerformanceInformation,
                      (PVOID) &sys_perf_info,
                      sizeof(sys_perf_info),
                      nullptr);
@@ -1196,8 +1300,8 @@ get_system_commit_limit(PLARGE_INTEGER out) {
   }
 
   // then get basic info
-  SYSTEM_BASIC_INFORMATION sys_basic_info;
-  auto status2 = func(SystemBasicInformation,
+  MY_SYSTEM_BASIC_INFORMATION sys_basic_info;
+  auto status2 = func(MySystemBasicInformation,
                       (PVOID) &sys_basic_info,
                       sizeof(sys_basic_info),
                       nullptr);
