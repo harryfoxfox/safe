@@ -89,7 +89,7 @@ DEPS_LIBRARIES = -lwebdav_server_fs -lencfs \
  -ltinyxml
 DEPS_EXTRA_LIBRARIES := $(if $(IS_MAC_TARGET),$(MAC_EXTRA_LIBRARIES),) $(if $(IS_WIN_TARGET),$(WIN_EXTRA_LIBRARIES),)
 
-all: test_encfs_main
+all: $(if $(IS_WIN_TARGET),$(EXE_NAME),) test_encfs_main
 
 libwebdav_server_fs: clean
 	@rm -rf "$(DAVFUSE_ROOT)/out"
