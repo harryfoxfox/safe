@@ -74,3 +74,6 @@ IoFreeWorkItem@4
 IoAllocateWorkItem@4
 KeQueryInterruptTime@0
 IoQueueWorkItem@16
+KeQuerySystemTime@4
+ZwQueryDirectoryFile@44
+RtlCompareUnicodeString@12

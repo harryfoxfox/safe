@@ -75,9 +75,11 @@ static_assert(DEFAULT_MEM_SIZE < 4096ULL * 1024ULL * 1024ULL,
 
 const ULONG REMOVE_LOCK_TAG = 0x02051986UL;
 const auto DISK_CONTROL_BLOCK_MAGIC = (uint32_t) 0x02051986UL;
-const auto TFS_DAV_EXPIRATION_AGE_100ns =
-  2 * 1000 * 1000 * 1000 / 100;
 const auto ERROR_RETRY_INTERVAL_100ns =
+  2 * 1000 * 1000 * 1000 / 100;
+const auto TFS_DAV_EXPIRATION_AGE_100ns =
+  1 * 1000 * 1000 * 1000 / 100;
+const auto FAT_WRITE_TIME_PRECISION_100ns = 
   2 * 1000 * 1000 * 1000 / 100;
 
 void
@@ -345,7 +347,11 @@ NTAPI
 delete_tfs_dav_children_work_item(PDEVICE_OBJECT device_object,
                                   PVOID ctx) {
   IoFreeWorkItem((PIO_WORKITEM) ctx);
-  delete_tfs_dav_children(TFS_DAV_EXPIRATION_AGE_100ns);
+  auto status = delete_tfs_dav_children(TFS_DAV_EXPIRATION_AGE_100ns);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("Failed to call delete_tfs_dav_children: %s (0x%x)",
+                 nt_status_to_string(status), status);
+  }
 }
 
 PDEVICE_OBJECT
@@ -356,6 +362,8 @@ RAMDiskDevice::get_device_object() {
 
 NTSTATUS
 RAMDiskDevice::queue_delete_tfs_dav_children() {
+  nt_log_debug("queueing new children delete job");
+
   auto work_item = IoAllocateWorkItem(get_device_object());
   if (!work_item) {
     nt_log_error("Error IoAllocateWorkItem: not enough resources\n");
@@ -510,9 +518,11 @@ RAMDiskDevice::worker_thread() noexcept {
       irp->IoStatus.Status = STATUS_SUCCESS;
       irp->IoStatus.Information = to_transfer;
 
-      if (io_stack->MajorFunction == IRP_MJ_WRITE) {
+      if (io_stack->MajorFunction == IRP_MJ_WRITE &&
+          dcb->ramdisk_is_engaged()) {
         // we just had a write, so schedule a delete
-        timeout_val.QuadPart = -TFS_DAV_EXPIRATION_AGE_100ns;
+        timeout_val.QuadPart = -(TFS_DAV_EXPIRATION_AGE_100ns +
+                                 FAT_WRITE_TIME_PRECISION_100ns);
         timeout = &timeout_val;
       }
 

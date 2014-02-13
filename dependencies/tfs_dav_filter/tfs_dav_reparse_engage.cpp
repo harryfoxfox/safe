@@ -46,6 +46,7 @@ const ULONG QUERY_VALUE_KEY_ALLOCATE_TAG = 0x20202020;
 const ULONG GET_PATH_TO_TFS_DAV_TAG = 0x20202021;
 const ULONG RENAME_TFS_DAV_DIRECTORY_TAG = 0x20202022;
 const ULONG FREE_UNICODE_STRING_TAG = 0x20202023;
+const ULONG DELETE_TFS_DAV_CHILDREN_TAG = 0x20202025;
 
 template <class T>
 void *
@@ -240,7 +241,8 @@ does_tfs_dav_link_already_exists(PUNICODE_STRING path_to_tfs_dav,
 			    DELETE | SYNCHRONIZE,
 			    &attributes,
 			    &io_status_block,
-			    FILE_SHARE_READ | FILE_SHARE_WRITE,
+			    FILE_SHARE_READ | FILE_SHARE_WRITE |
+                            FILE_SHARE_DELETE,
 			    FILE_DIRECTORY_FILE
 			    | FILE_OPEN_FOR_BACKUP_INTENT
 			    | FILE_SYNCHRONOUS_IO_ALERT
@@ -683,11 +685,209 @@ disengage_reparse_point(HANDLE reparse_handle) {
   return STATUS_SUCCESS;
 }
 
+template <typename DirStructType>
+struct StructTypeToInfoClass;
+
+template <>
+struct StructTypeToInfoClass<FILE_DIRECTORY_INFORMATION> {
+  const static auto value = FileDirectoryInformation;
+};
+
+template<typename DirStructType, typename F>
+static
+NTSTATUS
+iterate_over_files(PUNICODE_STRING path, F handle_entry) {
+  // get handle to the directory
+  OBJECT_ATTRIBUTES attributes;
+  InitializeObjectAttributes(&attributes,
+			     path,
+			     OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+			     nullptr,
+			     nullptr);
+
+  IO_STATUS_BLOCK io_status_block;
+  HANDLE tfs_dav_handle;
+  auto status = ZwCreateFile(&tfs_dav_handle,
+			     GENERIC_READ | SYNCHRONIZE |
+                             FILE_LIST_DIRECTORY,
+			     &attributes,
+			     &io_status_block,
+			     nullptr,
+			     FILE_ATTRIBUTE_NORMAL,
+			     FILE_SHARE_READ | FILE_SHARE_WRITE,
+			     FILE_OPEN,
+			     FILE_DIRECTORY_FILE |
+			     FILE_SYNCHRONOUS_IO_NONALERT,
+			     nullptr, 0);
+  if (!NT_SUCCESS(status)) {
+    nt_log_error("Error while calling ZwCreateFile: %s (0x%x)",
+		 nt_status_to_string(status), status);
+    return status;
+  }
+  auto _close_file = lockbox::create_deferred(ZwClose, tfs_dav_handle);
+
+  auto info_size = sizeof(FILE_DIRECTORY_INFORMATION);
+  auto info = ExAllocatePoolWithTag(PagedPool, info_size,
+                                    DELETE_TFS_DAV_CHILDREN_TAG);
+  if (!info) {
+    nt_log_error("Error while calling ExAllocatePoolWithTag\n");
+    return STATUS_INSUFFICIENT_RESOURCES;
+  }
+  auto _free_info =
+    lockbox::create_deferred(ExFreePoolWithTag,
+                             info, DELETE_TFS_DAV_CHILDREN_TAG);
+
+  while (true) {
+    // keep calling ZwQueryDirectoryFile until we get a valid buffer
+    NTSTATUS status2;
+    while (true) {
+      IO_STATUS_BLOCK io_status_block;
+      status2 = ZwQueryDirectoryFile(tfs_dav_handle,
+                                     nullptr, nullptr, nullptr,
+                                     &io_status_block,
+                                     info,
+                                     info_size,
+                                     StructTypeToInfoClass<DirStructType>::value,
+                                     FALSE, nullptr, FALSE);
+      if (status2 == STATUS_BUFFER_OVERFLOW) {
+        // buffer is too small, reallocate a larger one and try again
+        auto old_info_size = info_size;
+        info_size *= 2;
+        if (info_size < old_info_size) {
+          // integer overflow
+          nt_log_error("Required too large of a buffer\n");
+          return STATUS_BUFFER_OVERFLOW;
+        }
+        info = ExAllocatePoolWithTag(PagedPool, info_size,
+                                     DELETE_TFS_DAV_CHILDREN_TAG);
+        if (!info) {
+          nt_log_error("Error while calling ExAllocatePoolWithTag\n");
+          return STATUS_INSUFFICIENT_RESOURCES;
+        }
+        _free_info = 
+          lockbox::create_deferred(ExFreePoolWithTag, info,
+                                   DELETE_TFS_DAV_CHILDREN_TAG);
+      }
+      else break;
+    }
+
+    if (status2 == STATUS_NO_MORE_FILES) break;
+    if (!NT_SUCCESS(status2)) {
+      nt_log_error("Error while calling ZwQueryDirectoryFile: %s (0x%x)",
+                   nt_status_to_string(status2), status2);
+      return status2;
+    }
+
+    // now iterate over all returned entries
+    void *iptr = info;
+    bool continue_ = true;
+    while (continue_) {
+      auto dir_entry = (DirStructType *) iptr;
+      continue_ = handle_entry(tfs_dav_handle, *dir_entry);
+      if (!dir_entry->NextEntryOffset) break;
+      iptr = add_ptr(iptr, dir_entry->NextEntryOffset);
+    }
+
+    if (!continue_) break;
+  }
+
+  return STATUS_SUCCESS;
+}
+
+const UNICODE_STRING _CURRENT_DIRECTORY = {
+  sizeof(L".") - sizeof(WCHAR),
+  sizeof(L".") - sizeof(WCHAR),
+  (PWSTR) L".",
+};
+const auto CURRENT_DIRECTORY = (PUNICODE_STRING) &_CURRENT_DIRECTORY;
+
 NTSTATUS
 delete_tfs_dav_children(ULONGLONG expiration_age_100ns) {
-  (void) expiration_age_100ns;
-  nt_log_debug("DELET TFS DAV CHILDREN!\n");
-  return STATUS_SUCCESS;
+  // get path to Tfs_DAV
+  UNICODE_STRING path_to_tfs_dav;
+  auto status1 = get_path_to_tfs_dav(&path_to_tfs_dav);
+  if (!NT_SUCCESS(status1)) return status1;
+  auto _free_tfs_path =
+    lockbox::create_deferred(free_unicode_string, &path_to_tfs_dav);
+
+  nt_log_debug("delete tfs dav dhilren!");
+
+  return iterate_over_files<FILE_DIRECTORY_INFORMATION>
+    (&path_to_tfs_dav,
+     [&] (HANDLE dir_handle,
+          const FILE_DIRECTORY_INFORMATION & file_info) {
+      UNICODE_STRING file_name;
+      file_name.Length = file_info.FileNameLength;
+      file_name.MaximumLength = file_name.Length;
+      file_name.Buffer = (PWSTR) file_info.FileName;
+      
+      if (!RtlCompareUnicodeString(&file_name, CURRENT_DIRECTORY, TRUE)) {
+        return true;
+      }
+
+      LARGE_INTEGER cur_time;
+      KeQuerySystemTime(&cur_time);
+
+      LARGE_INTEGER check_time = file_info.LastWriteTime;
+      if (check_time.QuadPart > cur_time.QuadPart) {
+        check_time.QuadPart = cur_time.QuadPart;
+      }
+
+      auto difference = (ULONGLONG)
+        (cur_time.QuadPart - check_time.QuadPart);
+
+        nt_log_debug("cur_time %lld, check_time %lld, diff %lld\n",
+                     cur_time.QuadPart, check_time.QuadPart,
+                     difference);
+
+      if (difference >= expiration_age_100ns) {
+        // file is too old, time to reap!
+        nt_log_debug("Deleting \"%wZ\","
+                     "cur_time %lld, check_time %lld, diff %lld\n",
+                     &file_name,
+                     cur_time.QuadPart, check_time.QuadPart,
+                     difference);
+
+        OBJECT_ATTRIBUTES attributes;
+        InitializeObjectAttributes(&attributes,
+                                   &file_name,
+                                   OBJ_CASE_INSENSITIVE |
+                                   OBJ_KERNEL_HANDLE,
+                                   dir_handle,
+                                   nullptr);
+
+        // we delete with create file because we want
+        // to delete only if we have the only reference to the file
+        // (we set share_mode = 0 to ensure that)
+        IO_STATUS_BLOCK io_status_block;
+        HANDLE tfs_dav_handle;
+        auto status = ZwCreateFile(&tfs_dav_handle,
+                                   DELETE | SYNCHRONIZE,
+                                   &attributes,
+                                   &io_status_block,
+                                   nullptr,
+                                   FILE_ATTRIBUTE_NORMAL,
+                                   0,
+                                   FILE_OPEN,
+                                   FILE_SYNCHRONOUS_IO_NONALERT
+                                   | FILE_DELETE_ON_CLOSE,
+                                   NULL, 0);
+        if (!NT_SUCCESS(status)) {
+          nt_log_error("Error while calling ZwCreateFile(\"%wZ\"): %s (0x%x)",
+                       &file_name,
+                       nt_status_to_string(status), status);
+        }
+        else {
+          auto status2 = ZwClose(tfs_dav_handle);
+          if (!NT_SUCCESS(status2)) {
+            nt_log_error("Error while closing File, leaking...: %s (0x%x)",
+                         nt_status_to_string(status2), status2);
+          }
+        }
+      }
+
+      return true;
+    });
 }
 
 }
