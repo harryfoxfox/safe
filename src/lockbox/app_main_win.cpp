@@ -183,7 +183,7 @@ alert_of_popup_if_we_have_one(HWND lockbox_main_window, const WindowData & wd,
       auto success =
         SystemParametersInfoW(SPI_GETFOREGROUNDFLASHCOUNT,
                               0, &flash_count, 0);
-      if (!success) throw w32util::windows_error();
+      if (!success) w32util::throw_windows_error();
 
       FLASHWINFO finfo;
       lockbox::zero_object(finfo);
@@ -287,7 +287,7 @@ bubble_msg(HWND lockbox_main_window,
   icon_data.dwInfoFlags = NIIF_NONE;
 
   auto success = Shell_NotifyIconW(NIM_MODIFY, &icon_data);
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
 }
 
 static
@@ -300,7 +300,7 @@ update_tray_menu(WindowData & wd) {
                               wd.recent_mount_paths_store,
                               wd.control_was_pressed_on_tray_open);
   auto success = SetMenuDefaultItem(wd.tray_menu.get(), 0, TRUE);
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
 }
 
 static
@@ -383,7 +383,7 @@ perform_default_tray_action(HWND lockbox_main_window, WindowData & wd) {
 
   auto default_menu_item_id =
     GetMenuDefaultItem(wd.tray_menu.get(), FALSE, GMDI_GOINTOPOPUPS);
-  if (default_menu_item_id == (decltype(default_menu_item_id)) -1) throw w32util::windows_error();
+  if (default_menu_item_id == (decltype(default_menu_item_id)) -1) w32util::throw_windows_error();
 
   dispatch_tray_menu_action(lockbox_main_window, wd,
                             (UINT) default_menu_item_id);
@@ -449,7 +449,7 @@ is_app_running_as_admin() {
                                           DOMAIN_ALIAS_RID_ADMINS, 
                                           0, 0, 0, 0, 0, 0, 
                                           &administrators_group);
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
 
   auto _free_administrators_group_sid =
     lockbox::create_deferred(FreeSid, administrators_group);
@@ -458,7 +458,7 @@ is_app_running_as_admin() {
   auto success2 = CheckTokenMembership(nullptr,
                                        administrators_group,
                                        &is_running_as_admin);
-  if (!success2) throw w32util::windows_error();
+  if (!success2) w32util::throw_windows_error();
 
   return is_running_as_admin;
 }
@@ -488,7 +488,7 @@ install_kernel_driver_as_admin(HWND hwnd) {
   if (!ret ||
       (num_chars == ret &&
        GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-    throw w32util::windows_error();
+    w32util::throw_windows_error();
   }
 
   SHELLEXECUTEINFOW shex;
@@ -504,9 +504,9 @@ install_kernel_driver_as_admin(HWND hwnd) {
                 (unsigned) GetCurrentProcessId());
 
   auto success = ShellExecuteExW(&shex);
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
 
-  if (!shex.hProcess) throw w32util::windows_error();
+  if (!shex.hProcess) w32util::throw_windows_error();
 
   auto _close_process_handle =
     lockbox::create_deferred(CloseHandle, shex.hProcess);
@@ -520,7 +520,7 @@ install_kernel_driver_as_admin(HWND hwnd) {
 
   DWORD exit_code;
   auto success2 = GetExitCodeProcess(shex.hProcess, &exit_code);
-  if (!success2) throw w32util::windows_error();
+  if (!success2) w32util::throw_windows_error();
 
   switch (exit_code) {
   case INSTALL_KERNEL_DRIVER_SUCCESS: return false;
@@ -571,7 +571,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         auto success =
           SetTimer(hwnd, STOP_RELEVANT_DRIVE_THREADS_TIMER_ID, 0, NULL);
         // TODO: we don't yet handle this gracefully
-        if (!success) throw w32util::windows_error();
+        if (!success) w32util::throw_windows_error();
         wd->timer_rev += 1;
       }
       return TRUE;
@@ -880,7 +880,7 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   {
     int argc;
     auto wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    if (!wargv) throw w32util::windows_error();
+    if (!wargv) w32util::throw_windows_error();
 
     auto _free_wargv = lockbox::create_deferred(LocalFree, wargv);
 
@@ -949,12 +949,12 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   auto native_fs = lockbox::create_native_fs();
 
   auto tray_menu_handle = CreatePopupMenu();
-  if (!tray_menu_handle) throw w32util::windows_error();
+  if (!tray_menu_handle) w32util::throw_windows_error();
 
   wchar_t app_directory_buf[MAX_PATH];
   auto result = SHGetFolderPathW(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE,
                                  NULL, SHGFP_TYPE_CURRENT, app_directory_buf);
-  if (result != S_OK) throw w32util::windows_error();
+  if (result != S_OK) w32util::throw_windows_error();
   auto app_directory = w32util::narrow(app_directory_buf, wcslen(app_directory_buf));
   auto app_directory_path = native_fs->pathFromString(app_directory).join(PRODUCT_NAME_A);
 

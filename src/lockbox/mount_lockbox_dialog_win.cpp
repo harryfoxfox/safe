@@ -78,9 +78,9 @@ mount_existing_lockbox_dialog_proc(HWND hwnd, UINT Message,
     }
     case IDOK: {
       auto location_hwnd = GetDlgItem(hwnd, IDC_LOCATION);
-      if (!location_hwnd) throw w32util::windows_error();
+      if (!location_hwnd) w32util::throw_windows_error();
       auto password_hwnd = GetDlgItem(hwnd, IDC_PASSWORD);
-      if (!password_hwnd) throw w32util::windows_error();
+      if (!password_hwnd) w32util::throw_windows_error();
 
       auto location_string = w32util::read_text_field(location_hwnd);
       auto password_buf =

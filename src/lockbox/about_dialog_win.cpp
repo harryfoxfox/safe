@@ -75,7 +75,7 @@ about_dialog_proc(HWND hwnd, UINT Message,
 
     RECT r = {0, 0, 0, LOGO_TEXT_HEIGHT_DIALOG_UNITS};
     auto success = MapDialogRect(hwnd, &r);
-    if (!success) throw w32util::windows_error();
+    if (!success) w32util::throw_windows_error();
 
     // font for logo text
     auto font = CreateFontW(-r.bottom, 0,
@@ -84,7 +84,7 @@ about_dialog_proc(HWND hwnd, UINT Message,
                             FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
                             CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
                             DEFAULT_PITCH, L"Georgia");
-    if (!font) throw w32util::windows_error();
+    if (!font) w32util::throw_windows_error();
     ctx->logo_text_font.reset(font);
 
     SendDlgItemMessage(hwnd, IDC_LOGO_TEXT, WM_SETFONT,

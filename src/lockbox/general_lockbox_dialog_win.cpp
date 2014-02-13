@@ -201,7 +201,7 @@ generic_general_lockbox_dialog(HWND hwnd,
                                     dlg.get_data(),
                                     hwnd, general_lockbox_dialog_proc,
                                     (LPARAM) &ctx);
-  if (ret == 0 || ret == (INT_PTR) -1) throw windows_error();
+  if (ret == 0 || ret == (INT_PTR) -1) throw_windows_error();
 
   return receive_dialog_box_data<generic_choice_type>(ret);
 }

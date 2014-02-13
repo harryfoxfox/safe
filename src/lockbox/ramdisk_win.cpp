@@ -49,7 +49,7 @@ need_to_install_kernel_driver() {
 			     NULL);
   if (hFile == INVALID_HANDLE_VALUE) {
     if (GetLastError() == ERROR_FILE_NOT_FOUND) return true;
-    throw w32util::windows_error();
+    w32util::throw_windows_error();
   }
 
   CloseHandle(hFile);
@@ -76,16 +76,16 @@ static
 BinaryResource
 load_resource_data(LPCWSTR name, LPCWSTR type) {
   auto rsrc = FindResource(nullptr, name, type);
-  if (!rsrc) throw w32util::windows_error();
+  if (!rsrc) w32util::throw_windows_error();
 
   auto loaded_rsrc = LoadResource(nullptr, rsrc);
-  if (!loaded_rsrc) throw w32util::windows_error();
+  if (!loaded_rsrc) w32util::throw_windows_error();
 
   auto res_data_ptr = LockResource(loaded_rsrc);
-  if (!res_data_ptr) throw w32util::windows_error();
+  if (!res_data_ptr) w32util::throw_windows_error();
 
   auto size_of_data = SizeofResource(nullptr, rsrc);
-  if (!size_of_data) throw w32util::windows_error();
+  if (!size_of_data) w32util::throw_windows_error();
 
   return BinaryResource(res_data_ptr, size_of_data);
 }
@@ -97,14 +97,14 @@ write_file(std::string path, void *data, size_t size) {
                            GENERIC_WRITE, 0, nullptr,
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                            nullptr);
-  if (hfile == INVALID_HANDLE_VALUE) throw w32util::windows_error();
+  if (hfile == INVALID_HANDLE_VALUE) w32util::throw_windows_error();
 
   auto _close_file = lockbox::create_deferred(CloseHandle, hfile);
 
   DWORD bytes_written;
   auto success = WriteFile(hfile, data, size, &bytes_written, NULL);
   if (!success || bytes_written != size) {
-    throw w32util::windows_error();
+    w32util::throw_windows_error();
   }
 }
 
@@ -122,7 +122,7 @@ query_commit_limit() {
   PERFORMANCE_INFORMATION perf_info;
   perf_info.cb = sizeof(perf_info);
   auto success = GetPerformanceInfo(&perf_info, sizeof(perf_info));
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
   lbx_log_debug("Queried commit limit: %lu, page_size: %lu\n",
                 (long unsigned) perf_info.CommitLimit,
                 (long unsigned) perf_info.PageSize);
@@ -148,7 +148,7 @@ create_ramdisk_software_keys(HDEVINFO device_info_set,
                                      DIREG_DRV,
                                      nullptr,
                                      nullptr);
-  if (hkey == INVALID_HANDLE_VALUE) throw w32util::windows_error();
+  if (hkey == INVALID_HANDLE_VALUE) w32util::throw_windows_error();
 
   auto _close_key = lockbox::create_deferred(RegCloseKey, hkey);
 
@@ -158,7 +158,7 @@ create_ramdisk_software_keys(HDEVINFO device_info_set,
                            REG_DWORD,
                            (BYTE *) &ramdisk_size,
                            sizeof(ramdisk_size));
-  if (ret != ERROR_SUCCESS) throw w32util::windows_error();
+  if (ret != ERROR_SUCCESS) w32util::throw_windows_error();
 }
 
 static
@@ -172,7 +172,7 @@ create_ramdisk_device(std::string full_inf_file_path,
                         &class_guid,
                         class_name, sizeof(class_name),
                         nullptr);
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
 
   /* don't install device if it already exists */
   auto create_device = true;
@@ -181,7 +181,7 @@ create_ramdisk_device(std::string full_inf_file_path,
       SetupDiGetClassDevsEx(&class_guid, nullptr, nullptr, 0,
 			    nullptr, nullptr, nullptr);
     if (device_info_set == INVALID_HANDLE_VALUE) {
-      throw w32util::windows_error();
+      w32util::throw_windows_error();
     }
 
     SP_DEVINFO_DATA device_info_data;
@@ -201,7 +201,7 @@ create_ramdisk_device(std::string full_inf_file_path,
 					  (PBYTE) buffer,
 					  sizeof(buffer),
 					  nullptr);
-      if (!success_prop) throw w32util::windows_error();
+      if (!success_prop) w32util::throw_windows_error();
 
       PCHAR bp = buffer;
       while(*bp) {
@@ -219,7 +219,7 @@ create_ramdisk_device(std::string full_inf_file_path,
 
   auto device_info_set =
     SetupDiCreateDeviceInfoList(&class_guid, NULL);
-  if (device_info_set == INVALID_HANDLE_VALUE) throw w32util::windows_error();
+  if (device_info_set == INVALID_HANDLE_VALUE) w32util::throw_windows_error();
 
   SP_DEVINFO_DATA device_info_data;
   zero_object(device_info_data);
@@ -228,7 +228,7 @@ create_ramdisk_device(std::string full_inf_file_path,
     SetupDiCreateDeviceInfoA(device_info_set, class_name,
                              &class_guid, nullptr, 0,
                              DICD_GENERATE_ID, &device_info_data);
-  if (!success_create_device_info) throw w32util::windows_error();
+  if (!success_create_device_info) w32util::throw_windows_error();
 
   auto success_set_hardware_id =
     SetupDiSetDeviceRegistryPropertyA(device_info_set,
@@ -236,12 +236,12 @@ create_ramdisk_device(std::string full_inf_file_path,
                                       SPDRP_HARDWAREID,
                                       (BYTE *) hardware_id.c_str(),
                                       (DWORD) hardware_id.size() + 1);
-  if (!success_set_hardware_id) throw w32util::windows_error();
+  if (!success_set_hardware_id) w32util::throw_windows_error();
 
   auto success_class_installer =
     SetupDiCallClassInstaller(DIF_REGISTERDEVICE, device_info_set,
                               &device_info_data);
-  if (!success_class_installer) throw w32util::windows_error();
+  if (!success_class_installer) w32util::throw_windows_error();
 
   create_ramdisk_software_keys(device_info_set, &device_info_data);
 }
@@ -263,13 +263,13 @@ install_kernel_driver() {
   // create temp directory
   WCHAR temp_path[MAX_PATH + 1];
   auto ret = GetTempPathW(numelementsf(temp_path), temp_path);
-  if (!ret) throw w32util::windows_error();
+  if (!ret) w32util::throw_windows_error();
 
   auto temp_dir = std::wstring(temp_path, ret) + L"saferamdisk";
   lbx_log_debug("Creating debug directory at %ls", temp_dir.c_str());
   auto success = CreateDirectoryW(temp_dir.c_str(), nullptr);
   if (!success && GetLastError() != ERROR_ALREADY_EXISTS) {
-    throw w32util::windows_error();
+    w32util::throw_windows_error();
   }
 
   // store resource data to disk
@@ -296,7 +296,7 @@ install_kernel_driver() {
                                        w32util::widen(inf_file_path).c_str(),
                                        INSTALLFLAG_FORCE,
                                        &restart_required);
-  if (!success2) throw w32util::windows_error();
+  if (!success2) w32util::throw_windows_error();
 
   return restart_required;
 }
@@ -310,7 +310,7 @@ engage_ramdisk() {
                            OPEN_EXISTING,
                            0,
                            NULL);
-  if (hFile == INVALID_HANDLE_VALUE) throw w32util::windows_error();
+  if (hFile == INVALID_HANDLE_VALUE) w32util::throw_windows_error();
 
   auto toret = RAMDiskHandle(hFile);
 
@@ -324,7 +324,7 @@ engage_ramdisk() {
 				 0,
 				 &dw,
 				 NULL);
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
 
   return toret;
 }

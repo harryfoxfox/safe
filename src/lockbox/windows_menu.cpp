@@ -36,10 +36,10 @@ menu_append_separator(HMENU menu_handle) {
   mif.fType = MFT_SEPARATOR;
 
   auto items_added = GetMenuItemCount(menu_handle);
-  if (items_added == -1) throw w32util::windows_error();
+  if (items_added == -1) w32util::throw_windows_error();
   auto success_menu_item =
     InsertMenuItemW(menu_handle, items_added, TRUE, &mif);
-  if (!success_menu_item) throw w32util::windows_error();
+  if (!success_menu_item) w32util::throw_windows_error();
 }
 
 int
@@ -75,12 +75,12 @@ menu_append_string_item(HMENU menu_handle, bool is_default,
 void
 menu_clear(HMENU menu_handle) {
   auto item_count = GetMenuItemCount(menu_handle);
-  if (item_count == -1) throw w32util::windows_error();
+  if (item_count == -1) w32util::throw_windows_error();
 
   for (auto _ : lockbox::range(item_count)) {
     (void) _;
     auto success = DeleteMenu(menu_handle, 0, MF_BYPOSITION);
-    if (!success) throw w32util::windows_error();
+    if (!success) w32util::throw_windows_error();
   }
 }
 

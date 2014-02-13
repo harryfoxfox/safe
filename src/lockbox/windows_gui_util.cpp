@@ -149,7 +149,7 @@ get_message_font() {
   metrics.cbSize = sizeof(metrics);
   auto success = SystemParametersInfoW(SPI_GETNONCLIENTMETRICS,
                                        sizeof(metrics), &metrics, 0);
-  if (!success) throw windows_error();
+  if (!success) throw_windows_error();
   return std::move(metrics.lfMessageFont);
 }
 
@@ -168,13 +168,13 @@ set_default_dialog_font(HWND hwnd) {
   // if there are no children, then don't create a font
   auto child = GetWindow(hwnd, GW_CHILD);
   if (!child) {
-    if (GetLastError()) throw windows_error();
+    if (GetLastError()) throw_windows_error();
     else return;
   }
 
   auto message_font = get_message_font();
   auto handle_font = CreateFontIndirect(&message_font);
-  if (!handle_font) throw windows_error();
+  if (!handle_font) throw_windows_error();
 
   // set the font on all the dialog's children
   static_assert(sizeof(LPARAM) >= sizeof(handle_font),
@@ -189,13 +189,13 @@ cleanup_default_dialog_font(HWND hwnd) {
   // handling a message
   auto child = GetWindow(hwnd, GW_CHILD);
   if (!child) {
-    if (GetLastError()) throw windows_error();
+    if (GetLastError()) throw_windows_error();
     else return;
   }
   auto hfont = (HFONT) SendMessage(child, WM_GETFONT, 0, 0);
-  if (!hfont) throw windows_error();
+  if (!hfont) throw_windows_error();
   auto success_delete_object = DeleteObject(hfont);
-  if (!success_delete_object) throw windows_error();
+  if (!success_delete_object) throw_windows_error();
 }
 
 void
@@ -205,7 +205,7 @@ clear_text_field(HWND text_hwnd, size_t num_chars) {
   memset(zeroed_bytes.get(), 0xaa, num_chars * sizeof(wchar_t));
   zeroed_bytes[num_chars] = 0;
   auto success = SetWindowText(text_hwnd, zeroed_bytes.get());
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
 }
 
 std::string
@@ -213,12 +213,12 @@ read_text_field(HWND text_hwnd) {
   // read size of text in text field
   SetLastError(0);
   auto max_num_chars = GetWindowTextLengthW(text_hwnd);
-  if (!max_num_chars && GetLastError()) throw w32util::windows_error();
+  if (!max_num_chars && GetLastError()) w32util::throw_windows_error();
 
   auto text_buf = std::unique_ptr<wchar_t[]>(new wchar_t[max_num_chars + 1]);
   SetLastError(0);
   auto num_chars = GetWindowTextW(text_hwnd, text_buf.get(), max_num_chars + 1);
-  if (!num_chars && GetLastError()) throw w32util::windows_error();
+  if (!num_chars && GetLastError()) w32util::throw_windows_error();
 
   return w32util::narrow(text_buf.get(), num_chars);
 }
@@ -228,7 +228,7 @@ securely_read_text_field(HWND text_hwnd, bool clear) {
   // read size of text in text field
   SetLastError(0);
   auto max_num_chars = GetWindowTextLengthW(text_hwnd);
-  if (!max_num_chars && GetLastError()) throw w32util::windows_error();
+  if (!max_num_chars && GetLastError()) w32util::throw_windows_error();
 
   auto st1 = encfs::SecureMem((max_num_chars + 1) * sizeof(wchar_t));
   SetLastError(0);
@@ -236,7 +236,7 @@ securely_read_text_field(HWND text_hwnd, bool clear) {
     GetWindowTextW(text_hwnd,
                    (wchar_t *) st1.data(),
                    st1.size() / sizeof(wchar_t));
-  if (!num_chars && GetLastError()) throw w32util::windows_error();
+  if (!num_chars && GetLastError()) w32util::throw_windows_error();
 
   // attempt to clear what's in dialog box
   if (clear) clear_text_field(text_hwnd, num_chars);
@@ -288,7 +288,7 @@ open_url_in_browser(HWND owner, std::string url) {
     (INT_PTR) ShellExecuteW(owner, L"open",
 			    w32util::widen(url).c_str(),
 			    NULL, NULL, SW_SHOWNORMAL);
-  if (ret_shell2 <= 32) throw w32util::windows_error();
+  if (ret_shell2 <= 32) w32util::throw_windows_error();
 }
 
 LONG
@@ -296,7 +296,7 @@ compute_point_size_of_logfont(HWND hwnd, const LOGFONT & lplf) {
   assert(lplf.lfHeight < 0);
   auto hDC = GetDC(hwnd);
   assert(GetMapMode(hDC) == MM_TEXT);
-  if (!hDC) throw w32util::windows_error();
+  if (!hDC) w32util::throw_windows_error();
   auto _release_dc_1 =
     lockbox::create_deferred(ReleaseDC, hwnd, hDC);
   return MulDiv(-lplf.lfHeight, 72,
@@ -308,28 +308,28 @@ compute_base_units_of_logfont(HWND hwnd, const LOGFONT & lplf) {
   // LOGFONT already gives us the height of the font
   // we just need to compute the average width
   auto handle_font = CreateFontIndirect(&lplf);
-  if (!handle_font) throw w32util::windows_error();
+  if (!handle_font) w32util::throw_windows_error();
   auto _free_handle_font =
     lockbox::create_deferred(DeleteObject, handle_font);
 
   auto hDC = GetDC(hwnd);
-  if (!hDC) throw w32util::windows_error();
+  if (!hDC) w32util::throw_windows_error();
   auto _free_hDC = lockbox::create_deferred(ReleaseDC, hwnd, hDC);
 
   SIZE out;
   auto old_object = SelectObject(hDC, handle_font);
-  if (!old_object) throw w32util::windows_error();
+  if (!old_object) w32util::throw_windows_error();
   auto _restore_object = lockbox::create_deferred(SelectObject, hDC, old_object);
 
   TEXTMETRIC tm;
   auto success_1 = GetTextMetrics(hDC, &tm);
-  if (!success_1) throw w32util::windows_error();
+  if (!success_1) w32util::throw_windows_error();
 
   auto success =
     GetTextExtentPoint32W(hDC,
                           L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
                           52, &out);
-  if (!success) throw w32util::windows_error();
+  if (!success) w32util::throw_windows_error();
 
   auto baseunit_x = (out.cx / 26 + 1) / 2;
   auto baseunit_y = tm.tmHeight;

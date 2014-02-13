@@ -44,13 +44,13 @@ normalize_path_component_for_fs(const std::string & comp) {
   auto ret_normalize =
     NormalizeString(NormalizationC, wstr.data(), wstr.size(),
                     NULL, 0);
-  if (ret_normalize <= 0) throw w32util::windows_error();
+  if (ret_normalize <= 0) w32util::throw_windows_error();
 
   auto out = std::unique_ptr<wchar_t[]>(new wchar_t[ret_normalize]);
   auto ret_normalize2 =
     NormalizeString(NormalizationC, wstr.data(), wstr.size(),
                     out.get(), ret_normalize);
-  if (ret_normalize2 <= 0) throw w32util::windows_error();
+  if (ret_normalize2 <= 0) w32util::throw_windows_error();
 
   return w32util::narrow(std::wstring(out.get(), ret_normalize2));
 }
@@ -68,7 +68,7 @@ is_normalized_path_component(const std::string & comp) {
   SetLastError(ERROR_SUCCESS);
   auto ret = IsNormalizedString(NormalizationC, wstr.data(), wstr.size());
   if (!ret && GetLastError() != ERROR_SUCCESS) {
-    throw w32util::windows_error();
+    w32util::throw_windows_error();
   }
 
   return ret;
@@ -86,7 +86,7 @@ normalized_path_components_equal(const std::string & comp_a,
   auto ret = CompareStringOrdinal(wstr_a.data(), wstr_a.size(),
                                   wstr_b.data(), wstr_b.size(),
                                   do_case_insensitive_compare);
-  if (!ret) throw w32util::windows_error();
+  if (!ret) w32util::throw_windows_error();
 
   return ret == CSTR_EQUAL;
 }

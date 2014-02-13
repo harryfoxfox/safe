@@ -67,7 +67,7 @@ MountDetails::unmount() {
 			    L"c:\\windows\\system32\\net.exe",
 			    w32util::widen(os.str()).c_str(),
 			    NULL, SW_HIDE);
-  if (ret_shell1 <= 32) throw w32util::windows_error();
+  if (ret_shell1 <= 32) w32util::throw_windows_error();
 }
 
 void
@@ -77,7 +77,7 @@ MountDetails::open_mount() const {
 			    w32util::widen(std::to_string(_drive_letter) +
 					   ":\\").c_str(),
 			    NULL, NULL, SW_SHOWNORMAL);
-  if (ret_shell2 <= 32) throw w32util::windows_error();
+  if (ret_shell2 <= 32) w32util::throw_windows_error();
 }
 
 void
@@ -135,7 +135,7 @@ public:
     , _error(false)
     , _ws(opt::nullopt) {
     auto event = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if (!event) throw w32util::windows_error();
+    if (!event) w32util::throw_windows_error();
     _event.reset(event);
     InitializeCriticalSection(&_cs);
   }
@@ -157,7 +157,7 @@ public:
   opt::optional<std::pair<port_t, WebdavServerHandle>>
   wait_for_mount_event() {
     auto res = WaitForSingleObject(_event.get(), INFINITE);
-    if (res != WAIT_OBJECT_0) throw w32util::windows_error();
+    if (res != WAIT_OBJECT_0) w32util::throw_windows_error();
 
     EnterCriticalSection(&_cs);
     auto _deferred_unlock = lockbox::create_deferred(LeaveCriticalSection, &_cs);
@@ -228,7 +228,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
 			    L"c:\\windows\\system32\\net.exe",
 			    w32util::widen(os.str()).c_str(),
 			    NULL, SW_HIDE);
-  if (ret_shell1 <= 32) throw w32util::windows_error();
+  if (ret_shell1 <= 32) w32util::throw_windows_error();
 
   auto toret = MountDetails(drive_letter,
                             mount_name,

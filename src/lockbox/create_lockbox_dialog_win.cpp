@@ -73,13 +73,13 @@ create_new_lockbox_dialog_proc(HWND hwnd, UINT Message,
     }
     case IDOK: {
       auto location_hwnd = GetDlgItem(hwnd, IDC_LOCATION);
-      if (!location_hwnd) throw w32util::windows_error();
+      if (!location_hwnd) w32util::throw_windows_error();
       auto name_hwnd = GetDlgItem(hwnd, IDC_NAME);
-      if (!name_hwnd) throw w32util::windows_error();
+      if (!name_hwnd) w32util::throw_windows_error();
       auto password_hwnd = GetDlgItem(hwnd, IDC_PASSWORD);
-      if (!password_hwnd) throw w32util::windows_error();
+      if (!password_hwnd) w32util::throw_windows_error();
       auto confirm_password_hwnd = GetDlgItem(hwnd, IDC_CONFIRM_PASSWORD);
-      if (!confirm_password_hwnd) throw w32util::windows_error();
+      if (!confirm_password_hwnd) w32util::throw_windows_error();
 
       auto location_string = w32util::read_text_field(location_hwnd);
       auto name_string = w32util::read_text_field(name_hwnd);
