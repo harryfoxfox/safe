@@ -32,6 +32,9 @@ engage_reparse_point(PHANDLE reparse_handle);
 NTSTATUS
 disengage_reparse_point(HANDLE reparse_handle);
 
+NTSTATUS
+delete_tfs_dav_children(ULONGLONG expiration_age);
+
 }
 
 #endif

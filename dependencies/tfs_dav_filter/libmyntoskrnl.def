@@ -70,3 +70,7 @@ ZwCreateSection@28
 ZwMapViewOfSection@40
 ZwUnmapViewOfSection@8
 IoOpenDeviceRegistryKey@16
+IoFreeWorkItem@4
+IoAllocateWorkItem@4
+KeQueryInterruptTime@0
+IoQueueWorkItem@16

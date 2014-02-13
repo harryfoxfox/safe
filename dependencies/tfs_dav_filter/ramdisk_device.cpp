@@ -75,6 +75,10 @@ static_assert(DEFAULT_MEM_SIZE < 4096ULL * 1024ULL * 1024ULL,
 
 const ULONG REMOVE_LOCK_TAG = 0x02051986UL;
 const auto DISK_CONTROL_BLOCK_MAGIC = (uint32_t) 0x02051986UL;
+const auto TFS_DAV_EXPIRATION_AGE_100ns =
+  2 * 1000 * 1000 * 1000 / 100;
+const auto ERROR_RETRY_INTERVAL_100ns =
+  2 * 1000 * 1000 * 1000 / 100;
 
 void
 RAMDiskDevice::_free_remove_lock(RAMDiskDevice *dcb) {
@@ -274,8 +278,9 @@ RAMDiskDevice::queue_request(PIRP irp) noexcept {
   KeSetEvent(&this->request_event, (KPRIORITY) 0, FALSE);
 }
 
-PIRP
-RAMDiskDevice::dequeue_request() noexcept {
+NTSTATUS
+RAMDiskDevice::dequeue_request(PIRP *out,
+                               PLARGE_INTEGER timeout) noexcept {
   while (true) {
     auto request = ExInterlockedRemoveHeadList(&this->list_head,
 					       &this->list_lock);
@@ -294,16 +299,22 @@ RAMDiskDevice::dequeue_request() noexcept {
 				 Executive,
 				 KernelMode,
 				 FALSE,
-				 NULL,
+				 timeout,
 				 NULL);
-      
-      if (status == STATUS_WAIT_1) return nullptr;
-      
-      continue;
+      if (status == STATUS_WAIT_1) {
+        *out = nullptr;
+        break;
+      }
+
+      if (status != STATUS_WAIT_0) return status;
+      else continue;
     }
     
-    return CONTAINING_RECORD(request, IRP, Tail.Overlay.ListEntry);
+    *out = CONTAINING_RECORD(request, IRP, Tail.Overlay.ListEntry);
+    break;
   }
+
+  return STATUS_SUCCESS;
 }
 
 UCHAR
@@ -328,6 +339,35 @@ get_engaged(PFILE_OBJECT file_object) {
   return (bool) file_object->FsContext;
 }
 
+static
+VOID
+NTAPI
+delete_tfs_dav_children_work_item(PDEVICE_OBJECT device_object,
+                                  PVOID ctx) {
+  IoFreeWorkItem((PIO_WORKITEM) ctx);
+  delete_tfs_dav_children(TFS_DAV_EXPIRATION_AGE_100ns);
+}
+
+PDEVICE_OBJECT
+RAMDiskDevice::get_device_object() {
+  // TODO: may have to change this to the actual device object
+  return lower_device_object;
+}
+
+NTSTATUS
+RAMDiskDevice::queue_delete_tfs_dav_children() {
+  auto work_item = IoAllocateWorkItem(get_device_object());
+  if (!work_item) {
+    nt_log_error("Error IoAllocateWorkItem: not enough resources\n");
+    return STATUS_INSUFFICIENT_RESOURCES;
+  }
+
+  IoQueueWorkItem(work_item, delete_tfs_dav_children_work_item,
+                  DelayedWorkQueue, (PVOID) work_item);
+
+  return STATUS_SUCCESS;
+}
+
 VOID
 RAMDiskDevice::worker_thread() noexcept {
   auto dcb = this;
@@ -340,8 +380,46 @@ RAMDiskDevice::worker_thread() noexcept {
   
   HANDLE reparse_handle = nullptr;
   
+  LARGE_INTEGER timeout_val;
+  PLARGE_INTEGER timeout = nullptr;
   while (true) {
-    auto irp = dcb->dequeue_request();
+    PIRP irp;
+    
+    // not sure if the relative time specified in
+    // KeWaitForMultipleObjects's timeout parameter decrements
+    // while the system is asleep or not,
+    // -> guessing here that it is, so we use KeQueryInterruptTime
+    //    (instead of KeUnbiasedQueryInterruptTime) if the guess
+    //    is wrong it's fine, the worst that could happen is
+    //    schedule a spurious delete job
+    auto start_time = KeQueryInterruptTime();
+    auto status = dcb->dequeue_request(&irp, timeout);
+    auto elapsed = KeQueryInterruptTime() - start_time;
+    if (timeout) {
+      // decrement timeout
+      timeout->QuadPart = -(-timeout->QuadPart - elapsed);
+      if (timeout->QuadPart > 0) timeout->QuadPart = 0;
+    }
+
+    if (!NT_SUCCESS(status)) {
+      // another random error, this is quite bad
+      // the best we can do is try again
+      // we'll wait before doing so
+      LARGE_INTEGER wait_timeout;
+      wait_timeout.QuadPart = -ERROR_RETRY_INTERVAL_100ns;
+      KeDelayExecutionThread(KernelMode, FALSE, &wait_timeout);
+      continue;
+    }
+
+    if (status == STATUS_TIMEOUT) {
+      dcb->queue_delete_tfs_dav_children();
+      timeout = nullptr;
+      continue;
+    }
+    else if (status != STATUS_SUCCESS) {
+      // something else happened in the wait just spin
+      continue;
+    }
 
     // Got terminate message
     if (!irp) break;
@@ -386,6 +464,7 @@ RAMDiskDevice::worker_thread() noexcept {
         (PUCHAR) MmGetSystemAddressForMdlSafe(irp->MdlAddress,
                                               NormalPagePriority);
       if (!system_buffer) {
+
         irp->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
         irp->IoStatus.Information = 0;
         break;
@@ -430,6 +509,12 @@ RAMDiskDevice::worker_thread() noexcept {
       
       irp->IoStatus.Status = STATUS_SUCCESS;
       irp->IoStatus.Information = to_transfer;
+
+      if (io_stack->MajorFunction == IRP_MJ_WRITE) {
+        // we just had a write, so schedule a delete
+        timeout_val.QuadPart = -TFS_DAV_EXPIRATION_AGE_100ns;
+        timeout = &timeout_val;
+      }
 
       break;
     }

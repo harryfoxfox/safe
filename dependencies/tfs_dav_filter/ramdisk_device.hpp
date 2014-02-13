@@ -81,8 +81,9 @@ class RAMDiskDevice : public IODevice {
   void
   queue_request(PIRP irp) noexcept;
 
-  PIRP
-  dequeue_request() noexcept;
+
+  NTSTATUS
+  dequeue_request(PIRP *out, PLARGE_INTEGER timeout = nullptr) noexcept;
 
   UCHAR
   get_partition_type() const noexcept;
@@ -117,6 +118,12 @@ class RAMDiskDevice : public IODevice {
 
   bool
   ramdisk_is_engaged() noexcept;
+
+  PDEVICE_OBJECT
+  get_device_object();
+
+  NTSTATUS
+  queue_delete_tfs_dav_children();
 
   RAMDiskDevice(PDRIVER_OBJECT driver_object,
 		PDEVICE_OBJECT lower_device_object,

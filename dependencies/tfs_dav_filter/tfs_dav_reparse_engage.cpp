@@ -683,4 +683,11 @@ disengage_reparse_point(HANDLE reparse_handle) {
   return STATUS_SUCCESS;
 }
 
+NTSTATUS
+delete_tfs_dav_children(ULONGLONG expiration_age_100ns) {
+  (void) expiration_age_100ns;
+  nt_log_debug("DELET TFS DAV CHILDREN!\n");
+  return STATUS_SUCCESS;
+}
+
 }
