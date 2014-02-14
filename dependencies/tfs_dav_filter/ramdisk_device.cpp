@@ -138,6 +138,25 @@ format_fat32(HANDLE section, PLARGE_INTEGER memsize,
              PDISK_GEOMETRY pgeom,
 	     PUCHAR ppartition_type);
 
+template <bool, typename T>
+struct _limit_to {
+  static ULONGLONG lim(ULONGLONG v) {
+    return v;
+  }
+};
+
+template <typename T>
+struct _limit_to<true, T> {
+  static
+  ULONGLONG
+  lim(ULONGLONG v) {
+    return std::min(v, 1ULL << (sizeof(T) * 8));
+  }
+};
+
+template <typename T>
+using limit_to = _limit_to<sizeof(T) < sizeof(ULONGLONG), T>;
+
 RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
                              PDEVICE_OBJECT lower_device_object,
                              PLARGE_INTEGER ramdisk_size,
@@ -149,11 +168,8 @@ RAMDiskDevice::RAMDiskDevice(PDRIVER_OBJECT driver_object,
   this->image_size = *ramdisk_size;
 
   // Don't surpass the size of an address space
-#ifndef _WIN64
-    this->image_size.QuadPart =
-      std::min((ULONGLONG) this->image_size.QuadPart,
-	       1ULL << (sizeof(SIZE_T) * 8));
-#endif
+  this->image_size.QuadPart =
+    limit_to<SIZE_T>::lim((ULONGLONG) this->image_size.QuadPart);
 
   this->section_handle = nullptr;
   OBJECT_ATTRIBUTES attributes;
