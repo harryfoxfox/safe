@@ -31,6 +31,7 @@
 #include <windows.h>
 #include <setupapi.h>
 #include <psapi.h>
+#include <shellapi.h>
 
 #ifndef MAX_CLASS_NAME_LEN
 #define MAX_CLASS_NAME_LEN 1024
@@ -253,6 +254,85 @@ BOOL UpdateDriverForPlugAndPlayDevicesW(HWND hwndParent,
                                         DWORD InstallFlags,
                                         PBOOL bRebootRequired);
 
+static
+bool
+update_driver(std::string hardware_id,
+	      std::string full_inf_path) {
+  DWORD INSTALLFLAG_FORCE = 0x1;
+  BOOL restart_required;
+  w32util::check_bool(UpdateDriverForPlugAndPlayDevicesW,
+		      nullptr,
+		      w32util::widen(hardware_id).c_str(),
+		      w32util::widen(full_inf_path).c_str(),
+		      INSTALLFLAG_FORCE,
+		      &restart_required);
+  return restart_required;
+}
+
+bool
+create_device_and_install_driver_native(std::string hardware_id,
+					std::string inf_file_path) {
+  // create root-device
+  create_ramdisk_device(inf_file_path, hardware_id);
+
+  // install driver
+  return update_driver(hardware_id, inf_file_path);
+}
+
+static
+bool
+create_device_and_install_driver(std::string temp_dir,
+				 std::string hardware_id,
+				 std::string full_inf_path) {
+  BOOL is_wow64_process;
+  w32util::check_bool(IsWow64Process,
+		      GetCurrentProcess(), &is_wow64_process);
+  if (is_wow64_process) {
+    // if we're running as in WOW64 emulation
+    // we need to run a native 64-bit binary to call
+    // UpdateDriverForPlugAndPlayDevicesW
+    // http://msdn.microsoft.com/en-us/library/windows/hardware/ff541255%28v=vs.85%29.aspx
+
+    auto binary_path = temp_dir + "\\update_driver.exe";
+    store_resource_to_file(ID_LBX_UPDATE_DRV, LBX_BIN_RSRC,
+			   binary_path);
+
+    auto binary_path_w = w32util::widen(binary_path);
+    auto parameters_w =
+      w32util::widen(lockbox::wrap_quotes(hardware_id) + " " +
+		     lockbox::wrap_quotes(full_inf_path));
+
+    SHELLEXECUTEINFOW shex;
+    lockbox::zero_object(shex);
+    shex.cbSize = sizeof(shex);
+    shex.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
+    shex.lpVerb = L"open";
+    shex.lpFile = binary_path_w.c_str();
+    shex.lpParameters = parameters_w.c_str();
+    shex.nShow = SW_SHOWNORMAL;
+
+    w32util::check_bool(ShellExecuteExW, &shex);
+
+    if (!shex.hProcess) w32util::throw_windows_error();
+    auto _close_process_handle =
+      lockbox::create_deferred(CloseHandle, shex.hProcess);
+
+    w32util::check_call(WAIT_FAILED, WaitForSingleObject,
+			shex.hProcess, INFINITE);
+
+    DWORD exit_code;
+    w32util::check_bool(GetExitCodeProcess, shex.hProcess, &exit_code);
+
+    switch (exit_code) {
+    case ERROR_SUCCESS: return false;
+    case ERROR_SUCCESS_REBOOT_REQUIRED: return true;
+    default: throw w32util::windows_error(exit_code);
+    }
+  }
+  else return create_device_and_install_driver_native(hardware_id,
+						      full_inf_path);
+}
+
 bool
 install_kernel_driver() {
   // if this is a 64-bit system, we can't install any driver
@@ -264,41 +344,30 @@ install_kernel_driver() {
   WCHAR temp_path[MAX_PATH + 1];
   auto ret = GetTempPathW(numelementsf(temp_path), temp_path);
   if (!ret) w32util::throw_windows_error();
+  auto temp_dir = w32util::narrow(temp_path, ret) + "saferamdisk";
 
-  auto temp_dir = std::wstring(temp_path, ret) + L"saferamdisk";
-  lbx_log_debug("Creating debug directory at %ls", temp_dir.c_str());
-  auto success = CreateDirectoryW(temp_dir.c_str(), nullptr);
+  lbx_log_debug("Creating debug directory at %s", temp_dir.c_str());
+  auto success = CreateDirectoryW(w32util::widen(temp_dir).c_str(),
+				  nullptr);
   if (!success && GetLastError() != ERROR_ALREADY_EXISTS) {
     w32util::throw_windows_error();
   }
 
   // store resource data to disk
-  auto inf_file_path = w32util::narrow(temp_dir) + "\\safe_ramdisk.inf";
+  auto inf_file_path = temp_dir + "\\safe_ramdisk.inf";
   store_resource_to_file(ID_LBX_RD_INF, LBX_BIN_RSRC,
                          inf_file_path);
   store_resource_to_file(ID_LBX_RD_SYS32, LBX_BIN_RSRC,
-                         w32util::narrow(temp_dir) +
-                         "\\safe_ramdisk.sys");
+                         temp_dir + "\\safe_ramdisk.sys");
+  store_resource_to_file(ID_LBX_RD_SYS64, LBX_BIN_RSRC,
+                         temp_dir + "\\safe_ramdisk_x64.sys");
 
-  // create root-device
   // NB: hardware_id must match what's in the inf file
   auto hardware_id = std::string("root\\saferamdisk");
-  create_ramdisk_device(inf_file_path, hardware_id);
 
-  // update driver on root-device
-  // XXX: if we're on 64-bit windows this won't work
-  // http://msdn.microsoft.com/en-us/library/windows/hardware/ff541255%28v=vs.85%29.aspx
-  DWORD INSTALLFLAG_FORCE = 0x1;
-  BOOL restart_required;
-  auto success2 =
-    UpdateDriverForPlugAndPlayDevicesW(NULL,
-                                       w32util::widen(hardware_id).c_str(),
-                                       w32util::widen(inf_file_path).c_str(),
-                                       INSTALLFLAG_FORCE,
-                                       &restart_required);
-  if (!success2) w32util::throw_windows_error();
-
-  return restart_required;
+  return create_device_and_install_driver(temp_dir,
+					  hardware_id,
+					  inf_file_path);
 }
 
 RAMDiskHandle

@@ -36,6 +36,7 @@
 #define ID_LBX_RD_INF DEFRSRC(102)
 #define ID_LBX_RD_SYS32 DEFRSRC(103)
 #define ID_LBX_RD_SYS64 DEFRSRC(104)
+#define ID_LBX_UPDATE_DRV DEFRSRC(105)
 
 /*
   256 because 1-255 are reserved:

@@ -67,6 +67,9 @@ CFLAGS_RELEASE = -O3 $(if $(IS_WIN_TARGET),-flto,,)
 CXXFLAGS_DEBUG = -g
 CFLAGS_DEBUG = -g
 
+ASLR_LINK_FLAGS := -Wl,--dynamicbase=true -Wl,--nxcompat=true
+WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
+
 # default global configuration flags
 CPPFLAGS ?= $(if $(RELEASE),$(CPPFLAGS_RELEASE),$(CPPFLAGS_DEBUG))
 CXXFLAGS ?= $(if $(RELEASE),$(CXXFLAGS_RELEASE),$(CXXFLAGS_DEBUG))
@@ -215,6 +218,23 @@ safe_ramdisk_headers:
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
 	cp $(SAFE_RAMDISK_ROOT)/ramdisk_ioctl.h $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
 
+# see note for safe_ramdisk: target above,
+# basically this is not run automatically when building deps
+$(DYN_RESOURCES_ROOT)/update_driver.exe: src/lockbox/ramdisk_win.cpp src/lockbox/update_driver_main.cpp \
+ src/lockbox/*.h src/lockbox/*.hpp
+	@mkdir -p $(DYN_RESOURCES_ROOT)
+
+	@echo "Build update_driver.exe"
+	$(if $(IS_WIN64_TARGET),true,echo "Not a 64-bit compiler" && false)
+	$(CXX) -o $@ -DLBX_EMBEDDED $(MY_CPPFLAGS) $(MY_CXXFLAGS) \
+ $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
+ src/lockbox/update_driver_main.cpp src/lockbox/ramdisk_win.cpp -lsetupapi -lnewdev -lpsapi
+
+	$(if $(RELEASE),$(STRIP) -s $@,)
+	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@,)
+
+update_driver: $(DYN_RESOURCES_ROOT)/update_driver.exe
+
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
  libencfs \
@@ -226,6 +246,7 @@ clean-deps:
 
 clean:
 	rm -f src/lockbox/*.o
+	rm -f out/resources/*
 
 SRCS = fs_fsio.cpp CFsToFsIO.cpp webdav_server.cpp fs.cpp \
 	SecureMemPasswordReader.cpp UnicodeWrapperFsIO.cpp \
@@ -275,9 +296,6 @@ $(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 test_encfs_main:
 	$(CXX) -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
  -o $@ $(TEST_ENCFS_MAIN_OBJS) $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES)
-
-ASLR_LINK_FLAGS := -Wl,--dynamicbase=true -Wl,--nxcompat=true
-WINDOWS_SUBSYS_LINK_FLAGS := -mwindows
 
 $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \

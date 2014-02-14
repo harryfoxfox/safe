@@ -5,6 +5,17 @@
    TODO: all libraries should be configured to use the same common
    logging backend */
 
+#ifdef LBX_EMBEDDED
+
+#define lbx_log(...) do { } while(0)
+#define lbx_log_debug(...) do { } while(0)
+#define lbx_log_info(...) do { } while(0)
+#define lbx_log_warning(...) do { } while(0)
+#define lbx_log_error(...) do { } while(0)
+#define lbx_log_critical(...) do { } while(0)
+
+#else
+
 #include <davfuse/logging.h>
 
 #define lbx_log logging_log
@@ -13,5 +24,7 @@
 #define lbx_log_warning log_warning
 #define lbx_log_error log_error
 #define lbx_log_critical log_critical
+
+#endif
 
 #endif

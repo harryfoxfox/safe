@@ -102,6 +102,12 @@ escape_double_quotes(std::string mount_name) {
     return std::string(replaced.begin(), replaced.end());
 }
 
+inline
+std::string
+wrap_quotes(std::string str) {
+  return "\"" + escape_double_quotes(str) + "\"";
+}
+
 namespace _int {
 
 template<typename T,

@@ -21,6 +21,8 @@
 
 #include <lockbox/util_win.hpp>
 
+#include <string>
+
 namespace lockbox { namespace win {
 
 bool
@@ -28,6 +30,10 @@ need_to_install_kernel_driver();
 
 bool
 install_kernel_driver();
+
+bool
+create_device_and_install_driver_native(std::string hardware_id,
+					std::string inf_file_path);
 
 typedef ManagedHandle RAMDiskHandle;
 

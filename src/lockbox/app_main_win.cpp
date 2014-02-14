@@ -463,12 +463,6 @@ is_app_running_as_admin() {
   return is_running_as_admin;
 }
 
-enum {
-  INSTALL_KERNEL_DRIVER_SUCCESS,
-  INSTALL_KERNEL_DRIVER_SUCCESS_RESTART,
-  INSTALL_KERNEL_DRIVER_ERROR,
-};
-
 const WCHAR INSTALL_KERNEL_DRIVER_CMDLINE_W[] = L"/install_kernel_driver";
 
 static
@@ -523,8 +517,8 @@ install_kernel_driver_as_admin(HWND hwnd) {
   if (!success2) w32util::throw_windows_error();
 
   switch (exit_code) {
-  case INSTALL_KERNEL_DRIVER_SUCCESS: return false;
-  case INSTALL_KERNEL_DRIVER_SUCCESS_RESTART: return true;
+  case ERROR_SUCCESS: return false;
+  case ERROR_SUCCESS_REBOOT_REQUIRED: return true;
   default: throw std::runtime_error("installing driver failed");
   }
 }
@@ -890,15 +884,16 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   }
 
   if (run_install_driver) {
-    int toret = INSTALL_KERNEL_DRIVER_ERROR;
+    int toret;
     try {
       auto restart_required = lockbox::win::install_kernel_driver();
       toret = restart_required
-        ? INSTALL_KERNEL_DRIVER_SUCCESS_RESTART
-        : INSTALL_KERNEL_DRIVER_SUCCESS;
+        ? ERROR_SUCCESS_REBOOT_REQUIRED
+        : ERROR_SUCCESS;
     }
     catch (const std::exception & err) {
-      lbx_log_error("Failure to install driver to %s", err.what());
+      toret = -1;
+      lbx_log_error("Failure to install driver: %s", err.what());
     }
 
     lbx_log_debug("installing driver is finished, status was: 0x%x",
