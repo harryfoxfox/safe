@@ -26,6 +26,8 @@
 
 #include <encfs/base/optional.h>
 
+#include <system_error>
+
 namespace w32util {
 
 inline
@@ -73,12 +75,35 @@ last_error_message(opt::optional<DWORD> err_code = opt::nullopt) {
   return error_message(*err_code);
 }
 
-// TODO: implement class
+class windows_error_category_cls : public std::error_category {
+public:
+  windows_error_category_cls() {}
+
+  virtual const char *name() const noexcept {
+    return "windows_error";
+  }
+
+  virtual std::string message(int cond) const {
+    return error_message((DWORD) cond);
+  }
+};
+
 inline
-std::runtime_error
-windows_error(opt::optional<DWORD> err_code = opt::nullopt) {
-  return std::runtime_error(last_error_message(std::move(err_code)));
+const std::error_category &
+windows_error_category() noexcept {
+  static const windows_error_category_cls windows_error_category_instance;
+  return windows_error_category_instance;
 }
+
+class windows_error : public std::system_error {
+public:
+  windows_error(opt::optional<DWORD> err_code = opt::nullopt)
+    : std::system_error(err_code ? (int) *err_code : GetLastError(),
+			windows_error_category()) {
+    static_assert(sizeof(DWORD) <= sizeof(int),
+		  "can't store dword in an int!");
+  }
+};
 
 inline
 void
