@@ -297,31 +297,10 @@ create_device_and_install_driver(std::string temp_dir,
     store_resource_to_file(ID_LBX_UPDATE_DRV, LBX_BIN_RSRC,
 			   binary_path);
 
-    auto binary_path_w = w32util::widen(binary_path);
-    auto parameters_w =
-      w32util::widen(lockbox::wrap_quotes(hardware_id) + " " +
-		     lockbox::wrap_quotes(full_inf_path));
+    auto parameters = (lockbox::wrap_quotes(hardware_id) + " " +
+                       lockbox::wrap_quotes(full_inf_path));
 
-    SHELLEXECUTEINFOW shex;
-    lockbox::zero_object(shex);
-    shex.cbSize = sizeof(shex);
-    shex.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
-    shex.lpVerb = L"open";
-    shex.lpFile = binary_path_w.c_str();
-    shex.lpParameters = parameters_w.c_str();
-    shex.nShow = SW_HIDE;
-
-    w32util::check_bool(ShellExecuteExW, &shex);
-
-    if (!shex.hProcess) w32util::throw_windows_error();
-    auto _close_process_handle =
-      lockbox::create_deferred(CloseHandle, shex.hProcess);
-
-    w32util::check_call(WAIT_FAILED, WaitForSingleObject,
-			shex.hProcess, INFINITE);
-
-    DWORD exit_code;
-    w32util::check_bool(GetExitCodeProcess, shex.hProcess, &exit_code);
+    auto exit_code = run_command_sync(binary_path, parameters);
 
     switch (exit_code) {
     case ERROR_SUCCESS: return false;
