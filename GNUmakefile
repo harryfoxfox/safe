@@ -56,10 +56,11 @@ PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),$(if $(shell whi
 WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_fs.a
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 
-# we claim to support windows 2000 and above (to be as simple and tight as possible)
-# although currently we require comctl32.dll >= v6.0, which is only
-# available on minimum windows xp
-GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x500 -DWINVER=0x500 -DNTDDI_VERSION=0x05000000
+# we build for windows xp and above
+# we require comctl32.dll >= v6.0 (available in XP)
+# we require normaliz.dll (available in XP SP2)
+# NB: A Windows 2000 port wouldn't be too hard to do
+GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x501 -DWINVER=0x501 -DNTDDI_VERSION=0x05010000
 
 CPPFLAGS_RELEASE = -DNDEBUG
 CXXFLAGS_RELEASE = -O3 $(if $(IS_WIN_TARGET),-flto,,)
