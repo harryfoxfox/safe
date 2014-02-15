@@ -47,6 +47,41 @@ forward(typename remove_reference<_Tp>::type&& __t) noexcept
 template <class FNRET>
 class CDeferred;
 
+template <class F>
+class CDeferred<F()> {
+  F f;
+  bool is_valid;
+
+public:
+  CDeferred()
+    : is_valid(false) {}
+
+  CDeferred(F f_)
+    : f(_int::move(f_))
+    , is_valid(true) {}
+
+  CDeferred(CDeferred && cd)
+    : f(_int::move(cd.f))
+    , is_valid(cd.is_valid) {
+    cd.is_valid = false;
+  }
+
+  CDeferred &operator=(CDeferred && cd) {
+    if (this != &cd) {
+      this->~CDeferred();
+      new (this) CDeferred(_int::move(cd));
+    }
+    return *this;
+  }
+
+  void
+  cancel() {
+    is_valid = false;
+  }
+
+  ~CDeferred() { if (is_valid) f(); }
+};
+
 // CDeferred of one argument also serves a managed handle object
 template <class F, class T>
 class CDeferred<F(T)> {
