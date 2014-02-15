@@ -22,6 +22,7 @@
 #include <lockbox/resources_win.h>
 #include <lockbox/util.hpp>
 #include <lockbox/windows_error.hpp>
+#include <lockbox/windows_file.hpp>
 #include <lockbox/windows_string.hpp>
 
 #include <safe_ramdisk/ramdisk_ioctl.h>
@@ -314,16 +315,8 @@ create_device_and_install_driver(std::string temp_dir,
 
 bool
 install_kernel_driver() {
-  // if this is a 64-bit system, we can't install any driver
-  // TODO:
-
-  // write out .sys and .inf resources to a temp file
-
   // create temp directory
-  WCHAR temp_path[MAX_PATH + 1];
-  auto ret = GetTempPathW(numelementsf(temp_path), temp_path);
-  if (!ret) w32util::throw_windows_error();
-  auto temp_dir = w32util::narrow(temp_path, ret) + "saferamdisk";
+  auto temp_dir = w32util::get_temp_path() + "saferamdisk";
 
   lbx_log_debug("Creating debug directory at %s", temp_dir.c_str());
   auto success = CreateDirectoryW(w32util::widen(temp_dir).c_str(),

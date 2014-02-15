@@ -32,6 +32,7 @@
 #include <lockbox/webdav_server.hpp>
 #include <lockbox/welcome_dialog_win.hpp>
 #include <lockbox/windows_async.hpp>
+#include <lockbox/windows_file.hpp>
 #include <lockbox/windows_gui_util.hpp>
 #include <lockbox/windows_menu.hpp>
 #include <lockbox/windows_string.hpp>
@@ -64,6 +65,7 @@
 #include <shellapi.h>
 #include <dbt.h>
 #include <shlobj.h>
+#include <powrprof.h>
 
 #ifndef GW_ENABLEDPOPUP
 #define GW_ENABLEDPOPUP 6
@@ -104,6 +106,8 @@ const wchar_t LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME[] =
   L"LOCKBOX_DUPLICATE_INSTANCE_MESSAGE_NAME";
 const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
   L"TaskbarCreated";
+const wchar_t MAKE_REQUIRED_SYSTEM_CHANGES_ARG_W[] =
+  L"/make_required_system_changes";
 
 static
 void
@@ -463,18 +467,246 @@ is_app_running_as_admin() {
   return is_running_as_admin;
 }
 
-const WCHAR INSTALL_KERNEL_DRIVER_CMDLINE_W[] = L"/install_kernel_driver";
+static
+bool
+hibernate_is_enabled() {
+  SYSTEM_POWER_CAPABILITIES powercap;
+  w32util::check_bool(GetPwrCapabilities, &powercap);
+  return powercap.SystemS4 && powercap.HiberFilePresent;
+}
 
 static
 bool
-install_kernel_driver_as_admin(HWND hwnd) {
+set_hibernate(bool hibernate) {
+  auto ret = lockbox::win::run_command_sync("C:\\Windows\\system32\\powercfg.exe",
+                                            hibernate
+                                            ? "/hibernate on"
+                                            : "/hibernate off");
+  if (ret != EXIT_SUCCESS) throw std::runtime_error("powercfg failed");
+  return false;
+}
+
+static
+void
+skip_byte(size_t & fp, const w32util::Buffer & buf, uint8_t byte_) {
+  while (fp < buf.size) {
+    auto inb = buf.ptr[fp];
+    if (inb != byte_) break;
+    fp += 1;
+  }
+}
+
+static
+std::string
+parse_string_until_byte(size_t & fp,
+                        const w32util::Buffer & buf, uint8_t byte_) {
+  if (fp >= buf.size) throw std::runtime_error("no string!");
+
+  std::vector<char> build;
+  while (fp < buf.size) {
+    auto inb = buf.ptr[fp];
+    if (inb == byte_) break;
+    build.push_back(inb);
+    fp += 1;
+  }
+
+  return std::string(build.begin(), build.end());
+}
+
+static
+void
+expect(size_t & fp,
+       const w32util::Buffer & buf, uint8_t byte_) {
+  if (fp >= buf.size || buf.ptr[fp] != byte_) {
+    throw std::runtime_error("Failed expect");
+  }
+  fp += 1;
+}
+
+static
+opt::optional<int8_t>
+ascii_digit_value(uint8_t v) {
+  const auto ASCII_0 = 48;
+  const auto ASCII_9 = 57;
+  if (v >= ASCII_0 && v <= ASCII_9) {
+    return opt::make_optional((int8_t) (v - ASCII_0));
+  }
+  return opt::nullopt;
+}
+
+
+template <class IntegerType>
+IntegerType
+parse_ascii_integer(size_t & fp,
+                    const w32util::Buffer & buf) {
+  if (fp >= buf.size) {
+    throw std::runtime_error("eof");
+  }
+
+  if (!ascii_digit_value(buf.ptr[fp])) {
+    throw std::runtime_error("not at a number!");
+  }
+
+  IntegerType toret = 0;
+  while (fp < buf.size) {
+    auto inb = buf.ptr[fp];
+    auto digit_val = ascii_digit_value(inb);
+    if (!digit_val) break;
+
+    auto oldtoret = toret;
+    toret = toret * 10 + *digit_val;
+    if (toret < oldtoret) {
+      throw std::runtime_error("overflow occured");
+    }
+
+    fp += 1;
+  }
+
+  return toret;
+}
+
+static
+bool
+encrypted_pagefile_is_enabled() {
+  // create a temp file to store the result of
+  // calling query
+  auto temp_root_path = w32util::get_temp_path();
+  auto temp_file_path = w32util::get_temp_file_name(temp_root_path,
+                                                    "SAFETEMP");
+
+  lbx_log_debug("Storing fsutil tempfile at %s",
+                temp_file_path.c_str());
+
+  SECURITY_ATTRIBUTES saAttr;
+  lockbox::zero_object(saAttr);
+  saAttr.nLength = sizeof(saAttr);
+  saAttr.bInheritHandle = TRUE;
+
+  auto hfile =
+    w32util::check_invalid_handle(CreateFileW,
+                                  w32util::widen(temp_file_path).c_str(),
+                                  GENERIC_WRITE | GENERIC_READ,
+                                  FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
+                                  &saAttr,
+                                  OPEN_ALWAYS,
+                                  FILE_ATTRIBUTE_NORMAL |
+                                  FILE_FLAG_DELETE_ON_CLOSE,
+                                  nullptr);
+  auto _close_handle = lockbox::create_deferred(CloseHandle, hfile);
+
+  // run process
+  STARTUPINFO startup_info;
+  lockbox::zero_object(startup_info);
+  startup_info.cb = sizeof(startup_info);
+  startup_info.dwFlags = STARTF_USESTDHANDLES;
+  startup_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+  startup_info.hStdOutput = hfile;
+  startup_info.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+
+  WCHAR cmd_line[] = L"fsutil behavior query EncryptPagingFile";
+
+  PROCESS_INFORMATION pinfo;
+  w32util::check_bool(CreateProcessW,
+                      L"C:\\Windows\\system32\\fsutil.exe",
+                      cmd_line,
+                      nullptr,
+                      &saAttr,
+                      TRUE,
+                      CREATE_NO_WINDOW,
+                      nullptr,
+                      nullptr,
+                      &startup_info,
+                      &pinfo);
+  auto _close_process = lockbox::create_deferred([&] () {
+      CloseHandle(pinfo.hThread);
+      CloseHandle(pinfo.hProcess);
+    });
+
+  // wait for process to complete
+  w32util::check_call(WAIT_FAILED, WaitForSingleObject,
+                      pinfo.hProcess, INFINITE);
+
+  DWORD exit_code;
+  w32util::check_bool(GetExitCodeProcess, pinfo.hProcess, &exit_code);
+  if (exit_code != EXIT_SUCCESS) throw std::runtime_error("failed fsutil");
+
+  // read data from output, a reasonable amount is 256 bytes
+  w32util::check_call(INVALID_SET_FILE_POINTER, SetFilePointer,
+                      hfile, 0, nullptr, FILE_BEGIN);
+  auto buffer = w32util::read_file(hfile, 256);
+
+  // parse data
+  size_t fp = 0;
+  skip_byte(fp, buffer, ' ');
+  auto key_name = parse_string_until_byte(fp, buffer, ' ');
+  if (key_name != "EncryptPagingFile") {
+    throw std::runtime_error("invalid key name: " + key_name);
+  }
+
+  skip_byte(fp, buffer, ' ');
+  expect(fp, buffer, '=');
+  skip_byte(fp, buffer, ' ');
+  return parse_ascii_integer<DWORD>(fp, buffer);
+}
+
+static
+bool
+set_encrypted_pagefile(bool encrypted) {
+  auto cmdline_prefix = std::string("behavior set EncryptPagingFile ");
+  auto retcode =
+    lockbox::win::run_command_sync("C:\\Windows\\system32\\fsutil.exe",
+                                   cmdline_prefix +
+                                   (encrypted ? "1" : "0"));
+  if (retcode != EXIT_SUCCESS) {
+    throw std::runtime_error("error setting encrypted pagefile");
+  }
+  // NB: we just hardcode a required restart
+  // TODO: potentially query if the value changed, or read
+  //       the output from fsutil
+  return true;
+}
+
+static
+bool
+system_changes_are_required() {
+  return (lockbox::win::need_to_install_kernel_driver() ||
+          hibernate_is_enabled() ||
+          !encrypted_pagefile_is_enabled());
+}
+
+static
+bool
+make_required_system_changes() {
+  bool must_restart = false;
+
+  if (hibernate_is_enabled() &&
+      set_hibernate(false)) {
+    must_restart = true;
+  }
+
+  if (!encrypted_pagefile_is_enabled() &&
+      set_encrypted_pagefile(true)) {
+    must_restart = true;
+  }
+
+  if (lockbox::win::need_to_install_kernel_driver() &&
+      lockbox::win::install_kernel_driver()) {
+    must_restart = true;
+  }
+
+  return must_restart;
+}
+
+static
+bool
+make_required_system_changes_as_admin(HWND hwnd) {
   // NB: disable this shortcut for now since
   //     we need a window up during the driver install to
   //     not lose focus
   if (false && is_app_running_as_admin()) {
-    return lockbox::win::install_kernel_driver();
+    return make_required_system_changes();
   }
-  
+
   // we have to start ourselves with a special flag
   WCHAR application_path[MAX_PATH + 1];
   const auto num_chars = lockbox::numelementsf(application_path);
@@ -491,7 +723,7 @@ install_kernel_driver_as_admin(HWND hwnd) {
   shex.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
   shex.lpVerb = L"runas";
   shex.lpFile = application_path;
-  shex.lpParameters = INSTALL_KERNEL_DRIVER_CMDLINE_W;
+  shex.lpParameters = MAKE_REQUIRED_SYSTEM_CHANGES_ARG_W;
   shex.nShow = SW_SHOWNORMAL;
 
   lbx_log_debug("Executing admin child, our pid is: %u",
@@ -519,8 +751,41 @@ install_kernel_driver_as_admin(HWND hwnd) {
   switch (exit_code) {
   case ERROR_SUCCESS: return false;
   case ERROR_SUCCESS_REBOOT_REQUIRED: return true;
-  default: throw std::runtime_error("installing driver failed");
+  default: throw w32util::windows_error(exit_code);
   }
+}
+
+static
+void
+enable_and_initiate_shutdown() {
+  // first enable shutdown privilege
+  HANDLE token;
+  w32util::check_bool(OpenProcessToken, GetCurrentProcess(),
+                      TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token);
+
+  TOKEN_PRIVILEGES tkp;
+  w32util::check_bool(LookupPrivilegeValue, nullptr, SE_SHUTDOWN_NAME,
+                      &tkp.Privileges[0].Luid);
+  tkp.PrivilegeCount = 1;
+  tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+  w32util::check_bool(AdjustTokenPrivileges, token,
+                      FALSE, &tkp, 0, nullptr, nullptr);
+  if (GetLastError() != ERROR_SUCCESS) w32util::throw_windows_error();
+
+  auto _reduce_privilege = lockbox::create_deferred([&] () {
+      tkp.Privileges[0].Attributes = 0;
+      auto success = AdjustTokenPrivileges(token, FALSE, &tkp, 0,
+                                           nullptr, nullptr);
+      if (!success) {
+        lbx_log_error("Failed to disable SE_SHUTDOWN_NAME privilege");
+      }
+    });
+
+  // kick off shutdown
+  w32util::check_bool(InitiateSystemShutdownW,
+                      nullptr, nullptr,
+                      0, FALSE, TRUE);
 }
 
 #define NO_FALLTHROUGH(c) assert(false); case c
@@ -593,8 +858,8 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
                                       IMAGE_ICON, 32, 32, LR_SHARED));
 
-      bool installed_kernel_driver = false;
-      if (lockbox::win::need_to_install_kernel_driver()) {
+      bool made_system_changes = false;
+      if (system_changes_are_required()) {
 	// We need to install the kernel driver
 	// Thank user for starting program and let them know
 	// we have to make some changes before starting the program
@@ -606,16 +871,22 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	assert(choice == lockbox::win::SystemChangesChoice::OK);
 
-	auto must_restart = install_kernel_driver_as_admin(hwnd);
-        // XXX: fix this
-        if (must_restart) throw std::runtime_error("must restart!");
-	installed_kernel_driver = true;
+        auto must_restart = make_required_system_changes_as_admin(hwnd);
+
+        if (must_restart) {
+          // TODO: show a dialog first before shutting down
+          enable_and_initiate_shutdown();
+          PostMessage(hwnd, WM_CLOSE, 0, 0);
+	  return 0;
+        }
+
+	made_system_changes = true;
       }
 
       auto choice =
         lockbox::win::WelcomeDialogChoice::NOTHING;
       if (first_run) choice = lockbox::win::welcome_dialog(hwnd,
-                                                           installed_kernel_driver);
+                                                           made_system_changes);
 
       record_app_start(*wd);
 
@@ -870,7 +1141,7 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   logging_set_global_level(LOG_DEBUG);
   lbx_log_debug("Hello world! CmdLine: %s", lpCmdLine);
 
-  bool run_install_driver = false;
+  bool make_required_system_changes_ = false;
   {
     int argc;
     auto wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
@@ -878,22 +1149,26 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
     auto _free_wargv = lockbox::create_deferred(LocalFree, wargv);
 
-    run_install_driver =
+    make_required_system_changes_ =
       (argc == 2 &&
-       !wcscmp(wargv[1], INSTALL_KERNEL_DRIVER_CMDLINE_W));
+       !wcscmp(wargv[1], MAKE_REQUIRED_SYSTEM_CHANGES_ARG_W));
   }
 
-  if (run_install_driver) {
+  if (make_required_system_changes_) {
     int toret;
     try {
-      auto restart_required = lockbox::win::install_kernel_driver();
+      auto restart_required = make_required_system_changes();
       toret = restart_required
         ? ERROR_SUCCESS_REBOOT_REQUIRED
         : ERROR_SUCCESS;
     }
+    catch (const w32util::windows_error & err) {
+      lbx_log_error("Failure to make system changes: %s", err.what());
+      toret = err.code().value();
+    }
     catch (const std::exception & err) {
+      lbx_log_error("Failure to make system changes: %s", err.what());
       toret = -1;
-      lbx_log_error("Failure to install driver: %s", err.what());
     }
 
     lbx_log_debug("installing driver is finished, status was: 0x%x",

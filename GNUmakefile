@@ -236,11 +236,17 @@ $(DYN_RESOURCES_ROOT)/update_driver.exe: src/lockbox/ramdisk_win.cpp src/lockbox
 
 update_driver: $(DYN_RESOURCES_ROOT)/update_driver.exe
 
+MYPOWRPROF_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libmypowrprof.a
+$(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def
+	$(DLLTOOL) -k -d $^ -l $@
+
+mypowrprof: $(MYPOWRPROF_DEP)
+
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
  libencfs \
  libwebdav_server_fs \
- $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk_headers,)
+ $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk_headers mypowrprof,)
 
 clean-deps:
 	rm -rf $(OUT_DIR)
@@ -265,6 +271,7 @@ WINDOWS_APP_MAIN_SRCS = app_main_win.cpp app_win.rc mount_win.cpp \
  general_lockbox_dialog_win.cpp \
  system_changes_dialog_win.cpp \
  ramdisk_win.cpp \
+ windows_file.cpp \
  $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
@@ -302,7 +309,7 @@ $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
- -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi
+ -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof
 	$(if $(RELEASE),$(STRIP) -s $@.pre,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@.pre,)
 	mv $@.pre $@
