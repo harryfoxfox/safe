@@ -309,7 +309,7 @@ create_device_and_install_driver(std::string temp_dir,
     shex.lpVerb = L"open";
     shex.lpFile = binary_path_w.c_str();
     shex.lpParameters = parameters_w.c_str();
-    shex.nShow = SW_SHOWNORMAL;
+    shex.nShow = SW_HIDE;
 
     w32util::check_bool(ShellExecuteExW, &shex);
 
