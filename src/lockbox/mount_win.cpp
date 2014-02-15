@@ -222,7 +222,8 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     //     windows prefers ipv6 by default and we aren't
     //     listening on ipv6, so that will slow down connections
     ": \"http://127.0.0.1:" << listen_port << "/" <<
-    lockbox::escape_double_quotes(mount_name) << "\"";
+    lockbox::escape_double_quotes(mount_name) << "\" " <<
+    "/persistent:no";
   auto ret_shell1 =
     (INT_PTR) ShellExecuteW(NULL, L"open",
 			    L"c:\\windows\\system32\\net.exe",
