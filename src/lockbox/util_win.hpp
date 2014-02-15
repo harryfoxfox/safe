@@ -20,10 +20,13 @@
 #define __Lockbox__common_win
 
 #include <lockbox/util.hpp>
+#include <lockbox/windows_error.hpp>
+#include <lockbox/windows_string.hpp>
 
 #include <stdexcept>
 
 #include <lockbox/lean_windows.h>
+#include <shellapi.h>
 
 namespace lockbox { namespace win {
 
@@ -48,6 +51,37 @@ public:
     return (bool) get();
   }
 };
+
+inline
+DWORD
+run_command_sync(std::string binary_path,
+                   std::string parameters) {
+  auto binary_path_w = w32util::widen(binary_path);
+  auto parameters_w = w32util::widen(parameters);
+
+  SHELLEXECUTEINFOW shex;
+  lockbox::zero_object(shex);
+  shex.cbSize = sizeof(shex);
+  shex.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
+  shex.lpVerb = L"open";
+  shex.lpFile = binary_path_w.c_str();
+  shex.lpParameters = parameters_w.c_str();
+  shex.nShow = SW_HIDE;
+  
+  w32util::check_bool(ShellExecuteExW, &shex);
+
+  if (!shex.hProcess) w32util::throw_windows_error();
+  auto _close_process_handle =
+    lockbox::create_deferred(CloseHandle, shex.hProcess);
+
+  w32util::check_call(WAIT_FAILED, WaitForSingleObject,
+                      shex.hProcess, INFINITE);
+
+  DWORD exit_code;
+  w32util::check_bool(GetExitCodeProcess, shex.hProcess, &exit_code);
+
+  return exit_code;
+}
 
 }}
 
