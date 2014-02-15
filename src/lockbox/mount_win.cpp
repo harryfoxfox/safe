@@ -36,6 +36,9 @@
 
 namespace lockbox { namespace win {
 
+const char NET_BINARY_PATH[] = "c:\\windows\\system32\\net.exe";
+const wchar_t NET_BINARY_PATH_W[] = L"c:\\windows\\system32\\net.exe";
+
 bool
 MountDetails::is_still_mounted() const {
   auto drive_bitmask = GetLogicalDrives();
@@ -64,7 +67,7 @@ MountDetails::unmount() {
   os << "use " << _drive_letter <<  ": /delete";
   auto ret_shell1 =
     (INT_PTR) ShellExecuteW(NULL, L"open",
-			    L"c:\\windows\\system32\\net.exe",
+			    NET_BINARY_PATH_W,
 			    w32util::widen(os.str()).c_str(),
 			    NULL, SW_HIDE);
   if (ret_shell1 <= 32) w32util::throw_windows_error();
@@ -208,14 +211,18 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
 
   auto maybe_listen_port_ws_handle = mount_event_p->wait_for_mount_event();
   if (!maybe_listen_port_ws_handle) throw std::runtime_error("mount failed");
+  
+  auto & webdav_server_handle = maybe_listen_port_ws_handle->second;
+  auto _stop_webdav_server = lockbox::create_deferred([&] () {
+      webdav_server_handle.signal_stop();
+    });
 
   // server is now running, now we can ask the OS to mount it
   auto listen_port = maybe_listen_port_ws_handle->first;
-  auto webdav_server_handle = std::move(maybe_listen_port_ws_handle->second);
   auto drive_letter = find_free_drive_letter();
 
-  std::ostringstream os;
-  os << "use " << drive_letter <<
+  std::ostringstream parameters_builder;
+  parameters_builder << "use " << drive_letter <<
     // we wrap the url in quotes since it could have a space, etc.
     // we don't urlencode it because windows will do that for us
     // NB: use "127.0.0.1" here instead of "localhost"
@@ -224,28 +231,21 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     ": \"http://127.0.0.1:" << listen_port << "/" <<
     lockbox::escape_double_quotes(mount_name) << "\" " <<
     "/persistent:no";
-  auto ret_shell1 =
-    (INT_PTR) ShellExecuteW(NULL, L"open",
-			    L"c:\\windows\\system32\\net.exe",
-			    w32util::widen(os.str()).c_str(),
-			    NULL, SW_HIDE);
-  if (ret_shell1 <= 32) w32util::throw_windows_error();
 
-  auto toret = MountDetails(drive_letter,
-                            mount_name,
-                            std::move(thread_handle),
-                            listen_port,
-                            encrypted_container_path,
-                            std::move(webdav_server_handle),
-                            std::move(ramdisk_handle));
+  auto ret_code = run_command_sync(NET_BINARY_PATH,
+                                   parameters_builder.str());
+  if (ret_code != EXIT_SUCCESS) throw std::runtime_error("net failed");
 
-  // there is a race condition here, the user (or something else) could have
-  // unmounted the drive immediately after we mounted it,
-  // although it's extremely rare
-  // TODO: add a timeout here
-  while (!toret.is_still_mounted());
+  // Mount was successfull, don't stop webdav server thread
+  _stop_webdav_server.cancel();
 
-  return std::move(toret);
+  return MountDetails(drive_letter,
+                      mount_name,
+                      std::move(thread_handle),
+                      listen_port,
+                      encrypted_container_path,
+                      std::move(webdav_server_handle),
+                      std::move(ramdisk_handle));
 }
 
 }}
