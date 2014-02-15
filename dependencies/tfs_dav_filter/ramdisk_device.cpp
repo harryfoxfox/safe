@@ -1505,7 +1505,10 @@ read_registry_alloc_size(PDEVICE_OBJECT pdo,
     return STATUS_OBJECT_TYPE_MISMATCH;
   }
 
-  out->QuadPart = *((PULONG) value->Data);
+  ULONG reg_val;
+  memcpy(&reg_val, value->Data, sizeof(reg_val));
+
+  out->QuadPart = reg_val;
   
   return STATUS_SUCCESS;
 }
