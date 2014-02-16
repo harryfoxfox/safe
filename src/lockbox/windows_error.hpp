@@ -114,13 +114,30 @@ throw_windows_error() {
   throw windows_error(err_code);
 }
 
+template <class IsBadF, class F, class... Args>
+typename std::result_of<F(Args...)>::type
+check_call_fn(IsBadF is_bad, F f, Args && ...args) {
+  auto ret = f(std::forward<Args>(args)...);
+  if (is_bad(ret)) w32util::throw_windows_error();
+  return ret;
+}
+
 template <class F, class... Args,
           class ReturnType = typename std::result_of<F(Args...)>::type>
 ReturnType
 check_call(ReturnType bad, F && f, Args && ...args) {
-  auto ret = std::forward<F>(f)(std::forward<Args>(args)...);
-  if (ret == bad) w32util::throw_windows_error();
-  return ret;
+  auto is_equal_to = [&] (ReturnType in) { return in == bad; };
+  return check_call_fn(is_equal_to, std::forward<F>(f),
+                       std::forward<Args>(args)...);
+}
+
+template <class F, class... Args,
+          class ReturnType = typename std::result_of<F(Args...)>::type>
+ReturnType
+check_good_call(ReturnType good, F && f, Args && ...args) {
+  auto is_not_equal_to = [&] (ReturnType in) { return in != good; };
+  return check_call_fn(is_not_equal_to, std::forward<F>(f),
+                       std::forward<Args>(args)...);
 }
 
 template <class F, class... Args>
