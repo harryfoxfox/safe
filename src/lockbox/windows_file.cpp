@@ -18,6 +18,7 @@
 
 #include <lockbox/windows_file.hpp>
 
+#include <lockbox/deferred.hpp>
 #include <lockbox/windows_error.hpp>
 #include <lockbox/windows_string.hpp>
 
@@ -70,6 +71,45 @@ file_exists(std::string file_path) {
   }
 
   return true;
+}
+
+bool
+map_to_same_target(std::string a, std::string b) {
+  auto a_handle =
+    w32util::check_invalid_handle(CreateFileW,
+                                  w32util::widen(a).c_str(),
+                                  GENERIC_READ,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                  nullptr,
+                                  OPEN_EXISTING,
+                                  FILE_ATTRIBUTE_NORMAL,
+                                  nullptr);
+  auto close_a =
+    lockbox::create_deferred(CloseHandle, a_handle);
+
+  auto b_handle =
+    w32util::check_invalid_handle(CreateFileW,
+                                  w32util::widen(b).c_str(),
+                                  GENERIC_READ,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                  nullptr,
+                                  OPEN_EXISTING,
+                                  FILE_ATTRIBUTE_NORMAL,
+                                  nullptr);
+  auto close_b =
+    lockbox::create_deferred(CloseHandle, b_handle);
+
+  BY_HANDLE_FILE_INFORMATION a_info, b_info;
+
+  w32util::check_bool(GetFileInformationByHandle, a_handle,
+                      &a_info);
+
+  w32util::check_bool(GetFileInformationByHandle, b_handle,
+                      &b_info);
+
+  return ((a_info.dwVolumeSerialNumber == b_info.dwVolumeSerialNumber) &&
+          (a_info.nFileSizeHigh == b_info.nFileSizeHigh) &&
+          (a_info.nFileSizeLow == b_info.nFileSizeLow));
 }
 
 }

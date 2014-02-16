@@ -45,6 +45,9 @@ read_file(HANDLE handle, DWORD num_bytes_to_read);
 bool
 file_exists(std::string file_path);
 
+bool
+map_to_same_target(std::string a, std::string b);
+
 }
 
 #endif

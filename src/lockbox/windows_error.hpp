@@ -79,6 +79,17 @@ class windows_error_category_cls : public std::error_category {
 public:
   windows_error_category_cls() {}
 
+  std::error_condition
+  default_error_condition(int __i) const noexcept
+  {
+    // TODO: implement bool equivalent(int code, const std::error_condition &)
+    //       if we are equal to other conditions
+    switch ((DWORD) __i) {
+    case ERROR_FILE_NOT_FOUND: return std::errc::no_such_file_or_directory;
+    }
+    return std::error_category::default_error_condition(__i);
+  }
+
   virtual const char *name() const noexcept {
     return "windows_error";
   }
@@ -156,6 +167,56 @@ check_bool(F && f, Args && ...args) {
              std::forward<Args>(args)...);
 }
 
+class com_error_category_cls : public std::error_category {
+public:
+  com_error_category_cls() {}
+
+  virtual const char *name() const noexcept {
+    return "com_error";
+  }
+
+  std::error_condition
+  default_error_condition(int cond) const noexcept {
+    if (cond & 0x80070000) {
+      return windows_error_category().default_error_condition(cond & 0x0000ffff);
+    }
+
+    return std::error_category::default_error_condition(cond);
+  }
+
+  virtual std::string message(int cond) const {
+    if (cond & 0x80070000) {
+      return error_message((DWORD) (cond & 0x0000ffff));
+    }
+    else {
+      return "unknown com error!";
+    }
+  }
+};
+
+inline
+const std::error_category &
+com_error_category() noexcept {
+  static const com_error_category_cls com_error_category_instance;
+  return com_error_category_instance;
+}
+
+class com_error : public std::system_error {
+public:
+  com_error(HRESULT err_code)
+    : std::system_error(err_code, com_error_category()) {
+    static_assert(sizeof(HRESULT) <= sizeof(int),
+		  "can't store HRESULT in an int!");
+  }
+};
+
+template <class F, class... Args>
+HRESULT
+check_hresult(F && f, Args && ...args) {
+  auto hres = f(std::forward<Args>(args)...);
+  if (!SUCCEEDED(hres)) throw com_error(hres);
+  return hres;
+}
 
 }
 

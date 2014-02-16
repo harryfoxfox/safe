@@ -296,17 +296,64 @@ bubble_msg(HWND lockbox_main_window,
 }
 
 static
+std::string
+get_application_path() {
+  WCHAR application_path[MAX_PATH + 1];
+  const auto num_chars = lockbox::numelementsf(application_path);
+  auto ret = GetModuleFileName(nullptr, application_path, num_chars);
+  if (!ret ||
+      (num_chars == ret &&
+       GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+    w32util::throw_windows_error();
+  }
+  return w32util::narrow(application_path);
+}
+
+static
+std::string
+get_shortcut_path() {
+  auto startup_directory =
+    w32util::get_folder_path(CSIDL_STARTUP | CSIDL_FLAG_CREATE,
+                             SHGFP_TYPE_CURRENT);
+  return (startup_directory + "\\" +
+          PRODUCT_NAME_A + ".lnk");
+}
+
+static
 bool
 app_is_run_at_login() {
   /* return true for now */
-  return true;
+  auto shortcut_path = get_shortcut_path();
+  auto application_path = get_application_path();
+
+  try {
+    auto shortcut_target = w32util::get_shortcut_target(shortcut_path);
+    return w32util::map_to_same_target(shortcut_target, application_path);
+  }
+  catch (const std::system_error & err) {
+    if (err.code() == std::errc::no_such_file_or_directory) {
+      return false;
+    }
+    throw;
+  }
 }
 
 static
 void
 set_app_to_run_at_login(bool run_at_login) {
-  /* do nothing for now */
-  (void) run_at_login;
+  if (run_at_login) {
+    w32util::create_shortcut(get_shortcut_path(),
+                             get_application_path());
+  }
+  else {
+    try {
+      w32util::check_bool(DeleteFileW,
+                          w32util::widen(get_shortcut_path()).c_str());
+    }
+    catch (const std::system_error & err) {
+      if (err.code() != std::errc::no_such_file_or_directory) throw;
+    }
+  }
 }
 
 static
@@ -731,21 +778,14 @@ make_required_system_changes_as_admin(HWND hwnd) {
   }
 
   // we have to start ourselves with a special flag
-  WCHAR application_path[MAX_PATH + 1];
-  const auto num_chars = lockbox::numelementsf(application_path);
-  auto ret = GetModuleFileName(nullptr, application_path, num_chars);
-  if (!ret ||
-      (num_chars == ret &&
-       GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-    w32util::throw_windows_error();
-  }
+  auto application_path_w = w32util::widen(get_application_path());
 
   SHELLEXECUTEINFOW shex;
   lockbox::zero_object(shex);
   shex.cbSize = sizeof(shex);
   shex.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
   shex.lpVerb = L"runas";
-  shex.lpFile = application_path;
+  shex.lpFile = application_path_w.c_str();
   shex.lpParameters = MAKE_REQUIRED_SYSTEM_CHANGES_ARG_W;
   shex.nShow = SW_SHOWNORMAL;
 
@@ -933,6 +973,8 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
       auto first_run = is_first_run(*wd);
 
+      if (first_run) { set_app_to_run_at_login(true); }
+
       add_tray_icon(hwnd);
 
       // Set app icons (window icon and alt+tab icon)
@@ -1068,41 +1110,33 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
       if (wd->popup_menu_is_open) return 0;
 
-      try {
-        wd->control_was_pressed_on_tray_open = (bool) wParam;
-        update_tray_menu(*wd);
+      wd->control_was_pressed_on_tray_open = (bool) wParam;
+      update_tray_menu(*wd);
 
-        // NB: have to do this so the menu disappears
-        // when you click out of it
-        SetForegroundWindow(hwnd);
+      // NB: have to do this so the menu disappears
+      // when you click out of it
+      SetForegroundWindow(hwnd);
 
-        wd->popup_menu_is_open = true;
-        SetLastError(0);
-        auto selected =
-          (UINT) TrackPopupMenu(wd->tray_menu.get(),
-                                TPM_RIGHTALIGN | TPM_BOTTOMALIGN |
-                                TPM_RIGHTBUTTON |
-                                TPM_NONOTIFY | TPM_RETURNCMD,
-                                GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam),
-                                0, hwnd, NULL);
-        wd->popup_menu_is_open = false;
+      wd->popup_menu_is_open = true;
+      SetLastError(0);
+      auto selected =
+        (UINT) TrackPopupMenu(wd->tray_menu.get(),
+                              TPM_RIGHTALIGN | TPM_BOTTOMALIGN |
+                              TPM_RIGHTBUTTON |
+                              TPM_NONOTIFY | TPM_RETURNCMD,
+                              GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam),
+                              0, hwnd, NULL);
+      wd->popup_menu_is_open = false;
 
-        if (!selected && GetLastError()) throw std::runtime_error("TrackPopupMenu");
+      if (!selected && GetLastError()) throw std::runtime_error("TrackPopupMenu");
 
-        // according to MSDN, we must force a "task switch"
-        // this is so that if the user attempts to open the
-        // menu while the menu is open, it reopens instead
-        // of disappearing
-        PostMessage(hwnd, WM_NULL, 0, 0);
+      // according to MSDN, we must force a "task switch"
+      // this is so that if the user attempts to open the
+      // menu while the menu is open, it reopens instead
+      // of disappearing
+      PostMessage(hwnd, WM_NULL, 0, 0);
 
-        if (selected) dispatch_tray_menu_action(hwnd, *wd, selected);
-      }
-      catch (const std::exception & err) {
-        lbx_log_error("Error while doing: \"%s\": %s (%lu)",
-                      err.what(),
-                      w32util::last_error_message().c_str(),
-                      GetLastError());
-      }
+      if (selected) dispatch_tray_menu_action(hwnd, *wd, selected);
 
       return 0;
     }

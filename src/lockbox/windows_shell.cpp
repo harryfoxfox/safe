@@ -18,10 +18,13 @@
 
 #include <lockbox/windows_shell.hpp>
 
+#include <lockbox/deferred.hpp>
 #include <lockbox/windows_error.hpp>
 #include <lockbox/windows_string.hpp>
 
 #include <string>
+
+#include <cassert>
 
 #include <windows.h>
 #include <shlobj.h>
@@ -37,5 +40,85 @@ get_folder_path(int folder, DWORD flags) {
   return w32util::narrow(app_directory_buf);
 }
 
+template <class T>
+IPersistFile *
+get_persist_file_iface(T *obj) {
+  CLSID myIID_IPersistFile;
+  wchar_t clsid[] = L"{0000010b-0000-0000-C000-000000000046}";
+  w32util::check_hresult(CLSIDFromString, clsid, &myIID_IPersistFile);
+
+  // create shell link persister
+  IPersistFile *ppf;
+  w32util::check_hresult([&] () {
+      return obj->QueryInterface(myIID_IPersistFile, (LPVOID *) &ppf);
+    });
+
+  return ppf;
+}
+
+void
+create_shortcut(std::string path, std::string target) {
+  assert("CoInitialize has been called");
+
+  // create shell link
+  IShellLinkW *psl;
+  w32util::check_hresult(CoCreateInstance,
+                         CLSID_ShellLink, nullptr,
+                         CLSCTX_INPROC_SERVER,
+                         IID_IShellLink, (LPVOID *) &psl);
+  auto _free_psl =
+    lockbox::create_deferred([&] () { return psl->Release(); });
+
+  // set target for shell link
+  psl->SetPath(w32util::widen(target).c_str());
+
+  // get IID_IPersistFile
+  auto ppf = get_persist_file_iface(psl);
+  auto _free_ppf =
+    lockbox::create_deferred([&] () { return ppf->Release(); });
+
+  // persist shell link on disk
+  w32util::check_hresult([&] () {
+      return ppf->Save(w32util::widen(path).c_str(), TRUE);
+    });
+}
+
+std::string
+get_shortcut_target(std::string path) {
+  assert("CoInitialize has been called");
+
+  // create shell link
+  IShellLinkW *psl;
+  w32util::check_hresult(CoCreateInstance,
+                         CLSID_ShellLink, nullptr,
+                         CLSCTX_INPROC_SERVER,
+                         IID_IShellLink, (LPVOID *) &psl);
+  auto _free_psl =
+    lockbox::create_deferred([&] () { return psl->Release(); });
+
+  // get IID_IPersistFile
+  auto ppf = get_persist_file_iface(psl);
+  auto _free_ppf =
+    lockbox::create_deferred([&] () { return ppf->Release(); });
+
+  // load shortcut
+  w32util::check_hresult([&] () {
+      return ppf->Load(w32util::widen(path).c_str(), STGM_READ);
+    });
+
+  // resolve the link (since the user may have moved the exe around)
+  w32util::check_hresult([&] () {
+      return psl->Resolve(nullptr, SLR_NO_UI | SLR_UPDATE);
+    });
+
+  // get the path to the link target
+  WIN32_FIND_DATA fd;
+  WCHAR target_w[MAX_PATH];
+  w32util::check_hresult([&] () {
+      return psl->GetPath(target_w, MAX_PATH, &fd, 0);
+    });
+
+  return w32util::narrow(target_w);
+}
 
 }

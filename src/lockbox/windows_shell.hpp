@@ -28,6 +28,12 @@ namespace w32util {
 std::string
 get_folder_path(int folder, DWORD flags);
 
+void
+create_shortcut(std::string path, std::string target);
+
+std::string
+get_shortcut_target(std::string path);
+
 }
 
 #endif
