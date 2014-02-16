@@ -43,9 +43,9 @@ get_folder_path(int folder, DWORD flags) {
 template <class T>
 IPersistFile *
 get_persist_file_iface(T *obj) {
-  CLSID myIID_IPersistFile;
-  wchar_t clsid[] = L"{0000010b-0000-0000-C000-000000000046}";
-  w32util::check_hresult(CLSIDFromString, clsid, &myIID_IPersistFile);
+  const GUID myIID_IPersistFile = {0x0000010b, 0x0000, 0x0000,
+                                   {0xC0, 0x00,
+                                    0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
 
   // create shell link persister
   IPersistFile *ppf;
