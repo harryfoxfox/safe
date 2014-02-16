@@ -108,5 +108,7 @@ enum {
   ("Your PC must be rebooted before it is secure enough to use " \
    PRODUCT_NAME_A ". If you cancel you can reboot on your own later.")
 
+#define LOCKBOX_PROGRESS_SYSTEM_CHANGES_TITLE "Making System Changes"
+#define LOCKBOX_PROGRESS_SYSTEM_CHANGES_MESSAGE "Making System Changes..."
 
 #endif

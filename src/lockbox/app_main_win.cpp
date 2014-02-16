@@ -701,11 +701,14 @@ make_required_system_changes() {
 static
 bool
 make_required_system_changes_as_admin(HWND hwnd) {
-  // NB: disable this shortcut for now since
-  //     we need a window up during the driver install to
-  //     not lose focus
-  if (false && is_app_running_as_admin()) {
-    return make_required_system_changes();
+  if (is_app_running_as_admin()) {
+    auto maybe_reboot_required =
+      w32util::modal_call(hwnd,
+                          LOCKBOX_PROGRESS_SYSTEM_CHANGES_TITLE,
+                          LOCKBOX_PROGRESS_SYSTEM_CHANGES_MESSAGE,
+                          make_required_system_changes);
+    assert(maybe_reboot_required);
+    return *maybe_reboot_required;
   }
 
   // we have to start ourselves with a special flag
@@ -741,8 +744,8 @@ make_required_system_changes_as_admin(HWND hwnd) {
   // NB: we must keep a window up while performing the driver install,
   //     otherwise we'll lose focus
   w32util::modal_until_object(hwnd,
-                              "Making System Changes",
-                              "Making System Changes...",
+                              LOCKBOX_PROGRESS_SYSTEM_CHANGES_TITLE,
+                              LOCKBOX_PROGRESS_SYSTEM_CHANGES_MESSAGE,
                               shex.hProcess);
 
   DWORD exit_code;
