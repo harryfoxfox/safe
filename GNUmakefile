@@ -272,6 +272,7 @@ WINDOWS_APP_MAIN_SRCS = app_main_win.cpp app_win.rc mount_win.cpp \
  system_changes_dialog_win.cpp \
  ramdisk_win.cpp \
  windows_file.cpp \
+ windows_shell.cpp \
  $(SRCS)
 WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
 
