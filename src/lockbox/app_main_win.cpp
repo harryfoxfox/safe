@@ -1293,11 +1293,8 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   auto tray_menu_handle = CreatePopupMenu();
   if (!tray_menu_handle) w32util::throw_windows_error();
 
-  wchar_t app_directory_buf[MAX_PATH];
-  auto result = SHGetFolderPathW(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE,
-                                 NULL, SHGFP_TYPE_CURRENT, app_directory_buf);
-  if (result != S_OK) w32util::throw_windows_error();
-  auto app_directory = w32util::narrow(app_directory_buf, wcslen(app_directory_buf));
+  auto app_directory = w32util::get_folder_path(CSIDL_APPDATA | CSIDL_FLAG_CREATE,
+                                                SHGFP_TYPE_CURRENT);
   auto app_directory_path = native_fs->pathFromString(app_directory).join(PRODUCT_NAME_A);
 
   // make `app_directory_path` if it doesn't already exists
