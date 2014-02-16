@@ -108,7 +108,22 @@ enum {
   ("Your PC must be rebooted before it is secure enough to use " \
    PRODUCT_NAME_A ". If you cancel you can reboot on your own later.")
 
+#define LOCKBOX_DIALOG_SYSTEM_CHANGES_TITLE ("Welcome to " PRODUCT_NAME_A "!")
+#define LOCKBOX_DIALOG_SYSTEM_CHANGES_MESSAGE \
+  ("Before you can get started using " PRODUCT_NAME_A " " \
+   "we must make some low-level changes to your system " \
+   "to support greater privacy.")
+#define LOCKBOX_DIALOG_SYSTEM_CHANGES_OK "OK"
+#define LOCKBOX_DIALOG_SYSTEM_CHANGES_MORE_INFO "More Info"
+
 #define LOCKBOX_PROGRESS_SYSTEM_CHANGES_TITLE "Making System Changes"
 #define LOCKBOX_PROGRESS_SYSTEM_CHANGES_MESSAGE "Making System Changes..."
+
+#define LOCKBOX_DIALOG_CANCEL_SYSTEM_CHANGES_TITLE "Are You Sure?"
+#define LOCKBOX_DIALOG_CANCEL_SYSTEM_CHANGES_MESSAGE \
+  ("These changes are essential to keep your " \
+   "data safe from attackers. If you quit " \
+   "now you won't be able to use Safe. Are you " \
+   "sure you want to quit?")
 
 #endif

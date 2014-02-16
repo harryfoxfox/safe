@@ -31,6 +31,8 @@
 @property (retain) NSRunningApplication *lastActiveApp;
 @property (retain) LBXWelcomeWindowController *welcomeWindowDelegate;
 @property (retain) NSWindowController *aboutWindowController;
+@property (retain) LBXWelcomeWindowController *systemChangesWindowController;
+
 
 - (void)createNewLockbox:(id)sender;
 - (void)mountExistingLockbox:(id)sender;

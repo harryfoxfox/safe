@@ -47,11 +47,8 @@ system_changes_dialog(HWND hwnd) {
 
   auto quit = [=] () {
     auto ret = MessageBoxW(hwnd,
-                           (L"These changes are essential to keep your "
-                            L"data safe from attackers. If you quit "
-                            L"now you won't be able to use Safe. Are you "
-                            L"sure you want to quit?"),
-                           L"Are You Sure?",
+                           w32util::widen(LOCKBOX_DIALOG_CANCEL_SYSTEM_CHANGES_MESSAGE).c_str(),
+                           w32util::widen(LOCKBOX_DIALOG_CANCEL_SYSTEM_CHANGES_TITLE).c_str(),
                            MB_YESNO | MB_ICONWARNING | MB_SETFOREGROUND);
     return (ret == IDYES
             ? opt::make_optional(SystemChangesChoice::QUIT)
@@ -59,17 +56,15 @@ system_changes_dialog(HWND hwnd) {
   };
 
   std::vector<Choice<SystemChangesChoice>> choices = {
-    {"OK", SystemChangesChoice::OK},
-    {"More Info", more_info},
+    {LOCKBOX_DIALOG_SYSTEM_CHANGES_OK, SystemChangesChoice::OK},
+    {LOCKBOX_DIALOG_SYSTEM_CHANGES_MORE_INFO, more_info},
   };
 
   const auto & c = &general_lockbox_dialog<SystemChangesChoice,
                                            decltype(choices)>;
   return c(hwnd,
-           ("Welcome to " PRODUCT_NAME_A "!"),
-           ("Before you can get started using " PRODUCT_NAME_A " "
-            "we must make some low-level changes to your system "
-            "to support greater privacy."),
+           LOCKBOX_DIALOG_SYSTEM_CHANGES_TITLE,
+           LOCKBOX_DIALOG_SYSTEM_CHANGES_MESSAGE,
            std::move(choices),
            ButtonAction<SystemChangesChoice>(quit));
 }

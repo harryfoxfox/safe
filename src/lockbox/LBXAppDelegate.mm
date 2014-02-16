@@ -8,6 +8,8 @@
 
 #import <lockbox/LBXAppDelegate.h>
 
+#import <lockbox/LBXProgressSheetController.h>
+
 #import <lockbox/constants.h>
 #import <lockbox/fs.hpp>
 #import <lockbox/mount_mac.hpp>
@@ -15,6 +17,7 @@
 #import <lockbox/recent_paths_storage.hpp>
 #import <lockbox/tray_menu.hpp>
 #import <lockbox/util.hpp>
+#import <lockbox/util_mac.hpp>
 #import <lockbox/webdav_server.hpp>
 
 // 10 to model after system mac recent menus
@@ -455,6 +458,11 @@ _Pragma("clang diagnostic pop") \
 }
 
 - (BOOL)haveStartedAppBefore:(NSURL *)appSupportDir {
+    if (!appSupportDir) {
+        appSupportDir = [self applicationSupportDirectoryError:nil];
+        // TODO: don't do this
+        if (!appSupportDir) abort();
+    }
     NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:[NSString stringWithUTF8String:LOCKBOX_APP_STARTED_COOKIE_FILENAME]];
     // NB: assuming the following operation is quick
     return [NSFileManager.defaultManager fileExistsAtPath:cookieURL.path];
@@ -483,13 +491,24 @@ _Pragma("clang diagnostic pop") \
 - (void)startAppUI {
     [self _setupStatusBar];
     [self recordAppStart];
-    
-    if ([self haveUserNotifications]) {
-        [self notifyUserTitle:[NSString stringWithUTF8String:LOCKBOX_TRAY_ICON_WELCOME_TITLE]
-                      message:[NSString stringWithUTF8String:LOCKBOX_TRAY_ICON_MAC_WELCOME_MSG]
-                       action:@selector(clickStatusItem)];
+
+    if (self->path_store && !self->path_store->recently_used_paths().empty()) {
+        [self openMountDialogForPath:self->path_store->recently_used_paths()[0]];
     }
-    else [self clickStatusItem];
+    else if ([self haveStartedAppBefore:nil]) {
+        if ([self haveUserNotifications]) {
+            [self notifyUserTitle:lockbox::mac::to_ns_string(LOCKBOX_TRAY_ICON_WELCOME_TITLE)
+                          message:lockbox::mac::to_ns_string(LOCKBOX_TRAY_ICON_MAC_WELCOME_MSG)
+                           action:@selector(clickStatusItem)];
+        }
+        else [self clickStatusItem];
+    }
+    else {
+        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+        self.welcomeWindowDelegate = [LBXWelcomeWindowController.alloc
+                                      initWithDelegate:self];
+        [self.welcomeWindowDelegate showWindow:nil];
+    }
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
@@ -505,6 +524,102 @@ _Pragma("clang diagnostic pop") \
     for (const auto & md : self->mounts) {
         md.disconnect_clients();
     }
+}
+
+static
+bool
+system_changes_are_required() {
+    return false;
+}
+
+static
+bool
+make_required_system_changes() {
+    return false;
+}
+
+static
+void
+run_reboot_sequence(NSWindow *w) {
+    (void) w;
+}
+
+- (void)makeSystemChangesProgressDialog:(NSWindow *)window {
+    auto onSuccess = ^(bool reboot_required) {
+        (void) reboot_required;
+        if (reboot_required) {
+            // TODO: show reboot confirmation dialog;
+            run_reboot_sequence(window);
+            [NSApp terminate:nil];
+        }
+        else {
+            // delete the system changes dialog
+            self.systemChangesWindowController = nil;
+            // start app as usual
+            [self startAppUI];
+        }
+    };
+    
+    auto onFail = ^(const std::exception_ptr & err) {
+        (void) err;
+    };
+    
+    // perform changes
+    showBlockingSheetMessage(window,
+                             lockbox::mac::to_ns_string(LOCKBOX_PROGRESS_SYSTEM_CHANGES_TITLE),
+                             onSuccess,
+                             onFail,
+                             make_required_system_changes);
+}
+
+- (void)cancelSystemChangesResponse:(NSAlert *)alert
+                         returnCode:(NSInteger)returnCode
+                        contextInfo:(void *)contextInfo {
+    NSWindow *window = (__bridge NSWindow *) contextInfo;
+    
+    if (returnCode == NSAlertFirstButtonReturn) {
+        [alert.window orderOut:self];
+        // make system changes, chain the sheets
+        [self makeSystemChangesProgressDialog:window];
+    }
+    else if (returnCode == NSAlertSecondButtonReturn) {
+        // quit the app
+        [NSApp terminate:nil];
+    }
+    else assert(false);
+}
+
+- (bool)systemChangesResponseWithController:(LBXWelcomeWindowController *)c action:(welcome_window_action_t)action {
+    switch (action) {
+        case WELCOME_WINDOW_BUTTON_0: {
+            [self makeSystemChangesProgressDialog:c.window];
+            return false;
+        }
+        case WELCOME_WINDOW_BUTTON_1: {
+            // pop-up more info dialog
+            lockbox::mac::open_url(LOCKBOX_WINDOWS_SYSTEM_CHANGES_INFO_WEBSITE);
+            return false;
+        }
+        case WELCOME_WINDOW_NONE: {
+            // show confirmation dialog
+            NSAlert *alert = [[NSAlert alloc] init];
+            [alert setMessageText:lockbox::mac::to_ns_string(LOCKBOX_DIALOG_CANCEL_SYSTEM_CHANGES_TITLE)];
+            [alert setInformativeText:lockbox::mac::to_ns_string(LOCKBOX_DIALOG_CANCEL_SYSTEM_CHANGES_MESSAGE)];
+            [alert addButtonWithTitle:@"Make Changes"];
+            [alert addButtonWithTitle:@"Quit"];
+            [alert setAlertStyle:NSWarningAlertStyle];
+            
+            [alert beginSheetModalForWindow:c.window
+                              modalDelegate:self
+                             didEndSelector:@selector(cancelSystemChangesResponse:returnCode:contextInfo:)
+                                contextInfo:(__bridge void *)c.window];
+            
+            return false;
+        }
+    }
+    /* notreached */
+    assert(false);
+    return true;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
@@ -585,20 +700,20 @@ _Pragma("clang diagnostic pop") \
         NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
     }
 
-    if (self->path_store && !self->path_store->recently_used_paths().empty()) {
-        [self _setupStatusBar];
-        [self openMountDialogForPath:self->path_store->recently_used_paths()[0]];
+    if (system_changes_are_required()) {
+        decltype(self) __weak weakSelf = self;
+        self.systemChangesWindowController =
+        [LBXWelcomeWindowController.alloc
+         initWithBlock:^(LBXWelcomeWindowController *c, welcome_window_action_t action) {
+             return [weakSelf systemChangesResponseWithController:c action:action];
+         }
+         title:lockbox::mac::to_ns_string(LOCKBOX_DIALOG_SYSTEM_CHANGES_TITLE)
+         message:lockbox::mac::to_ns_string(LOCKBOX_DIALOG_SYSTEM_CHANGES_MESSAGE)
+         button0Title:lockbox::mac::to_ns_string(LOCKBOX_DIALOG_SYSTEM_CHANGES_OK)
+         button1Title:lockbox::mac::to_ns_string(LOCKBOX_DIALOG_SYSTEM_CHANGES_MORE_INFO)
+         ];
     }
-    else if ([self haveStartedAppBefore:appSupportDir]) {
-        [self startAppUI];
-    }
-    else {
-        [self _setupStatusBar];
-        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
-        self.welcomeWindowDelegate = [LBXWelcomeWindowController.alloc
-                                      initWithDelegate:self];
-        [self.welcomeWindowDelegate showWindow:nil];
-    }
+    else [self startAppUI];
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {

@@ -21,11 +21,21 @@
 namespace lockbox { namespace mac {
 
 void
+open_url(const char *url) {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:url]]];
+}
+    
+void
 initialize_window_for_dialog(NSWindow *window) {
     window.canHide = NO;
     window.level = NSModalPanelWindowLevel;
     [window center];
     [window makeKeyAndOrderFront:nil];
+}
+    
+NSString *
+to_ns_string(const char *a) {
+    return [NSString.alloc initWithUTF8String:a];
 }
     
 }}

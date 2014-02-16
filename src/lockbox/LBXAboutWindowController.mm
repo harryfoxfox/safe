@@ -20,6 +20,7 @@
 
 - (IBAction)getSourceCode:(id)sender {
     (void) sender;
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:LOCKBOX_SOURCE_CODE_WEBSITE]]];
+    lockbox::mac::open_url(LOCKBOX_SOURCE_CODE_WEBSITE);
 }
+
 @end

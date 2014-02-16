@@ -19,10 +19,18 @@
 #ifndef Lockbox_util_mac_hpp
 #define Lockbox_util_mac_hpp
 
+#import <Cocoa/Cocoa.h>
+
 namespace lockbox { namespace mac {
   
 void
 initialize_window_for_dialog(NSWindow *);
+
+void
+open_url(const char *url);
+    
+NSString *
+to_ns_string(const char *a);
     
 }}
 
