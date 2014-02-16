@@ -164,12 +164,88 @@ stop_relevant_drive_threads(HWND lockbox_main_window, WindowData & wd) {
 }
 
 static
+std::string
+get_links_folder_path() {
+  // We dynamically get a reference to "SHGetKnownFolderPath"
+  // this is to keep runtime compatibilty with Windows XP
+  HMODULE mod;
+  w32util::check_bool(GetModuleHandleExW,
+                      0, L"shell32.dll", &mod);
+  auto _free_mod = lockbox::create_deferred(FreeLibrary, mod);
+
+  auto func = w32util::check_null(GetProcAddress,
+                                  mod, "SHGetKnownFolderPath");
+
+  typedef HRESULT (*SHGetKnownFolderPathType)(const GUID *,
+                                              DWORD,
+                                              HANDLE,
+                                              PWSTR *);
+
+  auto SHGetKnownFolderPath = (SHGetKnownFolderPathType) func;
+
+  const GUID LINKS_GUID = {0xbfb9d5e0, 0xc6a9, 0x404c,
+                           {0xb2, 0xb2,
+                            0xae, 0x6d, 0xb6, 0xaf, 0x49, 0x68}};
+
+  const DWORD KF_FLAG_CREATE = 0x00008000;
+
+  PWSTR out;
+  w32util::check_hresult(SHGetKnownFolderPath,
+                         &LINKS_GUID, KF_FLAG_CREATE,
+                         nullptr, &out);
+  auto _free_out = lockbox::create_deferred(CoTaskMemFree, (void *) out);
+
+  return w32util::narrow(out);
+}
+
+static
+std::string
+get_mount_shortcut_path(const lockbox::win::MountDetails & mount) {
+  auto links_folder_path = get_links_folder_path();
+  auto shortcut_path =
+    (links_folder_path + "\\" + mount.get_mount_name() +
+     " (Safe Mount).lnk");
+  return shortcut_path;
+}
+
+static
+void
+add_mount_to_favorites(const lockbox::win::MountDetails & mount) {
+  auto f = get_mount_shortcut_path(mount);
+  lbx_log_debug("creating shortcut at %s", f.c_str());
+  w32util::create_shortcut(get_mount_shortcut_path(mount),
+                           std::to_string(mount.get_drive_letter()) + ":\\");
+}
+
+static
+void
+remove_mount_from_favorites(const lockbox::win::MountDetails & mount) {
+  w32util::ensure_deleted(get_mount_shortcut_path(mount));
+}
+
+static
+void
+unmount_drive(lockbox::win::MountDetails & mount) {
+  mount.unmount();
+  try {
+    remove_mount_from_favorites(mount);
+  }
+  catch (const std::exception & err) {
+    // this is fine, only works on vista anyway
+    // TODO: only ignore this error if we dont' have
+    // this functionality on this system
+    lbx_log_error("error while adding mount to favorites: %s",
+                  err.what());
+  }
+}
+
+static
 void
 unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
   auto mount_p = wd.mounts.begin() + mount_idx;
 
   // first unmount drive
-  mount_p->unmount();
+  unmount_drive(*mount_p);
 
   // now remove mount from list
   stop_drive(hwnd, wd, mount_p);
@@ -212,6 +288,14 @@ new_mount(WindowData & wd, lockbox::win::MountDetails md) {
   wd.recent_mount_paths_store.use_path(md.get_source_path());
   wd.mounts.push_back(std::move(md));
   update_tray_menu(wd);
+  try {
+    add_mount_to_favorites(wd.mounts.back());
+  }
+  catch (const std::exception & err) {
+    // this is fine, only works on vista anyway
+    lbx_log_error("error while adding mount to favorites: %s",
+                  err.what());
+  }
   try { wd.mounts.back().open_mount(); }
   catch (const std::exception & err) {
     lbx_log_error("Error opening %s: %s",
@@ -346,13 +430,7 @@ set_app_to_run_at_login(bool run_at_login) {
                              get_application_path());
   }
   else {
-    try {
-      w32util::check_bool(DeleteFileW,
-                          w32util::widen(get_shortcut_path()).c_str());
-    }
-    catch (const std::system_error & err) {
-      if (err.code() != std::errc::no_such_file_or_directory) throw;
-    }
+    w32util::ensure_deleted(get_shortcut_path());
   }
 }
 
@@ -1426,7 +1504,7 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   // kill all mounts
   for (auto & mount : wd.mounts) {
     try {
-      mount.unmount();
+      unmount_drive(mount);
     }
     catch (const std::exception & err) {
       lbx_log_error("Failed to unmount \"%s\": %s",

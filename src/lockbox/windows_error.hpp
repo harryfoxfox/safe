@@ -133,11 +133,10 @@ check_call_fn(IsBadF is_bad, F f, Args && ...args) {
   return ret;
 }
 
-template <class F, class... Args,
-          class ReturnType = typename std::result_of<F(Args...)>::type>
-ReturnType
+template <class ReturnType, class F, class... Args>
+typename std::result_of<F(Args...)>::type
 check_call(ReturnType bad, F && f, Args && ...args) {
-  auto is_equal_to = [&] (ReturnType in) { return in == bad; };
+  auto is_equal_to = [&] (typename std::result_of<F(Args...)>::type in) { return in == bad; };
   return check_call_fn(is_equal_to, std::forward<F>(f),
                        std::forward<Args>(args)...);
 }
@@ -165,6 +164,14 @@ check_bool(F && f, Args && ...args) {
   check_call(FALSE,
              std::forward<F>(f),
              std::forward<Args>(args)...);
+}
+
+template <class F, class... Args>
+typename std::result_of<F(Args...)>::type
+check_null(F && f, Args && ...args) {
+  return check_call(nullptr,
+                    std::forward<F>(f),
+                    std::forward<Args>(args)...);
 }
 
 class com_error_category_cls : public std::error_category {

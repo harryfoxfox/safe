@@ -48,6 +48,9 @@ file_exists(std::string file_path);
 bool
 map_to_same_target(std::string a, std::string b);
 
+void
+ensure_deleted(std::string path);
+
 }
 
 #endif
