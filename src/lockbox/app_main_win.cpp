@@ -296,6 +296,20 @@ bubble_msg(HWND lockbox_main_window,
 }
 
 static
+bool
+app_is_run_at_login() {
+  /* return true for now */
+  return true;
+}
+
+static
+void
+set_app_to_run_at_login(bool run_at_login) {
+  /* do nothing for now */
+  (void) run_at_login;
+}
+
+static
 void
 update_tray_menu(WindowData & wd) {
   w32util::menu_clear(wd.tray_menu.get());
@@ -303,6 +317,7 @@ update_tray_menu(WindowData & wd) {
   lockbox::populate_tray_menu(tm,
                               wd.mounts,
                               wd.recent_mount_paths_store,
+                              app_is_run_at_login(),
                               wd.control_was_pressed_on_tray_open);
   auto success = SetMenuDefaultItem(wd.tray_menu.get(), 0, TRUE);
   if (!success) w32util::throw_windows_error();
@@ -324,6 +339,10 @@ dispatch_tray_menu_action(HWND lockbox_main_window, WindowData & wd, UINT select
   }
   case TrayMenuAction::MOUNT: {
     run_mount_dialog(lockbox_main_window, wd);
+    break;
+  }
+  case TrayMenuAction::TOGGLE_RUN_AT_LOGIN: {
+    set_app_to_run_at_login(!app_is_run_at_login());
     break;
   }
   case TrayMenuAction::ABOUT_APP: {

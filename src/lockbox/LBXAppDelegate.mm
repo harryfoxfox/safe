@@ -48,6 +48,11 @@ public:
     }
     
     void
+    set_checked(bool checked) {
+        _menu_item.state = checked ? NSOnState : NSOffState;
+    }
+    
+    void
     disable() {
         _menu_item.enabled = NO;
     }
@@ -238,6 +243,10 @@ public:
             [self mountExistingLockbox:self];
             break;
         }
+        case TrayMenuAction::TOGGLE_RUN_AT_LOGIN: {
+            // no-op for now
+            break;
+        }
         case TrayMenuAction::ABOUT_APP: {
             [self _loadAboutWindow];
             break;
@@ -311,7 +320,8 @@ public:
     
     bool show_alternative_menu = self->lastModifierFlags & NSAlternateKeyMask;
     auto m = MacOSXTrayMenu(menu, self, @selector(_dispatchMenu:));
-    lockbox::populate_tray_menu(m, self->mounts, *self->path_store, show_alternative_menu);
+    auto startup_item_is_enabled = true;
+    lockbox::populate_tray_menu(m, self->mounts, *self->path_store, startup_item_is_enabled, show_alternative_menu);
 }
 
 - (void)menuNeedsUpdate:(NSMenu *)menu {

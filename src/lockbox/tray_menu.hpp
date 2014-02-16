@@ -35,6 +35,7 @@ enum class TrayMenuAction : uint16_t {
   MOUNT,
   MOUNT_RECENT,
   CLEAR_RECENTS,
+  TOGGLE_RUN_AT_LOGIN,
   ABOUT_APP,
   TEST_BUBBLE,
   TRIGGER_BREAKPOINT,
@@ -76,6 +77,7 @@ void
 populate_tray_menu(Menu & menu,
                    const MountList & mounts,
                    const RecentMountStore & recent_mounts,
+                   bool startup_enabled,
                    bool show_alternative_menu) {
   // Menu is:
   // [ (Open | Unmount) "<mount name>" ]
@@ -89,10 +91,13 @@ populate_tray_menu(Menu & menu,
   //   [ <separator> ]
   //   Clear Menu
   // <separator>
-  // Get Source Code
-  // Quit Bitvault
-  // [ <separator> ]
+  // [✓] Run Safe at Login
+  // Send Feedback
+  // About Safe
   // [ Test Bubble ]
+  // [ Trigger Breakpoint ]
+  // <separator>
+  // Quit
 
   const bool show_unmount = show_alternative_menu;
   std::string mount_verb_string;
@@ -142,6 +147,10 @@ populate_tray_menu(Menu & menu,
   }
 
   menu.append_separator();
+
+  menu.append_item("Run " PRODUCT_NAME_A " at Login",
+                   TrayMenuAction::TOGGLE_RUN_AT_LOGIN)
+    .set_checked(startup_enabled);
 
   // About Bitvault
   menu.append_item("About " PRODUCT_NAME_A, TrayMenuAction::ABOUT_APP);

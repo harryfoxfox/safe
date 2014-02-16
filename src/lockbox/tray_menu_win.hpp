@@ -53,6 +53,23 @@ private:
     , _mh(std::move(mh))
     , _item_idx(std::move(item_idx)) {}
 
+  template <class F>
+  void
+  _modify_state(F f) {
+    MENUITEMINFOW mif;
+    lockbox::zero_object(mif);
+    mif.cbSize = sizeof(mif);
+    mif.fMask = MIIM_STATE;
+
+    w32util::check_bool(GetMenuItemInfo,
+                        _get_mh(), _item_idx, TRUE, &mif);
+
+    mif.fState = f(mif.fState);
+
+    w32util::check_bool(SetMenuItemInfo,
+                        _get_mh(), _item_idx, TRUE, &mif);
+  }
+
 public:
   bool
   set_tooltip(std::string tooltip) {
@@ -70,20 +87,29 @@ public:
   }
 
   void
-  disable() {
+  set_checked(bool checked) {
+    _modify_state([&] (UINT old_state) {
+        return checked
+          ? old_state | MFS_CHECKED
+          : old_state & ~MFS_CHECKED;
+      });
+  }
+
+  void
+  set_enabled(bool enabled) {
     // NB: EnableMenuItem with MF_DISABLED doesn't seem to work on
     // Wine-1.6.1 on Mac OS X 10.9, i686-w64-mingw32-g++ (GCC) 4.9.0 20130531 (experimental)
     // use SetMenuItemInfo() instead
+    _modify_state([&] (UINT old_state) {
+        return enabled
+          ? old_state & ~MFS_DISABLED
+          : old_state | MFS_DISABLED;
+      });
+  }
 
-    MENUITEMINFOW mif;
-    lockbox::zero_object(mif);
-
-    mif.cbSize = sizeof(mif);
-    mif.fMask = MIIM_STATE;
-    mif.fState = MFS_GRAYED;
-
-    auto success = SetMenuItemInfo(_get_mh(), _item_idx, TRUE, &mif);
-    if (!success) throw w32util::windows_error();
+  void
+  disable() {
+    return set_enabled(false);
   }
 
   friend class TrayMenu;
