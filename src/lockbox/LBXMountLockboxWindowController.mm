@@ -12,6 +12,7 @@
 #import <lockbox/constants.h>
 #import <lockbox/logging.h>
 #import <lockbox/mount_lockbox_dialog_logic.hpp>
+#import <lockbox/util_mac.hpp>
 
 @implementation LBXMountLockboxWindowController
 
@@ -160,10 +161,7 @@
         [self.window makeFirstResponder:self.passwordSecureTextField];
     }
 
-    self.window.canHide = NO;
-    [self.window center];
-    [self.window makeKeyAndOrderFront:self];
-    self.window.level = NSModalPanelWindowLevel;
+    lockbox::mac::initialize_window_for_dialog(self.window);
 }
 
 @end

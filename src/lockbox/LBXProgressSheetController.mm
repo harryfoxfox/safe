@@ -6,7 +6,7 @@
 //  Copyright (c) 2013 Rian Hunter. All rights reserved.
 //
 
-#import "LBXProgressSheetController.h"
+#import <lockbox/LBXProgressSheetController.h>
 
 @interface LBXProgressSheetController ()
 

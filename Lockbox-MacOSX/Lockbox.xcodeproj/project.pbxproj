@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9602BF2E182F5F83003291A9 /* LBXAboutWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9602BF2D182F5F83003291A9 /* LBXAboutWindow.xib */; };
+		9604753518B1667300B9F5FB /* util_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9604753318B1667300B9F5FB /* util_mac.mm */; };
 		9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101761182A1499001D50E8 /* CFsToFsIO.cpp */; };
 		9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96101763182A1499001D50E8 /* fs_fsio.cpp */; };
 		9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96101766182A1499001D50E8 /* LBXAppDelegate.mm */; };
@@ -29,11 +30,11 @@
 		96358D3A182AFE4D00BE18E8 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96358D39182AFE4D00BE18E8 /* Security.framework */; };
 		963D09A717A1D89D00AEE673 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 963D09A617A1D89D00AEE673 /* Cocoa.framework */; };
 		963D09B117A1D89D00AEE673 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 963D09AF17A1D89D00AEE673 /* InfoPlist.strings */; };
-		963F170B1877AF7B00E50B2A /* LBXWelcomeWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */; };
+		963F170B1877AF7B00E50B2A /* LBXWelcomeWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.mm */; };
 		963F170C1877AF7B00E50B2A /* LBXWelcomeWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */; };
 		9644D029182F251600ED4911 /* mount_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9644D028182F251600ED4911 /* mount_mac.mm */; };
 		96597DFE1878B0F500073EC9 /* menuBarIconTemplate.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96597DFD1878B0F500073EC9 /* menuBarIconTemplate.icns */; };
-		96597E011878D9B700073EC9 /* LBXAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 96597E001878D9B700073EC9 /* LBXAboutWindowController.m */; };
+		96597E011878D9B700073EC9 /* LBXAboutWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96597E001878D9B700073EC9 /* LBXAboutWindowController.mm */; };
 		966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */; };
 		966ED38D184F2F3100463408 /* mount_lockbox_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED389184F2F3100463408 /* mount_lockbox_dialog_logic.cpp */; };
 		9682AA5718832205008A3DB7 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682AA5618832205008A3DB7 /* IOKit.framework */; };
@@ -56,7 +57,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		9602994618B165E500B34D75 /* util_mac.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = util_mac.hpp; path = ../src/lockbox/util_mac.hpp; sourceTree = "<group>"; };
 		9602BF2D182F5F83003291A9 /* LBXAboutWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXAboutWindow.xib; path = ../src/lockbox/LBXAboutWindow.xib; sourceTree = "<group>"; };
+		9604753318B1667300B9F5FB /* util_mac.mm */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = util_mac.mm; path = ../src/lockbox/util_mac.mm; sourceTree = "<group>"; };
 		96101761182A1499001D50E8 /* CFsToFsIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFsToFsIO.cpp; path = ../src/lockbox/CFsToFsIO.cpp; sourceTree = "<group>"; };
 		96101762182A1499001D50E8 /* CFsToFsIO.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = CFsToFsIO.hpp; path = ../src/lockbox/CFsToFsIO.hpp; sourceTree = "<group>"; };
 		96101763182A1499001D50E8 /* fs_fsio.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs_fsio.cpp; path = ../src/lockbox/fs_fsio.cpp; sourceTree = "<group>"; };
@@ -99,14 +102,14 @@
 		963D09B617A1D89D00AEE673 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		963D09C417A1D89D00AEE673 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
 		963F17081877AF7B00E50B2A /* LBXWelcomeWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXWelcomeWindowController.h; path = ../src/lockbox/LBXWelcomeWindowController.h; sourceTree = "<group>"; };
-		963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LBXWelcomeWindowController.m; path = ../src/lockbox/LBXWelcomeWindowController.m; sourceTree = "<group>"; };
+		963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXWelcomeWindowController.mm; path = ../src/lockbox/LBXWelcomeWindowController.mm; sourceTree = "<group>"; };
 		963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = LBXWelcomeWindowController.xib; path = ../src/lockbox/LBXWelcomeWindowController.xib; sourceTree = "<group>"; };
 		9644D028182F251600ED4911 /* mount_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mount_mac.mm; path = ../src/lockbox/mount_mac.mm; sourceTree = "<group>"; };
 		9644D02A182F3E4100ED4911 /* logging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logging.h; path = ../src/lockbox/logging.h; sourceTree = "<group>"; };
 		9653052618319A9900676ABE /* recent_paths_storage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = recent_paths_storage.hpp; path = ../src/lockbox/recent_paths_storage.hpp; sourceTree = "<group>"; };
 		96597DFD1878B0F500073EC9 /* menuBarIconTemplate.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = menuBarIconTemplate.icns; sourceTree = SOURCE_ROOT; };
 		96597DFF1878D9B700073EC9 /* LBXAboutWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LBXAboutWindowController.h; path = ../src/lockbox/LBXAboutWindowController.h; sourceTree = "<group>"; };
-		96597E001878D9B700073EC9 /* LBXAboutWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = LBXAboutWindowController.m; path = ../src/lockbox/LBXAboutWindowController.m; sourceTree = "<group>"; };
+		96597E001878D9B700073EC9 /* LBXAboutWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = LBXAboutWindowController.mm; path = ../src/lockbox/LBXAboutWindowController.mm; sourceTree = "<group>"; };
 		96597E02187CDD1E00073EC9 /* mount_common.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = mount_common.hpp; path = ../src/lockbox/mount_common.hpp; sourceTree = "<group>"; };
 		966ED386184F2F3100463408 /* create_lockbox_dialog_logic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = create_lockbox_dialog_logic.cpp; path = ../src/lockbox/create_lockbox_dialog_logic.cpp; sourceTree = "<group>"; };
 		966ED387184F2F3100463408 /* create_lockbox_dialog_logic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = create_lockbox_dialog_logic.hpp; path = ../src/lockbox/create_lockbox_dialog_logic.hpp; sourceTree = "<group>"; };
@@ -191,6 +194,8 @@
 				9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */,
 				9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */,
 				9610176C182A1499001D50E8 /* util.hpp */,
+				9602994618B165E500B34D75 /* util_mac.hpp */,
+				9604753318B1667300B9F5FB /* util_mac.mm */,
 				96230546182B2E5200913551 /* LBXCreateLockboxWindowController.h */,
 				96230547182B2E5200913551 /* LBXCreateLockboxWindowController.mm */,
 				96230548182B2E5200913551 /* LBXCreateLockboxWindowController.xib */,
@@ -198,10 +203,10 @@
 				96230551182C708400913551 /* LBXProgressSheetController.mm */,
 				96230552182C708400913551 /* LBXProgressSheetController.xib */,
 				963F17081877AF7B00E50B2A /* LBXWelcomeWindowController.h */,
-				963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.m */,
+				963F17091877AF7B00E50B2A /* LBXWelcomeWindowController.mm */,
 				963F170A1877AF7B00E50B2A /* LBXWelcomeWindowController.xib */,
 				96597DFF1878D9B700073EC9 /* LBXAboutWindowController.h */,
-				96597E001878D9B700073EC9 /* LBXAboutWindowController.m */,
+				96597E001878D9B700073EC9 /* LBXAboutWindowController.mm */,
 				9602BF2D182F5F83003291A9 /* LBXAboutWindow.xib */,
 			);
 			name = src;
@@ -422,8 +427,9 @@
 				9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */,
 				96230549182B2E5200913551 /* LBXCreateLockboxWindowController.mm in Sources */,
 				96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */,
-				963F170B1877AF7B00E50B2A /* LBXWelcomeWindowController.m in Sources */,
+				963F170B1877AF7B00E50B2A /* LBXWelcomeWindowController.mm in Sources */,
 				966ED38C184F2F3100463408 /* create_lockbox_dialog_logic.cpp in Sources */,
+				9604753518B1667300B9F5FB /* util_mac.mm in Sources */,
 				9610176E182A1499001D50E8 /* fs_fsio.cpp in Sources */,
 				9610176F182A1499001D50E8 /* LBXAppDelegate.mm in Sources */,
 				9632FB7B182F13BD003C3F2E /* LBXMountLockboxWindowController.mm in Sources */,
@@ -431,7 +437,7 @@
 				96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */,
 				96F36AC2185470B500DEE145 /* fs.cpp in Sources */,
 				96230553182C708400913551 /* LBXProgressSheetController.mm in Sources */,
-				96597E011878D9B700073EC9 /* LBXAboutWindowController.m in Sources */,
+				96597E011878D9B700073EC9 /* LBXAboutWindowController.mm in Sources */,
 				9632FB76182F1160003C3F2E /* app_main_mac.m in Sources */,
 				9644D029182F251600ED4911 /* mount_mac.mm in Sources */,
 			);

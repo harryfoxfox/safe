@@ -12,6 +12,7 @@
 #import <lockbox/constants.h>
 #import <lockbox/create_lockbox_dialog_logic.hpp>
 #import <lockbox/mount_mac.hpp>
+#import <lockbox/util_mac.hpp>
 
 #import <encfs/fs/FileUtils.h>
 
@@ -144,10 +145,7 @@ NSStringToSecureMem(NSString *str) {
     
     self.locationPathControl.URL = [NSURL fileURLWithPath:NSHomeDirectory()];
     
-    [self.window center];
-    self.window.canHide = NO;
-    [self.window makeKeyAndOrderFront:self];
-    self.window.level = NSModalPanelWindowLevel;
+    lockbox::mac::initialize_window_for_dialog(self.window);
 }
 
 @end

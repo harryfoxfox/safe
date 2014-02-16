@@ -6,7 +6,9 @@
 //  Copyright (c) 2014 Rian Hunter. All rights reserved.
 //
 
-#import "LBXWelcomeWindowController.h"
+#import <lockbox/LBXWelcomeWindowController.h>
+
+#import <lockbox/util_mac.hpp>
 
 @interface LBXWelcomeWindowController () {
     welcome_window_action_t action;
@@ -40,11 +42,7 @@
 - (void)windowDidLoad
 {
     [super windowDidLoad];
-    
-    self.window.canHide = NO;
-    [self.window center];
-    [self.window makeKeyAndOrderFront:self];
-    self.window.level = NSModalPanelWindowLevel;
+    lockbox::mac::initialize_window_for_dialog(self.window);
 }
 
 - (void)windowWillClose:(NSNotification *)notification {

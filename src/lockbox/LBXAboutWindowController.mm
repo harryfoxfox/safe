@@ -9,14 +9,13 @@
 #import <lockbox/LBXAboutWindowController.h>
 
 #import <lockbox/constants.h>
+#import <lockbox/util_mac.hpp>
 
 @implementation LBXAboutWindowController
 
 - (void)windowDidLoad {
     [super windowDidLoad];
-    self.window.canHide = NO;
-    self.window.level = NSModalPanelWindowLevel;
-    [self.window center];
+    lockbox::mac::initialize_window_for_dialog(self.window);
 }
 
 - (IBAction)getSourceCode:(id)sender {
