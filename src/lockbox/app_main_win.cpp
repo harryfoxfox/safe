@@ -121,6 +121,10 @@ update_tray_menu(WindowData & wd);
 
 static
 void
+remove_mount_from_favorites(const lockbox::win::MountDetails & mount);
+
+static
+void
 stop_drive_thread(lockbox::win::MountDetails *md) {
   md->signal_stop();
 }
@@ -130,6 +134,17 @@ std::vector<lockbox::win::MountDetails>::iterator
 stop_drive(HWND lockbox_main_window,
            WindowData & wd,
            std::vector<lockbox::win::MountDetails>::iterator it) {
+  try {
+    remove_mount_from_favorites(*it);
+  }
+  catch (const std::exception & err) {
+    // this is fine, only works on vista anyway
+    // TODO: only ignore this error if we dont' have
+    // this functionality on this system
+    lbx_log_error("error while removing mount from favorites: %s",
+                  err.what());
+  }
+
   // remove mount from list (even if thread hasn't died)
   auto md = std::move(*it);
   it = wd.mounts.erase(it);
@@ -225,27 +240,11 @@ remove_mount_from_favorites(const lockbox::win::MountDetails & mount) {
 
 static
 void
-unmount_drive(lockbox::win::MountDetails & mount) {
-  mount.unmount();
-  try {
-    remove_mount_from_favorites(mount);
-  }
-  catch (const std::exception & err) {
-    // this is fine, only works on vista anyway
-    // TODO: only ignore this error if we dont' have
-    // this functionality on this system
-    lbx_log_error("error while adding mount to favorites: %s",
-                  err.what());
-  }
-}
-
-static
-void
 unmount_and_stop_drive(HWND hwnd, WindowData & wd, size_t mount_idx) {
   auto mount_p = wd.mounts.begin() + mount_idx;
 
   // first unmount drive
-  unmount_drive(*mount_p);
+  mount_p->unmount();
 
   // now remove mount from list
   stop_drive(hwnd, wd, mount_p);
@@ -1502,14 +1501,12 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   }
 
   // kill all mounts
-  for (auto & mount : wd.mounts) {
+  while (!wd.mounts.empty()) {
     try {
-      unmount_drive(mount);
+      unmount_and_stop_drive(nullptr, wd, 0);
     }
     catch (const std::exception & err) {
-      lbx_log_error("Failed to unmount \"%s\": %s",
-                    mount.get_mount_name().c_str(),
-                    err.what());
+      lbx_log_error("Failed to unmount: %s", err.what());
     }
   }
 
