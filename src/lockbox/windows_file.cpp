@@ -56,4 +56,20 @@ read_file(HANDLE handle, DWORD num_bytes_to_read) {
   return Buffer {std::move(ptr), bytes_read};
 }
 
+bool
+file_exists(std::string file_path) {
+  auto file_attributes =
+    GetFileAttributesW(w32util::widen(file_path).c_str());
+  if (file_attributes == INVALID_FILE_ATTRIBUTES) {
+    auto last_error = GetLastError();
+    if (last_error == ERROR_FILE_NOT_FOUND ||
+        last_error == ERROR_PATH_NOT_FOUND) {
+      return false;
+    }
+    throw w32util::windows_error(last_error);
+  }
+
+  return true;
+}
+
 }

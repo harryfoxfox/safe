@@ -42,6 +42,9 @@ get_temp_file_name(std::string root, std::string prefix);
 Buffer
 read_file(HANDLE handle, DWORD num_bytes_to_read);
 
+bool
+file_exists(std::string file_path);
+
 }
 
 #endif
