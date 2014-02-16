@@ -103,4 +103,10 @@ enum {
 
 #define LOCKBOX_TRAY_ICON_SEND_FEEDBACK "Send Feedback..."
 
+#define LOCKBOX_DIALOG_REBOOT_CONFIRMATION_TITLE ("Reboot Now?")
+#define LOCKBOX_DIALOG_REBOOT_CONFIRMATION_MESSAGE \
+  ("Your PC must be rebooted before it is secure enough to use " \
+   PRODUCT_NAME_A ". If you cancel you can reboot on your own later.")
+
+
 #endif

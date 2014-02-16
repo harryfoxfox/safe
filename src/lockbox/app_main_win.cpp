@@ -35,6 +35,7 @@
 #include <lockbox/windows_file.hpp>
 #include <lockbox/windows_gui_util.hpp>
 #include <lockbox/windows_menu.hpp>
+#include <lockbox/windows_shell.hpp>
 #include <lockbox/windows_string.hpp>
 #include <lockbox/util.hpp>
 
@@ -788,6 +789,73 @@ enable_and_initiate_shutdown() {
                       0, FALSE, TRUE);
 }
 
+static
+HKEY
+get_hklm_safe_key() {
+  HKEY safe_key;
+  w32util::check_good_call(ERROR_SUCCESS, RegCreateKeyExW,
+                           HKEY_LOCAL_MACHINE,
+                           L"SOFTWARE\\Safe",
+                           0,
+                           nullptr,
+                           REG_OPTION_VOLATILE,
+                           KEY_ALL_ACCESS,
+                           nullptr,
+                           &safe_key,
+                           nullptr);
+  return safe_key;
+}
+
+static
+void
+save_reboot_pending_key() {
+  auto safe_key = get_hklm_safe_key();
+  auto _close_key = lockbox::create_deferred(RegCloseKey, safe_key);
+
+  w32util::check_good_call(ERROR_SUCCESS, RegSetValueExW, safe_key,
+                           L"RebootPending",
+                           0,
+                           REG_NONE,
+                           nullptr, 0);
+}
+
+static
+bool
+check_reboot_pending_key() {
+  auto safe_key = get_hklm_safe_key();
+  auto _close_key = lockbox::create_deferred(RegCloseKey, safe_key);
+
+  auto ret = RegQueryValueEx(safe_key,
+                             L"RebootPending", nullptr, nullptr,
+                             nullptr, nullptr);
+  switch (ret) {
+  case ERROR_SUCCESS: return true;
+  case ERROR_FILE_NOT_FOUND: return false;
+  default: w32util::throw_windows_error();
+  }
+  /* notreached */
+  assert(false);
+  return false;
+}
+
+static
+void
+run_reboot_sequence(HWND hwnd) {
+  auto ret =
+    w32util::check_call(0, MessageBoxW, hwnd,
+                        w32util::widen(LOCKBOX_DIALOG_REBOOT_CONFIRMATION_MESSAGE).c_str(),
+                        w32util::widen(LOCKBOX_DIALOG_REBOOT_CONFIRMATION_TITLE).c_str(),
+                        MB_OKCANCEL | MB_ICONWARNING | MB_SETFOREGROUND);
+
+  if (ret == IDOK) {
+    enable_and_initiate_shutdown();
+  }
+  else {
+    assert(ret == IDCANCEL);
+    save_reboot_pending_key();
+  }
+}
+
 #define NO_FALLTHROUGH(c) assert(false); case c
 
 static
@@ -858,6 +926,12 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_LBX_APP,
                                       IMAGE_ICON, 32, 32, LR_SHARED));
 
+      if (check_reboot_pending_key()) {
+        run_reboot_sequence(hwnd);
+        PostMessage(hwnd, WM_CLOSE, 0, 0);
+        return 0;
+      }
+
       bool made_system_changes = false;
       if (system_changes_are_required()) {
 	// We need to install the kernel driver
@@ -872,10 +946,8 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	assert(choice == lockbox::win::SystemChangesChoice::OK);
 
         auto must_restart = make_required_system_changes_as_admin(hwnd);
-
         if (must_restart) {
-          // TODO: show a dialog first before shutting down
-          enable_and_initiate_shutdown();
+          run_reboot_sequence(hwnd);
           PostMessage(hwnd, WM_CLOSE, 0, 0);
 	  return 0;
         }
