@@ -121,12 +121,6 @@ populate_tray_menu(Menu & menu,
 
   if (mount_tag) menu.append_separator();
 
-  // Create a New Bitvault
-  menu.append_item("Create New...", TrayMenuAction::CREATE);
-
-  // Mount an Existing Bitvault
-  menu.append_item("Mount Existing...", TrayMenuAction::MOUNT);
-
   // create "Mount Recent" submenu
   if (true) {
     auto sub_menu = menu.append_menu("Mount Recent");
@@ -145,6 +139,12 @@ populate_tray_menu(Menu & menu,
     auto item = sub_menu.append_item("Clear Menu", TrayMenuAction::CLEAR_RECENTS);
     if (!sub_tag) item.disable();
   }
+
+  // Mount an Existing Bitvault
+  menu.append_item("Mount Existing...", TrayMenuAction::MOUNT);
+
+  // Create a New Bitvault
+  menu.append_item("Create New...", TrayMenuAction::CREATE);
 
   menu.append_separator();
 
