@@ -98,7 +98,7 @@ public:
     append_menu(std::string title) {
         NSMenu *recentSubmenu = NSMenu.alloc.init;
         NSMenuItem *mi = [NSMenuItem.alloc initWithTitle:[NSString stringWithUTF8String:title.c_str()]
-                                                  action:_sel
+                                                  action:nil
                                            keyEquivalent:@""];
         mi.submenu = recentSubmenu;
         [_menu addItem:mi];
