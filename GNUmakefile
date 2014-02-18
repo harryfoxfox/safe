@@ -1,4 +1,4 @@
-# Lockbox: Encrypted File System
+# Safe: Encrypted File System
 # Copyright (C) 2013 Rian Hunter <rian@alum.mit.edu>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ ENCFS_ROOT := $(CURDIR)/../encfs
 BOTAN_ROOT := $(CURDIR)/dependencies/botan
 TINYXML_ROOT := $(CURDIR)/dependencies/tinyxml
 PROTOBUF_ROOT := $(CURDIR)/../protobuf
-SAFE_RAMDISK_ROOT := $(CURDIR)/dependencies/tfs_dav_filter
+SAFE_RAMDISK_ROOT := $(CURDIR)/dependencies/safe_ramdisk
 
 RESOURCES_ROOT = $(CURDIR)/resources
 DYN_RESOURCES_ROOT = $(CURDIR)/$(OUT_DIR)/resources
@@ -38,17 +38,19 @@ ifdef IS_WIN_CROSS
  CXX = $(IS_WIN_CROSS)-g++
  DLLTOOL = $(IS_WIN_CROSS)-dlltool
  STRIP = $(IS_WIN_CROSS)-strip
+ OBJDUMP = $(IS_WIN_CROSS)-objdump
 else
  RANLIB ?= ranlib
  WINDRES ?= windres
  DLLTOOL ?= dlltool
  STRIP ?= strip
+ OBJDUMP ?= objdump
 endif
 
 IS_WIN := $(shell uname | grep -i mingw)
 
 IS_WIN_TARGET = $(or $(IS_WIN_CROSS),$(IS_WIN))
-IS_WIN64_TARGET := $(if $(IS_WIN_TARGET),$(shell echo 'int main() {return 0;}' | ( $(CC) $(CFLAGS) -x c - -o test.exe && ( objdump -x test.exe; rm test.exe) ) | head -n 2 | grep x86-64),)
+IS_WIN64_TARGET := $(if $(IS_WIN_TARGET),$(shell echo 'int main() {return 0;}' | ( $(CC) $(CFLAGS) -x c - -o test.exe && ( $(OBJDUMP) -x test.exe; rm test.exe) ) | head -n 2 | grep x86-64),)
 IS_MAC_TARGET = $(if $(IS_WIN_TARGET),,$(shell test `uname` = Darwin && echo 1))
 
 PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),$(if $(shell which sysctl),$(shell sysctl hw.ncpu | awk '{print $$2}'),1))
@@ -76,7 +78,7 @@ CPPFLAGS ?= $(if $(RELEASE),$(CPPFLAGS_RELEASE),$(CPPFLAGS_DEBUG))
 CXXFLAGS ?= $(if $(RELEASE),$(CXXFLAGS_RELEASE),$(CXXFLAGS_DEBUG))
 CFLAGS ?= $(if $(RELEASE),$(CFLAGS_RELEASE),$(CFLAGS_DEBUG))
 
-# these are flags specific to our source files (everything in lockbox-app/src, not our deps)
+# these are flags specific to our source files (everything in safe-app/src, not our deps)
 MY_CPPFLAGS = $(CPPFLAGS) -I$(CURDIR)/src -I$(HEADERS_ROOT) \
  -I$(DEPS_INSTALL_ROOT)/include -I$(DEPS_INSTALL_ROOT)/include/encfs \
  -I$(DEPS_INSTALL_ROOT)/include/encfs/base -I$(DAVFUSE_ROOT)/src \
@@ -182,7 +184,7 @@ libtinyxml: clean
 	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
 
-NLSCHECK := $(CURDIR)/$(OUT_DIR)/deps/include/lockbox_nlscheck.h
+NLSCHECK := $(CURDIR)/$(OUT_DIR)/deps/include/safe_nlscheck.h
 $(NLSCHECK):
 	@mkdir -p /tmp/nlschk && \
          echo '#include <windows.h>' > /tmp/nlschk/chk.c && \
@@ -191,7 +193,7 @@ $(NLSCHECK):
          $(CC) -o /tmp/nlschk/chk.o -c /tmp/nlschk/chk.c 2>/dev/null >/dev/null; \
          echo > $(NLSCHECK); \
          if [ -e /tmp/nlschk/chk.o ]; then \
-         echo '#define LOCKBOX_HAVE_WINNLS' >> $(NLSCHECK); \
+         echo '#define SAFE_HAVE_WINNLS' >> $(NLSCHECK); \
          fi
 
 nlscheck: $(NLSCHECK)
@@ -205,11 +207,13 @@ normaliz: $(NORMALIZ_DEP)
 # this isn't run by default since we use the prebuild versions in "resources/"
 # but can be run manually, then upon build of Safe.exe, we'll pull in
 # the locally built version
-safe_ramdisk:
+SAFE_RAMDISK_TARGET = $(DYN_RESOURCES_ROOT)/safe_ramdisk$(if $(IS_WIN64_TARGET),_x64,).sys
+
+safe_ramdisk: clean
 	@echo "Building Safe RAMDisk"
 	@cd $(SAFE_RAMDISK_ROOT); cp $(if $(IS_WIN),$(if $(IS_WIN64_TARGET),config-win64.mk,config-win.mk),config-mac.mk) config.mk
-	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE) clean
-	@cd $(SAFE_RAMDISK_ROOT); make -j$(PROCS) RELEASE=$(RELEASE)
+	@cd $(SAFE_RAMDISK_ROOT); CXX=$(CXX) CC=$(CC) make RELEASE=$(RELEASE) clean
+	@cd $(SAFE_RAMDISK_ROOT); CXX=$(CXX) CC=$(CC) make -j$(PROCS) RELEASE=$(RELEASE)
 
 	@mkdir -p $(DYN_RESOURCES_ROOT)
 	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.inf $(DYN_RESOURCES_ROOT)
@@ -221,15 +225,15 @@ safe_ramdisk_headers:
 
 # see note for safe_ramdisk: target above,
 # basically this is not run automatically when building deps
-$(DYN_RESOURCES_ROOT)/update_driver.exe: src/lockbox/ramdisk_win.cpp src/lockbox/update_driver_main.cpp \
- src/lockbox/*.h src/lockbox/*.hpp
+$(DYN_RESOURCES_ROOT)/update_driver.exe: src/safe/win/ramdisk.cpp src/update_driver/main.cpp \
+ src/safe/*.h src/safe/*.hpp src/safe/win/*.hpp src/w32util/*.hpp clean
 	@mkdir -p $(DYN_RESOURCES_ROOT)
 
 	@echo "Build update_driver.exe"
 	$(if $(IS_WIN64_TARGET),true,echo "Not a 64-bit compiler" && false)
-	$(CXX) -o $@ -DLBX_EMBEDDED $(MY_CPPFLAGS) $(MY_CXXFLAGS) \
+	$(CXX) -o $@ -DSFX_EMBEDDED $(MY_CPPFLAGS) $(MY_CXXFLAGS) \
  $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
- src/lockbox/update_driver_main.cpp src/lockbox/ramdisk_win.cpp -lsetupapi -lnewdev -lpsapi
+ src/update_driver/main.cpp src/safe/win/ramdisk.cpp -lsetupapi -lnewdev -lpsapi
 
 	$(if $(RELEASE),$(STRIP) -s $@,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@,)
@@ -252,38 +256,53 @@ clean-deps:
 	rm -rf $(OUT_DIR)
 
 clean:
-	rm -f src/lockbox/*.o
+	rm -f src/safe/*.o
+	rm -f src/w32util/*.o
 	rm -f out/resources/*
 
 SRCS = fs_fsio.cpp CFsToFsIO.cpp webdav_server.cpp fs.cpp \
 	SecureMemPasswordReader.cpp UnicodeWrapperFsIO.cpp \
-	$(if $(IS_WIN_TARGET),unicode_fs_win.cpp,) \
-	$(if $(IS_MAC_TARGET),unicode_fs_mac.mm,)
+	$(if $(IS_WIN_TARGET),win/unicode_fs.cpp,) \
+	$(if $(IS_MAC_TARGET),win/unicode_fs.mm,)
 
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
-TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${TEST_ENCFS_MAIN_SRCS})
+TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/safe/%.o,${TEST_ENCFS_MAIN_SRCS})
 
-WINDOWS_APP_MAIN_SRCS = app_main_win.cpp app_win.rc mount_win.cpp \
- windows_gui_util.cpp about_dialog_win.cpp \
- create_lockbox_dialog_win.cpp create_lockbox_dialog_logic.cpp \
- mount_lockbox_dialog_win.cpp mount_lockbox_dialog_logic.cpp \
- windows_menu.cpp welcome_dialog_win.cpp \
- general_lockbox_dialog_win.cpp \
- system_changes_dialog_win.cpp \
- ramdisk_win.cpp \
- windows_file.cpp \
- windows_shell.cpp \
+W32UTIL_SRCS = \
+ gui_util.cpp \
+ menu.cpp \
+ file.cpp \
+ shell.cpp
+
+APP_SRCS = \
+ create_safe_dialog_logic.cpp \
+ mount_safe_dialog_logic.cpp \
  $(SRCS)
-WINDOWS_APP_MAIN_OBJS = $(patsubst %,src/lockbox/%.o,${WINDOWS_APP_MAIN_SRCS})
+
+WIN_APP_SRCS = \
+ app.rc \
+ mount.cpp \
+ about_dialog.cpp \
+ app_main.cpp \
+ create_safe_dialog.cpp \
+ mount_safe_dialog.cpp \
+ welcome_dialog.cpp \
+ general_safe_dialog.cpp \
+ system_changes_dialog.cpp \
+ ramdisk.cpp \
+ guids.cpp \
+
+WINDOWS_APP_MAIN_OBJS = \
+ $(patsubst %,src/safe/%.o,${APP_SRCS}) \
+ $(patsubst %,src/safe/win/%.o,${WIN_APP_SRCS}) \
+ $(patsubst %,src/w32util/%.o,${W32UTIL_SRCS})
 
 # dependencies
 
-src/lockbox/*.o: GNUmakefile src/lockbox/*.hpp src/lockbox/*.h
+src/safe/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp
+src/w32util/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp
 
-src/lockbox/*.rc.o: $(RESOURCES_ROOT)/* $(DYN_RESOURCES_ROOT)/*
-
-src/lockbox/windows_app.rc.o: src/lockbox/windows_app.rc \
-	src/lockbox/windows_app.manifest
+src/safe/win/*.rc.o: $(RESOURCES_ROOT)/* $(DYN_RESOURCES_ROOT)/*
 
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) GNUmakefile

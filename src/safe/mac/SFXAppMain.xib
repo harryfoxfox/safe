@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="12E55" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment defaultVersion="1070" identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="NSApplication"/>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application">
+            <connections>
+                <outlet property="delegate" destination="EVm-KR-vlL" id="pBr-cs-684"/>
+            </connections>
+        </customObject>
+        <customObject id="373" customClass="NSFontManager"/>
+        <customObject id="EVm-KR-vlL" customClass="SFXAppDelegate"/>
+        <menu title="AMainMenu" systemMenu="main" id="msQ-By-CF7">
+            <items>
+                <menuItem title="File" id="WLW-P6-QIB">
+                    <menu key="submenu" title="File" id="dXT-Vl-J34">
+                        <items>
+                            <menuItem title="Close" keyEquivalent="w" id="UGd-Cx-8FW">
+                                <connections>
+                                    <action selector="performClose:" target="-1" id="dvB-6g-7IQ"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Edit" id="Ho0-5u-FQC">
+                    <menu key="submenu" title="Edit" id="QvR-TB-mIu">
+                        <items>
+                            <menuItem title="Undo" keyEquivalent="z" id="XA1-eK-wkN">
+                                <connections>
+                                    <action selector="undo:" target="-1" id="h21-ue-mW4"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Redo" keyEquivalent="Z" id="B7f-A4-rOa">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                <connections>
+                                    <action selector="redo:" target="-1" id="hsw-yM-bWM"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="win-UR-MZe">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
+                            <menuItem title="Cut" keyEquivalent="x" id="8Jw-QU-v2D">
+                                <connections>
+                                    <action selector="cut:" target="-1" id="BSE-f0-ZAU"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Copy" keyEquivalent="c" id="Jl4-7y-FTj">
+                                <connections>
+                                    <action selector="copy:" target="-1" id="vmk-yU-ZuC"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Paste" keyEquivalent="v" id="ft0-iK-PTh">
+                                <connections>
+                                    <action selector="paste:" target="-1" id="yTH-Ji-u8Z"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Paste and Match Style" keyEquivalent="V" id="s7l-3z-gl8">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="pasteFont:" target="-1" id="FNv-GQ-5ib"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Select All" keyEquivalent="a" id="Cnr-Mx-3Ch">
+                                <connections>
+                                    <action selector="selectAll:" target="-1" id="czE-Sp-Jyr"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+            </items>
+        </menu>
+    </objects>
+</document>

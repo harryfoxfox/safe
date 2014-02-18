@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="13B42" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment defaultVersion="1070" identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="SFXWelcomeWindowController">
+            <connections>
+                <outlet property="button0" destination="fOG-nc-aAX" id="z2v-yr-Lvg"/>
+                <outlet property="button1" destination="WlY-lZ-MIt" id="ZuX-do-6km"/>
+                <outlet property="messageTextField" destination="Wpx-js-fWh" id="85S-us-1Vc"/>
+                <outlet property="window" destination="1" id="zgD-qV-5av"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application"/>
+        <window title="Welcome to Safe!" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" wantsToBeColor="NO" animationBehavior="default" id="1">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="196" y="240" width="507" height="168"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
+            <view key="contentView" id="2">
+                <rect key="frame" x="0.0" y="0.0" width="507" height="168"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                <subviews>
+                    <imageView translatesAutoresizingMaskIntoConstraints="NO" id="0pb-gU-5wJ">
+                        <rect key="frame" x="20" y="20" width="128" height="128"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="128" id="H5b-cb-7jG"/>
+                            <constraint firstAttribute="width" constant="128" id="HJG-1d-xXX"/>
+                        </constraints>
+                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyUpOrDown" image="output" id="VSr-sQ-R5G"/>
+                    </imageView>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Wpx-js-fWh">
+                        <rect key="frame" x="166" y="97" width="323" height="51"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Safe is now running. You can use it by clicking the Safe menu bar icon. Get started by clicking one of the actions below:" id="Uel-0R-ROh">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="fOG-nc-aAX">
+                        <rect key="frame" x="338" y="13" width="155" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="Create New Safe..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qAL-Ae-KjT">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="createNewSafe:" target="-2" id="ALt-XR-z86"/>
+                        </connections>
+                    </button>
+                    <button horizontalHuggingPriority="1000" verticalHuggingPriority="750" horizontalCompressionResistancePriority="1000" placeholderIntrinsicWidth="164" placeholderIntrinsicHeight="21" translatesAutoresizingMaskIntoConstraints="NO" id="WlY-lZ-MIt">
+                        <rect key="frame" x="162" y="13" width="176" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="Mount Existing Safe..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3sP-nu-dnf">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="mountExistingSafe:" target="-2" id="tTg-bT-yb5"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="bottom" secondItem="fOG-nc-aAX" secondAttribute="bottom" constant="20" id="9yI-pG-W3z"/>
+                    <constraint firstItem="fOG-nc-aAX" firstAttribute="leading" secondItem="WlY-lZ-MIt" secondAttribute="trailing" constant="12" id="Un7-OC-bDG"/>
+                    <constraint firstItem="fOG-nc-aAX" firstAttribute="leading" secondItem="WlY-lZ-MIt" secondAttribute="trailing" constant="12" id="V87-Du-Nsh"/>
+                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="0pb-gU-5wJ" secondAttribute="bottom" constant="20" id="WkR-wB-0oY"/>
+                    <constraint firstItem="Wpx-js-fWh" firstAttribute="leading" secondItem="0pb-gU-5wJ" secondAttribute="trailing" constant="20" id="YMu-38-fvT"/>
+                    <constraint firstItem="Wpx-js-fWh" firstAttribute="top" secondItem="2" secondAttribute="top" constant="20" id="aza-mH-t0Y"/>
+                    <constraint firstAttribute="trailing" secondItem="Wpx-js-fWh" secondAttribute="trailing" constant="20" id="bco-ya-Ne2"/>
+                    <constraint firstItem="0pb-gU-5wJ" firstAttribute="top" secondItem="2" secondAttribute="top" constant="20" id="drt-zw-3en"/>
+                    <constraint firstAttribute="bottom" secondItem="WlY-lZ-MIt" secondAttribute="bottom" constant="20" id="i4d-Yl-dCf"/>
+                    <constraint firstAttribute="trailing" secondItem="fOG-nc-aAX" secondAttribute="trailing" constant="20" symbolic="YES" id="j6O-si-U2Z"/>
+                    <constraint firstItem="0pb-gU-5wJ" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="yC7-8d-fn8"/>
+                </constraints>
+            </view>
+            <connections>
+                <outlet property="delegate" destination="-2" id="4"/>
+            </connections>
+        </window>
+    </objects>
+    <resources>
+        <image name="output" width="512" height="512"/>
+    </resources>
+</document>

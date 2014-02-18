@@ -1,1 +1,0 @@
-DDKINCLUDE ?= /mingw/include/ddk
