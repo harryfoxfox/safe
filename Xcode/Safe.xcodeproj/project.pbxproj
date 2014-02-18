@@ -168,63 +168,10 @@
 		9610175F182A1407001D50E8 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				9604753C18B2E13000B9F5FB /* deferred.hpp */,
-				9604753618B190D800B9F5FB /* parse.hpp */,
-				9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */,
-				96A3459A188139B7005AE884 /* mount_webdav_interpose.c */,
-				96597E02187CDD1E00073EC9 /* mount_common.hpp */,
-				96A7AEAB185473030003AEE5 /* constants.h */,
-				96F36ABE185470B500DEE145 /* fs.cpp */,
-				96F36ABF185470B500DEE145 /* fs.hpp */,
-				96F36AC0185470B500DEE145 /* webdav_server.cpp */,
-				96F36AC1185470B500DEE145 /* webdav_server.hpp */,
-				96974443185422000042FA6C /* tray_menu.hpp */,
-				966ED386184F2F3100463408 /* create_safe_dialog_logic.cpp */,
-				966ED387184F2F3100463408 /* create_safe_dialog_logic.hpp */,
-				966ED389184F2F3100463408 /* mount_safe_dialog_logic.cpp */,
-				966ED38A184F2F3100463408 /* mount_safe_dialog_logic.hpp */,
-				966ED38B184F2F3100463408 /* product_name.h */,
-				96185B2F18361C1900A2A67F /* unicode_fs.hpp */,
-				96185B3018361C1900A2A67F /* unicode_fs.mm */,
-				96185B3118361C1900A2A67F /* unicode_fs.hpp */,
-				96185B3218361C1900A2A67F /* UnicodeWrapperFsIO.cpp */,
-				96185B3318361C1900A2A67F /* UnicodeWrapperFsIO.hpp */,
-				9653052618319A9900676ABE /* recent_paths_storage.hpp */,
-				9644D02A182F3E4100ED4911 /* logging.h */,
-				9632FB78182F13BD003C3F2E /* SFXMountSafeWindowController.h */,
-				9632FB79182F13BD003C3F2E /* SFXMountSafeWindowController.mm */,
-				9632FB7A182F13BD003C3F2E /* SFXMountSafeWindowController.xib */,
-				9632FB73182F1160003C3F2E /* main.m */,
-				9632FB75182F1160003C3F2E /* mount.hpp */,
-				9644D028182F251600ED4911 /* mount.mm */,
-				9632FB71182F107F003C3F2E /* SFXAppMain.xib */,
-				96101761182A1499001D50E8 /* CFsToFsIO.cpp */,
-				96101762182A1499001D50E8 /* CFsToFsIO.hpp */,
-				96101763182A1499001D50E8 /* fs_fsio.cpp */,
-				96101764182A1499001D50E8 /* fs_fsio.h */,
-				96101765182A1499001D50E8 /* SFXAppDelegate.h */,
-				96101766182A1499001D50E8 /* SFXAppDelegate.mm */,
-				9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */,
-				9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */,
-				9610176C182A1499001D50E8 /* util.hpp */,
-				9602994618B165E500B34D75 /* util.hpp */,
-				9604753318B1667300B9F5FB /* util.mm */,
-				96230546182B2E5200913551 /* SFXCreateSafeWindowController.h */,
-				96230547182B2E5200913551 /* SFXCreateSafeWindowController.mm */,
-				96230548182B2E5200913551 /* SFXCreateSafeWindowController.xib */,
-				96230550182C708400913551 /* SFXProgressSheetController.h */,
-				96230551182C708400913551 /* SFXProgressSheetController.mm */,
-				96230552182C708400913551 /* SFXProgressSheetController.xib */,
-				963F17081877AF7B00E50B2A /* SFXWelcomeWindowController.h */,
-				963F17091877AF7B00E50B2A /* SFXWelcomeWindowController.mm */,
-				963F170A1877AF7B00E50B2A /* SFXWelcomeWindowController.xib */,
-				96597DFF1878D9B700073EC9 /* SFXAboutWindowController.h */,
-				96597E001878D9B700073EC9 /* SFXAboutWindowController.mm */,
-				9602BF2D182F5F83003291A9 /* SFXAboutWindow.xib */,
-				9604753918B2DF2600B9F5FB /* system_changes.cpp */,
-				9604753A18B2DF2600B9F5FB /* system_changes.hpp */,
-				96042A5B18B34F7F00D6CD58 /* keychain.mm */,
-				96042A5C18B34F7F00D6CD58 /* keychain.hpp */,
+				96C18F9F18B420F800D7DD37 /* ui */,
+				96C18F9E18B420A300D7DD37 /* ui-mac */,
+				96C18F9D18B4209800D7DD37 /* core */,
+				96C18F9C18B4203800D7DD37 /* core-mac */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -284,6 +231,91 @@
 			);
 			name = "Supporting Files";
 			path = Safe;
+			sourceTree = "<group>";
+		};
+		96C18F9C18B4203800D7DD37 /* core-mac */ = {
+			isa = PBXGroup;
+			children = (
+				96185B2F18361C1900A2A67F /* unicode_fs.hpp */,
+				96185B3018361C1900A2A67F /* unicode_fs.mm */,
+				9602994618B165E500B34D75 /* util.hpp */,
+				9632FB75182F1160003C3F2E /* mount.hpp */,
+				9644D028182F251600ED4911 /* mount.mm */,
+				9604753318B1667300B9F5FB /* util.mm */,
+				9632FB73182F1160003C3F2E /* main.m */,
+				96101765182A1499001D50E8 /* SFXAppDelegate.h */,
+				96101766182A1499001D50E8 /* SFXAppDelegate.mm */,
+				9604753918B2DF2600B9F5FB /* system_changes.cpp */,
+				9604753A18B2DF2600B9F5FB /* system_changes.hpp */,
+				96042A5B18B34F7F00D6CD58 /* keychain.mm */,
+				96042A5C18B34F7F00D6CD58 /* keychain.hpp */,
+			);
+			name = "core-mac";
+			sourceTree = "<group>";
+		};
+		96C18F9D18B4209800D7DD37 /* core */ = {
+			isa = PBXGroup;
+			children = (
+				966ED38B184F2F3100463408 /* product_name.h */,
+				9604753C18B2E13000B9F5FB /* deferred.hpp */,
+				9604753618B190D800B9F5FB /* parse.hpp */,
+				9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */,
+				96A3459A188139B7005AE884 /* mount_webdav_interpose.c */,
+				96597E02187CDD1E00073EC9 /* mount_common.hpp */,
+				96A7AEAB185473030003AEE5 /* constants.h */,
+				96F36ABE185470B500DEE145 /* fs.cpp */,
+				96F36ABF185470B500DEE145 /* fs.hpp */,
+				96F36AC0185470B500DEE145 /* webdav_server.cpp */,
+				96F36AC1185470B500DEE145 /* webdav_server.hpp */,
+				96185B3118361C1900A2A67F /* unicode_fs.hpp */,
+				96185B3218361C1900A2A67F /* UnicodeWrapperFsIO.cpp */,
+				96185B3318361C1900A2A67F /* UnicodeWrapperFsIO.hpp */,
+				9653052618319A9900676ABE /* recent_paths_storage.hpp */,
+				9644D02A182F3E4100ED4911 /* logging.h */,
+				96101761182A1499001D50E8 /* CFsToFsIO.cpp */,
+				96101762182A1499001D50E8 /* CFsToFsIO.hpp */,
+				96101763182A1499001D50E8 /* fs_fsio.cpp */,
+				96101764182A1499001D50E8 /* fs_fsio.h */,
+				9610176A182A1499001D50E8 /* SecureMemPasswordReader.cpp */,
+				9610176B182A1499001D50E8 /* SecureMemPasswordReader.hpp */,
+				9610176C182A1499001D50E8 /* util.hpp */,
+			);
+			name = core;
+			sourceTree = "<group>";
+		};
+		96C18F9E18B420A300D7DD37 /* ui-mac */ = {
+			isa = PBXGroup;
+			children = (
+				96230546182B2E5200913551 /* SFXCreateSafeWindowController.h */,
+				96230547182B2E5200913551 /* SFXCreateSafeWindowController.mm */,
+				96230548182B2E5200913551 /* SFXCreateSafeWindowController.xib */,
+				96230550182C708400913551 /* SFXProgressSheetController.h */,
+				96230551182C708400913551 /* SFXProgressSheetController.mm */,
+				96230552182C708400913551 /* SFXProgressSheetController.xib */,
+				963F17081877AF7B00E50B2A /* SFXWelcomeWindowController.h */,
+				963F17091877AF7B00E50B2A /* SFXWelcomeWindowController.mm */,
+				963F170A1877AF7B00E50B2A /* SFXWelcomeWindowController.xib */,
+				96597DFF1878D9B700073EC9 /* SFXAboutWindowController.h */,
+				96597E001878D9B700073EC9 /* SFXAboutWindowController.mm */,
+				9602BF2D182F5F83003291A9 /* SFXAboutWindow.xib */,
+				9632FB78182F13BD003C3F2E /* SFXMountSafeWindowController.h */,
+				9632FB79182F13BD003C3F2E /* SFXMountSafeWindowController.mm */,
+				9632FB7A182F13BD003C3F2E /* SFXMountSafeWindowController.xib */,
+				9632FB71182F107F003C3F2E /* SFXAppMain.xib */,
+			);
+			name = "ui-mac";
+			sourceTree = "<group>";
+		};
+		96C18F9F18B420F800D7DD37 /* ui */ = {
+			isa = PBXGroup;
+			children = (
+				96974443185422000042FA6C /* tray_menu.hpp */,
+				966ED386184F2F3100463408 /* create_safe_dialog_logic.cpp */,
+				966ED387184F2F3100463408 /* create_safe_dialog_logic.hpp */,
+				966ED389184F2F3100463408 /* mount_safe_dialog_logic.cpp */,
+				966ED38A184F2F3100463408 /* mount_safe_dialog_logic.hpp */,
+			);
+			name = ui;
 			sourceTree = "<group>";
 		};
 		96E9AE29182B012E00DDBF4E /* static libs */ = {
