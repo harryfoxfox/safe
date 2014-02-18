@@ -181,6 +181,7 @@
 			children = (
 				96E9AE29182B012E00DDBF4E /* static libs */,
 				9610175F182A1407001D50E8 /* src */,
+				96C18FA018B421DF00D7DD37 /* mount_webdav_interpose_src */,
 				963D09AD17A1D89D00AEE673 /* Supporting Files */,
 				963D09A517A1D89D00AEE673 /* Frameworks */,
 				963D09A417A1D89D00AEE673 /* Products */,
@@ -259,8 +260,6 @@
 				966ED38B184F2F3100463408 /* product_name.h */,
 				9604753C18B2E13000B9F5FB /* deferred.hpp */,
 				9604753618B190D800B9F5FB /* parse.hpp */,
-				9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */,
-				96A3459A188139B7005AE884 /* mount_webdav_interpose.c */,
 				96597E02187CDD1E00073EC9 /* mount_common.hpp */,
 				96A7AEAB185473030003AEE5 /* constants.h */,
 				96F36ABE185470B500DEE145 /* fs.cpp */,
@@ -316,6 +315,15 @@
 				966ED38A184F2F3100463408 /* mount_safe_dialog_logic.hpp */,
 			);
 			name = ui;
+			sourceTree = "<group>";
+		};
+		96C18FA018B421DF00D7DD37 /* mount_webdav_interpose_src */ = {
+			isa = PBXGroup;
+			children = (
+				9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */,
+				96A3459A188139B7005AE884 /* mount_webdav_interpose.c */,
+			);
+			name = mount_webdav_interpose_src;
 			sourceTree = "<group>";
 		};
 		96E9AE29182B012E00DDBF4E /* static libs */ = {
