@@ -257,6 +257,7 @@ clean-deps:
 
 clean:
 	rm -f src/safe/*.o
+	rm -f src/safe/win/*.o
 	rm -f src/w32util/*.o
 	rm -f out/resources/*
 
@@ -299,7 +300,8 @@ WINDOWS_APP_MAIN_OBJS = \
 
 # dependencies
 
-src/safe/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp
+src/safe/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp src/safe/win/*.hpp
+src/safe/win/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp src/safe/win/*.hpp
 src/w32util/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp
 
 src/safe/win/*.rc.o: $(RESOURCES_ROOT)/* $(DYN_RESOURCES_ROOT)/*
