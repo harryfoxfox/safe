@@ -82,6 +82,12 @@
             try {
                 std::rethrow_exception(eptr);
             }
+            catch (const encfs::BadPassword &) {
+                inputErrorAlert(self.window,
+                                safe::mac::to_ns_string(SAFE_DIALOG_PASS_INCORRECT_TITLE),
+                                safe::mac::to_ns_string(SAFE_DIALOG_PASS_INCORRECT_MESSAGE));
+                alerted = true;
+            }
             catch (const encfs::ConfigurationFileDoesNotExist & /*err*/) {
                 inputErrorAlert(self.window,
                                 [NSString stringWithUTF8String:SAFE_DIALOG_NO_CONFIG_EXISTS_TITLE],
@@ -101,57 +107,39 @@
     };
     
     auto onMountSuccess = ^(safe::mac::MountDetails md) {
+        // password was correct, save to keychain if requested
+        if (self.rememberPasswordCheckbox.state == NSOnState) {
+            try {
+                safe::mac::save_password_for_location(self.locationPathControl.URL, self.passwordSecureTextField.stringValue);
+            }
+            catch (const std::exception & err) {
+                // error while saving password, oh well
+                // TODO: consider warning the user so they make sure to remember their password
+                //       the old-fashioned way
+                lbx_log_debug("couldn't save password to keychain: %s", err.what());
+            }
+        }
+        
         self->maybeMount = std::move(md);
         [self.window performClose:self];
     };
     
-    auto onVerifySuccess = ^(opt::optional<encfs::EncfsConfig> maybeConfig) {
-        if (maybeConfig) {
-            // password was correct, save to keychain if requested
-            if (self.rememberPasswordCheckbox.state == NSOnState) {
-                try {
-                    safe::mac::save_password_for_location(self.locationPathControl.URL, self.passwordSecureTextField.stringValue);
-                }
-                catch (const std::exception & err) {
-                    // error while saving password, oh well
-                    // TODO: consider warning the user so they make sure to remember their password
-                    //       the old-fashioned way
-                    lbx_log_debug("couldn't save password to keychain: %s", err.what());
-                }
-            }
-            
-            self->maybeMount = [self.delegate takeMount:encrypted_container_path];
-            if (self->maybeMount) {
-                [self.window performClose:self];
-                return;
-            }
-            
-            // success pass values to app
-            showBlockingSheetMessage(self.window,
-                                     [NSString stringWithUTF8String:SAFE_PROGRESS_MOUNTING_EXISTING_TITLE],
-                                     onMountSuccess,
-                                     onFail,
-                                     safe::mac::mount_new_encfs_drive,
-                                     self->fs,
-                                     encrypted_container_path, *maybeConfig, password);
-        }
-        else {
-            inputErrorAlert(self.window,
-                            [NSString stringWithUTF8String:SAFE_DIALOG_PASS_INCORRECT_TITLE],
-                            [NSString stringWithUTF8String:SAFE_DIALOG_PASS_INCORRECT_MESSAGE]);
-        }
-    };
-    
     auto onReadCfgSuccess = ^(encfs::EncfsConfig cfg) {
         showBlockingSheetMessage(self.window,
-                                 [NSString stringWithUTF8String:SAFE_PROGRESS_VERIFYING_PASS_TITLE],
-                                 onVerifySuccess,
+                                 [NSString stringWithUTF8String:SAFE_PROGRESS_MOUNTING_EXISTING_TITLE],
+                                 onMountSuccess,
                                  onFail,
                                  ^{
-                                     auto pass_is_correct = encfs::verify_password(cfg, password);
-                                     return (pass_is_correct
-                                             ? opt::make_optional(cfg)
-                                             : opt::nullopt);
+                                     if ([self.delegate hasMount:encrypted_container_path]) {
+                                         auto pass_is_correct = encfs::verify_password(cfg, password);
+                                         if (!pass_is_correct) throw encfs::BadPassword();
+                                         return std::move(*[self.delegate takeMount:encrypted_container_path]);
+                                     }
+                                     else {
+                                         return safe::mac::mount_new_encfs_drive(self->fs,
+                                                                                 encrypted_container_path,
+                                                                                 cfg, password);
+                                     }
                                  });
     };
     

@@ -44,6 +44,7 @@ enum {
 struct MountExistingSafeDialogCtx {
   std::shared_ptr<encfs::FsIO> fs;
   safe::win::TakeMountFn take_mount;
+  safe::win::HaveMountFn have_mount;
   opt::optional<encfs::Path> initial_path;
 };
 
@@ -108,57 +109,63 @@ mount_existing_safe_dialog_proc(HWND hwnd, UINT Message,
           EndDialog(hwnd, (INT_PTR) 0);
           break;
         }
+
+        auto cfg = std::move(*maybe_cfg);
+
+        opt::optional<safe::win::MountDetails> maybe_mount_details;
+        if (ctx->have_mount(encrypted_container_path)) {
+          auto maybe_pass_is_correct =
+            w32util::modal_call(hwnd,
+                                SAFE_PROGRESS_VERIFYING_PASS_TITLE,
+                                SAFE_PROGRESS_VERIFYING_PASS_MESSAGE,
+                                encfs::verify_password, cfg, password_buf);
+          if (!maybe_pass_is_correct) {
+            EndDialog(hwnd, (INT_PTR) 0);
+            break;
+          }
+
+          auto pass_is_correct = *maybe_pass_is_correct;
+          if (!pass_is_correct) throw encfs::BadPassword();
+
+          // check if path is already mounted and return that instead
+          maybe_mount_details = ctx->take_mount(encrypted_container_path);
+          assert(maybe_mount_details);
+        }
+        else {
+          maybe_mount_details = w32util::modal_call(hwnd,
+                                                    SAFE_PROGRESS_MOUNTING_EXISTING_TITLE,
+                                                    SAFE_PROGRESS_MOUNTING_EXISTING_MESSAGE,
+                                                    safe::win::mount_new_encfs_drive,
+                                                    ctx->fs, encrypted_container_path, cfg, password_buf);
+        }
+
+        // modal_call returns nullopt if we got a quit signal
+        if (!maybe_mount_details) {
+          EndDialog(hwnd, (INT_PTR) 0);
+          break;
+        }
+
+        w32util::clear_text_field(password_hwnd,
+                                  strlen((char *) password_buf.data()));
+
+        EndDialog(hwnd, send_mount_details(std::move(maybe_mount_details)));
       }
       catch (const encfs::ConfigurationFileDoesNotExist &) {
         w32util::quick_alert(hwnd,
                              SAFE_DIALOG_NO_CONFIG_EXISTS_TITLE,
                              SAFE_DIALOG_NO_CONFIG_EXISTS_MESSAGE);
-        break;
       }
-
-      auto cfg = std::move(*maybe_cfg);
-
-      auto maybe_pass_is_correct =
-        w32util::modal_call(hwnd,
-                            SAFE_PROGRESS_VERIFYING_PASS_TITLE,
-                            SAFE_PROGRESS_VERIFYING_PASS_MESSAGE,
-                            encfs::verify_password, cfg, password_buf);
-      if (!maybe_pass_is_correct) {
-        EndDialog(hwnd, (INT_PTR) 0);
-        break;
-      }
-
-      auto pass_is_correct = *maybe_pass_is_correct;
-      if (!pass_is_correct) {
+      catch (const encfs::BadPassword &) {
         w32util::quick_alert(hwnd,
                              SAFE_DIALOG_PASS_INCORRECT_TITLE,
                              SAFE_DIALOG_PASS_INCORRECT_MESSAGE);
-        break;
+      }
+      catch (const std::exception &) {
+        w32util::quick_alert(hwnd,
+                             SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE,
+                             SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE);
       }
 
-      // check if path is already mounted and return that instead
-      auto maybe_mount_details =
-        ctx->take_mount(encrypted_container_path);
-
-      // if mount doesn't exist then mount new encfs drive
-      if (!maybe_mount_details) {
-        maybe_mount_details =
-          w32util::modal_call(hwnd,
-                              SAFE_PROGRESS_MOUNTING_EXISTING_TITLE,
-                              SAFE_PROGRESS_MOUNTING_EXISTING_MESSAGE,
-                              safe::win::mount_new_encfs_drive,
-                              ctx->fs, encrypted_container_path, cfg, password_buf);
-        if (!maybe_mount_details) {
-          // modal_call returns nullopt if we got a quit signal
-          EndDialog(hwnd, (INT_PTR) 0);
-          break;
-        }
-      }
-
-      w32util::clear_text_field(password_hwnd,
-                                strlen((char *) password_buf.data()));
-
-      EndDialog(hwnd, send_mount_details(std::move(maybe_mount_details)));
       break;
     }
     case IDCANCEL: {
@@ -179,8 +186,9 @@ mount_existing_safe_dialog_proc(HWND hwnd, UINT Message,
 
 opt::optional<safe::win::MountDetails>
 mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
-                              safe::win::TakeMountFn take_mount,
-                              opt::optional<encfs::Path> initial_path) {
+                           safe::win::TakeMountFn take_mount,
+                           safe::win::HaveMountFn have_mount,
+                           opt::optional<encfs::Path> initial_path) {
   using namespace w32util;
 
   typedef unsigned unit_t;
@@ -297,7 +305,7 @@ mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
                    );
 
   MountExistingSafeDialogCtx ctx = {
-    std::move(fsio), std::move(take_mount), std::move(initial_path),
+    std::move(fsio), std::move(take_mount), std::move(have_mount), std::move(initial_path),
   };
   auto ret_ptr =
     DialogBoxIndirectParam(GetModuleHandle(NULL),

@@ -112,31 +112,41 @@ class MountEvent {
   mutable CRITICAL_SECTION _cs;
   ManagedHandle _event;
   bool _msg_sent;
-  bool _error;
+  enum {
+    EVENT_TYPE_SUCCESS,
+    EVENT_TYPE_FAIL,
+    EVENT_TYPE_EXCEPTION,
+  } _event_type;
   port_t _listen_port;
   opt::optional<WebdavServerHandle> _ws;
+  std::exception_ptr _eptr;
 
+  template <class F>
   void
-  _set_mount_status(port_t listen_port, opt::optional<WebdavServerHandle> ws, bool error) {
+  _receive_event(F f) {
     EnterCriticalSection(&_cs);
     auto _deferred_unlock = safe::create_deferred(LeaveCriticalSection, &_cs);
 
     if (_msg_sent) throw std::runtime_error("Message already sent!");
+    f();
+    _msg_sent = true;
 
     auto success_set = SetEvent(_event.get());
     if (!success_set) throw std::runtime_error("failed to set event!");
+  }
 
-    _error = error;
-    _listen_port = listen_port;
-    _ws = std::move(ws);
-    _msg_sent = true;
+  void
+  _set_mount_status(port_t listen_port, opt::optional<WebdavServerHandle> ws, bool error) {
+    _receive_event([&] {
+        _event_type = error ? EVENT_TYPE_FAIL : EVENT_TYPE_SUCCESS;
+        _listen_port = listen_port;
+        _ws = std::move(ws);
+      });
   }
 
 public:
   MountEvent()
-    : _msg_sent(false)
-    , _error(false)
-    , _ws(opt::nullopt) {
+    : _msg_sent(false) {
     auto event = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (!event) w32util::throw_windows_error();
     _event.reset(event);
@@ -154,6 +164,14 @@ public:
   }
 
   void
+  set_mount_exception(std::exception_ptr eptr) {
+    _receive_event([&] {
+        _event_type = EVENT_TYPE_EXCEPTION;
+        _eptr = std::move(eptr);
+      });
+  }
+
+  void
   set_thread_done() {
   }
 
@@ -165,9 +183,19 @@ public:
     EnterCriticalSection(&_cs);
     auto _deferred_unlock = safe::create_deferred(LeaveCriticalSection, &_cs);
     assert(_msg_sent);
-    return (_error
-            ? opt::nullopt
-            : opt::make_optional(std::make_pair(std::move(_listen_port), std::move(*_ws))));
+
+    switch (_event_type) {
+    case EVENT_TYPE_SUCCESS:
+      return opt::make_optional(std::make_pair(std::move(_listen_port), std::move(*_ws)));
+    case EVENT_TYPE_FAIL:
+      return opt::nullopt;
+    case EVENT_TYPE_EXCEPTION:
+      std::rethrow_exception(_eptr);
+    default:
+      /* notreached */
+      assert(false);
+      return opt::nullopt;
+    }
   }
 };
 
@@ -211,7 +239,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
 
   auto maybe_listen_port_ws_handle = mount_event_p->wait_for_mount_event();
   if (!maybe_listen_port_ws_handle) throw std::runtime_error("mount failed");
-  
+
   auto & webdav_server_handle = maybe_listen_port_ws_handle->second;
   auto _stop_webdav_server = safe::create_deferred([&] () {
       webdav_server_handle.signal_stop();

@@ -44,10 +44,33 @@ class MountEvent {
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     bool msg_sent;
-    bool error;
+    enum {
+        EVENT_TYPE_SUCCESS,
+        EVENT_TYPE_FAIL,
+        EVENT_TYPE_EXCEPTION,
+    } event_type;
     port_t listen_port;
     opt::optional<WebdavServerHandle> ws;
+    std::exception_ptr eptr;
     
+    decltype(safe::create_deferred(pthread_mutex_unlock, (pthread_mutex_t *)nullptr))
+    _get_mutex_guard() {
+        auto ret_lock = pthread_mutex_lock(&mutex);
+        if (ret_lock) throw std::runtime_error("pthread_mutex_lock");
+        
+        return safe::create_deferred(pthread_mutex_unlock, &mutex);
+    }
+    
+    template <class F>
+    void
+    _receive_event(F f) {
+        auto mutex_guard = _get_mutex_guard();
+        if (msg_sent) throw std::runtime_error("Message already sent!");
+        f();
+        msg_sent = true;
+        pthread_cond_signal(&cond);
+    }
+
 public:
     MountEvent()
     : mutex(PTHREAD_MUTEX_INITIALIZER)
@@ -56,53 +79,53 @@ public:
     
     void
     set_mount_success(port_t listen_port_, WebdavServerHandle ws_) {
-        auto ret_lock = pthread_mutex_lock(&mutex);
-        if (ret_lock) throw std::runtime_error("pthread_mutex_lock");
-        
-        auto _deferred_unlock = safe::create_deferred(pthread_mutex_unlock, &mutex);
-        
-        if (msg_sent) throw std::runtime_error("Message already sent!");
-        
-        error = false;
-        listen_port = listen_port_;
-        ws = std::move(ws_);
-        msg_sent = true;
-        pthread_cond_signal(&cond);
+        _receive_event([&] () {
+            event_type = EVENT_TYPE_SUCCESS;
+            listen_port = listen_port_;
+            ws = std::move(ws_);
+        });
     }
     
     void
     set_mount_fail() {
-        auto ret_lock = pthread_mutex_lock(&mutex);
-        if (ret_lock) throw std::runtime_error("pthread_mutex_lock");
-        
-        auto _deferred_unlock = safe::create_deferred(pthread_mutex_unlock, &mutex);
-        
-        if (msg_sent) throw std::runtime_error("Message already sent!");
-        
-        error = true;
-        msg_sent = true;
-        pthread_cond_signal(&cond);
+        _receive_event([&] {
+            event_type = EVENT_TYPE_FAIL;
+        });
     }
-    
+
+    void
+    set_mount_exception(std::exception_ptr eptr_) {
+        _receive_event([&] {
+            event_type = EVENT_TYPE_EXCEPTION;
+            eptr = std::move(eptr_);
+        });
+    }
+
     void
     set_thread_done() {
     }
     
     opt::optional<std::pair<port_t, WebdavServerHandle>>
     wait_for_mount_event() {
-        auto ret_lock = pthread_mutex_lock(&mutex);
-        if (ret_lock) throw std::runtime_error("pthread_mutex_lock");
-        
-        auto _deferred_unlock = safe::create_deferred(pthread_mutex_unlock, &mutex);
+        auto mutex_guard = _get_mutex_guard();
         
         while (!msg_sent) {
             auto ret = pthread_cond_wait(&cond, &mutex);
             if (ret) throw std::runtime_error("pthread_cond_wait");
         }
         
-        return (error
-                ? opt::nullopt
-                : opt::make_optional(std::make_pair(std::move(listen_port), std::move(*ws))));
+        switch (event_type) {
+            case EVENT_TYPE_SUCCESS:
+                return opt::make_optional(std::make_pair(std::move(listen_port), std::move(*ws)));
+            case EVENT_TYPE_FAIL:
+                return opt::nullopt;
+            case EVENT_TYPE_EXCEPTION:
+                std::rethrow_exception(eptr);
+            default:
+                /* notreached */
+                assert(false);
+                return opt::nullopt;
+        }
     }
 };
 

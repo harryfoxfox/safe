@@ -276,6 +276,14 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
 
 @implementation SFXAppDelegate
 
+- (bool)hasMount:(const encfs::Path &)p {
+    auto it = std::find_if(self->mounts.begin(), self->mounts.end(),
+                           [&] (const safe::mac::MountDetails & md) {
+                               return md.get_source_path() == p;
+                           });
+    return (it != self->mounts.end());
+}
+
 - (opt::optional<safe::mac::MountDetails>)takeMount:(const encfs::Path &)p {
     auto it = std::find_if(self->mounts.begin(), self->mounts.end(),
                            [&] (const safe::mac::MountDetails & md) {

@@ -18,6 +18,8 @@
                    mount:(opt::optional<safe::mac::MountDetails>)a;
 
 - (opt::optional<safe::mac::MountDetails>)takeMount:(const encfs::Path &)p;
+- (bool)hasMount:(const encfs::Path &)p;
+
 
 @end
 

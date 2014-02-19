@@ -31,11 +31,13 @@
 namespace safe { namespace win {
 
 typedef std::function<opt::optional<safe::win::MountDetails>(const encfs::Path &)> TakeMountFn;
+typedef std::function<bool(const encfs::Path &)> HaveMountFn;
 
 opt::optional<safe::win::MountDetails>
 mount_existing_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio,
-                              TakeMountFn take_mount,
-                              opt::optional<encfs::Path> path);
+                           TakeMountFn take_mount,
+                           HaveMountFn have_mount,
+                           opt::optional<encfs::Path> path);
 
 }}
 

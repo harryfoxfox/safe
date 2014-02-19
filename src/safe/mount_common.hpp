@@ -31,6 +31,8 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <exception>
+
 namespace safe {
 
 template <typename MountEvent>
@@ -51,38 +53,50 @@ struct ServerThreadParams {
 template <typename MountEvent>
 void
 mount_thread_fn(std::unique_ptr<ServerThreadParams<MountEvent>> params) {
-  std::srand(std::time(nullptr));
-
-  auto enc_fs =
-    safe::create_enc_fs(std::move(params->native_fs),
-                           params->encrypted_directory_path,
-                           std::move(params->encfs_config),
-                           std::move(params->password));
-
-  // we only listen on localhost
-  auto ip_addr = LOCALHOST_IP;
-  auto listen_port =
-    find_random_free_listen_port(ip_addr, PRIVATE_PORT_START, PRIVATE_PORT_END);
-
   bool sent_signal = false;
 
-  auto our_callback = [&] (WebdavServerHandle webhandle) {
-    params->mount_event_p->set_mount_success(listen_port, std::move(webhandle));
-    sent_signal = true;
-  };
+  try {
+    std::srand(std::time(nullptr));
 
-  safe::run_webdav_server(std::move(enc_fs),
-                             std::move(params->encrypted_directory_path),
-                             ip_addr,
-                             listen_port,
-                             std::move(params->mount_name),
-                             our_callback);
+    auto enc_fs =
+    safe::create_enc_fs(std::move(params->native_fs),
+                        params->encrypted_directory_path,
+                        std::move(params->encfs_config),
+                        std::move(params->password));
 
-  if (!sent_signal) params->mount_event_p->set_mount_fail();
+    // we only listen on localhost
+    auto ip_addr = LOCALHOST_IP;
+    auto listen_port =
+    find_random_free_listen_port(ip_addr, PRIVATE_PORT_START, PRIVATE_PORT_END);
 
-  params->mount_event_p->set_thread_done();
+    auto our_callback = [&] (WebdavServerHandle webhandle) {
+      params->mount_event_p->set_mount_success(listen_port, std::move(webhandle));
+      sent_signal = true;
+    };
 
-  // server is done, possible unmount
+    safe::run_webdav_server(std::move(enc_fs),
+                            std::move(params->encrypted_directory_path),
+                            ip_addr,
+                            listen_port,
+                            std::move(params->mount_name),
+                            our_callback);
+
+    if (!sent_signal) params->mount_event_p->set_mount_fail();
+
+    params->mount_event_p->set_thread_done();
+  }
+  catch (...) {
+    if (sent_signal) {
+      // we've already mounted, this is an unexpected exception
+      // just rethrow
+      throw;
+    }
+    else {
+      params->mount_event_p->set_mount_exception(std::current_exception());
+    }
+  }
+
+    // server is done, possible unmount
 }
 
 }

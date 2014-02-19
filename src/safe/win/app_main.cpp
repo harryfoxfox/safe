@@ -334,9 +334,19 @@ run_mount_dialog(HWND safe_main_window, WindowData & wd,
     return std::move(md);
   };
 
+  safe::win::HaveMountFn have_mount = [&] (const encfs::Path & encrypted_container_path) {
+    auto it = std::find_if(wd.mounts.begin(), wd.mounts.end(),
+                           [&] (const safe::win::MountDetails & md) {
+                             return md.get_source_path() == encrypted_container_path;
+                           });
+    return (it != wd.mounts.end());
+  };
+
   auto ret = safe::win::mount_existing_safe_dialog(safe_main_window,
-                                                         wd.native_fs,
-                                                         take_mount, p);
+                                                   wd.native_fs,
+                                                   take_mount,
+                                                   have_mount,
+                                                   p);
   if (ret) new_mount(wd, std::move(*ret));
   return (bool) ret;
 }
