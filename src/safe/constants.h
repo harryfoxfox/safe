@@ -22,7 +22,7 @@
 #include <safe/product_name.h>
 
 #define SAFE_APP_STARTED_COOKIE_FILENAME "AppStarted"
-#define SAFE_RECENTLY_USED_PATHS_V1_FILE_NAME "RecentlyUsedPathsV1.db"
+#define SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME "RecentPaths.db"
 
 enum {
   SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS=10,

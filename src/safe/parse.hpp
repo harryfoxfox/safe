@@ -30,43 +30,51 @@
 
 namespace safe {
 
-inline
+template<class TokenStream, class Token>
 void
-skip_byte(size_t & fp, uint8_t *buf, size_t buf_size, uint8_t byte_) {
-  while (fp < buf_size) {
-    auto inb = buf[fp];
-    if (inb != byte_) break;
-    fp += 1;
+skip_token(TokenStream & stream, Token token) {
+  while (true) {
+    auto inb = stream.peek();
+    if (!inb || *inb != token) break;
+    stream.skip();
   }
 }
 
-inline
+template<class Token, class TokenStream>
+std::vector<typename std::decay<decltype(*std::declval<TokenStream>().peek())>::type>
+read_token_vector(TokenStream & stream, opt::optional<Token> term,
+                  opt::optional<size_t> max_amt, bool drop_term = false) {
+  std::vector<typename std::decay<decltype(*std::declval<TokenStream>().peek())>::type> toret;
+
+  for (size_t i = 0; !max_amt || i < *max_amt; ++i) {
+    auto mB = stream.peek();
+    if (!mB || (term && *mB == *term)) {
+      if (drop_term) stream.skip();
+      break;
+    }
+    toret.push_back(*mB);
+    stream.skip();
+  }
+  
+  return toret;
+}
+
+template<class TokenStream>
 std::string
-parse_string_until_byte(size_t & fp,
-                        uint8_t *buf, size_t buf_size,
-                        uint8_t byte_) {
-  if (fp >= buf_size) throw std::runtime_error("no string!");
-
-  std::vector<char> build;
-  while (fp < buf_size) {
-    auto inb = buf[fp];
-    if (inb == byte_) break;
-    build.push_back(inb);
-    fp += 1;
-  }
-
-  return std::string(build.begin(), build.end());
+read_string(TokenStream & stream, opt::optional<std::string::value_type> term,
+            opt::optional<size_t> max_amt, bool drop_term = false) {
+  auto v = read_token_vector(stream, term, max_amt, drop_term);
+  return std::string(v.begin(), v.end());
 }
 
-inline
+template<class TokenStream, class Token>
 void
-expect(size_t & fp,
-       uint8_t *buf, size_t buf_size,
-       uint8_t byte_) {
-  if (fp >= buf_size || buf[fp] != byte_) {
+expect(TokenStream & stream, Token expected) {
+  auto maybe_token = stream.peek();
+  if (!maybe_token || *maybe_token != expected) {
     throw std::runtime_error("Failed expect");
   }
-  fp += 1;
+  stream.skip();
 }
 
 inline
@@ -80,23 +88,20 @@ ascii_digit_value(uint8_t v) {
   return opt::nullopt;
 }
 
-
-template <class IntegerType>
+template <class IntegerType, class TokenStream>
 IntegerType
-parse_ascii_integer(size_t & fp,
-                    uint8_t *buf, size_t buf_size) {
-  if (fp >= buf_size) {
-    throw std::runtime_error("eof");
-  }
+parse_ascii_integer(TokenStream & stream) {
+  if (!stream.peek()) throw std::runtime_error("eof");
 
-  if (!ascii_digit_value(buf[fp])) {
+  if (!ascii_digit_value(*stream.peek())) {
     throw std::runtime_error("not at a number!");
   }
 
   IntegerType toret = 0;
-  while (fp < buf_size) {
-    auto inb = buf[fp];
-    auto digit_val = ascii_digit_value(inb);
+  while (true) {
+    auto inb = stream.peek();
+    if (!inb) break;
+    auto digit_val = ascii_digit_value(*inb);
     if (!digit_val) break;
 
     auto oldtoret = toret;
@@ -105,43 +110,58 @@ parse_ascii_integer(size_t & fp,
       throw std::runtime_error("overflow occured");
     }
 
-    fp += 1;
+    stream.skip();
   }
 
   return toret;
 }
 
-// TODO: would be nice to generalize this to use c++ streams
 class BufferParser {
-  size_t _pos;
-  uint8_t *_ptr;
-  size_t _size;
+  class BufferStream {
+    uint8_t *_ptr;
+    uint8_t *_end_ptr;
+
+  public:
+    BufferStream(uint8_t *ptr, size_t size)
+    : _ptr(ptr)
+    , _end_ptr(ptr + size) {}
+
+    opt::optional<uint8_t>
+    peek() {
+      return (_ptr == _end_ptr) ? opt::nullopt : opt::make_optional(*_ptr);
+    }
+
+    void
+    skip() {
+      if (_ptr != _end_ptr) _ptr += 1;
+    }
+  };
+
+  BufferStream _stream;
 
 public:
   BufferParser(uint8_t *ptr, size_t size)
-    : _pos(0)
-    , _ptr(ptr)
-    , _size(size) {}
+  : _stream(ptr, size) {}
 
   void
   skip_byte(uint8_t byte_) {
-    return safe::skip_byte(_pos, _ptr, _size, byte_);
+    return safe::skip_token(_stream, byte_);
   }
 
   std::string
   parse_string_until_byte(uint8_t byte_) {
-    return safe::parse_string_until_byte(_pos, _ptr, _size, byte_);
+    return safe::read_string(_stream, (char) byte_, opt::nullopt);
   }
 
   void
   expect(uint8_t byte_)  {
-    return safe::expect(_pos, _ptr, _size, byte_);
+    return safe::expect(_stream, byte_);
   }
 
   template <class IntegerType>
   IntegerType
   parse_ascii_integer() {
-    return safe::parse_ascii_integer<IntegerType>(_pos, _ptr, _size);
+    return safe::parse_ascii_integer<IntegerType>(_stream);
   }
 };
 

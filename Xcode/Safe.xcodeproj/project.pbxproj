@@ -44,6 +44,7 @@
 		9682AA59188373BF008A3DB7 /* mount_webdav_interpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */; };
 		96A3459B188139B7005AE884 /* mount_webdav_interpose.c in Sources */ = {isa = PBXBuildFile; fileRef = 96A3459A188139B7005AE884 /* mount_webdav_interpose.c */; };
 		96A3459C1881C3AF005AE884 /* libmount_webdav_interpose.dylib in Resources */ = {isa = PBXBuildFile; fileRef = 96A34596188139A3005AE884 /* libmount_webdav_interpose.dylib */; };
+		96D2DC6218B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
 		96F36AC2185470B500DEE145 /* fs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36ABE185470B500DEE145 /* fs.cpp */; };
 		96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36AC0185470B500DEE145 /* webdav_server.cpp */; };
@@ -132,6 +133,8 @@
 		96A34596188139A3005AE884 /* libmount_webdav_interpose.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmount_webdav_interpose.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		96A3459A188139B7005AE884 /* mount_webdav_interpose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mount_webdav_interpose.c; path = ../src/mount_webdav_interpose/mount_webdav_interpose.c; sourceTree = "<group>"; };
 		96A7AEAB185473030003AEE5 /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../src/safe/constants.h; sourceTree = "<group>"; };
+		96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RecentlyUsedNSURLStoreV1.mm; path = ../src/safe/mac/RecentlyUsedNSURLStoreV1.mm; sourceTree = "<group>"; };
+		96D2DC6118B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RecentlyUsedNSURLStoreV1.hpp; path = ../src/safe/mac/RecentlyUsedNSURLStoreV1.hpp; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
 		96F36ABE185470B500DEE145 /* fs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs.cpp; path = ../src/safe/fs.cpp; sourceTree = "<group>"; };
 		96F36ABF185470B500DEE145 /* fs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = fs.hpp; path = ../src/safe/fs.hpp; sourceTree = "<group>"; };
@@ -240,9 +243,9 @@
 				96185B2F18361C1900A2A67F /* unicode_fs.hpp */,
 				96185B3018361C1900A2A67F /* unicode_fs.mm */,
 				9602994618B165E500B34D75 /* util.hpp */,
+				9604753318B1667300B9F5FB /* util.mm */,
 				9632FB75182F1160003C3F2E /* mount.hpp */,
 				9644D028182F251600ED4911 /* mount.mm */,
-				9604753318B1667300B9F5FB /* util.mm */,
 				9632FB73182F1160003C3F2E /* main.m */,
 				96101765182A1499001D50E8 /* SFXAppDelegate.h */,
 				96101766182A1499001D50E8 /* SFXAppDelegate.mm */,
@@ -250,6 +253,8 @@
 				9604753A18B2DF2600B9F5FB /* system_changes.hpp */,
 				96042A5B18B34F7F00D6CD58 /* keychain.mm */,
 				96042A5C18B34F7F00D6CD58 /* keychain.hpp */,
+				96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */,
+				96D2DC6118B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.hpp */,
 			);
 			name = "core-mac";
 			sourceTree = "<group>";
@@ -499,6 +504,7 @@
 				96230553182C708400913551 /* SFXProgressSheetController.mm in Sources */,
 				96597E011878D9B700073EC9 /* SFXAboutWindowController.mm in Sources */,
 				9632FB76182F1160003C3F2E /* main.m in Sources */,
+				96D2DC6218B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm in Sources */,
 				9644D029182F251600ED4911 /* mount.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

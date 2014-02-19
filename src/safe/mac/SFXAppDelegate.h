@@ -12,7 +12,7 @@
 #import <safe/mac/SFXWelcomeWindowController.h>
 
 #import <safe/mac/mount.hpp>
-#import <safe/recent_paths_storage.hpp>
+#import <safe/mac/RecentlyUsedNSURLStoreV1.hpp>
 
 #import <Cocoa/Cocoa.h>
 
@@ -22,7 +22,7 @@
     std::vector<safe::mac::MountDetails> mounts;
     std::shared_ptr<encfs::FsIO> native_fs;
     NSInteger lastModifierFlags;
-    std::unique_ptr<safe::RecentlyUsedPathStoreV1> path_store;
+    std::unique_ptr<safe::mac::RecentlyUsedNSURLStoreV1> path_store;
 }
 
 @property (retain) NSStatusItem *statusItem;

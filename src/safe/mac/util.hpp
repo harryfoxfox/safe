@@ -36,6 +36,9 @@ to_ns_string(const char *a);
     
 NSString *
 to_ns_string(const std::string &);
+
+std::string
+from_ns_string(const NSString *);
    
 void
 reboot_machine();

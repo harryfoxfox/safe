@@ -97,6 +97,10 @@ reboot_machine() {
     if (status != noErr) throw std::runtime_error("Sending system process reboot message failed!");
 }
 
+std::string
+from_ns_string(const NSString *a) {
+  return std::string(a.UTF8String);
+}
     
 }}
 

@@ -15,7 +15,7 @@
 #import <safe/logging.h>
 #import <safe/mac/mount.hpp>
 #import <safe/parse.hpp>
-#import <safe/recent_paths_storage.hpp>
+#import <safe/mac/RecentlyUsedNSURLStoreV1.hpp>
 #import <safe/mac/system_changes.hpp>
 #import <safe/tray_menu.hpp>
 #import <safe/util.hpp>
@@ -500,9 +500,22 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
             break;
         }
         case TrayMenuAction::MOUNT_RECENT: {
-            const auto & recent_paths = self->path_store->recently_used_paths();
-            if (menu_action_arg >= recent_paths.size()) return;
-            [self openMountDialogForPath:recent_paths[menu_action_arg]];
+            if (menu_action_arg >= self->path_store->size()) return;
+            auto resolver = (*self->path_store)[menu_action_arg];
+            opt::optional<encfs::Path> path_resolution;
+            try {
+                path_resolution = std::get<0>(resolver.resolve_path());
+            }
+            catch (const std::exception & err) {
+                // failure to resolve bookmark
+                // TODO: show error, for now do nothing
+                lbx_log_debug("Couldn't resolve bookmark: %s", err.what());
+            }
+
+            if (path_resolution) {
+                [self openMountDialogForPath:path_resolution];
+            }
+
             break;
         }
         case TrayMenuAction::SEND_FEEDBACK: {
@@ -694,8 +707,18 @@ _Pragma("clang diagnostic pop") \
     [self _setupStatusBar];
     [self recordAppStart];
 
-    if (self->path_store && !self->path_store->recently_used_paths().empty()) {
-        [self openMountDialogForPath:self->path_store->recently_used_paths()[0]];
+    if (self->path_store && !self->path_store->empty()) {
+        opt::optional<encfs::Path> path_resolution;
+        try {
+            path_resolution = std::get<0>(self->path_store->front().resolve_path());
+        }
+        catch (const std::exception & err) {
+            lbx_log_error("couldn't resolve bookmark path, doing nothing: %s", err.what());
+        }
+
+        if (path_resolution) {
+            [self openMountDialogForPath:*path_resolution];
+        }
     }
     else if ([self haveStartedAppBefore:nil]) {
         set_app_to_run_at_login(true);
@@ -907,17 +930,17 @@ make_required_system_changes_as_admin() {
     self->native_fs = safe::create_native_fs();
     
     auto recently_used_paths_storage_path =
-    self->native_fs->pathFromString(appSupportDir.path.fileSystemRepresentation).join(SAFE_RECENTLY_USED_PATHS_V1_FILE_NAME);
+    self->native_fs->pathFromString(appSupportDir.path.fileSystemRepresentation).join(SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME);
     
     try {
         try {
-            self->path_store = safe::make_unique<safe::RecentlyUsedPathStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+            self->path_store = safe::make_unique<safe::mac::RecentlyUsedNSURLStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
         }
         catch (const safe::RecentlyUsedPathsParseError & err) {
             lbx_log_error("Parse error on recently used path store: %s", err.what());
             // delete path and try again
             self->native_fs->unlink(recently_used_paths_storage_path);
-            self->path_store = safe::make_unique<safe::RecentlyUsedPathStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+            self->path_store = safe::make_unique<safe::mac::RecentlyUsedNSURLStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
         }
     }
     catch (const std::exception & err) {

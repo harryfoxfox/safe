@@ -126,10 +126,9 @@ populate_tray_menu(Menu & menu,
     auto sub_menu = menu.append_menu("Mount Recent");
 
     tray_menu_action_arg_t sub_tag = 0;
-    for (const auto & p : recent_mounts.recently_used_paths()) {
-      auto item = sub_menu.append_item(p.basename(),
-                                       TrayMenuAction::MOUNT_RECENT, sub_tag);
-      item.set_tooltip(p);
+    for (const auto & p : recent_mounts) {
+      auto item = sub_menu.append_item(p.get_last_known_path().basename(), TrayMenuAction::MOUNT_RECENT, sub_tag);
+      item.set_tooltip(p.get_last_known_path());
       item.set_property(TrayMenuProperty::MAC_FILE_TYPE, "public.folder");
       ++sub_tag;
     }

@@ -284,6 +284,73 @@ public:
   }
 };
 
+template<class F, class Iterator>
+class MapIterator {
+  F _fn;
+  Iterator _iterator;
+
+public:
+  MapIterator(F fn, Iterator it)
+  : _fn(std::move(fn))
+  , _iterator(std::move(it))
+  {}
+
+  typename std::result_of<F(decltype(*std::declval<Iterator>()))>::type operator*() {
+    return _fn(*_iterator);
+  }
+
+  MapIterator & operator++() {
+    ++_iterator;
+    return *this;
+  }
+  MapIterator operator++(int) {
+    return MapIterator(_fn, _iterator++);
+  }
+
+  MapIterator & operator--() {
+    --_iterator;
+    return *this;
+  }
+
+  MapIterator operator--(int) {
+    return MapIterator(_fn, _iterator--);
+  }
+
+  bool operator==(const MapIterator & other) const {
+    // TODO: should we equate the function object? doesn't work for lambdas
+    return _iterator == other._iterator;
+  }
+
+  bool operator!=(const MapIterator & other) const {
+    return !(*this == other);
+  }
+};
+
+template<typename Fn, typename RangeType>
+class RangeMap  {
+  typedef decltype(std::declval<RangeType>().begin()) BeginIterator;
+  typedef decltype(std::declval<RangeType>().end()) EndIterator;
+
+  Fn _f;
+  BeginIterator _begin;
+  EndIterator _end;
+
+public:
+  RangeMap(Fn f, const RangeType & r)
+  : _f(std::move(f))
+  , _begin(r.begin())
+  , _end(r.end())
+  {}
+
+  MapIterator<Fn, BeginIterator> begin() const {
+    return MapIterator<Fn, BeginIterator>(_f, _begin);
+  }
+
+  MapIterator<Fn, EndIterator> end() const {
+    return MapIterator<Fn, EndIterator>(_f, _end);
+  }
+};
+
 }
 
 /* works like a python range(), e.g.
@@ -307,6 +374,12 @@ template<typename RangeType>
 _int::Reversed<typename std::decay<RangeType>::type>
 reversed(RangeType && r) {
   return _int::Reversed<typename std::decay<RangeType>::type>(std::forward<RangeType>(r));
+}
+
+template<typename F, typename RangeType>
+_int::RangeMap<typename std::decay<F>::type, typename std::decay<RangeType>::type>
+range_map(F && fn, RangeType && r) {
+  return _int::RangeMap<typename std::decay<F>::type, typename std::decay<RangeType>::type>(std::forward<F>(fn), std::forward<RangeType>(r));
 }
 
 template<typename T>

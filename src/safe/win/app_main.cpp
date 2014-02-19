@@ -514,7 +514,7 @@ dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd, UINT selected)
     break;
   }
   case TrayMenuAction::MOUNT_RECENT: {
-    auto path = wd.recent_mount_paths_store.recently_used_paths()[menu_action_arg];
+    auto path = std::get<0>(wd.recent_mount_paths_store[menu_action_arg].resolve_path());
     run_mount_dialog(safe_main_window, wd, path);
     break;
   }
@@ -1050,7 +1050,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // auto start the mount dialog with the most recently path
         // populated in the ui
         should_bubble = run_mount_dialog(hwnd, *wd,
-                                         wd->recent_mount_paths_store.front());
+                                         std::get<0>(wd->recent_mount_paths_store.front().resolve_path()));
       }
 
       if (should_bubble) {
@@ -1369,11 +1369,11 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   }
 
   auto recently_used_paths_storage_path =
-    app_directory_path.join(SAFE_RECENTLY_USED_PATHS_V1_FILE_NAME);
+    app_directory_path.join(SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME);
   auto path_store =
     safe::RecentlyUsedPathStoreV1(native_fs,
-                                     recently_used_paths_storage_path,
-                                     SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
+                                  recently_used_paths_storage_path,
+                                  SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
 
   auto first_run_cookie_path = app_directory_path.join(SAFE_APP_STARTED_COOKIE_FILENAME);
 
