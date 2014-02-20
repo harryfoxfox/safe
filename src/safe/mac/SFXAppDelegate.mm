@@ -696,22 +696,14 @@ struct SystemChangesErrorContext {
 - (void)systemChangesErrorResponse:(NSAlert *)alert
                         returnCode:(NSInteger)returnCode
                         contextInfo:(void *)contextInfo {
+    (void) alert;
     auto ctx = std::unique_ptr<SystemChangesErrorContext>((SystemChangesErrorContext *) contextInfo);
-    NSWindow *window = (__bridge NSWindow *) ctx->w;
 
     if (returnCode == NSAlertFirstButtonReturn) {
-        [alert.window orderOut:self];
-        // try again to make system changes
-        [self makeSystemChangesProgressDialog:window];
-    }
-    else if (returnCode == NSAlertSecondButtonReturn) {
         safe::mac::report_exception(safe::ExceptionLocation::SYSTEM_CHANGES, ctx->eptr);
-        [NSApp terminate:nil];
     }
-    else if (returnCode == NSAlertThirdButtonReturn) {
-        [NSApp terminate:nil];
-    }
-    else assert(false);
+
+    [NSApp terminate:nil];
 }
 
 - (void)makeSystemChangesProgressDialog:(NSWindow *)window {
@@ -736,14 +728,12 @@ struct SystemChangesErrorContext {
 
             auto error_message =
             ("An error occured while attempting to make changes to your system. "
-             "Trying again may help. If that doesn't work, "
-             "please help us improve by sending a bug report. It's automatic and "
+             "Please help us improve by sending a bug report. It's automatic and "
              "no personal information is used.");
 
             NSAlert *alert = [[NSAlert alloc] init];
             [alert setMessageText:@"Couldn't Make System Changes"];
             [alert setInformativeText:safe::mac::to_ns_string(error_message)];
-            [alert addButtonWithTitle:@"Try Again"];
             [alert addButtonWithTitle:@"Report Bug"];
             [alert addButtonWithTitle:@"Quit"];
             [alert setAlertStyle:NSWarningAlertStyle];
