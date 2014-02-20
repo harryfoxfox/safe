@@ -16,6 +16,7 @@
 #import <safe/mac/mount.hpp>
 #import <safe/parse.hpp>
 #import <safe/mac/RecentlyUsedNSURLStoreV1.hpp>
+#import <safe/mac/shared_file_list.hpp>
 #import <safe/mac/system_changes.hpp>
 #import <safe/tray_menu.hpp>
 #import <safe/util.hpp>
@@ -106,89 +107,12 @@ public:
     }
 };
 
-const auto LS_SHARED_FILE_LIST_STARTUP_ITEM_PROPERTY = @"SafeStartupItem";
-
-template<class F>
-static
-void
-iterate_shared_file_list(LSSharedFileListRef list_ref, F f) {
-    // iterate through every item to find out if we're run at login
-    UInt32 snapshot_seed;
-    auto item_array_ref = LSSharedFileListCopySnapshot(list_ref, &snapshot_seed);
-    if (!item_array_ref) throw std::runtime_error("couldn't create snapshot array");
-    auto _release_item_array = safe::create_deferred(CFRelease, item_array_ref);
-    
-    auto array_size = CFArrayGetCount(item_array_ref);
-    for (CFIndex i = 0; i < array_size; ++i) {
-        auto item_ref = (LSSharedFileListItemRef) CFArrayGetValueAtIndex(item_array_ref, i);
-        auto continue_ = f(item_ref);
-        if (!continue_) break;
-    }
-}
-
-static
-bool
-list_item_equals_nsurl(LSSharedFileListItemRef item_ref, NSURL *url) {
-    CFURLRef out_url;
-    auto err = LSSharedFileListItemResolve(item_ref,
-                                           kLSSharedFileListNoUserInteraction,
-                                           &out_url, nullptr);
-    if (err != noErr) {
-        // not sure under what circumstances this can happen but let's not fail on this
-        lbx_log_error("Error while calling LSSharedFileListItemResolve: 0x%x", (unsigned) err);
-        return false;
-    }
-    
-    auto _free_url = safe::create_deferred(CFRelease, out_url);
-    
-    return [(__bridge NSURL *) out_url isEqual:url];
-}
-
-static
-LSSharedFileListItemRef
-copy_safe_startup_item_ref(LSSharedFileListRef list_ref) {
-    LSSharedFileListItemRef toret = nullptr;
-    
-    // iterate through every item to find out if we're run at login
-    iterate_shared_file_list(list_ref, [&](LSSharedFileListItemRef item_ref) {
-        // does item have our special tag and point to this app?
-        auto startup_property_value = LSSharedFileListItemCopyProperty(item_ref, (__bridge CFStringRef) LS_SHARED_FILE_LIST_STARTUP_ITEM_PROPERTY);
-        if (!startup_property_value) return true;
-        auto _free_property_value = safe::create_deferred(CFRelease, startup_property_value);
-        
-        // if not a string type, doesn't match
-        if (CFGetTypeID(startup_property_value) != CFStringGetTypeID()) return true;
-        
-        // if not equal to the key, doesn't match
-        if (![(__bridge NSString *) startup_property_value isEqualToString:LS_SHARED_FILE_LIST_STARTUP_ITEM_PROPERTY]) return true;
-        
-        CFRetain(item_ref);
-        toret = item_ref;
-        
-        return false;
-    });
-    
-    return toret;
-}
-
 static
 bool
 app_is_run_at_login() {
 	auto appPath = NSBundle.mainBundle.bundlePath;
     NSURL *appURL = [NSURL fileURLWithPath:appPath];
-    
-    auto login_items_ref =
-        LSSharedFileListCreate(nullptr,
-                               kLSSharedFileListSessionLoginItems, nullptr);
-    if (!login_items_ref) throw std::runtime_error("unable to create shared file list");
-    auto _release_login_items = safe::create_deferred(CFRelease, login_items_ref);
-    
-    auto item_ref = copy_safe_startup_item_ref(login_items_ref);
-    if (!item_ref) return false;
-    auto _free_item_ref = safe::create_deferred(CFRelease, item_ref);
-
-    // does path resolve to our executable?
-    return list_item_equals_nsurl(item_ref, appURL);
+    return safe::mac::shared_file_list_contains_url(kLSSharedFileListSessionLoginItems, appURL);
 }
 
 static
@@ -196,82 +120,27 @@ void
 set_app_to_run_at_login(bool run_at_login) {
     auto appPath = NSBundle.mainBundle.bundlePath;
     NSURL *appURL = [NSURL fileURLWithPath:appPath];
-    
-    auto login_items_ref =
-    LSSharedFileListCreate(nullptr,
-                           kLSSharedFileListSessionLoginItems, nullptr);
-    if (!login_items_ref) throw std::runtime_error("unable to create shared file list");
-    auto _release_login_items = safe::create_deferred(CFRelease, login_items_ref);
-    
-    // remove old item if it exists
-    auto item_ref = copy_safe_startup_item_ref(login_items_ref);
-    if (item_ref) {
-        auto _free_item_ref = safe::create_deferred(CFRelease, item_ref);
-        auto ret = LSSharedFileListItemRemove(login_items_ref, item_ref);
-        if (ret != noErr) throw std::runtime_error("error removing old item");
-        item_ref = nullptr;
-    }
-    
+
     if (run_at_login) {
-        // create item
-        auto new_item_ref = LSSharedFileListInsertItemURL(login_items_ref,
-                                                          kLSSharedFileListItemLast,
-                                                          (__bridge CFStringRef) safe::mac::to_ns_string(PRODUCT_NAME_A),
-                                                          nullptr,
-                                                          (__bridge CFURLRef) appURL,
-                                                          (__bridge CFDictionaryRef) @{LS_SHARED_FILE_LIST_STARTUP_ITEM_PROPERTY :
-                                                                                           LS_SHARED_FILE_LIST_STARTUP_ITEM_PROPERTY},
-                                                          nullptr);
-        if (!new_item_ref) throw std::runtime_error("item creation failed");
-        auto _free_item_ref = safe::create_deferred(CFRelease, new_item_ref);
+        safe::mac::add_url_to_shared_file_list(kLSSharedFileListSessionLoginItems, appURL);
+    }
+    else {
+        safe::mac::remove_url_from_shared_file_list(kLSSharedFileListSessionLoginItems, appURL);
     }
 }
 
 static
 void
 add_mount_to_favorites(const safe::mac::MountDetails & mount) {
-    auto list_ref =
-    LSSharedFileListCreate(nullptr,
-                           kLSSharedFileListFavoriteVolumes, nullptr);
-    if (!list_ref) throw std::runtime_error("unable to create shared file list");
-    auto _release_login_items = safe::create_deferred(CFRelease, list_ref);
-
-    NSURL *mount_url = [NSURL fileURLWithPath:safe::mac::to_ns_string(mount.get_mount_point())];
-    
-    // create item
-    auto new_item_ref = LSSharedFileListInsertItemURL(list_ref,
-                                                      kLSSharedFileListItemBeforeFirst,
-                                                      (__bridge CFStringRef) safe::mac::to_ns_string(mount.get_mount_name() +
-                                                                                                        " (" PRODUCT_NAME_A " Mount)"),
-                                                      nullptr,
-                                                      (__bridge CFURLRef) mount_url,
-                                                      nullptr,
-                                                      nullptr);
-    if (!new_item_ref) throw std::runtime_error("item creation failed");
-    auto _free_item_ref = safe::create_deferred(CFRelease, new_item_ref);
+    return safe::mac::add_url_to_shared_file_list(kLSSharedFileListFavoriteVolumes,
+                                                  [NSURL fileURLWithPath:safe::mac::to_ns_string(mount.get_mount_point())]);
 }
 
 static
-void
+bool
 remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
-    (void) mount;
-    auto list_ref =
-    LSSharedFileListCreate(nullptr,
-                           kLSSharedFileListFavoriteVolumes, nullptr);
-    if (!list_ref) throw std::runtime_error("unable to create shared file list");
-    auto _release_login_items = safe::create_deferred(CFRelease, list_ref);
-
-    NSURL *mount_url = [NSURL fileURLWithPath:safe::mac::to_ns_string(mount.get_mount_point())];
-    
-    iterate_shared_file_list(list_ref, [&](LSSharedFileListItemRef item_ref) {
-        if (list_item_equals_nsurl(item_ref, mount_url)) {
-            auto ret = LSSharedFileListItemRemove(list_ref, item_ref);
-            if (ret != noErr) throw std::runtime_error("error deleting item from list");
-            return false;
-        }
-
-        return true;
-    });
+    return safe::mac::remove_url_from_shared_file_list(kLSSharedFileListFavoriteVolumes,
+                                                       [NSURL fileURLWithPath:safe::mac::to_ns_string(mount.get_mount_point())]);
 }
 
 @implementation SFXAppDelegate

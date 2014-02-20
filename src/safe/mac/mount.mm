@@ -8,6 +8,8 @@
 
 #import <safe/mac/mount.hpp>
 
+#import <safe/mac/shared_file_list.hpp>
+
 #import <safe/mount_common.hpp>
 #import <safe/util.hpp>
 #import <safe/webdav_server.hpp>
@@ -517,6 +519,14 @@ ensure_ramdisk() {
     auto str2 = os3.str();
     auto sys_ret2 = system(str2.c_str());
     if (sys_ret2) throw std::runtime_error("mounting disk failed");
+
+    // remove ramdisk from favorites menu
+    NSURL *mount_url = [NSURL fileURLWithPath:[NSFileManager.defaultManager
+                                               stringWithFileSystemRepresentation:buf
+                                               length:strlen(buf)]
+                                  isDirectory:YES];
+    auto was_removed = remove_url_from_shared_file_list(kLSSharedFileListFavoriteVolumes, mount_url);
+    lbx_log_debug("RAMDisk was %sremoved from favorites", was_removed ? "" : "NOT ");
     
     // ramdisk is mounted by this point :)
     return std::make_pair(ram_disk_mount_point, ram_disk_device);

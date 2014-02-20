@@ -46,6 +46,7 @@
 		96A3459C1881C3AF005AE884 /* libmount_webdav_interpose.dylib in Resources */ = {isa = PBXBuildFile; fileRef = 96A34596188139A3005AE884 /* libmount_webdav_interpose.dylib */; };
 		96D2DC6218B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
+		96F0640C18B58D7E0014F6A7 /* shared_file_list.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96F0640A18B58D7E0014F6A7 /* shared_file_list.mm */; };
 		96F36AC2185470B500DEE145 /* fs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36ABE185470B500DEE145 /* fs.cpp */; };
 		96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36AC0185470B500DEE145 /* webdav_server.cpp */; };
 /* End PBXBuildFile section */
@@ -136,6 +137,8 @@
 		96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RecentlyUsedNSURLStoreV1.mm; path = ../src/safe/mac/RecentlyUsedNSURLStoreV1.mm; sourceTree = "<group>"; };
 		96D2DC6118B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RecentlyUsedNSURLStoreV1.hpp; path = ../src/safe/mac/RecentlyUsedNSURLStoreV1.hpp; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
+		96F0640A18B58D7E0014F6A7 /* shared_file_list.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = shared_file_list.mm; path = ../src/safe/mac/shared_file_list.mm; sourceTree = "<group>"; };
+		96F0640B18B58D7E0014F6A7 /* shared_file_list.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = shared_file_list.hpp; path = ../src/safe/mac/shared_file_list.hpp; sourceTree = "<group>"; };
 		96F36ABE185470B500DEE145 /* fs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs.cpp; path = ../src/safe/fs.cpp; sourceTree = "<group>"; };
 		96F36ABF185470B500DEE145 /* fs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = fs.hpp; path = ../src/safe/fs.hpp; sourceTree = "<group>"; };
 		96F36AC0185470B500DEE145 /* webdav_server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = webdav_server.cpp; path = ../src/safe/webdav_server.cpp; sourceTree = "<group>"; };
@@ -255,6 +258,8 @@
 				96042A5C18B34F7F00D6CD58 /* keychain.hpp */,
 				96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */,
 				96D2DC6118B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.hpp */,
+				96F0640A18B58D7E0014F6A7 /* shared_file_list.mm */,
+				96F0640B18B58D7E0014F6A7 /* shared_file_list.hpp */,
 			);
 			name = "core-mac";
 			sourceTree = "<group>";
@@ -487,6 +492,7 @@
 			files = (
 				96185B3518361C1900A2A67F /* UnicodeWrapperFsIO.cpp in Sources */,
 				96185B3418361C1900A2A67F /* unicode_fs.mm in Sources */,
+				96F0640C18B58D7E0014F6A7 /* shared_file_list.mm in Sources */,
 				9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */,
 				96230549182B2E5200913551 /* SFXCreateSafeWindowController.mm in Sources */,
 				96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */,
