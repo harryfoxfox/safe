@@ -491,7 +491,7 @@ void PostMouseEvent(CGMouseButton button, CGEventType type, const CGPoint point)
     }
 
     [NSUserNotificationCenter.defaultUserNotificationCenter
-     scheduleNotification:user_not];
+     deliverNotification:user_not];
 }
 
 - (void)notifyUserTitle:(NSString *)title
@@ -516,11 +516,6 @@ _Pragma("clang diagnostic pop") \
         notification.userInfo[SFX_ACTION_KEY]) {
         SuppressPerformSelectorLeakWarning([self performSelector:NSSelectorFromString(notification.userInfo[SFX_ACTION_KEY])]);
     }
-}
-
-- (void)userNotificationCenter:(NSUserNotificationCenter *)center
-        didDeliverNotification:(NSUserNotification *)notification {
-    [center removeDeliveredNotification:notification];
 }
 
 - (BOOL)userNotificationCenter:(NSUserNotificationCenter *)center
