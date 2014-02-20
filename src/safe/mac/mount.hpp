@@ -21,6 +21,16 @@
 
 namespace safe { namespace mac {
 
+struct CloseFileDescriptor {
+    void
+    operator()(int fd) {
+        int ret = close(fd);
+        if (ret) throw std::system_error(errno, std::generic_category());
+    }
+};
+
+typedef ManagedResource<int, CloseFileDescriptor> RAMDiskHandle;
+
 class MountEvent;
 
 class MountDetails {
@@ -32,6 +42,7 @@ class MountDetails {
     std::shared_ptr<MountEvent> mount_event;
     encfs::Path source_path;
     safe::WebdavServerHandle ws;
+    RAMDiskHandle ramdisk_handle;
 
 public:
     MountDetails(port_t listen_port_,
@@ -40,7 +51,8 @@ public:
                  std::string mount_point_,
                  std::shared_ptr<MountEvent> mount_event_,
                  encfs::Path source_path_,
-                 safe::WebdavServerHandle ws_)
+                 safe::WebdavServerHandle ws_,
+                 RAMDiskHandle ramdisk_handle_)
     : listen_port(listen_port_)
     , name(std::move(name_))
     , thread_handle(thread_handle_)
@@ -48,7 +60,8 @@ public:
     , is_mounted(true)
     , mount_event(std::move(mount_event_))
     , source_path(std::move(source_path_))
-    , ws(std::move(ws_)) {}
+    , ws(std::move(ws_))
+    , ramdisk_handle(std::move(ramdisk_handle_)) {}
 
     // copy is not allowed
     MountDetails(const MountDetails &) = delete;

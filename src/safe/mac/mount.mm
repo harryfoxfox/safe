@@ -616,6 +616,13 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     auto ramdisk_pair = ensure_ramdisk();
     std::string ramdisk_root, ramdisk_dev;
     std::tie(ramdisk_root, ramdisk_dev) = ramdisk_pair;
+
+    // keep open handle to file inside ramdisk to prevent it from being unmounted
+    auto ramdisk_mount_lock_file = ramdisk_root + "/.safe_mount_lock";
+    auto fd = open(ramdisk_mount_lock_file.c_str(), O_RDWR | O_CREAT, 0777);
+    if (fd < 0) throw std::system_error(errno, std::generic_category());
+    unlink(ramdisk_mount_lock_file.c_str());
+    auto ramdisk_handle = RAMDiskHandle(fd);
     
     // get dyld path
     NSString *dyld_file = [NSBundle.mainBundle pathForResource:@"libmount_webdav_interpose" ofType:@"dylib"];
@@ -637,7 +644,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     // return new mount details with thread info
     return MountDetails(listen_port, std::move(mount_name),
                         thread, mount_point, event, encrypted_container_path,
-                        std::move(webdav_server_handle));
+                        std::move(webdav_server_handle), std::move(ramdisk_handle));
 }
 
 }}
