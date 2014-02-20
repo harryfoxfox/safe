@@ -659,7 +659,7 @@ const char *WAITING_FOR_REBOOT_SHM_NAME = "SAFE_WAITING_FOR_REBOOT";
 
 static
 bool
-waiting_for_reboot() {
+is_reboot_pending() {
     auto fd = shm_open(WAITING_FOR_REBOOT_SHM_NAME, O_RDONLY);
     if (fd < 0) {
         if (errno == ENOENT) return false;
@@ -671,7 +671,7 @@ waiting_for_reboot() {
 
 static
 void
-set_waiting_for_reboot(bool waiting) {
+set_reboot_pending(bool waiting) {
     if (waiting) {
         auto fd = shm_open(WAITING_FOR_REBOOT_SHM_NAME, O_WRONLY | O_CREAT, 0777);
         if (fd < 0) throw std::system_error(errno, std::generic_category());
@@ -690,7 +690,7 @@ set_waiting_for_reboot(bool waiting) {
     
     [alert.window orderOut:self];
 
-    set_waiting_for_reboot(true);
+    set_reboot_pending(true);
 
     if (returnCode == NSAlertFirstButtonReturn) {
         safe::mac::reboot_machine();
@@ -899,7 +899,7 @@ struct SystemChangesErrorContext {
         NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
     }
 
-    if (waiting_for_reboot()) {
+    if (is_reboot_pending()) {
         [self runRebootSequence:nil];
     } else if (safe::mac::system_changes_are_required()) {
         decltype(self) __weak weakSelf = self;

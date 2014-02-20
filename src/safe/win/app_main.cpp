@@ -879,20 +879,33 @@ get_hklm_safe_key() {
 
 static
 void
-save_reboot_pending_key() {
+set_reboot_pending(bool reboot_pending) {
   auto safe_key = get_hklm_safe_key();
   auto _close_key = safe::create_deferred(RegCloseKey, safe_key);
 
-  w32util::check_good_call(ERROR_SUCCESS, RegSetValueExW, safe_key,
-                           L"RebootPending",
-                           0,
-                           REG_NONE,
-                           nullptr, 0);
+  const wchar_t *REBOOT_PENDING_KEY_W = L"RebootPending";
+
+  if (reboot_pending) {
+    w32util::check_good_call(ERROR_SUCCESS, RegSetValueExW, safe_key,
+                             REBOOT_PENDING_KEY_W,
+                             0,
+                             REG_NONE,
+                             nullptr, 0);
+  }
+  else {
+    try {
+      w32util::check_good_call(ERROR_SUCCESS, RegDeleteValueW,
+                               safe_key, REBOOT_PENDING_KEY_W);
+    }
+    catch (const std::system_error & err) {
+      if (err.code() != std::errc::no_such_file_or_directory) throw;
+    }
+  }
 }
 
 static
 bool
-check_reboot_pending_key() {
+is_reboot_pending() {
   auto safe_key = get_hklm_safe_key();
   auto _close_key = safe::create_deferred(RegCloseKey, safe_key);
 
@@ -918,13 +931,12 @@ run_reboot_sequence(HWND hwnd) {
                         w32util::widen(SAFE_DIALOG_REBOOT_CONFIRMATION_TITLE).c_str(),
                         MB_OKCANCEL | MB_ICONWARNING | MB_SETFOREGROUND);
 
+  set_reboot_pending(true);
+
   if (ret == IDOK) {
     enable_and_initiate_shutdown();
   }
-  else {
-    assert(ret == IDCANCEL);
-    save_reboot_pending_key();
-  }
+  else assert(ret == IDCANCEL);
 }
 
 #define NO_FALLTHROUGH(c) assert(false); case c
@@ -999,7 +1011,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_SFX_APP,
                                       IMAGE_ICON, 32, 32, LR_SHARED));
 
-      if (check_reboot_pending_key()) {
+      if (is_reboot_pending()) {
         run_reboot_sequence(hwnd);
         PostMessage(hwnd, WM_CLOSE, 0, 0);
         return 0;
