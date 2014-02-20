@@ -46,7 +46,10 @@ hibernate_is_enabled() {
         // TODO: there should be a way to convert FILE * to std::fstream
         //       but let's worry about that another day
         auto bytes_read = getline(&line, &linecap, f);
-        if (bytes_read < 0) break;
+        if (bytes_read < 0) {
+            if (feof(f)) break;
+            else throw std::system_error(errno, std::generic_category());
+        }
         
         auto parser = safe::BufferParser((uint8_t *) line, linecap);
         try {
@@ -101,7 +104,7 @@ encrypted_swap_is_enabled() {
     char *line = nullptr;
     size_t linecap = 0;
     auto bytes_read = getline(&line, &linecap, f);
-    if (bytes_read < 0) throw std::runtime_error("no line!");
+    if (bytes_read < 0) throw std::system_error(errno, std::generic_category());
     auto _free_line = safe::create_deferred(free, line);
     
     return strnstr(line, "(encrypted)", linecap);

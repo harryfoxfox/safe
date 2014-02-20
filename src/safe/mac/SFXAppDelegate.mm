@@ -770,7 +770,7 @@ make_required_system_changes_as_admin() {
     return true;
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+- (void)_applicationDidFinishLaunching:(NSNotification *)aNotification {
     (void)aNotification;
     
     log_printer_default_init();
@@ -780,13 +780,7 @@ make_required_system_changes_as_admin() {
     NSError *err;
     NSURL *appSupportDir = [self applicationSupportDirectoryError:&err];
     if (!appSupportDir) {
-        lbx_log_critical("Error while getting application support directory: (%s:%ld) %s",
-                         err.domain.UTF8String,
-                         (long) err.code,
-                         err.localizedDescription.UTF8String);
-        [NSApp presentError:err];
-        [NSApp terminate:self];
-        return;
+        throw std::runtime_error(safe::mac::from_ns_string(err.localizedDescription));
     }
     
     safe::global_webdav_init();
@@ -797,22 +791,15 @@ make_required_system_changes_as_admin() {
     self->native_fs->pathFromString(appSupportDir.path.fileSystemRepresentation).join(SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME);
     
     try {
-        try {
-            self->path_store = safe::make_unique<safe::mac::RecentlyUsedNSURLStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
-        }
-        catch (const safe::RecentlyUsedPathsParseError & err) {
-            lbx_log_error("Parse error on recently used path store: %s", err.what());
-            // delete path and try again
-            self->native_fs->unlink(recently_used_paths_storage_path);
-            self->path_store = safe::make_unique<safe::mac::RecentlyUsedNSURLStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
-        }
+        self->path_store = safe::make_unique<safe::mac::RecentlyUsedNSURLStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
     }
-    catch (const std::exception & err) {
-        // error while creating recently used path storee
-        // not a huge deal, but log error
-        lbx_log_error("Couldn't create recently used path store: %s", err.what());
+    catch (const safe::RecentlyUsedPathsParseError & err) {
+        lbx_log_error("Parse error on recently used path store: %s", err.what());
+        // delete path and try again
+        self->native_fs->unlink(recently_used_paths_storage_path);
+        self->path_store = safe::make_unique<safe::mac::RecentlyUsedNSURLStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
     }
-    
+
     self.createWindows = [NSMutableArray array];
     self.mountWindows = [NSMutableArray array];
     
@@ -862,6 +849,19 @@ make_required_system_changes_as_admin() {
          ];
     }
     else [self startAppUI];
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    try {
+        [self _applicationDidFinishLaunching:notification];
+    }
+    catch (const std::exception & err) {
+        // TODO: handle startup errors better
+        [NSApp presentError:[NSError errorWithDomain:@"SFXUnexpectedError"
+                                                code:0
+                                            userInfo:@{NSLocalizedDescriptionKey: safe::mac::to_ns_string(err.what())}]];
+        [NSApp terminate:nil];
+    }
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
