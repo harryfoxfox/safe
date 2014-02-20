@@ -655,22 +655,51 @@ make_required_system_changes_as_admin() {
     });
 }
 
+const char *WAITING_FOR_REBOOT_SHM_NAME = "SAFE_WAITING_FOR_REBOOT";
+
+static
+bool
+waiting_for_reboot() {
+    auto fd = shm_open(WAITING_FOR_REBOOT_SHM_NAME, O_RDONLY);
+    if (fd < 0) {
+        if (errno == ENOENT) return false;
+        throw std::system_error(errno, std::generic_category());
+    }
+    close(fd);
+    return true;
+}
+
+static
+void
+set_waiting_for_reboot(bool waiting) {
+    if (waiting) {
+        auto fd = shm_open(WAITING_FOR_REBOOT_SHM_NAME, O_WRONLY | O_CREAT, 0777);
+        if (fd < 0) throw std::system_error(errno, std::generic_category());
+        close(fd);
+    }
+    else {
+        int ret = shm_unlink(WAITING_FOR_REBOOT_SHM_NAME);
+        if (ret < 0) throw std::system_error(errno, std::generic_category());
+    }
+}
+
 - (void)rebootComputerResponse:(NSAlert *)alert
                     returnCode:(NSInteger)returnCode
                    contextInfo:(void *)contextInfo {
     (void) contextInfo;
     
     [alert.window orderOut:self];
-    
+
+    set_waiting_for_reboot(true);
+
     if (returnCode == NSAlertFirstButtonReturn) {
         safe::mac::reboot_machine();
     }
-    
+
     [NSApp terminate:nil];
 }
 
 - (void)runRebootSequence:(NSWindow *)w {
-    // TODO: show reboot confirmation dialog;
     // show confirmation dialog
     NSAlert *alert = [[NSAlert alloc] init];
     [alert setMessageText:safe::mac::to_ns_string(SAFE_DIALOG_REBOOT_CONFIRMATION_TITLE)];
@@ -870,7 +899,9 @@ struct SystemChangesErrorContext {
         NSUserNotificationCenter.defaultUserNotificationCenter.delegate = self;
     }
 
-    if (safe::mac::system_changes_are_required()) {
+    if (waiting_for_reboot()) {
+        [self runRebootSequence:nil];
+    } else if (safe::mac::system_changes_are_required()) {
         decltype(self) __weak weakSelf = self;
         self.systemChangesWindowController =
         [SFXWelcomeWindowController.alloc
