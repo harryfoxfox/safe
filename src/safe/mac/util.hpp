@@ -19,11 +19,21 @@
 #ifndef Safe_util_mac_hpp
 #define Safe_util_mac_hpp
 
+#include <exception>
 #include <string>
 
 #import <Cocoa/Cocoa.h>
 
-namespace safe { namespace mac {
+namespace safe {
+
+enum class ExceptionLocation {
+    SYSTEM_CHANGES,
+    STARTUP,
+    MOUNT,
+    CREATE,
+};
+
+namespace mac {
   
 void
 initialize_window_for_dialog(NSWindow *);
@@ -42,6 +52,9 @@ from_ns_string(const NSString *);
    
 void
 reboot_machine();
+
+void
+report_exception(ExceptionLocation, std::exception_ptr eptr);
     
 }}
 

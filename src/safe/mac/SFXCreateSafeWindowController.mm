@@ -75,6 +75,17 @@ NSStringToSecureMem(NSString *str) {
     return std::make_pair(std::move(encrypted_container_path), std::move(password_buf));
 }
 
+- (void)unknownErrorResponse:(NSAlert *)alert
+                  returnCode:(NSInteger)returnCode
+                 contextInfo:(void *)contextInfo {
+    (void) alert;
+    auto ctx = std::unique_ptr<std::exception_ptr>((std::exception_ptr *) contextInfo);
+    if (returnCode == NSAlertSecondButtonReturn) {
+        safe::mac::report_exception(safe::ExceptionLocation::MOUNT, *ctx);
+    }
+    [alert.window orderOut:self];
+    [self.window performClose:self];
+}
 
 - (IBAction)confirmCreate:(id)sender {
     (void)sender;
@@ -90,20 +101,33 @@ NSStringToSecureMem(NSString *str) {
     const auto use_case_safe_filename_encoding = true;
     
     auto onFail = ^(const std::exception_ptr & eptr) {
-        // TODO log eptr
-        (void) eptr;
-        
         // TODO: delete directory and .encfs.txt
         //       *only* if those are the only files that exist
         try {
             self->fs->rmdir(encrypted_container_path);
         }
-        catch (...) {
-            //TODO: log this error
+        catch (const std::exception & err) {
+            lbx_log_error("Error deleting encrypted container: %s", err.what());
         }
-        
-        [self inputErrorAlertWithTitle:[NSString stringWithUTF8String:SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE]
-                               message:[NSString stringWithUTF8String:SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE]];
+
+        {
+            // unknown error occured, allow user to report
+            auto message = (std::string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE) +
+                            (" Please help us improve by sending a bug report. It's automatic and "
+                             "no personal information is used."));
+
+            NSAlert *alert = [[NSAlert alloc] init];
+            [alert setMessageText:safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE)];
+            [alert setInformativeText:safe::mac::to_ns_string(message)];
+            [alert addButtonWithTitle:@"OK"];
+            [alert addButtonWithTitle:@"Report Bug"];
+            [alert setAlertStyle:NSWarningAlertStyle];
+
+            [alert beginSheetModalForWindow:self.window
+                              modalDelegate:self
+                             didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
+                                contextInfo:(void *) new std::exception_ptr(eptr)];
+        }
     };
     
     auto onMountSuccess = ^(safe::mac::MountDetails md) {

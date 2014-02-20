@@ -16,14 +16,17 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <safe/mac/util.hpp>
+#import <safe/mac/util.hpp>
 
-#include <stdexcept>
-#include <string>
+#import <safe/constants.h>
+#import <safe/util.hpp>
 
-#include <Cocoa/Cocoa.h>
-#include <Carbon/Carbon.h>
-#include <CoreServices/CoreServices.h>
+#import <stdexcept>
+#import <string>
+
+#import <Cocoa/Cocoa.h>
+#import <Carbon/Carbon.h>
+#import <CoreServices/CoreServices.h>
 
 namespace safe { namespace mac {
 
@@ -101,6 +104,43 @@ std::string
 from_ns_string(const NSString *a) {
   return std::string(a.UTF8String);
 }
-    
+
+const char *
+exception_location_to_string(ExceptionLocation el) {
+#define _CV(e) case e: return #e
+    switch (el) {
+            _CV(ExceptionLocation::SYSTEM_CHANGES);
+            _CV(ExceptionLocation::STARTUP);
+            _CV(ExceptionLocation::MOUNT);
+            _CV(ExceptionLocation::CREATE);
+        default: /* notreached */ assert(false); return "";
+    }
+#undef _CV
+}
+
+void
+report_exception(ExceptionLocation el, std::exception_ptr eptr) {
+    std::string what;
+    try {
+        std::rethrow_exception(eptr);
+    }
+    catch (const std::exception & err) {
+        what = err.what();
+    }
+
+    auto string_ref =
+    CFURLCreateStringByAddingPercentEscapes(nullptr,
+                                            (__bridge CFStringRef) safe::mac::to_ns_string(what),
+                                            nullptr,
+                                            (__bridge CFStringRef) @";/?:@&=+$,",
+                                            kCFStringEncodingUTF8);
+    auto _free_string_ref = safe::create_deferred(CFRelease, string_ref);
+
+    auto url = (std::string(SAFE_REPORT_EXCEPTION_WEBSITE) + "?" +
+                "where=" + exception_location_to_string(el) + "&" +
+                "what=" + safe::mac::from_ns_string((__bridge NSString *) string_ref));
+    open_url(url.c_str());
+}
+
 }}
 

@@ -30,7 +30,9 @@ enum {
 
 #define SAFE_SOURCE_CODE_WEBSITE "http://getsafe.org/app/get_source_code"
 #define SAFE_SEND_FEEDBACK_WEBSITE "http://getsafe.org/app/send_feedback"
-#define SAFE_WINDOWS_SYSTEM_CHANGES_INFO_WEBSITE "http://getsafe.org/app/system_changes_more_info"
+#define SAFE_WINDOWS_SYSTEM_CHANGES_INFO_WEBSITE "http://getsafe.org/app/windows_system_changes_more_info"
+#define SAFE_MAC_SYSTEM_CHANGES_INFO_WEBSITE "http://getsafe.org/app/mac_system_changes_more_info"
+#define SAFE_REPORT_EXCEPTION_WEBSITE "http://getsafe.org/app/report_exception"
 
 /* UI Strings follow */
 

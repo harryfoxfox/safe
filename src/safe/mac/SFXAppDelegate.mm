@@ -685,6 +685,35 @@ make_required_system_changes_as_admin() {
                         contextInfo:nil];
 }
 
+struct SystemChangesErrorContext {
+    void *w;
+    std::exception_ptr eptr;
+    SystemChangesErrorContext(void *w_, std::exception_ptr eptr_)
+    : w(w_)
+    , eptr(std::move(eptr_)) {}
+};
+
+- (void)systemChangesErrorResponse:(NSAlert *)alert
+                        returnCode:(NSInteger)returnCode
+                        contextInfo:(void *)contextInfo {
+    auto ctx = std::unique_ptr<SystemChangesErrorContext>((SystemChangesErrorContext *) contextInfo);
+    NSWindow *window = (__bridge NSWindow *) ctx->w;
+
+    if (returnCode == NSAlertFirstButtonReturn) {
+        [alert.window orderOut:self];
+        // try again to make system changes
+        [self makeSystemChangesProgressDialog:window];
+    }
+    else if (returnCode == NSAlertSecondButtonReturn) {
+        safe::mac::report_exception(safe::ExceptionLocation::SYSTEM_CHANGES, ctx->eptr);
+        [NSApp terminate:nil];
+    }
+    else if (returnCode == NSAlertThirdButtonReturn) {
+        [NSApp terminate:nil];
+    }
+    else assert(false);
+}
+
 - (void)makeSystemChangesProgressDialog:(NSWindow *)window {
     auto onSuccess = ^(bool reboot_required) {
         if (reboot_required) {
@@ -699,16 +728,32 @@ make_required_system_changes_as_admin() {
     };
     
     auto onFail = ^(const std::exception_ptr & eptr) {
-        // TODO: potentially give user information to help us debug their problem
-        inputErrorAlert(window,
-                        @"Couldn't Make System Changes",
-                        (@"An error occured while attempting to make changes to your system to increase privacy. "
-                         @"Trying again may help. If that doesn't work, please send us a bug report!"));
         try {
             std::rethrow_exception(eptr);
         }
         catch (const std::exception & err) {
             lbx_log_debug("Error while making system changes: %s", err.what());
+
+            auto error_message =
+            ("An error occured while attempting to make changes to your system. "
+             "Trying again may help. If that doesn't work, "
+             "please help us improve by sending a bug report. It's automatic and "
+             "no personal information is used.");
+
+            NSAlert *alert = [[NSAlert alloc] init];
+            [alert setMessageText:@"Couldn't Make System Changes"];
+            [alert setInformativeText:safe::mac::to_ns_string(error_message)];
+            [alert addButtonWithTitle:@"Try Again"];
+            [alert addButtonWithTitle:@"Report Bug"];
+            [alert addButtonWithTitle:@"Quit"];
+            [alert setAlertStyle:NSWarningAlertStyle];
+
+            auto ctx = safe::make_unique<SystemChangesErrorContext>((__bridge void *)window, eptr);
+
+            [alert beginSheetModalForWindow:window
+                              modalDelegate:self
+                             didEndSelector:@selector(systemChangesErrorResponse:returnCode:contextInfo:)
+                                contextInfo:(void *) ctx.release()];
         }
     };
     
@@ -745,7 +790,7 @@ make_required_system_changes_as_admin() {
         }
         case WELCOME_WINDOW_BUTTON_1: {
             // pop-up more info dialog
-            safe::mac::open_url(SAFE_WINDOWS_SYSTEM_CHANGES_INFO_WEBSITE);
+            safe::mac::open_url(SAFE_MAC_SYSTEM_CHANGES_INFO_WEBSITE);
             return false;
         }
         case WELCOME_WINDOW_NONE: {
@@ -856,10 +901,25 @@ make_required_system_changes_as_admin() {
         [self _applicationDidFinishLaunching:notification];
     }
     catch (const std::exception & err) {
-        // TODO: handle startup errors better
-        [NSApp presentError:[NSError errorWithDomain:@"SFXUnexpectedError"
-                                                code:0
-                                            userInfo:@{NSLocalizedDescriptionKey: safe::mac::to_ns_string(err.what())}]];
+        lbx_log_debug("Error while starting up: %s", err.what());
+
+        auto error_message =
+        ("An unrecoverable error occured while starting " PRODUCT_NAME_A ". "
+         "Please help us improve by reporting the bug. It's automatic and "
+         "no personal information is used.");
+
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert setMessageText:@"Error During Startup"];
+        [alert setInformativeText:safe::mac::to_ns_string(error_message)];
+        [alert addButtonWithTitle:@"Report Bug"];
+        [alert addButtonWithTitle:@"Quit"];
+        [alert setAlertStyle:NSWarningAlertStyle];
+
+        auto response = [alert runModal];
+        if (response == NSAlertFirstButtonReturn) {
+            safe::mac::report_exception(safe::ExceptionLocation::STARTUP, std::current_exception());
+        }
+
         [NSApp terminate:nil];
     }
 }

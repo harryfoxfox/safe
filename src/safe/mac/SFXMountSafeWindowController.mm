@@ -55,6 +55,18 @@
                               mount:std::move(self->maybeMount)];
 }
 
+- (void)unknownErrorResponse:(NSAlert *)alert
+                  returnCode:(NSInteger)returnCode
+                 contextInfo:(void *)contextInfo {
+    (void) alert;
+    auto ctx = std::unique_ptr<std::exception_ptr>((std::exception_ptr *) contextInfo);
+    if (returnCode == NSAlertSecondButtonReturn) {
+        safe::mac::report_exception(safe::ExceptionLocation::MOUNT, *ctx);
+    }
+    [alert.window orderOut:self];
+    [self.window performClose:self];
+}
+
 - (IBAction)confirmStart:(id)sender {
     (void) sender;
     
@@ -78,31 +90,43 @@
     
     auto onFail = ^(const std::exception_ptr & eptr) {
         bool alerted = false;
-        if (eptr != std::exception_ptr()) {
-            try {
-                std::rethrow_exception(eptr);
-            }
-            catch (const encfs::BadPassword &) {
-                inputErrorAlert(self.window,
-                                safe::mac::to_ns_string(SAFE_DIALOG_PASS_INCORRECT_TITLE),
-                                safe::mac::to_ns_string(SAFE_DIALOG_PASS_INCORRECT_MESSAGE));
-                alerted = true;
-            }
-            catch (const encfs::ConfigurationFileDoesNotExist & /*err*/) {
-                inputErrorAlert(self.window,
-                                [NSString stringWithUTF8String:SAFE_DIALOG_NO_CONFIG_EXISTS_TITLE],
-                                [NSString stringWithUTF8String:SAFE_DIALOG_NO_CONFIG_EXISTS_MESSAGE]);
-                alerted = true;
-            }
-            catch (const std::exception &err) {
-                lbx_log_error("Error while mounting: %s", err.what());
-            }
+        try {
+            std::rethrow_exception(eptr);
         }
-        
-        if (!alerted) {
+        catch (const encfs::BadPassword &) {
             inputErrorAlert(self.window,
-                            [NSString stringWithUTF8String:SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE],
-                            [NSString stringWithUTF8String:SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE]);
+                            safe::mac::to_ns_string(SAFE_DIALOG_PASS_INCORRECT_TITLE),
+                            safe::mac::to_ns_string(SAFE_DIALOG_PASS_INCORRECT_MESSAGE));
+            alerted = true;
+        }
+        catch (const encfs::ConfigurationFileDoesNotExist & /*err*/) {
+            inputErrorAlert(self.window,
+                            [NSString stringWithUTF8String:SAFE_DIALOG_NO_CONFIG_EXISTS_TITLE],
+                            [NSString stringWithUTF8String:SAFE_DIALOG_NO_CONFIG_EXISTS_MESSAGE]);
+            alerted = true;
+        }
+        catch (const std::exception &err) {
+            lbx_log_error("Error while mounting: %s", err.what());
+        }
+
+        if (!alerted) {
+            // unknown error occured, allow user to report
+
+            auto message = (std::string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE) +
+                            (" Please help us improve by sending a bug report. It's automatic and "
+                             "no personal information is used."));
+
+            NSAlert *alert = [[NSAlert alloc] init];
+            [alert setMessageText:safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE)];
+            [alert setInformativeText:safe::mac::to_ns_string(message)];
+            [alert addButtonWithTitle:@"OK"];
+            [alert addButtonWithTitle:@"Report Bug"];
+            [alert setAlertStyle:NSWarningAlertStyle];
+
+            [alert beginSheetModalForWindow:self.window
+                              modalDelegate:self
+                             didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
+                                contextInfo:(void *) new std::exception_ptr(eptr)];
         }
     };
     
