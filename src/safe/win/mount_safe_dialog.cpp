@@ -67,6 +67,8 @@ mount_existing_safe_dialog_proc(HWND hwnd, UINT Message,
 
     if (ctx->initial_path) {
       SetDlgItemTextW(hwnd, IDC_LOCATION, w32util::widen(*ctx->initial_path).c_str());
+      SetFocus(GetDlgItem(hwnd, IDC_PASSWORD));
+      return FALSE;
     }
 
     return TRUE;
