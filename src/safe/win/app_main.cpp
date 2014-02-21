@@ -448,17 +448,45 @@ set_app_to_run_at_login(bool run_at_login) {
 }
 
 static
+bool
+set_highest_non_disabled_to_default(HMENU root) {
+  // do a basic recursive dfs, it should be okay since we trust
+  // our menus
+
+  auto num_items = w32util::check_call(-1, GetMenuItemCount, root);
+  for (UINT i = 0; i < (UINT) num_items; ++i) {
+    auto set_default = false;
+    auto submenu = GetSubMenu(root, i);
+    if (submenu) {
+      set_default = set_highest_non_disabled_to_default(submenu);
+    }
+    else {
+      auto state = GetMenuState(root, i, MF_BYPOSITION);
+      set_default = !(state & MF_DISABLED);
+    }
+
+    if (set_default) {
+      w32util::check_bool(SetMenuDefaultItem, root, i, TRUE);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+static
 void
 update_tray_menu(WindowData & wd) {
   w32util::menu_clear(wd.tray_menu.get());
   auto tm = safe::win::TrayMenu(wd.tray_menu);
   safe::populate_tray_menu(tm,
-                              wd.mounts,
-                              wd.recent_mount_paths_store,
-                              app_is_run_at_login(),
-                              wd.control_was_pressed_on_tray_open);
-  auto success = SetMenuDefaultItem(wd.tray_menu.get(), 0, TRUE);
-  if (!success) w32util::throw_windows_error();
+                           wd.mounts,
+                           wd.recent_mount_paths_store,
+                           app_is_run_at_login(),
+                           wd.control_was_pressed_on_tray_open);
+
+  auto ret = set_highest_non_disabled_to_default(wd.tray_menu.get());
+  assert(ret);
 }
 
 static
@@ -539,6 +567,8 @@ perform_default_tray_action(HWND safe_main_window, WindowData & wd) {
   assert(!wd.popup_menu_is_open);
   auto child = alert_of_popup_if_we_have_one(safe_main_window, wd, false);
   if (child) return;
+
+  SetForegroundWindow(safe_main_window);
 
   wd.control_was_pressed_on_tray_open = false;
   update_tray_menu(wd);
