@@ -21,6 +21,7 @@
 #import <safe/constants.h>
 #import <safe/util.hpp>
 
+#import <sstream>
 #import <stdexcept>
 #import <string>
 
@@ -31,8 +32,12 @@
 namespace safe { namespace mac {
 
 void
-open_url(const char *url) {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:url]]];
+open_url(const std::string & url) {
+  // just responsible for getting a raw string into
+  // a browser address bar
+  auto success = [NSWorkspace.sharedWorkspace
+                  openURL:[NSURL URLWithString:safe::mac::to_ns_string(url)]];
+  if (!success) throw std::runtime_error("failed to open url");
 }
     
 void
@@ -103,43 +108,6 @@ reboot_machine() {
 std::string
 from_ns_string(const NSString *a) {
   return std::string(a.UTF8String);
-}
-
-const char *
-exception_location_to_string(ExceptionLocation el) {
-#define _CV(e) case e: return #e
-    switch (el) {
-            _CV(ExceptionLocation::SYSTEM_CHANGES);
-            _CV(ExceptionLocation::STARTUP);
-            _CV(ExceptionLocation::MOUNT);
-            _CV(ExceptionLocation::CREATE);
-        default: /* notreached */ assert(false); return "";
-    }
-#undef _CV
-}
-
-void
-report_exception(ExceptionLocation el, std::exception_ptr eptr) {
-    std::string what;
-    try {
-        std::rethrow_exception(eptr);
-    }
-    catch (const std::exception & err) {
-        what = err.what();
-    }
-
-    auto string_ref =
-    CFURLCreateStringByAddingPercentEscapes(nullptr,
-                                            (__bridge CFStringRef) safe::mac::to_ns_string(what),
-                                            nullptr,
-                                            (__bridge CFStringRef) @";/?:@&=+$,",
-                                            kCFStringEncodingUTF8);
-    auto _free_string_ref = safe::create_deferred(CFRelease, string_ref);
-
-    auto url = (std::string(SAFE_REPORT_EXCEPTION_WEBSITE) + "?" +
-                "where=" + exception_location_to_string(el) + "&" +
-                "what=" + safe::mac::from_ns_string((__bridge NSString *) string_ref));
-    open_url(url.c_str());
 }
 
 }}

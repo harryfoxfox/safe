@@ -14,6 +14,7 @@
 #import <safe/mac/keychain.hpp>
 #import <safe/mount_safe_dialog_logic.hpp>
 #import <safe/mac/util.hpp>
+#import <safe/report_exception.hpp>
 
 @implementation SFXMountSafeWindowController
 
@@ -61,7 +62,7 @@
     (void) alert;
     auto ctx = std::unique_ptr<std::exception_ptr>((std::exception_ptr *) contextInfo);
     if (returnCode == NSAlertSecondButtonReturn) {
-        safe::mac::report_exception(safe::ExceptionLocation::MOUNT, *ctx);
+        safe::report_exception(safe::ExceptionLocation::MOUNT, *ctx);
     }
     [alert.window orderOut:self];
     [self.window performClose:self];

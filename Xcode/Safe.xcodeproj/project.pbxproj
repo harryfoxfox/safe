@@ -44,6 +44,8 @@
 		9682AA59188373BF008A3DB7 /* mount_webdav_interpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 9682AA58188373BF008A3DB7 /* mount_webdav_interpose.h */; };
 		96A3459B188139B7005AE884 /* mount_webdav_interpose.c in Sources */ = {isa = PBXBuildFile; fileRef = 96A3459A188139B7005AE884 /* mount_webdav_interpose.c */; };
 		96A3459C1881C3AF005AE884 /* libmount_webdav_interpose.dylib in Resources */ = {isa = PBXBuildFile; fileRef = 96A34596188139A3005AE884 /* libmount_webdav_interpose.dylib */; };
+		96C3708318B6D148008C1CE3 /* report_exception.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96C3708118B6D148008C1CE3 /* report_exception.cpp */; };
+		96C3708718B6EBE2008C1CE3 /* open_url.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96C3708418B6EBE2008C1CE3 /* open_url.cpp */; };
 		96D2DC6218B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
 		96F0640C18B58D7E0014F6A7 /* shared_file_list.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96F0640A18B58D7E0014F6A7 /* shared_file_list.mm */; };
@@ -134,6 +136,11 @@
 		96A34596188139A3005AE884 /* libmount_webdav_interpose.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmount_webdav_interpose.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		96A3459A188139B7005AE884 /* mount_webdav_interpose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mount_webdav_interpose.c; path = ../src/mount_webdav_interpose/mount_webdav_interpose.c; sourceTree = "<group>"; };
 		96A7AEAB185473030003AEE5 /* constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = constants.h; path = ../src/safe/constants.h; sourceTree = "<group>"; };
+		96C3708118B6D148008C1CE3 /* report_exception.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = report_exception.cpp; path = ../src/safe/report_exception.cpp; sourceTree = "<group>"; };
+		96C3708218B6D148008C1CE3 /* report_exception.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = report_exception.hpp; path = ../src/safe/report_exception.hpp; sourceTree = "<group>"; };
+		96C3708418B6EBE2008C1CE3 /* open_url.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = open_url.cpp; path = ../src/safe/open_url.cpp; sourceTree = "<group>"; };
+		96C3708518B6EBE2008C1CE3 /* open_url.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = open_url.hpp; path = ../src/safe/open_url.hpp; sourceTree = "<group>"; };
+		96C3708618B6EBE2008C1CE3 /* optional.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = optional.hpp; path = ../src/safe/optional.hpp; sourceTree = "<group>"; };
 		96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RecentlyUsedNSURLStoreV1.mm; path = ../src/safe/mac/RecentlyUsedNSURLStoreV1.mm; sourceTree = "<group>"; };
 		96D2DC6118B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RecentlyUsedNSURLStoreV1.hpp; path = ../src/safe/mac/RecentlyUsedNSURLStoreV1.hpp; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
@@ -267,6 +274,11 @@
 		96C18F9D18B4209800D7DD37 /* core */ = {
 			isa = PBXGroup;
 			children = (
+				96C3708418B6EBE2008C1CE3 /* open_url.cpp */,
+				96C3708518B6EBE2008C1CE3 /* open_url.hpp */,
+				96C3708618B6EBE2008C1CE3 /* optional.hpp */,
+				96C3708118B6D148008C1CE3 /* report_exception.cpp */,
+				96C3708218B6D148008C1CE3 /* report_exception.hpp */,
 				966ED38B184F2F3100463408 /* product_name.h */,
 				9604753C18B2E13000B9F5FB /* deferred.hpp */,
 				9604753618B190D800B9F5FB /* parse.hpp */,
@@ -497,7 +509,9 @@
 				96230549182B2E5200913551 /* SFXCreateSafeWindowController.mm in Sources */,
 				96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */,
 				963F170B1877AF7B00E50B2A /* SFXWelcomeWindowController.mm in Sources */,
+				96C3708318B6D148008C1CE3 /* report_exception.cpp in Sources */,
 				966ED38C184F2F3100463408 /* create_safe_dialog_logic.cpp in Sources */,
+				96C3708718B6EBE2008C1CE3 /* open_url.cpp in Sources */,
 				9604753B18B2DF2600B9F5FB /* system_changes.cpp in Sources */,
 				9604753518B1667300B9F5FB /* util.mm in Sources */,
 				96042A5D18B34F7F00D6CD58 /* keychain.mm in Sources */,

@@ -21,6 +21,9 @@
 #include <safe/constants.h>
 #include <safe/create_safe_dialog_logic.hpp>
 #include <safe/win/dialog_common.hpp>
+#include <safe/win/report_bug_dialog.hpp>
+#include <safe/report_exception.hpp>
+
 #include <w32util/async.hpp>
 #include <w32util/dialog.hpp>
 #include <w32util/error.hpp>
@@ -97,46 +100,62 @@ create_new_safe_dialog_proc(HWND hwnd, UINT Message,
         break;
       }
 
-      // create encfs drive
-      auto encrypted_container_path = ctx->fs->pathFromString(location_string).join(name_string);
-      auto use_case_safe_filename_encoding = true;
-      auto maybe_cfg =
-        w32util::modal_call(hwnd,
-                            SAFE_PROGRESS_CREATING_TITLE,
-                            SAFE_PROGRESS_CREATING_MESSAGE,
-                            [&] {
-                              auto cfg =
-                                encfs::create_paranoid_config(password_buf,
-                                                              use_case_safe_filename_encoding);
-                              ctx->fs->mkdir(encrypted_container_path);
-                              encfs::write_config(ctx->fs, encrypted_container_path, cfg);
-                              return cfg;
-                            });
-      if (!maybe_cfg) {
-        // modal_call returns nullopt if we got a quit signal
+      try {
+        // create encfs drive
+        auto encrypted_container_path = ctx->fs->pathFromString(location_string).join(name_string);
+        auto use_case_safe_filename_encoding = true;
+        auto maybe_cfg =
+          w32util::modal_call(hwnd,
+                              SAFE_PROGRESS_CREATING_TITLE,
+                              SAFE_PROGRESS_CREATING_MESSAGE,
+                              [&] {
+                                auto cfg =
+                                  encfs::create_paranoid_config(password_buf,
+                                                                use_case_safe_filename_encoding);
+                                ctx->fs->mkdir(encrypted_container_path);
+                                encfs::write_config(ctx->fs, encrypted_container_path, cfg);
+                                return cfg;
+                              });
+        if (!maybe_cfg) {
+          // modal_call returns nullopt if we got a quit signal
+          EndDialog(hwnd, (INT_PTR) 0);
+          break;
+        }
+
+        // mount encfs drive
+        auto maybe_mount_details =
+          w32util::modal_call(hwnd,
+                              SAFE_PROGRESS_MOUNTING_TITLE,
+                              SAFE_PROGRESS_MOUNTING_TITLE,
+                              safe::win::mount_new_encfs_drive,
+                              ctx->fs, encrypted_container_path, *maybe_cfg, password_buf);
+        if (!maybe_mount_details) {
+          // modal_call returns nullopt if we got a quit signal
+          EndDialog(hwnd, (INT_PTR) 0);
+          break;
+        }
+
+        w32util::clear_text_field(password_hwnd,
+                                  strlen((char *) password_buf.data()));
+        w32util::clear_text_field(confirm_password_hwnd,
+                                  strlen((char *) confirm_password_buf.data()));
+
+        EndDialog(hwnd, send_mount_details(std::move(maybe_mount_details)));
+      }
+      catch (const std::exception & err) {
+        auto choice =
+          safe::win::report_bug_dialog(hwnd,
+                                       "An error occured while attempting to create \"" +
+                                       name_string + "\"");
+
+        if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
+          safe::report_exception(safe::ExceptionLocation::CREATE,
+                                 std::current_exception());
+        }
+
         EndDialog(hwnd, (INT_PTR) 0);
-        break;
       }
 
-      // mount encfs drive
-      auto maybe_mount_details =
-        w32util::modal_call(hwnd,
-                            SAFE_PROGRESS_MOUNTING_TITLE,
-                            SAFE_PROGRESS_MOUNTING_TITLE,
-                            safe::win::mount_new_encfs_drive,
-                            ctx->fs, encrypted_container_path, *maybe_cfg, password_buf);
-      if (!maybe_mount_details) {
-        // modal_call returns nullopt if we got a quit signal
-        EndDialog(hwnd, (INT_PTR) 0);
-        break;
-      }
-
-      w32util::clear_text_field(password_hwnd,
-                                strlen((char *) password_buf.data()));
-      w32util::clear_text_field(confirm_password_hwnd,
-                                strlen((char *) confirm_password_buf.data()));
-
-      EndDialog(hwnd, send_mount_details(std::move(maybe_mount_details)));
       break;
     }
     case IDCANCEL: {

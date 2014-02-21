@@ -264,7 +264,7 @@ clean:
 SRCS = fs_fsio.cpp CFsToFsIO.cpp webdav_server.cpp fs.cpp \
 	SecureMemPasswordReader.cpp UnicodeWrapperFsIO.cpp \
 	$(if $(IS_WIN_TARGET),win/unicode_fs.cpp,) \
-	$(if $(IS_MAC_TARGET),win/unicode_fs.mm,)
+	$(if $(IS_MAC_TARGET),mac/unicode_fs.mm,)
 
 TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/safe/%.o,${TEST_ENCFS_MAIN_SRCS})
@@ -278,6 +278,8 @@ W32UTIL_SRCS = \
 APP_SRCS = \
  create_safe_dialog_logic.cpp \
  mount_safe_dialog_logic.cpp \
+ report_exception.cpp \
+ open_url.cpp \
  $(SRCS)
 
 WIN_APP_SRCS = \
@@ -292,6 +294,8 @@ WIN_APP_SRCS = \
  system_changes_dialog.cpp \
  ramdisk.cpp \
  guids.cpp \
+ report_bug_dialog.cpp \
+ util.cpp
 
 WINDOWS_APP_MAIN_OBJS = \
  $(patsubst %,src/safe/%.o,${APP_SRCS}) \

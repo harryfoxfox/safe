@@ -22,8 +22,10 @@
 #include <safe/util.hpp>
 #include <w32util/error.hpp>
 #include <w32util/string.hpp>
+#include <w32util/gui_util.hpp>
 
 #include <stdexcept>
+#include <string>
 
 #include <safe/lean_windows.h>
 #include <shellapi.h>
@@ -82,6 +84,9 @@ run_command_sync(std::string binary_path,
 
   return exit_code;
 }
+
+void
+open_url(const std::string & url);
 
 }}
 

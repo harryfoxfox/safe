@@ -32,6 +32,7 @@
 #include <safe/win/tray_menu.hpp>
 #include <safe/webdav_server.hpp>
 #include <safe/win/welcome_dialog.hpp>
+#include <safe/win/report_bug_dialog.hpp>
 #include <w32util/async.hpp>
 #include <w32util/file.hpp>
 #include <w32util/gui_util.hpp>
@@ -39,6 +40,7 @@
 #include <w32util/shell.hpp>
 #include <w32util/string.hpp>
 #include <safe/util.hpp>
+#include <safe/report_exception.hpp>
 
 #include <encfs/fs/FsIO.h>
 #include <encfs/fs/FileUtils.h>
@@ -1030,7 +1032,23 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	assert(choice == safe::win::SystemChangesChoice::OK);
 
-        auto must_restart = make_required_system_changes_as_admin(hwnd);
+        bool must_restart = false;
+        try {
+          must_restart = make_required_system_changes_as_admin(hwnd);
+        }
+        catch (...) {
+          // show "report bug" dialog and quit
+          auto choice =
+            safe::win::report_bug_dialog(hwnd, "An error occured while attempting to make changes to your system.");
+          if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
+            safe::report_exception(safe::ExceptionLocation::SYSTEM_CHANGES,
+                                   std::current_exception());
+          }
+
+          PostMessage(hwnd, WM_CLOSE, 0, 0);
+	  return 0;
+        }
+
         if (must_restart) {
           run_reboot_sequence(hwnd);
           PostMessage(hwnd, WM_CLOSE, 0, 0);
@@ -1469,6 +1487,14 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
   catch (const std::exception & err) {
     lbx_log_critical("Uncaught exception: %s", err.what());
+    auto choice =
+      safe::win::report_bug_dialog(nullptr, "An error occured while starting " PRODUCT_NAME_A ".");
+
+    if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
+      safe::report_exception(safe::ExceptionLocation::STARTUP,
+                             std::current_exception());
+    }
+
     return 0;
   }
 }

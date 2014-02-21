@@ -23,6 +23,9 @@
 #include <safe/mount_safe_dialog_logic.hpp>
 #include <safe/win/mount.hpp>
 #include <safe/util.hpp>
+#include <safe/win/report_bug_dialog.hpp>
+#include <safe/report_exception.hpp>
+
 #include <w32util/async.hpp>
 #include <w32util/dialog.hpp>
 #include <w32util/gui_util.hpp>
@@ -95,10 +98,10 @@ mount_existing_safe_dialog_proc(HWND hwnd, UINT Message,
         break;
       }
 
-      auto encrypted_container_path = ctx->fs->pathFromString(location_string);
-
       opt::optional<encfs::EncfsConfig> maybe_cfg;
       try {
+        auto encrypted_container_path = ctx->fs->pathFromString(location_string);
+
         maybe_cfg =
           w32util::modal_call(hwnd,
                               SAFE_PROGRESS_READING_CONFIG_TITLE,
@@ -161,9 +164,17 @@ mount_existing_safe_dialog_proc(HWND hwnd, UINT Message,
                              SAFE_DIALOG_PASS_INCORRECT_MESSAGE);
       }
       catch (const std::exception &) {
-        w32util::quick_alert(hwnd,
-                             SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE,
-                             SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE);
+        auto choice =
+          safe::win::report_bug_dialog(hwnd,
+                                       "An error occured while attempting to mount \"" +
+                                       location_string + "\"");
+
+        if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
+          safe::report_exception(safe::ExceptionLocation::MOUNT,
+                                 std::current_exception());
+        }
+
+        EndDialog(hwnd, (INT_PTR) 0);
       }
 
       break;

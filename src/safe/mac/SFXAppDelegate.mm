@@ -22,6 +22,7 @@
 #import <safe/util.hpp>
 #import <safe/mac/util.hpp>
 #import <safe/webdav_server.hpp>
+#import <safe/report_exception.hpp>
 
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
@@ -729,7 +730,7 @@ struct SystemChangesErrorContext {
     auto ctx = std::unique_ptr<SystemChangesErrorContext>((SystemChangesErrorContext *) contextInfo);
 
     if (returnCode == NSAlertFirstButtonReturn) {
-        safe::mac::report_exception(safe::ExceptionLocation::SYSTEM_CHANGES, ctx->eptr);
+        safe::report_exception(safe::ExceptionLocation::SYSTEM_CHANGES, ctx->eptr);
     }
 
     [NSApp terminate:nil];
@@ -918,6 +919,9 @@ struct SystemChangesErrorContext {
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    NSURL *a = [NSURL URLWithString:@"http://getsafe.org/yowhatsup?a!@#$^*()=b!@#$^*()&a=b"];
+    NSLog(@"YO: %@", a);
+    [NSWorkspace.sharedWorkspace openURL:a];
     try {
         [self _applicationDidFinishLaunching:notification];
     }
@@ -938,7 +942,7 @@ struct SystemChangesErrorContext {
 
         auto response = [alert runModal];
         if (response == NSAlertFirstButtonReturn) {
-            safe::mac::report_exception(safe::ExceptionLocation::STARTUP, std::current_exception());
+            safe::report_exception(safe::ExceptionLocation::STARTUP, std::current_exception());
         }
 
         [NSApp terminate:nil];
