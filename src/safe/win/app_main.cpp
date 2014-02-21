@@ -33,6 +33,7 @@
 #include <safe/webdav_server.hpp>
 #include <safe/win/welcome_dialog.hpp>
 #include <safe/win/report_bug_dialog.hpp>
+#include <safe/win/general_safe_dialog.hpp>
 #include <w32util/async.hpp>
 #include <w32util/file.hpp>
 #include <w32util/gui_util.hpp>
@@ -626,6 +627,16 @@ is_app_running_as_admin() {
 
 static
 bool
+running_on_winxp() {
+  OSVERSIONINFOW vi;
+  safe::zero_object(vi);
+  vi.dwOSVersionInfoSize = sizeof(vi);
+  w32util::check_bool(GetVersionEx, &vi);
+  return vi.dwMajorVersion < 6;
+}
+
+static
+bool
 hibernate_is_enabled() {
   SYSTEM_POWER_CAPABILITIES powercap;
   w32util::check_bool(GetPwrCapabilities, &powercap);
@@ -762,7 +773,8 @@ make_required_system_changes() {
     must_restart = true;
   }
 
-  if (!encrypted_pagefile_is_enabled() &&
+  if (!running_on_winxp() &&
+      !encrypted_pagefile_is_enabled() &&
       set_encrypted_pagefile(true)) {
     must_restart = true;
   }
@@ -941,6 +953,49 @@ run_reboot_sequence(HWND hwnd) {
   else assert(ret == IDCANCEL);
 }
 
+static
+bool
+run_winxp_warning_dialog(HWND hwnd) {
+  std::string message =
+    ("The security of " PRODUCT_NAME_A " is degraded while "
+     "running under Windows XP. This is not a limitation of "
+     PRODUCT_NAME_A " and most security products on Windows XP "
+     "suffer from the same weakness."
+     "\n\n"
+     "If you expect that the only "
+     "people who will ever have access to your physical hard "
+     "disk are trusted, "
+     "then this is not an issue. Otherwise we don't recommend "
+     "running " PRODUCT_NAME_A " in this environment."
+     );
+
+  enum class XPWarningChoice {
+    CONTINUE,
+    MORE_INFO,
+    QUIT,
+  };
+
+  auto more_info = [&] {
+    return opt::nullopt;
+  };
+
+  std::vector<safe::win::Choice<XPWarningChoice>> choices = {
+    {"Continue", XPWarningChoice::CONTINUE},
+    {"More Info", more_info},
+    {"Quit", XPWarningChoice::QUIT},
+  };
+
+  auto ret =
+    safe::win::general_safe_dialog<XPWarningChoice>(hwnd,
+                                                    "Windows XP Warning",
+                                                    message,
+                                                    std::move(choices),
+                                                    opt::nullopt,
+                                                    safe::win::GeneralDialogIcon::NONE);
+
+  return ret == XPWarningChoice::CONTINUE;
+}
+
 #define NO_FALLTHROUGH(c) assert(false); case c
 
 static
@@ -1012,6 +1067,14 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   ICON_BIG,
                   (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_SFX_APP,
                                       IMAGE_ICON, 32, 32, LR_SHARED));
+
+      if (running_on_winxp()) {
+        auto should_continue = run_winxp_warning_dialog(hwnd);
+        if (!should_continue) {
+          PostMessage(hwnd, WM_CLOSE, 0, 0);
+          return 0;
+        }
+      }
 
       if (is_reboot_pending()) {
         run_reboot_sequence(hwnd);
