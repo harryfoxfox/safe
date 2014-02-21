@@ -259,6 +259,11 @@ public:
   bool operator!=(const ReversedIterator & other) const {
     return !(*this == other);
   }
+
+  decltype(std::declval<Iterator>() - std::declval<Iterator>())
+  operator-(const ReversedIterator & a) const {
+    return a._iterator - _iterator;
+  }
 };
 
 template<typename RangeType>
@@ -336,7 +341,8 @@ class RangeMap  {
   EndIterator _end;
 
 public:
-  RangeMap(Fn f, const RangeType & r)
+  template<typename R>
+  explicit RangeMap(Fn f, R && r)
   : _f(std::move(f))
   , _begin(r.begin())
   , _end(r.end())
@@ -348,6 +354,127 @@ public:
 
   MapIterator<Fn, EndIterator> end() const {
     return MapIterator<Fn, EndIterator>(_f, _end);
+  }
+};
+
+template<class Iterator1, class Iterator2,
+         class EndIterator1, class EndIterator2>
+class ZipIterator {
+  Iterator1 _it1;
+  Iterator2 _it2;
+  EndIterator1 _end1;
+  EndIterator2 _end2;
+
+public:
+  ZipIterator(Iterator1 it1, Iterator2 it2,
+              EndIterator1 end1, EndIterator2 end2)
+    : _it1(std::move(it1))
+    , _it2(std::move(it2))
+    , _end1(std::move(end1))
+    , _end2(std::move(end2))
+  {}
+
+  decltype(std::make_pair(*std::declval<Iterator1>(),
+                          *std::declval<Iterator2>()))
+  operator*() {
+    return std::make_pair(*_it1, *_it2);
+  }
+
+  ZipIterator & operator++() {
+    ++_it1;
+    ++_it2;
+    return *this;
+  }
+
+  ZipIterator operator++(int) {
+    return ZipIterator(_it1++, _it2++, _end1, _end2);
+  }
+
+  ZipIterator & operator--() {
+    --_it1;
+    --_it2;
+    return *this;
+  }
+
+  ZipIterator operator--(int) {
+    return ZipIterator(_it1--, _it2--, _end1, _end2);
+  }
+
+  bool operator==(const ZipIterator & other) const {
+    if (!(_end1 == other._end1 &&
+          _end2 == other._end2)) return false;
+
+    bool we_are_an_end_iterator = (_it1 == _end1 &&
+                                   _it2 == _end2);
+    bool they_are_an_end_iterator = (other._it1 == other._end1 &&
+                                     other._it2 == other._end2);
+
+    bool we_are_at_end = (_it1 == _end1 || _it2 == _end2);
+    bool they_are_at_end = (other._it1 == other._end1 ||
+                            other._it2 == other._end2);
+
+    if (we_are_at_end && they_are_an_end_iterator) {
+      return true;
+    }
+    else if (we_are_an_end_iterator && they_are_at_end) {
+      return true;
+    }
+    else {
+      return _it1 == other._it1 && _it2 == other._it2;
+    }
+  }
+
+  bool operator!=(const ZipIterator & other) const {
+    return !(*this == other);
+  }
+
+  decltype(std::declval<Iterator1>() - std::declval<Iterator1>())
+  operator-(const ZipIterator & a) const {
+    // we use the first iterator here,
+    // since we co
+    return _it1 - a._it1;
+  }
+};
+
+template<typename RangeType1, typename RangeType2>
+class RangeZip  {
+  typedef decltype(std::declval<RangeType1>().begin()) BeginIterator1;
+  typedef decltype(std::declval<RangeType1>().end()) EndIterator1;
+
+  typedef decltype(std::declval<RangeType2>().begin()) BeginIterator2;
+  typedef decltype(std::declval<RangeType2>().end()) EndIterator2;
+
+
+  BeginIterator1 _begin1;
+  EndIterator1 _end1;
+
+  BeginIterator2 _begin2;
+  EndIterator2 _end2;
+
+public:
+  template<typename R, typename R2>
+  explicit
+  RangeZip(R && r, R2 && r2)
+   : _begin1(r.begin())
+   , _end1(r.end())
+   , _begin2(r2.begin())
+   , _end2(r2.end())
+  {}
+
+  ZipIterator<BeginIterator1, BeginIterator2,
+              EndIterator1, EndIterator2>
+  begin() const {
+    return ZipIterator<BeginIterator1, BeginIterator2,
+                       EndIterator1, EndIterator2>
+      (_begin1, _begin2, _end1, _end2);
+  }
+
+  ZipIterator<EndIterator1, EndIterator2,
+              EndIterator1, EndIterator2>
+  end() const {
+    return ZipIterator<EndIterator1, EndIterator2,
+                       EndIterator1, EndIterator2>
+      (_end1, _end2, _end1, _end2);
   }
 };
 
@@ -380,6 +507,17 @@ template<typename F, typename RangeType>
 _int::RangeMap<typename std::decay<F>::type, typename std::decay<RangeType>::type>
 range_map(F && fn, RangeType && r) {
   return _int::RangeMap<typename std::decay<F>::type, typename std::decay<RangeType>::type>(std::forward<F>(fn), std::forward<RangeType>(r));
+}
+
+template<typename RangeType1, typename RangeType2>
+_int::RangeZip<typename std::decay<RangeType1>::type,
+               typename std::decay<RangeType2>::type>
+range_zip(RangeType1 && r, RangeType2 && r2) {
+  // i implemented this because i was feeling particularly
+  // masochistic / adventurous
+  return _int::RangeZip<typename std::decay<RangeType1>::type,
+                        typename std::decay<RangeType2>::type>
+    (std::forward<RangeType1>(r), std::forward<RangeType2>(r2));
 }
 
 template<typename T>
