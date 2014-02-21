@@ -24,6 +24,8 @@
 #import <safe/webdav_server.hpp>
 #import <safe/report_exception.hpp>
 
+#import <encfs/base/logging.h>
+
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
 
@@ -839,7 +841,13 @@ struct SystemChangesErrorContext {
     (void)aNotification;
     
     log_printer_default_init();
+#ifdef NDEBUG
+    logging_set_global_level(LOG_NOTHING);
+    encfs_set_log_level(ENCFS_LOG_NOTHING);
+#else
     logging_set_global_level(LOG_DEBUG);
+    encfs_set_log_level(ENCFS_LOG_DEBUG);
+#endif
     log_debug("Hello world!");
     
     NSError *err;
