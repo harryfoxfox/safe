@@ -76,17 +76,22 @@ send_mount_details(opt::optional<safe::win::MountDetails> maybe_mount_details) {
 
 inline
 void
-draw_icon_item(LPDRAWITEMSTRUCT pDIS, LPCWSTR icon_resource) {
+draw_icon_item(LPDRAWITEMSTRUCT pDIS,
+               LPCWSTR icon_resource,
+               bool is_system) {
   auto width = pDIS->rcItem.right - pDIS->rcItem.left;
   auto height = pDIS->rcItem.bottom - pDIS->rcItem.top;
 
-  auto icon_handle = (HICON) LoadImage(GetModuleHandle(NULL),
+
+  HINSTANCE instance = is_system ? nullptr : GetModuleHandle(nullptr);
+  auto icon_handle = (HICON) LoadImage(instance,
                                        icon_resource, IMAGE_ICON,
                                        width, height,
-                                       0);
+                                       is_system ? LR_SHARED : 0);
   if (!icon_handle) throw w32util::windows_error();
   auto _release_icon =
     safe::create_deferred(DestroyIcon, icon_handle);
+  if (is_system) _release_icon.cancel();
 
   auto success = DrawIconEx(pDIS->hDC, pDIS->rcItem.left, pDIS->rcItem.top,
                             icon_handle, width, height,

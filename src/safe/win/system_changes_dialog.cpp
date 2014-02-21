@@ -60,13 +60,13 @@ system_changes_dialog(HWND hwnd) {
     {SAFE_DIALOG_SYSTEM_CHANGES_MORE_INFO, more_info},
   };
 
-  const auto & c = &general_safe_dialog<SystemChangesChoice,
-                                           decltype(choices)>;
-  return c(hwnd,
-           SAFE_DIALOG_SYSTEM_CHANGES_TITLE,
-           SAFE_DIALOG_SYSTEM_CHANGES_MESSAGE,
-           std::move(choices),
-           ButtonAction<SystemChangesChoice>(quit));
+  return general_safe_dialog<SystemChangesChoice,
+                             decltype(choices)>
+    (hwnd,
+     SAFE_DIALOG_SYSTEM_CHANGES_TITLE,
+     SAFE_DIALOG_SYSTEM_CHANGES_MESSAGE,
+     std::move(choices),
+     ButtonAction<SystemChangesChoice>(quit));
 }
 
 }}

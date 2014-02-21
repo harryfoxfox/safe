@@ -33,6 +33,12 @@ namespace safe { namespace win {
 template<typename ChoiceType>
 using ButtonAction = std::function<opt::optional<ChoiceType>()>;
 
+enum class GeneralDialogIcon {
+  SAFE,
+  WARNING,
+  NONE,
+};
+
 template <class To,
           class From,
           typename
@@ -48,7 +54,6 @@ convert_button_action(ButtonAction<From> action) {
             : opt::nullopt);
   };
 }
-
 
 template <class ChoiceType>
 struct Choice {
@@ -79,16 +84,18 @@ namespace _int {
 
   generic_choice_type
   generic_general_safe_dialog(HWND, std::string, std::string,
-                                 generic_choices_type,
-                                 opt::optional<ButtonAction<generic_choice_type>>);
+                              generic_choices_type,
+                              opt::optional<ButtonAction<generic_choice_type>>,
+                              GeneralDialogIcon);
 }
 
 template <class ChoiceType, class RangeType>
 ChoiceType
 general_safe_dialog(HWND hwnd,
-                       std::string title,
-                       std::string msg, RangeType && r,
-                       opt::optional<ButtonAction<ChoiceType>> close_action = opt::nullopt) {
+                    std::string title,
+                    std::string msg, RangeType && r,
+                    opt::optional<ButtonAction<ChoiceType>> close_action = opt::nullopt,
+                    GeneralDialogIcon t = GeneralDialogIcon::SAFE) {
   auto choices =
     _int::generic_choices_type(std::forward<RangeType>(r).begin(),
 			       std::forward<RangeType>(r).end());
@@ -98,8 +105,9 @@ general_safe_dialog(HWND hwnd,
 
   auto ret =
     _int::generic_general_safe_dialog(hwnd, title, msg,
-                                         std::move(choices),
-                                         new_close_action);
+                                      std::move(choices),
+                                      new_close_action,
+                                      t);
 
   return static_cast<ChoiceType>(ret);
 }

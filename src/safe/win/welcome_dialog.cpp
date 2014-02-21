@@ -46,15 +46,14 @@ welcome_dialog(HWND hwnd, bool installed_kernel_driver) {
         return WelcomeDialogChoice::NOTHING;
       });
 
-  const auto & c = &general_safe_dialog<WelcomeDialogChoice,
-                                           decltype(choices)>;
-  return c(hwnd, "Welcome to Safe!",
-           installed_kernel_driver
-           ? SAFE_DIALOG_WELCOME_TEXT_POST_DRIVER_INSTALL
-           : SAFE_DIALOG_WELCOME_TEXT,
-           std::move(choices),
-           close_action
-           );
+  return general_safe_dialog<WelcomeDialogChoice,
+                             decltype(choices)>
+    (hwnd, "Welcome to Safe!",
+     installed_kernel_driver
+     ? SAFE_DIALOG_WELCOME_TEXT_POST_DRIVER_INSTALL
+     : SAFE_DIALOG_WELCOME_TEXT,
+     std::move(choices),
+     close_action);
 }
 
 }}

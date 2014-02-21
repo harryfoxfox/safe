@@ -41,13 +41,15 @@ enum {
 struct GeneralSafeDialogCtx {
   generic_choices_type choices;
   opt::optional<ButtonAction<generic_choice_type>> close_action;
+  LPCWSTR icon_name;
+  bool is_system;
 };
 
 CALLBACK
 static
 INT_PTR
 general_safe_dialog_proc(HWND hwnd, UINT Message,
-                            WPARAM wParam, LPARAM lParam) {
+                         WPARAM wParam, LPARAM lParam) {
   const auto ctx = (GeneralSafeDialogCtx *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
   switch (Message) {
@@ -66,7 +68,9 @@ general_safe_dialog_proc(HWND hwnd, UINT Message,
   }
   case WM_DRAWITEM: {
     auto pDIS = (LPDRAWITEMSTRUCT) lParam;
-    if (pDIS->CtlID == IDC_LOGO) draw_icon_item(pDIS, IDI_SFX_APP);
+    if (pDIS->CtlID == IDC_LOGO) {
+      draw_icon_item(pDIS, ctx->icon_name, ctx->is_system);
+    }
     return TRUE;
   }
   case WM_COMMAND: {
@@ -96,10 +100,11 @@ general_safe_dialog_proc(HWND hwnd, UINT Message,
 
 _int::generic_choice_type
 generic_general_safe_dialog(HWND hwnd,
-                               std::string title,
-                               std::string msg,
-                               _int::generic_choices_type choices,
-                               opt::optional<ButtonAction<generic_choice_type>> close_action) {
+                            std::string title,
+                            std::string msg,
+                            _int::generic_choices_type choices,
+                            opt::optional<ButtonAction<generic_choice_type>> close_action,
+                            GeneralDialogIcon t) {
   using namespace w32util;
 
   auto message_font = get_message_font();
@@ -116,14 +121,38 @@ generic_general_safe_dialog(HWND hwnd,
   const unit_t LEFT_MARGIN = MulDiv(base_units.cy, 4, base_units.cx);
   const unit_t RIGHT_MARGIN = LEFT_MARGIN;
 
-  // the icon is 128px
-  const unit_t ICON_WIDTH = 128 * 4 / base_units.cx;
-  const unit_t ICON_HEIGHT = 128 * 8 / base_units.cy;
+  // the safe icon is 128px
+  size_t icon_width_px = 128;
+  size_t icon_height_px = 128;
+  auto icon_margin = LEFT_MARGIN;
+  auto icon_tag = IDI_SFX_APP;
+  auto is_system = false;
+
+  if (t == GeneralDialogIcon::WARNING) {
+    icon_width_px = GetSystemMetrics(SM_CXICON);
+    icon_height_px = GetSystemMetrics(SM_CYICON);
+
+    if (!icon_width_px || !icon_height_px) {
+      // just default to 32
+      lbx_log_error("Error while doing GetSystemMetrics");
+      icon_width_px = icon_height_px = 32;
+    }
+
+    icon_tag = IDI_WARNING;
+  }
+  else if (t == GeneralDialogIcon::NONE) {
+    icon_width_px = 0;
+    icon_width_px = 0;
+    icon_margin = 0;
+  }
+
+  const unit_t ICON_WIDTH = icon_width_px * 4 / base_units.cx;
+  const unit_t ICON_HEIGHT = icon_height_px * 8 / base_units.cy;
   const unit_t ICON_TOP = TOP_MARGIN;
   const unit_t ICON_LEFT = LEFT_MARGIN;
 
   // compute body width
-  const unit_t ICON_MARGIN = LEFT_MARGIN;
+  const unit_t ICON_MARGIN = icon_margin;
   // NB: body width should be min 33 characters,
   //     height is characters / 33
   //     otherwise it grows with # of buttons
@@ -150,12 +179,12 @@ generic_general_safe_dialog(HWND hwnd,
                               MAX_CHARS_PER_LINE);
   const unit_t TEXT_LEFT = ICON_LEFT + ICON_WIDTH + ICON_MARGIN;
   const unit_t TEXT_TOP = TOP_MARGIN;
-  
+
   const unit_t BUTTON_HEIGHT = 11;
 
   const unit_t DIALOG_WIDTH =
     LEFT_MARGIN + ICON_WIDTH + ICON_MARGIN + BODY_WIDTH + RIGHT_MARGIN;
-  const unit_t DIALOG_HEIGHT = 
+  const unit_t DIALOG_HEIGHT =
     TOP_MARGIN +
     std::max(ICON_HEIGHT,
              TEXT_HEIGHT + FONT_HEIGHT +
@@ -167,22 +196,44 @@ generic_general_safe_dialog(HWND hwnd,
         LText(msg, IDC_STATIC,
               TEXT_LEFT, TEXT_TOP,
               TEXT_WIDTH, TEXT_HEIGHT),
-        Control("", IDC_LOGO, ControlClass::STATIC,
-                SS_OWNERDRAW, ICON_LEFT, ICON_TOP,
-                ICON_WIDTH, ICON_HEIGHT),
       });
+
+  if (t != GeneralDialogIcon::NONE) {
+    controls.push_back(Control("", IDC_LOGO, ControlClass::STATIC,
+                               SS_OWNERDRAW, ICON_LEFT, ICON_TOP,
+                               ICON_WIDTH, ICON_HEIGHT));
+  }
+
+  // discover button offsets
+  auto left_offset = DIALOG_WIDTH - RIGHT_MARGIN;
+  std::vector<decltype(left_offset)> button_offsets;
+  for (const auto & choice : reversed(choices)) {
+    auto width = button_width(choice.message);
+    left_offset -= width;
+    button_offsets.push_back(left_offset);
+    left_offset -= BUTTON_SPACING;
+  }
 
   // add all buttons
   auto BUTTON_TOP = DIALOG_HEIGHT - BOTTOM_MARGIN - BUTTON_HEIGHT;
-  auto left_offset = DIALOG_WIDTH - RIGHT_MARGIN;
-  for (const auto & choice : reversed(enumerate(choices))) {
-    auto width = button_width(choice.value.message);
-    left_offset -= width;
-    controls.push_back(PushButton(choice.value.message,
-                                  IDC_BUTTON_BASE + choice.index,
-                                  left_offset, BUTTON_TOP,
-                                  width, BUTTON_HEIGHT));
-    left_offset -= BUTTON_SPACING;
+  for (const auto & e : enumerate(range_zip(reversed(button_offsets),
+                                            choices))) {
+    auto left_offset = e.value.first;
+    auto button_index = e.index;
+    auto message = e.value.second.message;
+    auto width = button_width(message);
+    if (!button_index) {
+      controls.push_back(DefPushButton(message,
+                                       IDC_BUTTON_BASE + button_index,
+                                       left_offset, BUTTON_TOP,
+                                       width, BUTTON_HEIGHT));
+    }
+    else {
+      controls.push_back(PushButton(message,
+                                    IDC_BUTTON_BASE + button_index,
+                                    left_offset, BUTTON_TOP,
+                                    width, BUTTON_HEIGHT));
+    }
   }
 
   const auto dlg =
@@ -196,6 +247,8 @@ generic_general_safe_dialog(HWND hwnd,
   GeneralSafeDialogCtx ctx = {
     std::move(choices),
     std::move(close_action),
+    icon_tag,
+    is_system,
   };
   auto ret = DialogBoxIndirectParam(GetModuleHandle(NULL),
                                     dlg.get_data(),
