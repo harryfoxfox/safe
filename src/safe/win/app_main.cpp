@@ -1079,8 +1079,8 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // if the user has mounted paths in the past
         // auto start the mount dialog with the most recently path
         // populated in the ui
-        should_bubble = run_mount_dialog(hwnd, *wd,
-                                         std::get<0>(wd->recent_mount_paths_store.front().resolve_path()));
+        should_bubble = !run_mount_dialog(hwnd, *wd,
+                                          std::get<0>(wd->recent_mount_paths_store.front().resolve_path()));
       }
 
       if (should_bubble) {
