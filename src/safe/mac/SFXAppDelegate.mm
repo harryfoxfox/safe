@@ -24,8 +24,6 @@
 #import <safe/webdav_server.hpp>
 #import <safe/report_exception.hpp>
 
-#import <encfs/base/logging.h>
-
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
 

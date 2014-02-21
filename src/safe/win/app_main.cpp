@@ -43,6 +43,7 @@
 #include <safe/util.hpp>
 #include <safe/report_exception.hpp>
 
+#include <encfs/base/logging.h>
 #include <encfs/fs/FsIO.h>
 #include <encfs/fs/FileUtils.h>
 
@@ -1398,7 +1399,13 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
               LPSTR lpCmdLine, int nCmdShow) {
   // TODO: de-initialize
   log_printer_default_init();
+#ifdef NDEBUG
+  logging_set_global_level(LOG_NOTHING);
+  encfs_set_log_level(ENCFS_LOG_NOTHING);
+#else
   logging_set_global_level(LOG_DEBUG);
+  encfs_set_log_level(ENCFS_LOG_DEBUG);
+#endif
   lbx_log_debug("Hello world! CmdLine: %s", lpCmdLine);
 
   bool make_required_system_changes_ = false;
