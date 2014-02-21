@@ -925,9 +925,6 @@ struct SystemChangesErrorContext {
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
-    NSURL *a = [NSURL URLWithString:@"http://getsafe.org/yowhatsup?a!@#$^*()=b!@#$^*()&a=b"];
-    NSLog(@"YO: %@", a);
-    [NSWorkspace.sharedWorkspace openURL:a];
     try {
         [self _applicationDidFinishLaunching:notification];
     }
