@@ -96,18 +96,24 @@ bool
 encrypted_swap_is_enabled() {
     // NB: we specify full path to sysctl since we have to trust
     //     the information that is returned from it
-    auto f = popen("/usr/sbin/sysctl vm.swapusage", "r");
-    if (!f) throw std::runtime_error("sysctl fail");
-    auto _close_open = safe::create_deferred(pclose, f);
+    while (true) {
+        auto f = popen("/usr/sbin/sysctl vm.swapusage", "r");
+        if (!f) throw std::runtime_error("sysctl fail");
+        auto _close_open = safe::create_deferred(pclose, f);
     
-    // get first line
-    char *line = nullptr;
-    size_t linecap = 0;
-    auto bytes_read = getline(&line, &linecap, f);
-    if (bytes_read < 0) throw std::system_error(errno, std::generic_category());
-    auto _free_line = safe::create_deferred(free, line);
+        // get first line
+        char *line = nullptr;
+        size_t linecap = 0;
+        auto bytes_read = getline(&line, &linecap, f);
+        if (bytes_read < 0) {
+            // NB: this was happening often when starting under Xcode
+            if (errno == EINTR) continue;
+            else throw std::system_error(errno, std::generic_category());
+        }
+        auto _free_line = safe::create_deferred(free, line);
     
-    return strnstr(line, "(encrypted)", linecap);
+        return strnstr(line, "(encrypted)", linecap);
+    }
 }
 
 static
