@@ -550,15 +550,15 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
     auto mount_name = encrypted_container_path.basename();
     
     // create thread details
-    auto thread_params = new ServerThreadParams<MountEvent> {
+    auto thread_params = safe::make_unique<ServerThreadParams<MountEvent>>
+    (ServerThreadParams<MountEvent>{
         event,
         native_fs,
         encrypted_container_path,
         cfg,
         password,
-        mount_name,
-    };
-    
+        mount_name});
+
     // start thread
     pthread_t thread;
     pthread_attr_t 	stackSizeAttribute;
@@ -576,8 +576,11 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
         auto err = pthread_attr_setstacksize (&stackSizeAttribute, REQUIRED_STACK_SIZE);
         if (err) throw std::runtime_error("couldn't get stack size");
     }
-    auto ret = pthread_create(&thread, &stackSizeAttribute, mount_thread_fn, thread_params);
+    auto ret = pthread_create(&thread, &stackSizeAttribute, mount_thread_fn, thread_params.get());
     if (ret) throw std::runtime_error("pthread_create");
+
+    // thread now owns thread_params
+    thread_params.release();
     
     // wait for server to run
     auto maybe_listen_port_ws_handle = event->wait_for_mount_event();

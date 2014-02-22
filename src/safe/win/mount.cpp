@@ -217,22 +217,24 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
   auto ramdisk_handle = engage_ramdisk();
 
   auto mount_event_p = std::make_shared<MountEvent>();
-  auto thread_params = new ServerThreadParams<MountEvent> {
-    mount_event_p,
-    native_fs,
-    encrypted_container_path,
-    cfg,
-    password,
-    mount_name,
-  };
+  auto thread_params = safe::make_unique<ServerThreadParams<MountEvent>>
+    (ServerThreadParams<MountEvent>{
+      mount_event_p,
+      native_fs,
+      encrypted_container_path,
+      cfg,
+      password,
+      mount_name});
 
   auto thread_handle =
     create_managed_thread_handle(CreateThread(NULL, 0, mount_thread,
-                                              (LPVOID) thread_params, 0, NULL));
+                                              (LPVOID) thread_params.get(), 0, NULL));
   if (!thread_handle) {
-    delete thread_params;
     throw std::runtime_error("couldn't create mount thread");
   }
+
+  // thread now owns thread_params
+  thread_params.release();
 
   auto maybe_listen_port_ws_handle = mount_event_p->wait_for_mount_event();
   if (!maybe_listen_port_ws_handle) throw std::runtime_error("mount failed");
