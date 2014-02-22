@@ -263,13 +263,16 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
 }
 
 - (void)openMountDialogForPath:(opt::optional<encfs::Path>)maybePath {
-    [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
     SFXMountSafeWindowController *wc = [SFXMountSafeWindowController.alloc
                                            initWithDelegate:self
                                            fs:self->native_fs
                                            path:std::move(maybePath)];
     [self.mountWindows addObject:wc];
     [wc showWindow:nil];
+    // NB: request activation *after* showing the window, if we do it beforehand
+    //     we may lose activation privilege if a keychain dialog popups before
+    //     our window is actually shown (we load from keychain in the window init)
+    [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
 }
 
 - (void)mountNthMostRecentlyMounted:(size_t)n {
