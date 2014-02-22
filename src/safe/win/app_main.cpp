@@ -488,6 +488,7 @@ update_tray_menu(WindowData & wd) {
 
   auto ret = set_highest_non_disabled_to_default(wd.tray_menu.get());
   assert(ret);
+  (void) ret;
 }
 
 static
