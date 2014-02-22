@@ -129,12 +129,6 @@ void
 remove_mount_from_favorites(const safe::win::MountDetails & mount);
 
 static
-void
-stop_drive_thread(safe::win::MountDetails *md) {
-  md->signal_stop();
-}
-
-static
 std::vector<safe::win::MountDetails>::iterator
 stop_drive(HWND safe_main_window,
            WindowData & wd,
@@ -155,12 +149,6 @@ stop_drive(HWND safe_main_window,
   it = wd.mounts.erase(it);
 
   update_tray_menu(wd);
-
-  // then stop thread
-  auto success =
-    w32util::run_async_void(stop_drive_thread, &md);
-  // if not success, it was a quit message
-  if (!success) return it;
 
   // TODO: this might be too spammy if multiple drives have been
   // unmounted

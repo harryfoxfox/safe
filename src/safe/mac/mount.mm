@@ -149,11 +149,6 @@ webdav_mount_url(port_t listen_port, std::string name) {
 }
 
 void
-MountDetails::signal_stop() const {
-    ws.signal_stop();
-}
-
-void
 MountDetails::disconnect_clients() const {
     ws.signal_disconnect_all_clients();
 }

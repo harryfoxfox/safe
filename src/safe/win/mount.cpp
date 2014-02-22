@@ -46,22 +46,6 @@ MountDetails::is_still_mounted() const {
 }
 
 void
-MountDetails::signal_stop() const {
-  // check if the thread is already dead
-  DWORD exit_code;
-  auto success_getexitcode =
-    GetExitCodeThread(_thread_handle.get(), &exit_code);
-  if (!success_getexitcode) {
-    throw std::runtime_error("Couldn't get exit code");
-  }
-
-  // thread is done, we out
-  if (exit_code != STILL_ACTIVE) return;
-
-  _ws.signal_stop();
-}
-
-void
 MountDetails::unmount() {
   std::ostringstream os;
   os << "use " << _drive_letter <<  ": /delete";

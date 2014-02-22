@@ -89,9 +89,6 @@ public:
   is_still_mounted() const;
 
   void
-  signal_stop() const;
-
-  void
   unmount();
 
   void

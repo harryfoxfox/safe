@@ -217,7 +217,6 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
     auto mount_name = it->get_mount_name();
 
     remove_mount_from_favorites(*it);
-    it->signal_stop();
     it = self->mounts.erase(it);
     [self _updateStatusMenu];
     
