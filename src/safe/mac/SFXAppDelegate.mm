@@ -841,6 +841,8 @@ struct SystemChangesErrorContext {
     (void)aNotification;
     
     log_printer_default_init();
+    encfs_set_log_printer(encfs_log_printer_adapter);
+
 #ifdef NDEBUG
     logging_set_global_level(LOG_NOTHING);
     encfs_set_log_level(ENCFS_LOG_NOTHING);
