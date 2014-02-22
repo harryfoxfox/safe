@@ -54,6 +54,8 @@ public:
   WebdavServerHandle(ManagedSocket send_socket)
     : _send_socket(std::move(send_socket)) {}
 
+  ~WebdavServerHandle();
+
   WebdavServerHandle(WebdavServerHandle &&) = default;
   WebdavServerHandle &operator=(WebdavServerHandle &&) = default;
 

@@ -189,6 +189,13 @@ EVENT_HANDLER_DEFINE(_when_server_runs, ev_type, ev, ud) {
   ctx->fn(WebdavServerHandle(ctx->send_socket));
 }
 
+WebdavServerHandle::~WebdavServerHandle() {
+  // if we haven't been moved and we are being destroyed
+  // then signal to our thread to stop
+  // this allows for automatic thread cleanup
+  if (_send_socket) signal_stop();
+}
+
 void WebdavServerHandle::signal_stop() const {
   auto ret_send = send(_send_socket.get(), "0", 1, 0);
   if (ret_send == -1) throw std::runtime_error("error calling send()");

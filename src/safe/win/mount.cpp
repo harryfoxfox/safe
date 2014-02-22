@@ -241,9 +241,6 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
   if (!maybe_listen_port_ws_handle) throw std::runtime_error("mount failed");
 
   auto & webdav_server_handle = maybe_listen_port_ws_handle->second;
-  auto _stop_webdav_server = safe::create_deferred([&] () {
-      webdav_server_handle.signal_stop();
-    });
 
   // server is now running, now we can ask the OS to mount it
   auto listen_port = maybe_listen_port_ws_handle->first;
@@ -263,9 +260,6 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
   auto ret_code = run_command_sync(NET_BINARY_PATH,
                                    parameters_builder.str());
   if (ret_code != EXIT_SUCCESS) throw std::runtime_error("net failed");
-
-  // Mount was successfull, don't stop webdav server thread
-  _stop_webdav_server.cancel();
 
   return MountDetails(drive_letter,
                       mount_name,

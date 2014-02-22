@@ -67,6 +67,10 @@ public:
   explicit ManagedResource(T arg_) : _ptr(new T(std::move(arg_)), SubF()) {}
   ManagedResource() : _ptr() {}
 
+  operator bool() const {
+    return (bool) _ptr;
+  }
+
   const T & get() const {
     return *_ptr;
   }

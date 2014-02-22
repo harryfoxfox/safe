@@ -546,9 +546,6 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                       const encfs::Path & encrypted_container_path,
                       const encfs::EncfsConfig & cfg,
                       const encfs::SecureMem & password) {
-    // TODO: catch all exceptions and clean up state if one occurs
-    // (etc. clean up threads, etc.)
-    
     auto event = std::make_shared<MountEvent>();
     
     // TODO: perhaps make this an argument
