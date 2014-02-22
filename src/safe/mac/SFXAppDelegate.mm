@@ -272,6 +272,23 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
     [wc showWindow:nil];
 }
 
+- (void)mountNthMostRecentlyMounted:(size_t)n {
+    auto resolver = (*self->path_store)[n];
+    opt::optional<encfs::Path> path_resolution;
+    try {
+        path_resolution = std::get<0>(resolver.resolve_path());
+    }
+    catch (const std::exception & err) {
+        // failure to resolve bookmark
+        // TODO: show error, for now do nothing
+        lbx_log_debug("Couldn't resolve bookmark: %s", err.what());
+    }
+
+    if (path_resolution) {
+        [self openMountDialogForPath:path_resolution];
+    }
+}
+
 - (void)createNewSafe:(id)sender {
     (void)sender;
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
@@ -393,21 +410,7 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
         }
         case TrayMenuAction::MOUNT_RECENT: {
             if (menu_action_arg >= self->path_store->size()) return;
-            auto resolver = (*self->path_store)[menu_action_arg];
-            opt::optional<encfs::Path> path_resolution;
-            try {
-                path_resolution = std::get<0>(resolver.resolve_path());
-            }
-            catch (const std::exception & err) {
-                // failure to resolve bookmark
-                // TODO: show error, for now do nothing
-                lbx_log_debug("Couldn't resolve bookmark: %s", err.what());
-            }
-
-            if (path_resolution) {
-                [self openMountDialogForPath:path_resolution];
-            }
-
+            [self mountNthMostRecentlyMounted:menu_action_arg];
             break;
         }
         case TrayMenuAction::SEND_FEEDBACK: {
@@ -595,17 +598,7 @@ _Pragma("clang diagnostic pop") \
     [self recordAppStart];
 
     if (self->path_store && !self->path_store->empty()) {
-        opt::optional<encfs::Path> path_resolution;
-        try {
-            path_resolution = std::get<0>(self->path_store->front().resolve_path());
-        }
-        catch (const std::exception & err) {
-            lbx_log_error("couldn't resolve bookmark path, doing nothing: %s", err.what());
-        }
-
-        if (path_resolution) {
-            [self openMountDialogForPath:*path_resolution];
-        }
+        [self mountNthMostRecentlyMounted:0];
     }
     else if ([self haveStartedAppBefore:nil]) {
         set_app_to_run_at_login(true);
