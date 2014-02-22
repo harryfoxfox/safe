@@ -535,9 +535,7 @@ ensure_ramdisk() {
 static
 void *
 mount_thread_fn(void *p) {
-    // TODO: catch all exceptions since this is a top-level
-    auto params = std::unique_ptr<ServerThreadParams<MountEvent>>((ServerThreadParams<MountEvent> *) p);
-    mount_thread_fn(std::move(params));
+    mount_thread_fn_common((ServerThreadParams<MountEvent> *) p);
     return NULL;
 }
 

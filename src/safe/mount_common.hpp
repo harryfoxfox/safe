@@ -52,8 +52,9 @@ struct ServerThreadParams {
 
 template <typename MountEvent>
 void
-mount_thread_fn(std::unique_ptr<ServerThreadParams<MountEvent>> params) {
+mount_thread_fn_common(ServerThreadParams<MountEvent> *p) {
   bool sent_signal = false;
+  auto params = std::unique_ptr<ServerThreadParams<MountEvent>>(p);
 
   try {
     std::srand(std::time(nullptr));

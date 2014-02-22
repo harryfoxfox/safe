@@ -203,10 +203,7 @@ WINAPI
 static
 DWORD
 mount_thread(LPVOID params_) {
-  // TODO: catch all exceptions, since this is a top-level
-  auto params =
-    std::unique_ptr<ServerThreadParams<MountEvent>>((ServerThreadParams<MountEvent> *) params_);
-  safe::mount_thread_fn(std::move(params));
+  safe::mount_thread_fn_common((ServerThreadParams<MountEvent> *) params_);
   return 0;
 }
 
