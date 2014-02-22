@@ -62,7 +62,11 @@ write_directory_metadata(NSURL *dir_url, NSDictionary *dict) {
 
 static
 NSDictionary *
-read_directory_metadata(NSURL *url) {
+read_directory_metadata(NSURL *url, bool return_nil_if_doesnt_exist) {
+    auto no_metadata_exists = [&] {
+        return return_nil_if_doesnt_exist ? nil : write_directory_metadata(url, @{});
+    };
+
     NSURL *id_path = [url URLByAppendingPathComponent:safe::mac::to_ns_string(KEYCHAIN_ID_FILE)];
 
     NSInputStream *stream = [NSInputStream inputStreamWithURL:id_path];
@@ -74,7 +78,7 @@ read_directory_metadata(NSURL *url) {
             [stream_error code] == ENOENT) {
             // file didn't exist, create it
             lbx_log_debug("metadata file didn't exist, initializing");
-            return write_directory_metadata(url, @{});
+            return no_metadata_exists();
         }
         else {
             throw nserror_to_exception("opening metadata for read", stream_error);
@@ -88,13 +92,13 @@ read_directory_metadata(NSURL *url) {
     if (err) {
         // file was invalid format, reinitialize
         lbx_log_debug("metadata was not valid json, reinitializing");
-        return write_directory_metadata(url, @{});
+        return no_metadata_exists();
     }
 
     if (![metadata_typeless isKindOfClass:NSDictionary.class]) {
         // file was invalid format, reinitialize
         lbx_log_debug("metadata was not a dictionary, reinitializing");
-        return write_directory_metadata(url, @{});
+        return no_metadata_exists();
     }
 
     return metadata_typeless;
@@ -153,8 +157,9 @@ base64dec(NSString *input) {
  */
 static
 NSString *
-read_keychain_id_for_path(NSURL *url) {
-    NSDictionary *metadata = read_directory_metadata(url);
+read_keychain_id_for_path(NSURL *url, bool return_nil_if_doesnt_exist) {
+    NSDictionary *metadata = read_directory_metadata(url, return_nil_if_doesnt_exist);
+    if (!metadata) return nil;
 
     static const NSString *KEYCHAIN_ID_KEY = @"apple_keychain_unhashed_account_name";
     static const size_t KEYCHAIN_ID_RAW_LENGTH = CC_SHA256_DIGEST_LENGTH;
@@ -184,6 +189,8 @@ read_keychain_id_for_path(NSURL *url) {
 
     // signal to create new keychain id
     if (!raw_id) {
+        if (return_nil_if_doesnt_exist) return nil;
+
         char random_buffer[KEYCHAIN_ID_RAW_LENGTH];
         arc4random_buf((void *) random_buffer, sizeof(random_buffer));
 
@@ -232,7 +239,8 @@ copy_keychain_item_for_account_name(NSString *account_name) {
 
 NSString *
 get_saved_password_for_location(NSURL *url) {
-    NSString *account_name = read_keychain_id_for_path(url);
+    NSString *account_name = read_keychain_id_for_path(url, true);
+    if (!account_name) return nil;
 
     auto keychain_item = copy_keychain_item_for_account_name(account_name);
     auto _free_keychain_item = safe::create_deferred(CFRelease, keychain_item);
@@ -256,7 +264,8 @@ get_saved_password_for_location(NSURL *url) {
 
 void
 save_password_for_location(NSURL *url, NSString *password) {
-    NSString *account_name = read_keychain_id_for_path(url);
+    NSString *account_name = read_keychain_id_for_path(url, false);
+    assert(account_name);
 
     SecKeychainItemRef keychain_item = nullptr;
     try {

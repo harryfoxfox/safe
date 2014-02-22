@@ -182,14 +182,17 @@
 - (IBAction)locationURLChanged:(id)sender {
     (void)sender;
     NSURL *url = self.locationPathControl.URL;
-    
+
+    NSString *pass = nil;
     try {
-        self.passwordSecureTextField.stringValue = safe::mac::get_saved_password_for_location(url);
+        pass = safe::mac::get_saved_password_for_location(url);
     }
     catch (const std::exception & err) {
         lbx_log_error("Error while getting keychain password for %s (%s)",
                       url.path.fileSystemRepresentation, err.what());
     }
+
+    if (pass) self.passwordSecureTextField.stringValue = pass;
 }
 
 - (void)windowDidLoad
