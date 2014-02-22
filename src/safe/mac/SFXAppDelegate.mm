@@ -363,7 +363,27 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
         }
         case TrayMenuAction::UNMOUNT: {
             if (menu_action_arg >= self->mounts.size()) return;
-            [self unmountAndStopDrive:self->mounts.begin() + menu_action_arg withUI:YES];
+            auto it = self->mounts.begin() + menu_action_arg;
+            try {
+                [self unmountAndStopDrive:it withUI:YES];
+            }
+            catch (const std::exception & err) {
+                lbx_log_debug("Error while attempting to unmount \"%s\": %s",
+                              it->get_mount_point().c_str(), err.what());
+                [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+                NSAlert *alert =
+                    [NSAlert alertWithMessageText:@"Unable to Unmount"
+                                    defaultButton:nil
+                                  alternateButton:nil
+                                      otherButton:nil
+                        informativeTextWithFormat:(@"Safe could not unmount \"%s.\" It's most likely in use. "
+                                                   @"Please close all applications using files in \"%s\" before "
+                                                   @"attempting to unmount again."),
+                     it->get_mount_name().c_str(), it->get_mount_name().c_str()
+                     ];
+                [alert beginSheetModalForWindow:nil modalDelegate:nil didEndSelector:nil contextInfo:nil];
+            }
+
             break;
         }
         case TrayMenuAction::CLEAR_RECENTS: {
@@ -913,6 +933,7 @@ struct SystemChangesErrorContext {
     if (is_reboot_pending()) {
         [self runRebootSequence:nil];
     } else if (safe::mac::system_changes_are_required()) {
+        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
         decltype(self) __weak weakSelf = self;
         self.systemChangesWindowController =
         [SFXWelcomeWindowController.alloc
@@ -940,6 +961,7 @@ struct SystemChangesErrorContext {
          "Please help us improve by reporting the bug. It's automatic and "
          "no personal information is used.");
 
+        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
         NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:@"Error During Startup"];
         [alert setInformativeText:safe::mac::to_ns_string(error_message)];
@@ -956,14 +978,31 @@ struct SystemChangesErrorContext {
     }
 }
 
-- (void)applicationWillTerminate:(NSNotification *)notification {
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)notification {
     (void)notification;
     
     for (auto it = self->mounts.begin(); it != self->mounts.end();) {
-        it = [self unmountAndStopDrive:it withUI:NO];
+        try {
+            it = [self unmountAndStopDrive:it withUI:NO];
+        }
+        catch (const std::exception & err) {
+            [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+            NSAlert *alert =
+                [NSAlert alertWithMessageText:@"Unable to Unmount"
+                                defaultButton:nil
+                              alternateButton:nil
+                                  otherButton:nil
+	                informativeTextWithFormat:(@"Safe could not quit because it could not unmount \"%s.\" It's most likely in use. "
+                                               @"Please close all applications using files in \"%s\" before attempting to quit again."),
+                 it->get_mount_name().c_str(), it->get_mount_name().c_str()
+                 ];
+            [alert beginSheetModalForWindow:nil modalDelegate:nil didEndSelector:nil contextInfo:nil];
+            return NSTerminateCancel;
+        }
     }
     
     safe::global_webdav_shutdown();
+    return NSTerminateNow;
 }
 
 - (void)driveWasUnmounted:(NSNotification *)p {
