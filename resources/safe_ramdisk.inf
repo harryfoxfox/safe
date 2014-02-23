@@ -3,7 +3,18 @@ Signature = "$WINDOWS NT$"
 Class     = "Safe RAMDisk"
 ClassGuid = {168F02BC-933F-4E2E-B3E1-E30E84F0DC05}
 Provider  = "Rian Hunter"
-DriverVer = 2/14/2014,1.0.2.86
+DriverVer = 02/14/2014,1.0.2.86
+CatalogFile = safe_ramdisk.cat
+
+[SourceDisksNames.x86]
+1 = "Yo",,,\
+
+[SourceDisksNames.amd64]
+1 = "Yo",,,\
+
+[SourceDisksFiles]
+safe_ramdisk.sys = 1,,
+safe_ramdisk_x64.sys = 1,,
 
 [DestinationDirs]
 DefaultDestDir = 12
@@ -56,6 +67,7 @@ StartType     = 0 ; start at book
 ErrorControl  = 1 ; normal error handling
 DisplayName   = %SVCDescription%
 ServiceBinary = %12%\safe_ramdisk_x64.sys
+
 
 [Strings]
 ClassName       = "Safe RAMDisk"
