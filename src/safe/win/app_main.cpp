@@ -26,7 +26,7 @@
 #include <safe/parse.hpp>
 #include <safe/win/ramdisk.hpp>
 #include <safe/recent_paths_storage.hpp>
-#include <safe/resources_win.h>
+#include <safe/win/resources.h>
 #include <safe/win/system_changes_dialog.hpp>
 #include <safe/tray_menu.hpp>
 #include <safe/win/tray_menu.hpp>

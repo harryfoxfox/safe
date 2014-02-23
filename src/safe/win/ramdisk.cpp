@@ -19,7 +19,7 @@
 #include <safe/win/ramdisk.hpp>
 
 #include <safe/deferred.hpp>
-#include <safe/resources_win.h>
+#include <safe/win/resources.h>
 #include <safe/util.hpp>
 #include <w32util/error.hpp>
 #include <w32util/file.hpp>
