@@ -21,10 +21,10 @@
 // yes i know defines are suboptimal, but it's mostly contained
 #ifdef __APPLE__
 #include <safe/mac/util.hpp>
-#define arch mac
+#define platform mac
 #elif _WIN32
 #include <safe/win/util.hpp>
-#define arch win
+#define platform win
 #else
 #error report_exception not supported on this platform
 #endif
@@ -91,7 +91,7 @@ open_url(const std::string & escaped_scheme_authority_path,
     os << "&";
   }
 
-  safe::arch::open_url(os.str());
+  safe::platform::open_url(os.str());
 }
 
 }

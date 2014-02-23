@@ -40,6 +40,9 @@ open_url(const std::string &);
 void
 reboot_machine();
 
+std::string
+get_parseable_platform_version();
+
 #ifdef __OBJC__
 
 void

@@ -18,13 +18,51 @@
 
 #include <safe/win/util.hpp>
 
+#include <safe/util.hpp>
+
+#include <w32util/error.hpp>
 #include <w32util/gui_util.hpp>
+
+#include <sstream>
+
+#include <windows.h>
 
 namespace safe { namespace win {
 
 void
 open_url(const std::string & url) {
   w32util::open_url_in_browser(nullptr, url);
+}
+
+static
+bool
+is_64_bit_windows() {
+#ifdef _WIN64
+  return true;
+#else
+  BOOL is_wow64_process;
+  w32util::check_bool(IsWow64Process,
+		      GetCurrentProcess(), &is_wow64_process);
+  return is_wow64_process;
+#endif
+}
+
+std::string
+get_parseable_platform_version() {
+  OSVERSIONINFOW vi;
+  safe::zero_object(vi);
+  vi.dwOSVersionInfoSize = sizeof(vi);
+  w32util::check_bool(GetVersionEx, &vi);
+
+  std::ostringstream os;
+
+  os << "windows-" <<
+    (is_64_bit_windows() ? "x64" : "x86") <<
+    vi.dwMajorVersion  << "." <<
+    vi.dwMinorVersion << "." <<
+    vi.dwBuildNumber;
+
+  return os.str();
 }
 
 }}

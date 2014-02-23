@@ -88,6 +88,9 @@ run_command_sync(std::string binary_path,
 void
 open_url(const std::string & url);
 
+std::string
+get_parseable_platform_version();
+
 }}
 
 
