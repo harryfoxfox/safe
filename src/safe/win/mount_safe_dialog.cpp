@@ -306,7 +306,7 @@ mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
                      EditText(IDC_PASSWORD,
                               PASS_ENTRY_LEFT, PASS_ENTRY_TOP,
                               PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
-                              ES_PASSWORD | ES_LEFT |
+                              ES_PASSWORD | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER | WS_TABSTOP),
                      DefPushButton("OK", IDOK,
                                    OK_BTN_LEFT, OK_BTN_TOP,

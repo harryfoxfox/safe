@@ -293,7 +293,7 @@ create_new_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
                      EditText(IDC_PASSWORD,
                               PASS_ENTRY_LEFT, PASS_ENTRY_TOP,
                               PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
-                              ES_PASSWORD | ES_LEFT |
+                              ES_PASSWORD | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER | WS_TABSTOP),
                      LText("Confirm:", IDC_STATIC,
                            CONFIRM_LABEL_LEFT, CONFIRM_LABEL_TOP,
@@ -301,7 +301,7 @@ create_new_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
                      EditText(IDC_CONFIRM_PASSWORD,
                               CONFIRM_ENTRY_LEFT, CONFIRM_ENTRY_TOP,
                               CONFIRM_ENTRY_WIDTH, CONFIRM_ENTRY_HEIGHT,
-                              ES_PASSWORD | ES_LEFT |
+                              ES_PASSWORD | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER | WS_TABSTOP),
                      DefPushButton("OK", IDOK,
                                    OK_BTN_LEFT, OK_BTN_TOP,
