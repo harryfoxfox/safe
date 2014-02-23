@@ -7,6 +7,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="SFXAboutWindowController">
             <connections>
+                <outlet property="versionTextField" destination="wu9-sn-TFc" id="0EI-PF-GGE"/>
                 <outlet property="window" destination="1" id="Gnc-Fe-28D"/>
             </connections>
         </customObject>

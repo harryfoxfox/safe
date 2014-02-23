@@ -15,6 +15,7 @@
 
 - (void)windowDidLoad {
     [super windowDidLoad];
+    self.versionTextField.stringValue = safe::mac::to_ns_string(SAFE_DIALOG_ABOUT_VERSION);
     safe::mac::initialize_window_for_dialog(self.window);
 }
 
