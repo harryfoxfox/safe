@@ -819,16 +819,16 @@ struct SystemChangesErrorContext {
     else assert(false);
 }
 
-- (bool)systemChangesResponseWithController:(SFXWelcomeWindowController *)c action:(welcome_window_action_t)action {
+- (void)systemChangesResponseWithController:(SFXWelcomeWindowController *)c action:(welcome_window_action_t)action {
     switch (action) {
         case WELCOME_WINDOW_BUTTON_0: {
             [self makeSystemChangesProgressDialog:c.window];
-            return false;
+            return;
         }
         case WELCOME_WINDOW_BUTTON_1: {
             // pop-up more info dialog
             safe::mac::open_url(SAFE_MAC_SYSTEM_CHANGES_INFO_WEBSITE);
-            return false;
+            return;
         }
         case WELCOME_WINDOW_NONE: {
             // show confirmation dialog
@@ -843,13 +843,11 @@ struct SystemChangesErrorContext {
                               modalDelegate:self
                              didEndSelector:@selector(cancelSystemChangesResponse:returnCode:contextInfo:)
                                 contextInfo:(__bridge void *)c.window];
-            
-            return false;
+            return;
         }
     }
     /* notreached */
     assert(false);
-    return true;
 }
 
 - (void)_applicationDidFinishLaunching:(NSNotification *)aNotification {
@@ -933,7 +931,7 @@ struct SystemChangesErrorContext {
         self.systemChangesWindowController =
         [SFXWelcomeWindowController.alloc
          initWithBlock:^(SFXWelcomeWindowController *c, welcome_window_action_t action) {
-             return [weakSelf systemChangesResponseWithController:c action:action];
+             [weakSelf systemChangesResponseWithController:c action:action];
          }
          title:safe::mac::to_ns_string(SAFE_DIALOG_SYSTEM_CHANGES_TITLE)
          message:safe::mac::to_ns_string(SAFE_DIALOG_SYSTEM_CHANGES_MESSAGE)

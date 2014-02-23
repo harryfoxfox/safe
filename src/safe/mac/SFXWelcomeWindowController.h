@@ -18,7 +18,7 @@ typedef enum {
 
 @class SFXWelcomeWindowController;
 
-typedef bool (^WelcomeWindowDoneBlock)(SFXWelcomeWindowController *, welcome_window_action_t);
+typedef void (^WelcomeWindowDoneBlock)(SFXWelcomeWindowController *, welcome_window_action_t);
 
 @protocol SFXWelcomeWindowControllerDelegate <NSObject>
 
