@@ -416,7 +416,7 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
             break;
         }
         case TrayMenuAction::SEND_FEEDBACK: {
-            [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:[NSString stringWithUTF8String:SAFE_SEND_FEEDBACK_WEBSITE]]];
+            safe::mac::open_url(SAFE_SEND_FEEDBACK_WEBSITE);
             break;
         }
         default: {
