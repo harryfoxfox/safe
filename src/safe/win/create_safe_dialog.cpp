@@ -281,7 +281,7 @@ create_new_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
                      PushButton("Browse", IDC_BROWSE,
                                 BROWSE_BTN_LEFT, BROWSE_BTN_TOP,
                                 BROWSE_BTN_WIDTH, BROWSE_BTN_HEIGHT),
-                     LText("Name:", IDC_STATIC,
+                     LText(ENCRYPTED_STORAGE_NAME_A " Name:", IDC_STATIC,
                            NAME_LABEL_LEFT, NAME_LABEL_TOP,
                            NAME_LABEL_WIDTH, NAME_LABEL_HEIGHT),
                      EditText(IDC_NAME,
