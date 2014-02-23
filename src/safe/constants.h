@@ -62,7 +62,7 @@ enum {
 #define SAFE_DIALOG_NO_CONFIG_EXISTS_MESSAGE ("The location you selected is not a " ENCRYPTED_STORAGE_NAME_A ".")
 
 #define SAFE_DIALOG_QUIT_CONFIRMATION_TITLE ("Quit " PRODUCT_NAME_A " Now?")
-#define SAFE_DIALOG_QUIT_CONFIRMATION_MESSAGE ("You currently have " ENCRYPTED_STORAGE_NAME_A " s mounted, if you quit they will not be accessible until you run " PRODUCT_NAME_A " again. Quit " PRODUCT_NAME_A " Now?")
+#define SAFE_DIALOG_QUIT_CONFIRMATION_MESSAGE ("You currently have one or more " ENCRYPTED_STORAGE_NAME_A "s mounted, if you quit they will not be accessible until you run " PRODUCT_NAME_A " again. Quit " PRODUCT_NAME_A " Now?")
 
 #define SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE "Unknown Error"
 #define SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE ("Unknown error occurred while creating new " ENCRYPTED_STORAGE_NAME_A ".")
