@@ -21,10 +21,12 @@
 
 #include <safe/win/mount.hpp>
 #include <w32util/error.hpp>
+#include <w32util/string.hpp>
 
 #include <encfs/base/optional.h>
 
 #include <memory>
+#include <string>
 
 #include <cassert>
 
@@ -97,6 +99,14 @@ draw_icon_item(LPDRAWITEMSTRUCT pDIS,
                             icon_handle, width, height,
                             0, NULL, DI_NORMAL);
   if (!success) throw w32util::windows_error();
+}
+
+inline
+decltype(w32util::num_characters(""))
+button_width(const std::string & msg) {
+  auto width = w32util::num_characters(msg) * 4;
+  auto MIN_BUTTON_WIDTH = (decltype(width)) 10 * 4;
+  return std::max(width, MIN_BUTTON_WIDTH);
 }
 
 }}
