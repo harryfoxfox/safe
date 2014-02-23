@@ -194,7 +194,7 @@ create_new_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
 
   const unit_t LABEL_WIDTH = 30;
   const unit_t LABEL_HEIGHT = FONT_HEIGHT;
-  const unit_t TEXT_ENTRY_WIDTH = 80;
+  const unit_t TEXT_ENTRY_WIDTH = 160;
   const unit_t TEXT_ENTRY_HEIGHT = 11;
 
   const unit_t BOTTOM_HEADING_MARGIN = TOP_MARGIN;
