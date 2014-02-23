@@ -219,7 +219,7 @@ mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
 
   const unit_t LABEL_WIDTH = 30;
   const unit_t LABEL_HEIGHT = FONT_HEIGHT;
-  const unit_t TEXT_ENTRY_WIDTH = 80;
+  const unit_t TEXT_ENTRY_WIDTH = 160;
   const unit_t TEXT_ENTRY_HEIGHT = 11;
 
   const unit_t BOTTOM_HEADING_MARGIN = TOP_MARGIN;
@@ -295,7 +295,7 @@ mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
                      EditText(IDC_LOCATION,
                               LOCATION_ENTRY_LEFT, LOCATION_ENTRY_TOP,
                               LOCATION_ENTRY_WIDTH, LOCATION_ENTRY_HEIGHT,
-                              ES_READONLY | ES_LEFT |
+                              ES_READONLY | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER),
                      PushButton("Browse", IDC_BROWSE,
                                 BROWSE_BTN_LEFT, BROWSE_BTN_TOP,
@@ -306,7 +306,7 @@ mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
                      EditText(IDC_PASSWORD,
                               PASS_ENTRY_LEFT, PASS_ENTRY_TOP,
                               PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
-                              ES_PASSWORD | ES_LEFT |
+                              ES_PASSWORD | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER | WS_TABSTOP),
                      DefPushButton("OK", IDOK,
                                    OK_BTN_LEFT, OK_BTN_TOP,

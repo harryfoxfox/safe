@@ -44,7 +44,7 @@ AddService = SafeRamDisk, 2, RAMDiskServiceInst
 
 [RAMDiskServiceInst]
 ServiceType   = 1 ; Driver
-StartType     = 0 ; start at book
+StartType     = 1 ; start at os init
 ErrorControl  = 1 ; normal error handling
 DisplayName   = %SVCDescription%
 ServiceBinary = %12%\safe_ramdisk.sys
@@ -63,7 +63,7 @@ AddService = SafeRamDisk, 2, RAMDiskServiceInstNTamd64
 
 [RAMDiskServiceInstNTamd64]
 ServiceType   = 1 ; Driver
-StartType     = 0 ; start at book
+StartType     = 1 ; start at os init
 ErrorControl  = 1 ; normal error handling
 DisplayName   = %SVCDescription%
 ServiceBinary = %12%\safe_ramdisk_x64.sys

@@ -63,6 +63,7 @@ create_new_safe_dialog_proc(HWND hwnd, UINT Message,
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) ctx);
     w32util::center_window_in_monitor(hwnd);
     w32util::set_default_dialog_font(hwnd);
+
     return TRUE;
   }
   case WM_COMMAND: {
@@ -194,7 +195,7 @@ create_new_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
 
   const unit_t LABEL_WIDTH = 30;
   const unit_t LABEL_HEIGHT = FONT_HEIGHT;
-  const unit_t TEXT_ENTRY_WIDTH = 80;
+  const unit_t TEXT_ENTRY_WIDTH = 160;
   const unit_t TEXT_ENTRY_HEIGHT = 11;
 
   const unit_t BOTTOM_HEADING_MARGIN = TOP_MARGIN;
@@ -276,24 +277,26 @@ create_new_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
                      EditText(IDC_LOCATION,
                               LOCATION_ENTRY_LEFT, LOCATION_ENTRY_TOP,
                               LOCATION_ENTRY_WIDTH, LOCATION_ENTRY_HEIGHT,
-                              ES_READONLY | ES_LEFT |
+                              ES_READONLY | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER),
                      PushButton("Browse", IDC_BROWSE,
                                 BROWSE_BTN_LEFT, BROWSE_BTN_TOP,
                                 BROWSE_BTN_WIDTH, BROWSE_BTN_HEIGHT),
-                     LText("Name:", IDC_STATIC,
+                     LText(ENCRYPTED_STORAGE_NAME_A " Name:", IDC_STATIC,
                            NAME_LABEL_LEFT, NAME_LABEL_TOP,
                            NAME_LABEL_WIDTH, NAME_LABEL_HEIGHT),
                      EditText(IDC_NAME,
                               NAME_ENTRY_LEFT, NAME_ENTRY_TOP,
-                              NAME_ENTRY_WIDTH, NAME_ENTRY_HEIGHT),
+                              NAME_ENTRY_WIDTH, NAME_ENTRY_HEIGHT,
+                              ES_LEFT | WS_BORDER | WS_TABSTOP |
+                              ES_AUTOHSCROLL),
                      LText("Password:", IDC_STATIC,
                            PASS_LABEL_LEFT, PASS_LABEL_TOP,
                            PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
                      EditText(IDC_PASSWORD,
                               PASS_ENTRY_LEFT, PASS_ENTRY_TOP,
                               PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
-                              ES_PASSWORD | ES_LEFT |
+                              ES_PASSWORD | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER | WS_TABSTOP),
                      LText("Confirm:", IDC_STATIC,
                            CONFIRM_LABEL_LEFT, CONFIRM_LABEL_TOP,
@@ -301,7 +304,7 @@ create_new_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
                      EditText(IDC_CONFIRM_PASSWORD,
                               CONFIRM_ENTRY_LEFT, CONFIRM_ENTRY_TOP,
                               CONFIRM_ENTRY_WIDTH, CONFIRM_ENTRY_HEIGHT,
-                              ES_PASSWORD | ES_LEFT |
+                              ES_PASSWORD | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER | WS_TABSTOP),
                      DefPushButton("OK", IDOK,
                                    OK_BTN_LEFT, OK_BTN_TOP,

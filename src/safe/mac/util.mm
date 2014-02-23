@@ -110,5 +110,19 @@ from_ns_string(const NSString *a) {
   return std::string(a.UTF8String);
 }
 
+std::string
+get_parseable_platform_version() {
+    SInt32 major_version;
+    SInt32 minor_version;
+    SInt32 bug_fix_version;
+    Gestalt(gestaltSystemVersionMajor, &major_version);
+    Gestalt(gestaltSystemVersionMinor, &minor_version);
+    Gestalt(gestaltSystemVersionBugFix, &bug_fix_version);
+
+    std::ostringstream os;
+    os << "macosx-" << major_version << "." << minor_version << "." << bug_fix_version;
+    return os.str();
+}
+
 }}
 

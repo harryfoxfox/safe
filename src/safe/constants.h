@@ -20,6 +20,7 @@
 #define _safe_constants_h
 
 #include <safe/product_name.h>
+#include <safe/version.h>
 
 #define SAFE_APP_STARTED_COOKIE_FILENAME "AppStarted"
 #define SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME "RecentPaths.db"
@@ -33,6 +34,8 @@ enum {
 #define SAFE_WINDOWS_SYSTEM_CHANGES_INFO_WEBSITE "http://getsafe.org/app/windows_system_changes_more_info"
 #define SAFE_MAC_SYSTEM_CHANGES_INFO_WEBSITE "http://getsafe.org/app/mac_system_changes_more_info"
 #define SAFE_REPORT_EXCEPTION_WEBSITE "http://getsafe.org/app/report_exception"
+#define SAFE_VISIT_WEBSITE_WEBSITE "http://getsafe.org/app/visit_website"
+#define SAFE_WINXP_MORE_INFO_WEBSITE "http://getsafe.org/app/winxp_more_info"
 
 /* UI Strings follow */
 
@@ -60,7 +63,7 @@ enum {
 #define SAFE_DIALOG_NO_CONFIG_EXISTS_MESSAGE ("The location you selected is not a " ENCRYPTED_STORAGE_NAME_A ".")
 
 #define SAFE_DIALOG_QUIT_CONFIRMATION_TITLE ("Quit " PRODUCT_NAME_A " Now?")
-#define SAFE_DIALOG_QUIT_CONFIRMATION_MESSAGE ("You currently have " ENCRYPTED_STORAGE_NAME_A " s mounted, if you quit they will not be accessible until you run " PRODUCT_NAME_A " again. Quit " PRODUCT_NAME_A " Now?")
+#define SAFE_DIALOG_QUIT_CONFIRMATION_MESSAGE ("You currently have one or more " ENCRYPTED_STORAGE_NAME_A "s mounted, if you quit they will not be accessible until you run " PRODUCT_NAME_A " again. Quit " PRODUCT_NAME_A " Now?")
 
 #define SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE "Unknown Error"
 #define SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE ("Unknown error occurred while creating new " ENCRYPTED_STORAGE_NAME_A ".")
@@ -100,7 +103,8 @@ enum {
    "tray icon bubbles. Don't you? Don't you?!?!")
 
 #define SAFE_DIALOG_ABOUT_TAGLINE "Protect your files."
-#define SAFE_DIALOG_ABOUT_VERSION "Version 1.0"
+#define SAFE_DIALOG_ABOUT_VERSION "Version " SAFE_VERSION_STR
+
 #define SAFE_DIALOG_ABOUT_BYLINE (PRODUCT_NAME_A " is free software.")
 
 #define SAFE_TRAY_ICON_SEND_FEEDBACK "Send Feedback..."

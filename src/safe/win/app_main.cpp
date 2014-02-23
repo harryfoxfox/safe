@@ -996,6 +996,7 @@ run_winxp_warning_dialog(HWND hwnd) {
   };
 
   auto more_info = [&] {
+    w32util::open_url_in_browser(hwnd, SAFE_WINXP_MORE_INFO_WEBSITE);
     return opt::nullopt;
   };
 

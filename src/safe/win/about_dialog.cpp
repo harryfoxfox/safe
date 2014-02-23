@@ -37,6 +37,7 @@ enum {
   IDC_LOGO_TEXT,
   IDC_TAGLINE,
   IDC_VERSION,
+  IDC_VISIT_WEBSITE,
   IDC_GET_SOURCE_CODE,
   IDC_BYLINE,
 };
@@ -110,6 +111,15 @@ about_dialog_proc(HWND hwnd, UINT Message,
       }
       return TRUE;
     }
+    case IDC_VISIT_WEBSITE: {
+      try {
+        w32util::open_url_in_browser(hwnd, SAFE_VISIT_WEBSITE_WEBSITE);
+      }
+      catch (...) {
+        lbx_log_error("Error opening source website");
+      }
+      return TRUE;
+    }
     case IDOK: case IDCANCEL: {
       EndDialog(hwnd, (INT_PTR) LOWORD(wParam));
       return TRUE;
@@ -173,10 +183,17 @@ about_dialog(HWND hwnd) {
   const unit_t VERSION_LEFT = 0;
   const unit_t VERSION_TOP = TAGLINE_TOP + TAGLINE_HEIGHT + 8;
 
-  const unit_t SOURCE_WIDTH = 73;
+  const auto VISIT_TEXT = "Visit Website";
+  const unit_t VISIT_WIDTH = button_width(VISIT_TEXT);
+  const unit_t VISIT_HEIGHT = 12;
+  const unit_t VISIT_LEFT = center_offset(DIALOG_WIDTH, VISIT_WIDTH);
+  const unit_t VISIT_TOP = VERSION_TOP + VERSION_HEIGHT + 8;
+
+  const auto SOURCE_TEXT = "Get Source Code...";
+  const unit_t SOURCE_WIDTH = button_width(SOURCE_TEXT);
   const unit_t SOURCE_HEIGHT = 12;
   const unit_t SOURCE_LEFT = center_offset(DIALOG_WIDTH, SOURCE_WIDTH);
-  const unit_t SOURCE_TOP = VERSION_TOP + VERSION_HEIGHT + 8;
+  const unit_t SOURCE_TOP = VISIT_TOP + VISIT_HEIGHT + 4;
 
   const unit_t BYLINE_WIDTH = DIALOG_WIDTH;
   const unit_t BYLINE_HEIGHT = 8;
@@ -202,7 +219,10 @@ about_dialog(HWND hwnd) {
                      CText(SAFE_DIALOG_ABOUT_VERSION, IDC_VERSION,
                            VERSION_LEFT, VERSION_TOP,
                            VERSION_WIDTH, VERSION_HEIGHT),
-                     PushButton("Get Source Code...", IDC_GET_SOURCE_CODE,
+                     PushButton(VISIT_TEXT, IDC_VISIT_WEBSITE,
+                                VISIT_LEFT, VISIT_TOP,
+                                VISIT_WIDTH, VISIT_HEIGHT),
+                     PushButton(SOURCE_TEXT, IDC_GET_SOURCE_CODE,
                                 SOURCE_LEFT, SOURCE_TOP,
                                 SOURCE_WIDTH, SOURCE_HEIGHT),
                      CText(SAFE_DIALOG_ABOUT_BYLINE, IDC_BYLINE,

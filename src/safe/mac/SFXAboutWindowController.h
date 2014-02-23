@@ -10,5 +10,7 @@
 
 @interface SFXAboutWindowController : NSWindowController
 - (IBAction)getSourceCode:(id)sender;
+- (IBAction)visitWebsite:(id)sender;
+@property (weak) IBOutlet NSTextField *versionTextField;
 
 @end

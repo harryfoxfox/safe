@@ -18,8 +18,20 @@
 
 #include <safe/report_exception.hpp>
 
+// yes i know defines are suboptimal, but it's mostly contained
+#ifdef __APPLE__
+#include <safe/mac/util.hpp>
+#define platform mac
+#elif _WIN32
+#include <safe/win/util.hpp>
+#define platform win
+#else
+#error report_exception not supported on this platform
+#endif
+
 #include <safe/constants.h>
 #include <safe/open_url.hpp>
+#include <safe/version.h>
 
 #include <cassert>
 
@@ -38,6 +50,18 @@ exception_location_to_string(ExceptionLocation el) {
 #undef _CV
 }
 
+static
+const char *
+get_target_abi_tag() {
+#if defined(__amd64__) || defined(_M_AMD64)
+  return "amd64";
+#elif defined(__i386__) || defined(_M_IX86)
+  return "i386";
+#else
+#error "target abi identification not supported!"
+#endif
+}
+
 void
 report_exception(ExceptionLocation el, std::exception_ptr eptr) {
   std::string what;
@@ -50,7 +74,10 @@ report_exception(ExceptionLocation el, std::exception_ptr eptr) {
 
   safe::URLQueryArgs qargs =
     {{"where", exception_location_to_string(el)},
-     {"what", what}};
+     {"what", what},
+     {"version", SAFE_VERSION_STR},
+     {"platform", safe::platform::get_parseable_platform_version()},
+     {"abi", get_target_abi_tag()}};
 
   safe::open_url(SAFE_REPORT_EXCEPTION_WEBSITE, qargs);
 }
