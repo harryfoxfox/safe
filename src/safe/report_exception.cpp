@@ -31,6 +31,7 @@
 
 #include <safe/constants.h>
 #include <safe/open_url.hpp>
+#include <safe/version.h>
 
 #include <cassert>
 
@@ -74,6 +75,7 @@ report_exception(ExceptionLocation el, std::exception_ptr eptr) {
   safe::URLQueryArgs qargs =
     {{"where", exception_location_to_string(el)},
      {"what", what},
+     {"version", SAFE_VERSION_STR},
      {"platform", safe::platform::get_parseable_platform_version()},
      {"abi", get_target_abi_tag()}};
 

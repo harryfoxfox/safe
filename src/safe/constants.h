@@ -20,6 +20,7 @@
 #define _safe_constants_h
 
 #include <safe/product_name.h>
+#include <safe/version.h>
 
 #define SAFE_APP_STARTED_COOKIE_FILENAME "AppStarted"
 #define SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME "RecentPaths.db"
@@ -102,7 +103,8 @@ enum {
    "tray icon bubbles. Don't you? Don't you?!?!")
 
 #define SAFE_DIALOG_ABOUT_TAGLINE "Protect your files."
-#define SAFE_DIALOG_ABOUT_VERSION "Version 1.0"
+#define SAFE_DIALOG_ABOUT_VERSION "Version " SAFE_VERSION_STR
+
 #define SAFE_DIALOG_ABOUT_BYLINE (PRODUCT_NAME_A " is free software.")
 
 #define SAFE_TRAY_ICON_SEND_FEEDBACK "Send Feedback..."

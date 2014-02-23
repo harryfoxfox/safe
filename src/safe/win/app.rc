@@ -2,14 +2,23 @@
 
 #include "safe/product_name.h"
 #include "safe/resources_win.h"
+#include "safe/version.h"
 
 // Wonderfully guided by:
 // http://www.transmissionzero.co.uk/computing/win32-apps-with-mingw/
 
+#if SAFE_VERSION_MAJOR > 65535
+#error SAFE_VERSION_MAJOR is too large
+#endif
+
+#if SAFE_VERSION_BUILD > 65535
+#error SAFE_VERSION_BUILD is too large
+#endif
+
 // Executable version information.
 VS_VERSION_INFO    VERSIONINFO
-FILEVERSION        1,0,0,0
-PRODUCTVERSION     1,0,0,0
+FILEVERSION        0, SAFE_VERSION_MAJOR, 0, SAFE_VERSION_BUILD
+PRODUCTVERSION     0, SAFE_VERSION_MAJOR, 0, SAFE_VERSION_BUILD
 FILEFLAGSMASK      VS_FFI_FILEFLAGSMASK
 #ifndef NDEBUG
   FILEFLAGS        VS_FF_DEBUG | VS_FF_PRERELEASE
@@ -26,12 +35,12 @@ BEGIN
     BEGIN
       VALUE "CompanyName", "Rian Hunter"
       VALUE "FileDescription", PRODUCT_NAME_A
-      VALUE "FileVersion", "1.0.0.0"
+      VALUE "FileVersion", SAFE_VERSION_STR
       VALUE "InternalName", PRODUCT_NAME_A
-      VALUE "LegalCopyright", "© 2013 Rian Hunter"
+      VALUE "LegalCopyright", "© 2014 Rian Hunter"
       VALUE "OriginalFilename", PRODUCT_NAME_A ".exe"
       VALUE "ProductName", PRODUCT_NAME_A
-      VALUE "ProductVersion", "1.0.0.0"
+      VALUE "ProductVersion", SAFE_VERSION_STR
     END
   END
   BLOCK "VarFileInfo"
