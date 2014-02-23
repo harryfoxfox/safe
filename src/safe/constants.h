@@ -34,6 +34,7 @@ enum {
 #define SAFE_MAC_SYSTEM_CHANGES_INFO_WEBSITE "http://getsafe.org/app/mac_system_changes_more_info"
 #define SAFE_REPORT_EXCEPTION_WEBSITE "http://getsafe.org/app/report_exception"
 #define SAFE_VISIT_WEBSITE_WEBSITE "http://getsafe.org/app/visit_website"
+#define SAFE_WINXP_MORE_INFO_WEBSITE "http://getsafe.org/app/winxp_more_info"
 
 /* UI Strings follow */
 
