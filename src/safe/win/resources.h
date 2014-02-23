@@ -37,6 +37,7 @@
 #define ID_SFX_RD_SYS32 DEFRSRC(103)
 #define ID_SFX_RD_SYS64 DEFRSRC(104)
 #define ID_SFX_UPDATE_DRV DEFRSRC(105)
+#define ID_SFX_RD_CAT DEFRSRC(106)
 
 /*
   256 because 1-255 are reserved:
