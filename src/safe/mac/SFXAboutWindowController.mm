@@ -23,4 +23,10 @@
     safe::mac::open_url(SAFE_SOURCE_CODE_WEBSITE);
 }
 
+- (IBAction)visitWebsite:(id)sender {
+    (void) sender;
+
+    safe::mac::open_url(SAFE_VISIT_WEBSITE_WEBSITE);
+}
+
 @end

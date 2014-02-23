@@ -14,30 +14,23 @@
         <customObject id="-3" userLabel="Application"/>
         <window title="About Safe" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" wantsToBeColor="NO" animationBehavior="default" id="1">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
-            <rect key="contentRect" x="498" y="381" width="307" height="399"/>
+            <rect key="contentRect" x="498" y="381" width="285" height="439"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
             <view key="contentView" id="2">
-                <rect key="frame" x="0.0" y="0.0" width="307" height="399"/>
+                <rect key="frame" x="0.0" y="0.0" width="285" height="439"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <subviews>
-                    <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IgO-BY-U81">
-                        <rect key="frame" x="75" y="46" width="157" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="Get Source Code..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="roW-ge-WI4">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <action selector="getSourceCode:" target="-2" id="LAD-S0-V6z"/>
-                        </connections>
-                    </button>
-                    <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7XK-ld-o0f">
-                        <rect key="frame" x="89" y="251" width="128" height="128"/>
+                    <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7XK-ld-o0f">
+                        <rect key="frame" x="79" y="291" width="128" height="128"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="128" id="8SM-33-Fzd"/>
+                            <constraint firstAttribute="height" constant="128" id="uGM-WN-Ue5"/>
+                        </constraints>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="output" id="s9d-Rh-uSh"/>
                     </imageView>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fJf-bi-JEC">
-                        <rect key="frame" x="-2" y="156" width="311" height="99"/>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fJf-bi-JEC">
+                        <rect key="frame" x="71" y="192" width="143" height="99"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Safe" id="dH6-ph-C7Y">
                             <font key="font" size="72" name="Georgia"/>
@@ -45,8 +38,8 @@
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wu9-sn-TFc">
-                        <rect key="frame" x="113" y="93" width="81" height="19"/>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="wu9-sn-TFc">
+                        <rect key="frame" x="102" y="128" width="81" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Version 1.0" id="FKd-8E-8u2">
                             <font key="font" size="13" name="LucidaGrande"/>
@@ -54,17 +47,17 @@
                             <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XGk-Mg-hUA">
-                        <rect key="frame" x="96" y="19" width="115" height="14"/>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="XGk-Mg-hUA">
+                        <rect key="frame" x="83" y="20" width="119" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Safe is free sofware." placeholderString="sdfgsdfg" id="427-Jm-5wh">
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Safe is free software." placeholderString="sdfgsdfg" id="427-Jm-5wh">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" name="disabledControlTextColor" catalog="System" colorSpace="catalog"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gob-kI-cpb">
-                        <rect key="frame" x="96" y="131" width="114" height="17"/>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gob-kI-cpb">
+                        <rect key="frame" x="86" y="165" width="114" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Protect your files." id="CwW-0i-Q49">
                             <font key="font" metaFont="system"/>
@@ -72,7 +65,46 @@
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
+                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3Ai-Iw-XxQ">
+                        <rect key="frame" x="83" y="80" width="120" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="Visit Website" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="VQY-20-Zc2">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="visitWebsite:" target="-2" id="MqT-Sc-lXs"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Frf-5Z-Rim">
+                        <rect key="frame" x="64" y="47" width="157" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="Get Source Code..." bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="gG8-ve-7me">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="getSourceCode:" target="-2" id="BA3-oc-FW1"/>
+                        </connections>
+                    </button>
                 </subviews>
+                <constraints>
+                    <constraint firstAttribute="centerX" secondItem="fJf-bi-JEC" secondAttribute="centerX" id="1fR-6Q-ad7"/>
+                    <constraint firstAttribute="centerX" secondItem="Frf-5Z-Rim" secondAttribute="centerX" id="2dS-XM-znl"/>
+                    <constraint firstItem="Frf-5Z-Rim" firstAttribute="top" secondItem="3Ai-Iw-XxQ" secondAttribute="bottom" constant="12" symbolic="YES" id="AWT-po-LOS"/>
+                    <constraint firstAttribute="centerX" secondItem="XGk-Mg-hUA" secondAttribute="centerX" id="IJq-E2-McN"/>
+                    <constraint firstItem="fJf-bi-JEC" firstAttribute="top" secondItem="7XK-ld-o0f" secondAttribute="bottom" id="RXe-8L-bSa"/>
+                    <constraint firstAttribute="centerX" secondItem="3Ai-Iw-XxQ" secondAttribute="centerX" id="WGw-Qw-Mqm"/>
+                    <constraint firstAttribute="centerX" secondItem="wu9-sn-TFc" secondAttribute="centerX" id="bHk-cf-PZF"/>
+                    <constraint firstAttribute="centerX" secondItem="7XK-ld-o0f" secondAttribute="centerX" id="cP8-Vb-uEw"/>
+                    <constraint firstItem="7XK-ld-o0f" firstAttribute="top" secondItem="2" secondAttribute="top" constant="20" id="dkY-Ux-e05"/>
+                    <constraint firstItem="wu9-sn-TFc" firstAttribute="top" secondItem="gob-kI-cpb" secondAttribute="bottom" constant="20" id="gjF-6n-iKU"/>
+                    <constraint firstAttribute="centerX" secondItem="gob-kI-cpb" secondAttribute="centerX" id="k3w-R4-ezX"/>
+                    <constraint firstAttribute="bottom" secondItem="XGk-Mg-hUA" secondAttribute="bottom" constant="20" id="rFp-AM-T27"/>
+                    <constraint firstItem="3Ai-Iw-XxQ" firstAttribute="top" secondItem="wu9-sn-TFc" secondAttribute="bottom" constant="20" id="rbp-wo-hEZ"/>
+                    <constraint firstItem="gob-kI-cpb" firstAttribute="top" secondItem="fJf-bi-JEC" secondAttribute="bottom" constant="10" id="t5R-1e-q2e"/>
+                    <constraint firstItem="XGk-Mg-hUA" firstAttribute="top" secondItem="Frf-5Z-Rim" secondAttribute="bottom" constant="20" id="tXe-F6-Hp0"/>
+                </constraints>
             </view>
         </window>
     </objects>

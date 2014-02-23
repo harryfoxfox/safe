@@ -10,5 +10,6 @@
 
 @interface SFXAboutWindowController : NSWindowController
 - (IBAction)getSourceCode:(id)sender;
+- (IBAction)visitWebsite:(id)sender;
 
 @end
