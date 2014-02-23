@@ -63,6 +63,7 @@ create_new_safe_dialog_proc(HWND hwnd, UINT Message,
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) ctx);
     w32util::center_window_in_monitor(hwnd);
     w32util::set_default_dialog_font(hwnd);
+
     return TRUE;
   }
   case WM_COMMAND: {
@@ -286,7 +287,9 @@ create_new_safe_dialog(HWND owner, std::shared_ptr<encfs::FsIO> fsio) {
                            NAME_LABEL_WIDTH, NAME_LABEL_HEIGHT),
                      EditText(IDC_NAME,
                               NAME_ENTRY_LEFT, NAME_ENTRY_TOP,
-                              NAME_ENTRY_WIDTH, NAME_ENTRY_HEIGHT),
+                              NAME_ENTRY_WIDTH, NAME_ENTRY_HEIGHT,
+                              ES_LEFT | WS_BORDER | WS_TABSTOP |
+                              ES_AUTOHSCROLL),
                      LText("Password:", IDC_STATIC,
                            PASS_LABEL_LEFT, PASS_LABEL_TOP,
                            PASS_LABEL_WIDTH, PASS_LABEL_HEIGHT),
