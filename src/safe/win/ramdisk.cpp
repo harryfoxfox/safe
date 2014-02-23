@@ -19,7 +19,7 @@
 #include <safe/win/ramdisk.hpp>
 
 #include <safe/deferred.hpp>
-#include <safe/resources_win.h>
+#include <safe/win/resources.h>
 #include <safe/util.hpp>
 #include <w32util/error.hpp>
 #include <w32util/file.hpp>
@@ -333,6 +333,8 @@ install_kernel_driver() {
                          temp_dir + "\\safe_ramdisk.sys");
   store_resource_to_file(ID_SFX_RD_SYS64, SFX_BIN_RSRC,
                          temp_dir + "\\safe_ramdisk_x64.sys");
+  store_resource_to_file(ID_SFX_RD_CAT, SFX_BIN_RSRC,
+                         temp_dir + "\\safe_ramdisk.cat");
 
   // NB: hardware_id must match what's in the inf file
   auto hardware_id = std::string("root\\saferamdisk");

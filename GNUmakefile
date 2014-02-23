@@ -232,7 +232,7 @@ $(DYN_RESOURCES_ROOT)/update_driver.exe: src/safe/win/ramdisk.cpp src/update_dri
 	@echo "Build update_driver.exe"
 	$(if $(IS_WIN64_TARGET),true,echo "Not a 64-bit compiler" && false)
 	$(CXX) -o $@ -DSFX_EMBEDDED $(MY_CPPFLAGS) $(MY_CXXFLAGS) \
- $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
+ $(ASLR_LINK_FLAGS) -mconsole -static \
  src/update_driver/main.cpp src/safe/win/ramdisk.cpp -lsetupapi -lnewdev -lpsapi
 
 	$(if $(RELEASE),$(STRIP) -s $@,)

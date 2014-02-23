@@ -21,7 +21,7 @@
 #include <safe/constants.h>
 #include <safe/win/dialog_common.hpp>
 #include <safe/logging.h>
-#include <safe/resources_win.h>
+#include <safe/win/resources.h>
 #include <w32util/dialog.hpp>
 #include <w32util/gui_util.hpp>
 #include <safe/util.hpp>

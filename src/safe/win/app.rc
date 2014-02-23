@@ -1,7 +1,7 @@
 #include <windows.h>
 
 #include "safe/product_name.h"
-#include "safe/resources_win.h"
+#include "safe/win/resources.h"
 #include "safe/version.h"
 
 // Wonderfully guided by:
@@ -53,6 +53,7 @@ IDI_SFX_APP ICON "app_win.ico"
 ID_SFX_RD_INF SFX_BIN_RSRC "safe_ramdisk.inf"
 ID_SFX_RD_SYS32 SFX_BIN_RSRC "safe_ramdisk.sys"
 ID_SFX_RD_SYS64 SFX_BIN_RSRC "safe_ramdisk_x64.sys"
+ID_SFX_RD_CAT SFX_BIN_RSRC "safe_ramdisk.cat"
 
 #ifndef _WIN64
 ID_SFX_UPDATE_DRV SFX_BIN_RSRC "update_driver.exe"
