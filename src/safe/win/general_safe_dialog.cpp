@@ -160,12 +160,6 @@ generic_general_safe_dialog(HWND hwnd,
   const unit_t MIN_BODY_WIDTH = 4 * MAX_CHARS_PER_LINE;
   const unit_t BUTTON_SPACING = 4;
 
-  auto button_width = [] (const std::string & msg) {
-    auto width = num_characters(msg) * 4;
-    auto MIN_BUTTON_WIDTH = (decltype(width)) 10 * 4;
-    return std::max(width, MIN_BUTTON_WIDTH);
-  };
-
   // RANT: this should be a fold over a map
   unit_t body_width = 0;
   for (const auto & choice : choices) {
