@@ -7,9 +7,12 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="SFXMountSafeWindowController">
             <connections>
+                <outlet property="insecurePasswordTextField" destination="5w0-RG-zdV" id="eIc-ha-2MR"/>
                 <outlet property="locationPathControl" destination="LNb-3P-z9H" id="wv0-oV-oO4"/>
-                <outlet property="passwordSecureTextField" destination="I7t-QG-Szy" id="Qtq-gM-85T"/>
+                <outlet property="passwordTabView" destination="E9V-gP-nkV" id="uOL-4G-XTz"/>
                 <outlet property="rememberPasswordCheckbox" destination="xer-8X-1Eo" id="IiS-1g-30o"/>
+                <outlet property="securePasswordTextField" destination="zAO-4J-nCH" id="j6u-cx-7fc"/>
+                <outlet property="showPasswordCheckbox" destination="jfc-vg-kWj" id="Q9l-i3-Ggh"/>
                 <outlet property="window" destination="1" id="Jdc-NA-3AB"/>
             </connections>
         </customObject>
@@ -18,14 +21,14 @@
         <window title="Mount Existing Safe" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" wantsToBeColor="NO" visibleAtLaunch="NO" animationBehavior="default" id="1">
             <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="0.0" y="0.0" width="344" height="198"/>
+            <rect key="contentRect" x="0.0" y="0.0" width="344" height="215"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
             <view key="contentView" id="2">
-                <rect key="frame" x="0.0" y="0.0" width="344" height="198"/>
+                <rect key="frame" x="0.0" y="0.0" width="344" height="215"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="PKe-bW-EUs">
-                        <rect key="frame" x="18" y="161" width="138" height="17"/>
+                        <rect key="frame" x="18" y="178" width="138" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Mount Existing Safe" id="Icl-2L-XFn">
                             <font key="font" metaFont="systemBold"/>
@@ -34,7 +37,7 @@
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="590" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="Hy2-Mp-kd8">
-                        <rect key="frame" x="18" y="124" width="79" height="17"/>
+                        <rect key="frame" x="18" y="141" width="79" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="75" id="3Bg-1Q-5zP"/>
@@ -46,7 +49,7 @@
                         </textFieldCell>
                     </textField>
                     <pathControl horizontalHuggingPriority="589" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LNb-3P-z9H">
-                        <rect key="frame" x="97" y="119" width="230" height="26"/>
+                        <rect key="frame" x="97" y="136" width="230" height="26"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <pathCell key="cell" selectable="YES" editable="YES" alignment="left" pathStyle="popUp" id="VXb-uc-3p4">
                             <font key="font" metaFont="system"/>
@@ -60,7 +63,7 @@
                         </pathCell>
                     </pathControl>
                     <textField horizontalHuggingPriority="249" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" verticalCompressionResistancePriority="748" translatesAutoresizingMaskIntoConstraints="NO" id="SJ0-8r-MLc">
-                        <rect key="frame" x="18" y="88" width="79" height="17"/>
+                        <rect key="frame" x="18" y="105" width="79" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Password:" id="qsM-Bf-kqd">
                             <font key="font" metaFont="system"/>
@@ -68,21 +71,54 @@
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
-                    <secureTextField verticalHuggingPriority="750" verticalCompressionResistancePriority="749" translatesAutoresizingMaskIntoConstraints="NO" id="I7t-QG-Szy">
-                        <rect key="frame" x="100" y="86" width="224" height="22"/>
+                    <tabView allowsTruncatedLabels="NO" type="noTabsNoBorder" translatesAutoresizingMaskIntoConstraints="NO" id="E9V-gP-nkV">
+                        <rect key="frame" x="100" y="103" width="224" height="22"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <secureTextFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" borderStyle="bezel" drawsBackground="YES" usesSingleLineMode="YES" id="GSA-gO-dfQ">
-                            <font key="font" metaFont="system"/>
-                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                            <allowedInputSourceLocales>
-                                <string>NSAllRomanInputSourcesLocaleIdentifier</string>
-                            </allowedInputSourceLocales>
-                        </secureTextFieldCell>
-                        <connections>
-                            <action selector="confirmStart:" target="-2" id="cLk-Bd-OKB"/>
-                        </connections>
-                    </secureTextField>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="224" id="CEa-IZ-31x"/>
+                            <constraint firstAttribute="height" constant="22" id="anl-6u-fTi"/>
+                        </constraints>
+                        <font key="font" metaFont="system"/>
+                        <tabViewItems>
+                            <tabViewItem label="Tab" identifier="1" id="OWw-7g-fIb">
+                                <view key="view" id="BbO-vD-esG">
+                                    <rect key="frame" x="0.0" y="0.0" width="224" height="22"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5w0-RG-zdV">
+                                            <rect key="frame" x="0.0" y="0.0" width="224" height="22"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="Uuc-xj-exC">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            </textFieldCell>
+                                        </textField>
+                                    </subviews>
+                                </view>
+                            </tabViewItem>
+                            <tabViewItem label="View" identifier="2" id="aG2-Lz-KWb">
+                                <view key="view" id="47c-rL-HwM">
+                                    <rect key="frame" x="0.0" y="0.0" width="224" height="22"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <secureTextField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zAO-4J-nCH">
+                                            <rect key="frame" x="0.0" y="0.0" width="224" height="22"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                            <secureTextFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" usesSingleLineMode="YES" id="1hI-IW-cGI">
+                                                <font key="font" metaFont="system"/>
+                                                <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                <allowedInputSourceLocales>
+                                                    <string>NSAllRomanInputSourcesLocaleIdentifier</string>
+                                                </allowedInputSourceLocales>
+                                            </secureTextFieldCell>
+                                        </secureTextField>
+                                    </subviews>
+                                </view>
+                            </tabViewItem>
+                        </tabViewItems>
+                    </tabView>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ZWj-Zk-Skx">
                         <rect key="frame" x="248" y="13" width="82" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -122,31 +158,45 @@ Gw
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                     </button>
+                    <button verticalHuggingPriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="jfc-vg-kWj">
+                        <rect key="frame" x="98" y="79" width="228" height="18"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="check" title="Show Password" bezelStyle="regularSquare" imagePosition="left" inset="2" id="yMr-p9-Kdh">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="showPassword:" target="-2" id="irH-9W-YJo"/>
+                        </connections>
+                    </button>
                 </subviews>
                 <constraints>
                     <constraint firstItem="Kmh-t3-y7e" firstAttribute="top" secondItem="xer-8X-1Eo" secondAttribute="bottom" constant="20" symbolic="YES" id="0tS-fq-GOT"/>
                     <constraint firstItem="Hy2-Mp-kd8" firstAttribute="top" secondItem="PKe-bW-EUs" secondAttribute="bottom" constant="20" id="1PU-og-yue"/>
+                    <constraint firstItem="jfc-vg-kWj" firstAttribute="top" secondItem="E9V-gP-nkV" secondAttribute="bottom" constant="8" symbolic="YES" id="1Ud-ZR-elu"/>
+                    <constraint firstItem="E9V-gP-nkV" firstAttribute="top" secondItem="LNb-3P-z9H" secondAttribute="bottom" constant="15" id="27o-LL-tPf"/>
                     <constraint firstItem="Kmh-t3-y7e" firstAttribute="height" secondItem="ZWj-Zk-Skx" secondAttribute="height" id="4oC-LG-nZ8"/>
                     <constraint firstItem="LNb-3P-z9H" firstAttribute="leading" secondItem="Hy2-Mp-kd8" secondAttribute="trailing" constant="5" id="8Wk-sm-Zit"/>
+                    <constraint firstItem="E9V-gP-nkV" firstAttribute="trailing" secondItem="xer-8X-1Eo" secondAttribute="trailing" id="AjO-n2-LnB"/>
                     <constraint firstItem="ZWj-Zk-Skx" firstAttribute="leading" secondItem="Kmh-t3-y7e" secondAttribute="trailing" constant="12" id="Fcg-Kt-Quf"/>
                     <constraint firstAttribute="bottom" secondItem="ZWj-Zk-Skx" secondAttribute="bottom" constant="20" id="Hew-cg-V0U"/>
                     <constraint firstItem="LNb-3P-z9H" firstAttribute="baseline" secondItem="Hy2-Mp-kd8" secondAttribute="baseline" id="ILl-Yj-a9B"/>
-                    <constraint firstItem="I7t-QG-Szy" firstAttribute="leading" secondItem="LNb-3P-z9H" secondAttribute="leading" id="OgQ-4a-QoV"/>
-                    <constraint firstItem="I7t-QG-Szy" firstAttribute="width" secondItem="LNb-3P-z9H" secondAttribute="width" id="RZK-wB-4vE"/>
+                    <constraint firstItem="E9V-gP-nkV" firstAttribute="trailing" secondItem="LNb-3P-z9H" secondAttribute="trailing" id="KSP-fF-v79"/>
                     <constraint firstItem="Kmh-t3-y7e" firstAttribute="bottom" secondItem="ZWj-Zk-Skx" secondAttribute="bottom" id="SxH-HE-PJM"/>
                     <constraint firstItem="SJ0-8r-MLc" firstAttribute="leading" secondItem="Hy2-Mp-kd8" secondAttribute="leading" id="Umn-Ji-R4M"/>
-                    <constraint firstItem="I7t-QG-Szy" firstAttribute="baseline" secondItem="SJ0-8r-MLc" secondAttribute="baseline" id="V9D-H9-tkc"/>
-                    <constraint firstItem="I7t-QG-Szy" firstAttribute="width" secondItem="xer-8X-1Eo" secondAttribute="width" id="VwV-kX-Kvm"/>
                     <constraint firstAttribute="trailing" secondItem="ZWj-Zk-Skx" secondAttribute="trailing" constant="20" id="Vxg-0u-UCv"/>
-                    <constraint firstItem="xer-8X-1Eo" firstAttribute="leading" secondItem="I7t-QG-Szy" secondAttribute="leading" id="Y9Y-Tz-Rp9"/>
-                    <constraint firstItem="xer-8X-1Eo" firstAttribute="top" secondItem="I7t-QG-Szy" secondAttribute="bottom" constant="11" id="aln-Y0-6FE"/>
+                    <constraint firstItem="E9V-gP-nkV" firstAttribute="leading" secondItem="xer-8X-1Eo" secondAttribute="leading" id="Ye4-iM-aMc"/>
+                    <constraint firstItem="xer-8X-1Eo" firstAttribute="top" secondItem="jfc-vg-kWj" secondAttribute="bottom" constant="6" symbolic="YES" id="ahK-Fd-CMT"/>
+                    <constraint firstItem="E9V-gP-nkV" firstAttribute="leading" secondItem="LNb-3P-z9H" secondAttribute="leading" id="fId-rP-Zsh"/>
                     <constraint firstItem="Hy2-Mp-kd8" firstAttribute="height" secondItem="SJ0-8r-MLc" secondAttribute="height" id="glr-bj-2sG"/>
                     <constraint firstItem="SJ0-8r-MLc" firstAttribute="top" secondItem="Hy2-Mp-kd8" secondAttribute="bottom" constant="19" id="kfc-os-oBu"/>
                     <constraint firstItem="Kmh-t3-y7e" firstAttribute="width" secondItem="ZWj-Zk-Skx" secondAttribute="width" id="l4o-M4-b2z"/>
                     <constraint firstItem="PKe-bW-EUs" firstAttribute="top" secondItem="2" secondAttribute="top" constant="20" id="rv6-dI-fHr"/>
                     <constraint firstItem="PKe-bW-EUs" firstAttribute="leading" secondItem="Hy2-Mp-kd8" secondAttribute="leading" id="sP5-fv-gRz"/>
                     <constraint firstItem="Hy2-Mp-kd8" firstAttribute="width" secondItem="SJ0-8r-MLc" secondAttribute="width" id="ssQ-aS-djr"/>
+                    <constraint firstItem="E9V-gP-nkV" firstAttribute="trailing" secondItem="jfc-vg-kWj" secondAttribute="trailing" id="tR5-AP-ydJ"/>
                     <constraint firstItem="PKe-bW-EUs" firstAttribute="leading" secondItem="2" secondAttribute="leading" constant="20" id="uFN-iy-qpj"/>
+                    <constraint firstItem="E9V-gP-nkV" firstAttribute="leading" secondItem="jfc-vg-kWj" secondAttribute="leading" id="zuK-Cf-y8G"/>
                 </constraints>
             </view>
             <connections>

@@ -68,12 +68,29 @@
     [self.window performClose:self];
 }
 
+- (NSTextField *)currentPasswordView {
+    if (self.showPasswordCheckbox.state == NSOnState) {
+        return self.insecurePasswordTextField;
+    }
+    else {
+        return self.securePasswordTextField;
+    }
+}
+
+- (NSString *)password {
+    return self.currentPasswordView.stringValue;
+}
+
+- (void)setPassword:(NSString *)p {
+    self.currentPasswordView.stringValue = p;
+}
+
 - (IBAction)confirmStart:(id)sender {
     (void) sender;
     
-    encfs::SecureMem password([self.passwordSecureTextField.stringValue lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1);
+    encfs::SecureMem password([self.password lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1);
     memcpy(password.data(),
-           self.passwordSecureTextField.stringValue.UTF8String,
+           self.password.UTF8String,
            password.size());
     
     auto error_msg =
@@ -135,7 +152,7 @@
         // password was correct, save to keychain if requested
         if (self.rememberPasswordCheckbox.state == NSOnState) {
             try {
-                safe::mac::save_password_for_location(self.locationPathControl.URL, self.passwordSecureTextField.stringValue);
+                safe::mac::save_password_for_location(self.locationPathControl.URL, self.password);
             }
             catch (const std::exception & err) {
                 // error while saving password, oh well
@@ -192,16 +209,43 @@
                       url.path.fileSystemRepresentation, err.what());
     }
 
-    if (pass) self.passwordSecureTextField.stringValue = pass;
+    if (pass) self.password = pass;
+}
+
+- (IBAction)showPassword:(id)sender {
+    (void) sender;
+    bool should_show_password =
+        self.showPasswordCheckbox.state == NSOnState;
+
+    NSTextField *lastTextField = should_show_password
+        ? self.securePasswordTextField
+        : self.insecurePasswordTextField;
+
+    // get current cursor location
+    NSText *fieldEditor = [self.window fieldEditor:YES forObject:lastTextField];
+    NSRange curRange = fieldEditor.selectedRange;
+
+    // transfer password value
+    self.password = lastTextField.stringValue;
+
+    // switch views
+    [self.passwordTabView selectTabViewItemAtIndex:
+     should_show_password ? 0 : 1];
+
+    // reset cursor location (after switching views, since that also manipulates cursor position)
+    NSText *newFieldEditor = [self.window fieldEditor:YES forObject:self.currentPasswordView];
+    newFieldEditor.selectedRange = curRange;
 }
 
 - (void)windowDidLoad
 {
     [super windowDidLoad];
 
+    [self showPassword:nil];
+
     if (self.fileURL) {
         self.locationPathControl.URL = self.fileURL;
-        [self.window makeFirstResponder:self.passwordSecureTextField];
+        [self.window makeFirstResponder:self.currentPasswordView];
         [self locationURLChanged:nil];
     }
 

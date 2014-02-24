@@ -33,11 +33,11 @@ BEGIN
   BEGIN
     BLOCK "080904b0"
     BEGIN
-      VALUE "CompanyName", "Rian Hunter"
+      VALUE "CompanyName", PRODUCT_NAME_A
       VALUE "FileDescription", PRODUCT_NAME_A
       VALUE "FileVersion", SAFE_VERSION_STR
       VALUE "InternalName", PRODUCT_NAME_A
-      VALUE "LegalCopyright", "© 2014 Rian Hunter"
+      VALUE "LegalCopyright", PRODUCT_NAME_A " is free software."
       VALUE "OriginalFilename", PRODUCT_NAME_A ".exe"
       VALUE "ProductName", PRODUCT_NAME_A
       VALUE "ProductVersion", SAFE_VERSION_STR
