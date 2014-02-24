@@ -28,6 +28,8 @@
 
 namespace safe_nt {
 
+#ifdef DBG
+
 const char *
 ioctl_to_string(ULONG ioctl) {
 #define __R(a) case a: return #a
@@ -1131,6 +1133,27 @@ nt_status_to_string(NTSTATUS status) {
   }
 #undef __R
 }
+
+#else
+
+const char *const NOT_IN_DBG_MODE = "<not in dbg mode>";
+
+const char *
+ioctl_to_string(ULONG) {
+  return NOT_IN_DBG_MODE;
+}
+
+const char *
+pnp_minor_function_to_string(UCHAR) {
+  return NOT_IN_DBG_MODE;
+}
+
+const char *
+nt_status_to_string(NTSTATUS) {
+  return NOT_IN_DBG_MODE;
+}
+
+#endif
 
 NTSTATUS
 standard_complete_irp_info(PIRP irp, NTSTATUS status, ULONG_PTR info) noexcept {
