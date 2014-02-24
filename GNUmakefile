@@ -65,8 +65,9 @@ ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x501 -DWINVER=0x501 -DNTDDI_VERSION=0x05010000
 
 CPPFLAGS_RELEASE = -DNDEBUG
-CXXFLAGS_RELEASE = -O3 $(if $(IS_WIN_TARGET),-flto,,)
-CFLAGS_RELEASE = -O3 $(if $(IS_WIN_TARGET),-flto,,)
+CXXFLAGS_RELEASE = -Os $(if $(IS_WIN_TARGET),-flto,,)
+CFLAGS_RELEASE = -Os $(if $(IS_WIN_TARGET),-flto,,)
+LDFLAGS_RELEASE = -fuse-linker-plugin
 CXXFLAGS_DEBUG = -g
 CFLAGS_DEBUG = -g
 
@@ -201,10 +202,10 @@ $(NLSCHECK): clean
 nlscheck: $(NLSCHECK)
 
 NORMALIZ_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libnormaliz.a
-$(NORMALIZ_DEP): $(CURDIR)/normaliz.def clean-exe
+$(NORMALIZ_DEP): $(CURDIR)/normaliz.def
 	$(DLLTOOL) -k -d $^ -l $@
 
-normaliz: $(NORMALIZ_DEP)
+normaliz: $(NORMALIZ_DEP) clean-exe
 
 # this isn't run by default since we use the prebuild versions in "resources/"
 # but can be run manually, then upon build of Safe.exe, we'll pull in
@@ -245,10 +246,10 @@ $(DYN_RESOURCES_ROOT)/update_driver.exe: src/safe/win/ramdisk.cpp src/update_dri
 update_driver: $(DYN_RESOURCES_ROOT)/update_driver.exe
 
 MYPOWRPROF_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libmypowrprof.a
-$(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def clean-exe
+$(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def
 	$(DLLTOOL) -k -d $^ -l $@
 
-mypowrprof: $(MYPOWRPROF_DEP)
+mypowrprof: $(MYPOWRPROF_DEP) clean-exe
 
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
@@ -339,7 +340,8 @@ test_encfs_main:
  -o $@ $(TEST_ENCFS_MAIN_OBJS) $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES)
 
 $(EXE_NAME):
-	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -static \
+	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) \
+        $(if $(RELEASE),$(LDFLAGS_RELEASE),$(LDFLAGS_DEBUG)) -static \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
  -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof
