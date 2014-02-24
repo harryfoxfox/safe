@@ -32,8 +32,11 @@
 @property (retain) NSURL *fileURL;
 
 @property (weak) IBOutlet NSPathControl *locationPathControl;
-@property (weak) IBOutlet NSSecureTextField *passwordSecureTextField;
 @property (weak) IBOutlet NSButton *rememberPasswordCheckbox;
+@property (weak) IBOutlet NSButton *showPasswordCheckbox;
+@property (weak) IBOutlet NSTextField *insecurePasswordTextField;
+@property (weak) IBOutlet NSSecureTextField *securePasswordTextField;
+@property (weak) IBOutlet NSTabView *passwordTabView;
 
 - (id)initWithDelegate:(NSObject <SFXMountSafeWindowControllerDelegate> *) del
                     fs:(std::shared_ptr<encfs::FsIO>)fs;
@@ -45,5 +48,6 @@
 - (IBAction)confirmStart:(id)sender;
 - (IBAction)cancelStart:(id)sender;
 - (IBAction)locationURLChanged:(id)sender;
+- (IBAction)showPassword:(id)sender;
 
 @end
