@@ -182,7 +182,7 @@ modal_until_object(HWND parent, std::string title, std::string ui_msg,
 
   // loop
   while (true) {
-    auto ret = MsgWaitForMultipleObjects(1, &obj, TRUE, INFINITE, QS_ALLEVENTS);
+    auto ret = MsgWaitForMultipleObjects(1, &obj, FALSE, INFINITE, QS_ALLEVENTS);
     if (ret == WAIT_OBJECT_0) break;
     if (ret != WAIT_OBJECT_0 + 1) throw w32util::windows_error();
 
