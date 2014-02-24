@@ -16,7 +16,6 @@
     decltype(delegate) __weak weakDelegate = delegate;
     WelcomeWindowDoneBlock b = ^(SFXWelcomeWindowController *sender, welcome_window_action_t action_) {
         [weakDelegate welcomeWindowDone:sender withAction:action_];
-        return true;
     };
     return [self initWithBlock:b
                             title:nil
@@ -50,8 +49,7 @@
 }
 
 - (void)_dispatchAction:(welcome_window_action_t)action_ {
-    auto should_close = self.block(self, action_);
-    if (should_close) [self.window close];
+    self.block(self, action_);
 }
 
 - (IBAction)createNewSafe:(id)sender {
@@ -71,8 +69,10 @@
 
 - (BOOL)windowShouldClose:(id)sender {
     (void) sender;
-    auto should_close = self.block(self, WELCOME_WINDOW_NONE);
-    return should_close ? YES : NO;
+    [self _dispatchAction:WELCOME_WINDOW_NONE];
+    // this effectively turns the window close button into a normal button
+    // only the handler can close the window
+    return false;
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
