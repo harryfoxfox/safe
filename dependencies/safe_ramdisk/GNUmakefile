@@ -23,8 +23,8 @@ SAFE_RAMDISK_SRC_CPP = ramdisk.cpp nt_helpers.cpp ramdisk_device.cpp tfs_dav_rep
 SAFE_RAMDISK_OBJ =${SAFE_RAMDISK_SRC_CPP:.cpp=.cpp.o}
 
 CPPFLAGS ?= -I$(CURDIR) $(DDKINCLUDE) -I$(CURDIR)/../../src $(if $(RELEASE),,-DDBG)
-CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror $(if $(RELEASE),-Os -flto,)
-CFLAGS ?= $(CPPFLAGS) -Wall -Werror $(if $(RELEASE),-Os -flto,)
+CXXFLAGS ?= $(CPPFLAGS) -fno-rtti -fno-exceptions -nostdinc++ -fno-threadsafe-statics -std=c++11 -Wall -Werror $(if $(RELEASE),-Os,)
+CFLAGS ?= $(CPPFLAGS) -Wall -Werror $(if $(RELEASE),-Os,)
 
 ifdef IS_64BIT_BUILD
 EXTRA_LDFLAGS = -Wl,--entry,DriverEntry
@@ -53,23 +53,11 @@ all: $(SAFE_RAMDISK_TARGET)
 	$(DLLTOOL) -k -d $^ -l $@
 
 $(SAFE_RAMDISK_TARGET): $(SAFE_RAMDISK_OBJ) $(if $(USE_CUSTOM_NTOSKERNEL_DEF),libmyntoskrnl.a,)
-	$(CC) 	-Wl,--base-file,base.tmp \
-                $(EXTRA_LDFLAGS) \
-		-Wl,--entry,$(ENTRY) \
-		-nostartfiles -nostdlib  -static-libgcc \
-		-o junk.tmp \
-		$(CFLAGS) \
-		-L$(CURDIR) \
-		$(SAFE_RAMDISK_OBJ) \
-		$(if $(USE_CUSTOM_NTOSKERNEL_DEF),-lmyntoskrnl,-lntoskrnl) -lhal -lgcc
-	-rm -f junk.tmp
-
-	$(DLLTOOL) --dllname $@ --base-file base.tmp --output-exp ${@:.sys=.exp}
-	-rm -f base.tmp
-
 	$(CC)	-Wl,--subsystem,native \
+                -Wl,--disable-runtime-pseudo-reloc \
+                -Wl,--wdmdriver  \
 		$(EXTRA_LDFLAGS) \
-		-Wl,${@:.sys=.exp} \
+	        -shared \
 		-nostartfiles -nostdlib -static-libgcc \
 		-o $@ \
 		$(CFLAGS) \
