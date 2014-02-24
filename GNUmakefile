@@ -184,8 +184,10 @@ libtinyxml: clean
 	@cd $(TINYXML_ROOT); mv libtinyxml.a $(DEPS_INSTALL_ROOT)/lib
 	@cd $(TINYXML_ROOT); cp tinyxml.h tinystr.h $(DEPS_INSTALL_ROOT)/include
 
+# we issue "clean" first because our source files use code in
+# "safe_nlscheck.h"
 NLSCHECK := $(CURDIR)/$(OUT_DIR)/deps/include/safe_nlscheck.h
-$(NLSCHECK):
+$(NLSCHECK): clean
 	@mkdir -p /tmp/nlschk && \
          echo '#include <windows.h>' > /tmp/nlschk/chk.c && \
          echo 'NORM_FORM a = NormalizationC;' >> /tmp/nlschk/chk.c && \
@@ -199,7 +201,7 @@ $(NLSCHECK):
 nlscheck: $(NLSCHECK)
 
 NORMALIZ_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libnormaliz.a
-$(NORMALIZ_DEP): $(CURDIR)/normaliz.def
+$(NORMALIZ_DEP): $(CURDIR)/normaliz.def clean-exe
 	$(DLLTOOL) -k -d $^ -l $@
 
 normaliz: $(NORMALIZ_DEP)
@@ -209,7 +211,7 @@ normaliz: $(NORMALIZ_DEP)
 # the locally built version
 SAFE_RAMDISK_TARGET = $(DYN_RESOURCES_ROOT)/safe_ramdisk$(if $(IS_WIN64_TARGET),_x64,).sys
 
-safe_ramdisk: clean
+safe_ramdisk:
 	@echo "Building Safe RAMDisk"
 	@cd $(SAFE_RAMDISK_ROOT); cp $(if $(IS_WIN),$(if $(IS_WIN64_TARGET),config-win64.mk,config-win.mk),config-mac.mk) config.mk
 	@cd $(SAFE_RAMDISK_ROOT); CXX=$(CXX) CC=$(CC) make RELEASE=$(RELEASE) clean
@@ -219,14 +221,16 @@ safe_ramdisk: clean
 	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk.inf $(DYN_RESOURCES_ROOT)
 	@cp $(SAFE_RAMDISK_ROOT)/safe_ramdisk$(if $(IS_WIN64_TARGET),_x64,).sys $(DYN_RESOURCES_ROOT)
 
-safe_ramdisk_headers:
+# we issue "clean" first because our source files use code in
+# "ramdisk_ioctl.h"
+safe_ramdisk_headers: clean
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
 	cp $(SAFE_RAMDISK_ROOT)/ramdisk_ioctl.h $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
 
 # see note for safe_ramdisk: target above,
 # basically this is not run automatically when building deps
 $(DYN_RESOURCES_ROOT)/update_driver.exe: src/safe/win/ramdisk.cpp src/update_driver/main.cpp \
- src/safe/*.h src/safe/*.hpp src/safe/win/*.hpp src/w32util/*.hpp clean
+ src/safe/*.h src/safe/*.hpp src/safe/win/*.hpp src/w32util/*.hpp
 	@mkdir -p $(DYN_RESOURCES_ROOT)
 
 	@echo "Build update_driver.exe"
@@ -241,7 +245,7 @@ $(DYN_RESOURCES_ROOT)/update_driver.exe: src/safe/win/ramdisk.cpp src/update_dri
 update_driver: $(DYN_RESOURCES_ROOT)/update_driver.exe
 
 MYPOWRPROF_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libmypowrprof.a
-$(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def
+$(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def clean-exe
 	$(DLLTOOL) -k -d $^ -l $@
 
 mypowrprof: $(MYPOWRPROF_DEP)
@@ -254,6 +258,9 @@ dependencies: libprotobuf libtinyxml \
 
 clean-deps:
 	rm -rf $(OUT_DIR)
+
+clean-exe:
+	rm -f $(EXE_NAME)
 
 clean:
 	rm -f src/safe/*.o
@@ -341,4 +348,4 @@ $(EXE_NAME):
 	mv $@.pre $@
 
 .PHONY: dependencies clean libbotan \
-	libprotobuf libtinyxml libencfs libwebdav_server_fs nlscheck normaliz clean-deps safe_ramdisk
+	libprotobuf libtinyxml libencfs libwebdav_server_fs nlscheck normaliz clean-deps safe_ramdisk clean-exe
