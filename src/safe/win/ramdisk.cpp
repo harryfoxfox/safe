@@ -100,8 +100,9 @@ write_file(std::string path, void *data, size_t size) {
                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                            nullptr);
   if (hfile == INVALID_HANDLE_VALUE) w32util::throw_windows_error();
-
   auto _close_file = safe::create_deferred(CloseHandle, hfile);
+
+  w32util::check_bool(SetEndOfFile, hfile);
 
   DWORD bytes_written;
   auto success = WriteFile(hfile, data, size, &bytes_written, NULL);
