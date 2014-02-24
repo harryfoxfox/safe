@@ -421,6 +421,7 @@
 				ORGANIZATIONNAME = "Rian Hunter";
 				TargetAttributes = {
 					963D09A217A1D89D00AEE673 = {
+						DevelopmentTeam = V846G4FW34;
 						SystemCapabilities = {
 							com.apple.Sandbox = {
 								enabled = 0;
@@ -668,7 +669,7 @@
 		963D09D517A1D89D00AEE673 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Rian Hunter";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -686,7 +687,7 @@
 		963D09D617A1D89D00AEE673 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Rian Hunter";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
