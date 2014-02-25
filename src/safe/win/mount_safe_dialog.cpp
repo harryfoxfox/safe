@@ -41,6 +41,7 @@ enum {
   IDC_LOCATION = 1000,
   IDC_BROWSE,
   IDC_PASSWORD,
+  IDC_SHOW_PASSWORD,
   IDC_STATIC,
 };
 
@@ -49,6 +50,7 @@ struct MountExistingSafeDialogCtx {
   safe::win::TakeMountFn take_mount;
   safe::win::HaveMountFn have_mount;
   opt::optional<encfs::Path> initial_path;
+  wchar_t original_password_char;
 };
 
 CALLBACK
@@ -65,6 +67,10 @@ mount_existing_safe_dialog_proc(HWND hwnd, UINT Message,
     w32util::center_window_in_monitor(hwnd);
     w32util::set_default_dialog_font(hwnd);
 
+    ctx->original_password_char = (wchar_t)
+      SendDlgItemMessage(hwnd, IDC_PASSWORD,
+			 EM_GETPASSWORDCHAR, 0, 0);
+
     if (ctx->initial_path) {
       SetDlgItemTextW(hwnd, IDC_LOCATION, w32util::widen(*ctx->initial_path).c_str());
       SetFocus(GetDlgItem(hwnd, IDC_PASSWORD));
@@ -75,6 +81,22 @@ mount_existing_safe_dialog_proc(HWND hwnd, UINT Message,
   }
   case WM_COMMAND:
     switch (LOWORD(wParam)) {
+    case IDC_SHOW_PASSWORD: {
+      if (HIWORD(wParam) == BN_CLICKED) {
+	bool should_show_password =
+	  BST_CHECKED ==
+	  IsDlgButtonChecked(hwnd, IDC_SHOW_PASSWORD);
+	PostMessage(GetDlgItem(hwnd, IDC_PASSWORD), EM_SETPASSWORDCHAR,
+		    (WPARAM) (should_show_password
+			      ? L'\0'
+			      : ctx->original_password_char),
+		    (LPARAM) 0);
+	RedrawWindow(GetDlgItem(hwnd, IDC_PASSWORD), nullptr, nullptr,
+		     RDW_ERASE | RDW_FRAME |
+		     RDW_INVALIDATE | RDW_ALLCHILDREN);
+      }
+      break;
+    }
     case IDC_BROWSE: {
       auto ret = w32util::get_folder_dialog(hwnd);
       if (ret) {
@@ -265,11 +287,19 @@ mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
   ALIGN_LABEL(PASS, LOCATION);
   ALIGN_TEXT_ENTRY(PASS);
 
+  const unit_t SHOW_PASSWORD_WIDTH = PASS_ENTRY_WIDTH;
+  const unit_t SHOW_PASSWORD_HEIGHT = FONT_HEIGHT;
+  const unit_t SHOW_PASSWORD_LEFT = PASS_ENTRY_LEFT;
+  const unit_t SHOW_PASSWORD_TOP = (PASS_ENTRY_TOP +
+				    PASS_ENTRY_HEIGHT +
+				    2);
+
   // cancel btn
   const unit_t CANCEL_BTN_WIDTH = 40;
   const unit_t CANCEL_BTN_HEIGHT = 11;
   const unit_t CANCEL_BTN_LEFT = DIALOG_WIDTH - RIGHT_MARGIN - CANCEL_BTN_WIDTH;
-  const unit_t CANCEL_BTN_TOP = (PASS_ENTRY_TOP + PASS_ENTRY_HEIGHT +
+  const unit_t CANCEL_BTN_TOP = (SHOW_PASSWORD_TOP +
+				 SHOW_PASSWORD_HEIGHT +
                                  TOP_BTN_MARGIN);
 
   // ok btn
@@ -308,6 +338,10 @@ mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
                               PASS_ENTRY_WIDTH, PASS_ENTRY_HEIGHT,
                               ES_PASSWORD | ES_LEFT | ES_AUTOHSCROLL |
                               WS_BORDER | WS_TABSTOP),
+                     CheckBox("Show Password", IDC_SHOW_PASSWORD,
+                              SHOW_PASSWORD_LEFT, SHOW_PASSWORD_TOP,
+                              SHOW_PASSWORD_WIDTH, SHOW_PASSWORD_HEIGHT,
+			      BS_AUTOCHECKBOX | WS_TABSTOP),
                      DefPushButton("OK", IDOK,
                                    OK_BTN_LEFT, OK_BTN_TOP,
                                    OK_BTN_WIDTH, OK_BTN_HEIGHT),
@@ -318,7 +352,7 @@ mount_existing_safe_dialog(HWND hwnd, std::shared_ptr<encfs::FsIO> fsio,
                    );
 
   MountExistingSafeDialogCtx ctx = {
-    std::move(fsio), std::move(take_mount), std::move(have_mount), std::move(initial_path),
+    std::move(fsio), std::move(take_mount), std::move(have_mount), std::move(initial_path), 0,
   };
   auto ret_ptr =
     DialogBoxIndirectParam(GetModuleHandle(NULL),

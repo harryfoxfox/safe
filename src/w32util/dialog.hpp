@@ -402,6 +402,19 @@ Icon(ResourceID rsrc, WORD id,
                         id, x, y, width, height);
 }
 
+inline
+DialogItemDesc
+CheckBox(std::string text,
+	 WORD id, short x, short y,
+	 short width, short height,
+	 DWORD style = BS_CHECKBOX | WS_TABSTOP) {
+  //                          DWORD extended_style = 0) {
+  return DialogItemDesc(style | WS_VISIBLE | WS_CHILD,
+                        TitleOrResourceID(std::move(text)),
+                        ControlClass::BUTTON,
+                        id, x, y, width, height);
+}
+
 template<class T>
 inline
 T
