@@ -237,7 +237,7 @@ $(DYN_RESOURCES_ROOT)/update_driver.exe: src/safe/win/ramdisk.cpp src/update_dri
 	@echo "Build update_driver.exe"
 	$(if $(IS_WIN64_TARGET),true,echo "Not a 64-bit compiler" && false)
 	$(CXX) -o $@ -DSFX_EMBEDDED $(MY_CPPFLAGS) $(MY_CXXFLAGS) \
- $(ASLR_LINK_FLAGS) -mconsole -static \
+ $(ASLR_LINK_FLAGS) -mconsole $(if $(RELEASE),-static,) \
  src/update_driver/main.cpp src/safe/win/ramdisk.cpp -lsetupapi -lnewdev -lpsapi
 
 	$(if $(RELEASE),$(STRIP) -s $@,)
@@ -341,7 +341,8 @@ test_encfs_main:
 
 $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) \
-        $(if $(RELEASE),$(LDFLAGS_RELEASE),$(LDFLAGS_DEBUG)) -static \
+        $(if $(RELEASE),$(LDFLAGS_RELEASE),$(LDFLAGS_DEBUG)) \
+        $(if $(RELEASE),-static,) \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
  -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof
