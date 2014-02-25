@@ -91,6 +91,9 @@ open_url(const std::string & url);
 std::string
 get_parseable_platform_version();
 
+bool
+running_on_winxp();
+
 }}
 
 

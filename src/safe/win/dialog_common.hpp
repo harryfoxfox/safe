@@ -84,11 +84,22 @@ draw_icon_item(LPDRAWITEMSTRUCT pDIS,
   auto width = pDIS->rcItem.right - pDIS->rcItem.left;
   auto height = pDIS->rcItem.bottom - pDIS->rcItem.top;
 
+  auto load_image_width = width;
+  auto load_image_height = height;
+
+  if (running_on_winxp()) {
+    // NB: windows xp can't load our 256x256 icon
+    //     perhaps because it's 32-bit PNG
+    //     or because it's not a standard icon size
+    //     anyway, this is fine for now (use whatever size LoadImage() can find)
+    load_image_width = 0;
+    load_image_height = 0;
+  }
 
   HINSTANCE instance = is_system ? nullptr : GetModuleHandle(nullptr);
   auto icon_handle = (HICON) LoadImage(instance,
                                        icon_resource, IMAGE_ICON,
-                                       width, height,
+                                       load_image_width, load_image_height,
                                        is_system ? LR_SHARED : 0);
   if (!icon_handle) throw w32util::windows_error();
   auto _release_icon =

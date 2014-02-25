@@ -647,16 +647,6 @@ is_app_running_as_admin() {
 
 static
 bool
-running_on_winxp() {
-  OSVERSIONINFOW vi;
-  safe::zero_object(vi);
-  vi.dwOSVersionInfoSize = sizeof(vi);
-  w32util::check_bool(GetVersionEx, &vi);
-  return vi.dwMajorVersion < 6;
-}
-
-static
-bool
 hibernate_is_enabled() {
   SYSTEM_POWER_CAPABILITIES powercap;
   w32util::check_bool(GetPwrCapabilities, &powercap);
@@ -793,7 +783,7 @@ make_required_system_changes() {
     must_restart = true;
   }
 
-  if (!running_on_winxp() &&
+  if (!safe::win::running_on_winxp() &&
       !encrypted_pagefile_is_enabled() &&
       set_encrypted_pagefile(true)) {
     must_restart = true;
@@ -1089,7 +1079,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_SFX_APP,
                                       IMAGE_ICON, 32, 32, LR_SHARED));
 
-      if (running_on_winxp()) {
+      if (safe::win::running_on_winxp()) {
         auto should_continue = run_winxp_warning_dialog(hwnd);
         if (!should_continue) {
           PostMessage(hwnd, WM_CLOSE, 0, 0);
