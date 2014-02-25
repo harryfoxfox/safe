@@ -20,6 +20,8 @@
 #define __windows_safe_dialog_common_hpp
 
 #include <safe/win/mount.hpp>
+#include <safe/win/resources.h>
+#include <safe/win/util.hpp>
 #include <w32util/error.hpp>
 #include <w32util/string.hpp>
 
@@ -80,26 +82,16 @@ inline
 void
 draw_icon_item(LPDRAWITEMSTRUCT pDIS,
                LPCWSTR icon_resource,
+               int source_width,
+               int source_height,
                bool is_system) {
   auto width = pDIS->rcItem.right - pDIS->rcItem.left;
   auto height = pDIS->rcItem.bottom - pDIS->rcItem.top;
 
-  auto load_image_width = width;
-  auto load_image_height = height;
-
-  if (running_on_winxp()) {
-    // NB: windows xp can't load our 256x256 icon
-    //     perhaps because it's 32-bit PNG
-    //     or because it's not a standard icon size
-    //     anyway, this is fine for now (use whatever size LoadImage() can find)
-    load_image_width = 0;
-    load_image_height = 0;
-  }
-
   HINSTANCE instance = is_system ? nullptr : GetModuleHandle(nullptr);
   auto icon_handle = (HICON) LoadImage(instance,
                                        icon_resource, IMAGE_ICON,
-                                       load_image_width, load_image_height,
+                                       source_width, source_height,
                                        is_system ? LR_SHARED : 0);
   if (!icon_handle) throw w32util::windows_error();
   auto _release_icon =
@@ -110,6 +102,25 @@ draw_icon_item(LPDRAWITEMSTRUCT pDIS,
                             icon_handle, width, height,
                             0, NULL, DI_NORMAL);
   if (!success) throw w32util::windows_error();
+}
+
+inline
+void
+draw_safe(LPDRAWITEMSTRUCT pDIS) {
+  auto load_image_width = 256;
+  auto load_image_height = 256;
+
+  if (running_on_winxp()) {
+    // NB: windows xp can't load our 256x256 icon
+    //     perhaps because it's PNG
+    //     so fallback to whatever it can load
+    load_image_width = 0;
+    load_image_height = 0;
+  }
+
+  draw_icon_item(pDIS, IDI_SFX_APP,
+                 load_image_width, load_image_height,
+                 false);
 }
 
 inline

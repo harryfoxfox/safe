@@ -41,8 +41,6 @@ enum {
 struct GeneralSafeDialogCtx {
   generic_choices_type choices;
   opt::optional<ButtonAction<generic_choice_type>> close_action;
-  LPCWSTR icon_name;
-  bool is_system;
 };
 
 CALLBACK
@@ -68,9 +66,7 @@ general_safe_dialog_proc(HWND hwnd, UINT Message,
   }
   case WM_DRAWITEM: {
     auto pDIS = (LPDRAWITEMSTRUCT) lParam;
-    if (pDIS->CtlID == IDC_LOGO) {
-      draw_icon_item(pDIS, ctx->icon_name, ctx->is_system);
-    }
+    if (pDIS->CtlID == IDC_LOGO) draw_safe(pDIS);
     return TRUE;
   }
   case WM_COMMAND: {
@@ -125,22 +121,8 @@ generic_general_safe_dialog(HWND hwnd,
   size_t icon_width_px = 128;
   size_t icon_height_px = 128;
   auto icon_margin = LEFT_MARGIN;
-  auto icon_tag = IDI_SFX_APP;
-  auto is_system = false;
 
-  if (t == GeneralDialogIcon::WARNING) {
-    icon_width_px = GetSystemMetrics(SM_CXICON);
-    icon_height_px = GetSystemMetrics(SM_CYICON);
-
-    if (!icon_width_px || !icon_height_px) {
-      // just default to 32
-      lbx_log_error("Error while doing GetSystemMetrics");
-      icon_width_px = icon_height_px = 32;
-    }
-
-    icon_tag = IDI_WARNING;
-  }
-  else if (t == GeneralDialogIcon::NONE) {
+  if (t == GeneralDialogIcon::NONE) {
     icon_width_px = 0;
     icon_width_px = 0;
     icon_margin = 0;
@@ -241,8 +223,6 @@ generic_general_safe_dialog(HWND hwnd,
   GeneralSafeDialogCtx ctx = {
     std::move(choices),
     std::move(close_action),
-    icon_tag,
-    is_system,
   };
   auto ret = DialogBoxIndirectParam(GetModuleHandle(NULL),
                                     dlg.get_data(),

@@ -96,7 +96,7 @@ about_dialog_proc(HWND hwnd, UINT Message,
   case WM_DRAWITEM: {
     auto pDIS = (LPDRAWITEMSTRUCT) lParam;
     if (pDIS->CtlID == IDC_LOGO) {
-      draw_icon_item(pDIS, IDI_SFX_APP, false);
+      draw_safe(pDIS);
     }
     return TRUE;
   }

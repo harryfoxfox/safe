@@ -35,7 +35,6 @@ using ButtonAction = std::function<opt::optional<ChoiceType>()>;
 
 enum class GeneralDialogIcon {
   SAFE,
-  WARNING,
   NONE,
 };
 
