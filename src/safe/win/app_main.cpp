@@ -78,7 +78,7 @@
 #endif
 
 // MinGW32 workaround
-#ifdef __STRICT_ANSI__
+#if defined(__STRICT_ANSI__) && !defined(__MINGW64_VERSION_MAJOR)
 extern "C"
 int _stricmp(const char *, const char *);
 #endif
