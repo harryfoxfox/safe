@@ -349,6 +349,7 @@ $(EXE_NAME):
 	$(if $(RELEASE),$(STRIP) -s $@.pre,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@.pre,)
 	mv $@.pre $@
+	$(if $(RELEASE),signtool sign //v //s MY //n "Rian Hunter" //fd sha1 //t "http://timestamp.digicert.com" $@.pre,)
 
 .PHONY: dependencies clean libbotan \
 	libprotobuf libtinyxml libencfs libwebdav_server_fs nlscheck normaliz clean-deps safe_ramdisk clean-exe
