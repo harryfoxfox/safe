@@ -57,7 +57,7 @@ get_parseable_platform_version() {
   std::ostringstream os;
 
   os << "windows-" <<
-    (is_64_bit_windows() ? "x64" : "x86") <<
+    (is_64_bit_windows() ? "x64" : "x86") << "-" <<
     vi.dwMajorVersion  << "." <<
     vi.dwMinorVersion << "." <<
     vi.dwBuildNumber;

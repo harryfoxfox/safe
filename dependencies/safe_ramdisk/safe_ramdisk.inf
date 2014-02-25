@@ -2,8 +2,8 @@
 Signature = "$WINDOWS NT$"
 Class     = "Safe RAMDisk"
 ClassGuid = {168F02BC-933F-4E2E-B3E1-E30E84F0DC05}
-Provider  = "Rian Hunter"
-DriverVer = 02/14/2014,1.0.2.86
+Provider  = "Safe"
+DriverVer = 02/14/2014,1.0.3.0
 CatalogFile = safe_ramdisk.cat
 
 [SourceDisksNames.x86]
@@ -28,7 +28,7 @@ HKR,,Icon,,-5
 HKR,,NoDisplayClass,,1
 
 [Manufacturer]
-"Rian Hunter" = RAMDiskDevice,NTx86, NTamd64
+"Safe" = RAMDiskDevice,NTx86, NTamd64
 
 [RAMDiskDevice.NTx86]
 %Description% = RAMDiskInstall, root\saferamdisk
@@ -70,7 +70,7 @@ ServiceBinary = %12%\safe_ramdisk_x64.sys
 
 
 [Strings]
-ClassName       = "Safe RAMDisk"
-Description     = "Safe RAMDisk"
-SVCDescription  = "Safe RAMDisk"
+ClassName       = "RAMDisk"
+Description     = "RAMDisk"
+SVCDescription  = "RAMDisk"
 
