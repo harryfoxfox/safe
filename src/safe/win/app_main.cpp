@@ -468,10 +468,19 @@ void
 update_tray_menu(WindowData & wd) {
   w32util::menu_clear(wd.tray_menu.get());
   auto tm = safe::win::TrayMenu(wd.tray_menu);
+
+  // NB: don't allow more than one mount on windows xp.
+  //     xp can only mount drives on port 80 and
+  //     currently we listen on a different port for
+  //     each drive mounted
+  bool allow_more_mounts = (!safe::win::running_on_winxp() ||
+                            wd.mounts.size() < 1);
+
   safe::populate_tray_menu(tm,
                            wd.mounts,
                            wd.recent_mount_paths_store,
                            app_is_run_at_login(),
+                           allow_more_mounts,
                            wd.control_was_pressed_on_tray_open);
 
   auto ret = set_highest_non_disabled_to_default(wd.tray_menu.get());
