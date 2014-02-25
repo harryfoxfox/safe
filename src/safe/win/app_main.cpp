@@ -770,7 +770,8 @@ bool
 system_changes_are_required() {
   return (safe::win::need_to_install_kernel_driver() ||
           hibernate_is_enabled() ||
-          !encrypted_pagefile_is_enabled());
+          (!safe::win::running_on_winxp() &&
+           !encrypted_pagefile_is_enabled()));
 }
 
 static
