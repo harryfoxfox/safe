@@ -95,8 +95,8 @@
     
     auto error_msg =
         safe::verify_mount_safe_dialog_fields(self->fs,
-                                                    self.locationPathControl.URL.path.UTF8String,
-                                                    password);
+                                              self.locationPathControl.URL.path.fileSystemRepresentation,
+                                              password);
     if (error_msg) {
         inputErrorAlert(self.window,
                         [NSString stringWithUTF8String:error_msg->title.c_str()],
@@ -104,8 +104,8 @@
         return;
     }
     
-    auto encrypted_container_path = self->fs->pathFromString(self.locationPathControl.URL.path.fileSystemRepresentation);
-    
+    auto encrypted_container_path = safe::mac::url_to_path(self->fs, self.locationPathControl.URL);
+
     auto onFail = ^(const std::exception_ptr & eptr) {
         bool alerted = false;
         try {

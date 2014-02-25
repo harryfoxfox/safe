@@ -124,5 +124,23 @@ get_parseable_platform_version() {
     return os.str();
 }
 
+encfs::Path
+string_to_path(std::shared_ptr<encfs::FsIO> fs, NSString *string) {
+    auto path_string = std::string(string.fileSystemRepresentation);
+
+    // strip trailing slash
+    if (path_string[path_string.length() - 1] == '/') {
+        path_string = path_string.substr(0, path_string.length() - 1);
+    }
+
+    return fs->pathFromString(path_string);
+}
+
+encfs::Path
+url_to_path(std::shared_ptr<encfs::FsIO> fs, NSURL *url) {
+    if (![url isFileURL]) throw std::runtime_error("Not file path: " + from_ns_string(url.description));
+    return string_to_path(fs, url.filePathURL.path);
+}
+
 }}
 

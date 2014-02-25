@@ -876,7 +876,7 @@ struct SystemChangesErrorContext {
     self->native_fs = safe::create_native_fs();
     
     auto recently_used_paths_storage_path =
-    self->native_fs->pathFromString(appSupportDir.path.fileSystemRepresentation).join(SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME);
+    safe::mac::url_to_path(self->native_fs, appSupportDir).join(SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME);
     
     try {
         self->path_store = safe::make_unique<safe::mac::RecentlyUsedNSURLStoreV1>(self->native_fs, recently_used_paths_storage_path, SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);

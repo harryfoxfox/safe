@@ -21,9 +21,12 @@
 
 #include <safe/util.hpp>
 
+#include <encfs/fs/FsIO.h>
+
 #include <exception>
-#include <utility>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifdef __OBJC__
@@ -56,6 +59,12 @@ to_ns_string(const std::string &);
 
 std::string
 from_ns_string(const NSString *);
+
+encfs::Path
+url_to_path(std::shared_ptr<encfs::FsIO> fs, NSURL *url);
+
+encfs::Path
+string_to_path(std::shared_ptr<encfs::FsIO> fs, NSString *string);
 
 #endif
 

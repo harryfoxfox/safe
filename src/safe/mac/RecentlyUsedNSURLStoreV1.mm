@@ -64,7 +64,7 @@ PathResolver::resolve_path() const {
                                            error:&err];
   if (!url) throw std::runtime_error("couldn't resolve bookmark: " + from_ns_string(err.localizedDescription));
 
-  return std::make_pair(_fs->pathFromString(url.path.fileSystemRepresentation), data_is_stale);
+  return std::make_pair(url_to_path(_fs, url), data_is_stale);
 }
 
 encfs::Path
@@ -73,7 +73,9 @@ PathResolver::get_last_known_path() const {
 
   NSDictionary *resources = [NSURL resourceValuesForKeys:@[NSURLPathKey] fromBookmarkData:data_ref];
   if (!resources) throw std::runtime_error("name wasn't found!");
-  return _fs->pathFromString(from_ns_string(resources[NSURLPathKey]));
+  NSString *ret = resources[NSURLPathKey];
+  if (!ret) throw std::runtime_error("name wasn't found!");
+  return string_to_path(_fs, ret);
 }
 
 }}

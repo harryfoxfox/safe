@@ -71,8 +71,9 @@ NSStringToSecureMem(NSString *str) {
         return opt::nullopt;
     }
 
-    auto encrypted_container_path =
-        self->fs->pathFromString(self.locationPathControl.URL.path.fileSystemRepresentation).join(self.nameTextField.stringValue.fileSystemRepresentation);
+    NSURL *encrypted_container_url = [self.locationPathControl.URL
+                                      URLByAppendingPathComponent:self.nameTextField.stringValue];
+    auto encrypted_container_path = safe::mac::url_to_path(self->fs, encrypted_container_url);
 
     return std::make_pair(std::move(encrypted_container_path), std::move(password_buf));
 }
