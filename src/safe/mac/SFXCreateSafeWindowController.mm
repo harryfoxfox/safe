@@ -53,6 +53,37 @@ NSStringToSecureMem(NSString *str) {
     return std::move(password_buf);
 }
 
+- (void)unknownErrorResponse:(NSAlert *)alert
+                  returnCode:(NSInteger)returnCode
+                 contextInfo:(void *)contextInfo {
+    (void) alert;
+    auto ctx = std::unique_ptr<std::exception_ptr>((std::exception_ptr *) contextInfo);
+    if (returnCode == NSAlertSecondButtonReturn) {
+        safe::report_exception(safe::ExceptionLocation::MOUNT, *ctx);
+    }
+    [alert.window orderOut:self];
+    [self.window performClose:self];
+}
+
+- (void)unknownError:(const std::exception_ptr &)eptr {
+    // unknown error occured, allow user to report
+    auto message = (std::string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE) +
+                    (" Please help us improve by sending a bug report. It's automatic and "
+                     "no personal information is used."));
+
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE)];
+    [alert setInformativeText:safe::mac::to_ns_string(message)];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Report Bug"];
+    [alert setAlertStyle:NSWarningAlertStyle];
+
+    [alert beginSheetModalForWindow:self.window
+                      modalDelegate:self
+                     didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
+                        contextInfo:(void *) new std::exception_ptr(eptr)];
+}
+
 - (opt::optional<std::pair<encfs::Path, encfs::SecureMem>>) verifyFields {
     auto password_buf = NSStringToSecureMem(self.passwordSecureTextField.stringValue);
     auto confirm_password_buf = NSStringToSecureMem(self.confirmSecureTextField.stringValue);
@@ -73,36 +104,39 @@ NSStringToSecureMem(NSString *str) {
 
     NSURL *encrypted_container_url = [self.locationPathControl.URL
                                       URLByAppendingPathComponent:self.nameTextField.stringValue];
-    auto encrypted_container_path = safe::mac::url_to_path(self->fs, encrypted_container_url);
 
-    return std::make_pair(std::move(encrypted_container_path), std::move(password_buf));
-}
-
-- (void)unknownErrorResponse:(NSAlert *)alert
-                  returnCode:(NSInteger)returnCode
-                 contextInfo:(void *)contextInfo {
-    (void) alert;
-    auto ctx = std::unique_ptr<std::exception_ptr>((std::exception_ptr *) contextInfo);
-    if (returnCode == NSAlertSecondButtonReturn) {
-        safe::report_exception(safe::ExceptionLocation::MOUNT, *ctx);
+    // this method is not supposed to throw exceptions so since we're calling function
+    // that can possibly throw exception, we catch it and alert the unknown error mechanism
+    opt::optional<encfs::Path> maybe_encrypted_container_path;
+    try {
+        maybe_encrypted_container_path = safe::mac::url_to_path(self->fs, encrypted_container_url);
     }
-    [alert.window orderOut:self];
-    [self.window performClose:self];
+    catch (...) {
+        [self unknownError:std::current_exception()];
+        return opt::nullopt;
+    }
+
+    return std::make_pair(std::move(*maybe_encrypted_container_path), std::move(password_buf));
 }
 
 - (IBAction)confirmCreate:(id)sender {
     (void)sender;
-    
+
     auto maybeValidFields = [self verifyFields];
     if (!maybeValidFields) return;
-    
+
     auto validFields = *maybeValidFields;
 
     auto encrypted_container_path = std::move(std::get<0>(validFields));
     auto password = std::move(std::get<1>(validFields));
-    
+
     const auto use_case_safe_filename_encoding = true;
-    
+
+    auto onMountSuccess = ^(safe::mac::MountDetails md) {
+        self->maybeMount = std::move(md);
+        [self.window performClose:self];
+    };
+
     auto onFail = ^(const std::exception_ptr & eptr) {
         // TODO: delete directory and .encfs.txt
         //       *only* if those are the only files that exist
@@ -113,31 +147,9 @@ NSStringToSecureMem(NSString *str) {
             lbx_log_error("Error deleting encrypted container: %s", err.what());
         }
 
-        {
-            // unknown error occured, allow user to report
-            auto message = (std::string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE) +
-                            (" Please help us improve by sending a bug report. It's automatic and "
-                             "no personal information is used."));
-
-            NSAlert *alert = [[NSAlert alloc] init];
-            [alert setMessageText:safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE)];
-            [alert setInformativeText:safe::mac::to_ns_string(message)];
-            [alert addButtonWithTitle:@"OK"];
-            [alert addButtonWithTitle:@"Report Bug"];
-            [alert setAlertStyle:NSWarningAlertStyle];
-
-            [alert beginSheetModalForWindow:self.window
-                              modalDelegate:self
-                             didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
-                                contextInfo:(void *) new std::exception_ptr(eptr)];
-        }
+        [self unknownError:eptr];
     };
-    
-    auto onMountSuccess = ^(safe::mac::MountDetails md) {
-        self->maybeMount = std::move(md);
-        [self.window performClose:self];
-    };
-    
+
     auto onCreateCfgSuccess = ^(encfs::EncfsConfig cfg) {
         if (self.rememberPasswordCheckbox.state == NSOnState) {
             try {

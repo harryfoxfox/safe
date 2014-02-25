@@ -68,6 +68,25 @@
     [self.window performClose:self];
 }
 
+- (void)unknownError:(const std::exception_ptr &)eptr {
+    // unknown error occured, allow user to report
+    auto message = (std::string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE) +
+                    (" Please help us improve by sending a bug report. It's automatic and "
+                     "no personal information is used."));
+
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE)];
+    [alert setInformativeText:safe::mac::to_ns_string(message)];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Report Bug"];
+    [alert setAlertStyle:NSWarningAlertStyle];
+
+    [alert beginSheetModalForWindow:self.window
+                      modalDelegate:self
+                     didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
+                        contextInfo:(void *) new std::exception_ptr(eptr)];
+}
+
 - (NSTextField *)currentPasswordView {
     if (self.showPasswordCheckbox.state == NSOnState) {
         return self.insecurePasswordTextField;
@@ -103,8 +122,6 @@
                         [NSString stringWithUTF8String:error_msg->message.c_str()]);
         return;
     }
-    
-    auto encrypted_container_path = safe::mac::url_to_path(self->fs, self.locationPathControl.URL);
 
     auto onFail = ^(const std::exception_ptr & eptr) {
         bool alerted = false;
@@ -127,26 +144,20 @@
             lbx_log_error("Error while mounting: %s", err.what());
         }
 
-        if (!alerted) {
-            // unknown error occured, allow user to report
-
-            auto message = (std::string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE) +
-                            (" Please help us improve by sending a bug report. It's automatic and "
-                             "no personal information is used."));
-
-            NSAlert *alert = [[NSAlert alloc] init];
-            [alert setMessageText:safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE)];
-            [alert setInformativeText:safe::mac::to_ns_string(message)];
-            [alert addButtonWithTitle:@"OK"];
-            [alert addButtonWithTitle:@"Report Bug"];
-            [alert setAlertStyle:NSWarningAlertStyle];
-
-            [alert beginSheetModalForWindow:self.window
-                              modalDelegate:self
-                             didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
-                                contextInfo:(void *) new std::exception_ptr(eptr)];
-        }
+        if (!alerted) [self unknownError:eptr];
     };
+
+    opt::optional<encfs::Path> maybe_encrypted_container_path;
+
+    try {
+        maybe_encrypted_container_path = safe::mac::url_to_path(self->fs, self.locationPathControl.URL);
+    }
+    catch (...) {
+        onFail(std::current_exception());
+        return;
+    }
+
+    auto encrypted_container_path = std::move(*maybe_encrypted_container_path);
     
     auto onMountSuccess = ^(safe::mac::MountDetails md) {
         // password was correct, save to keychain if requested
