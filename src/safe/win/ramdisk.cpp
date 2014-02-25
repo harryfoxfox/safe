@@ -352,6 +352,9 @@ install_kernel_driver() {
 
 RAMDiskHandle
 engage_ramdisk() {
+  // windows xp doesn't use the ramdisk for now
+  if (running_on_winxp()) return RAMDiskHandle();
+
   // check if we can access the ramdisk
   auto hFile = CreateFileW(L"\\\\.\\" RAMDISK_CTL_DOSNAME_W,
                            0, 0,
