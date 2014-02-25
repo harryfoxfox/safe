@@ -184,10 +184,10 @@ get_links_folder_path() {
   auto func = w32util::check_null(GetProcAddress,
                                   mod, "SHGetKnownFolderPath");
 
-  typedef HRESULT (*SHGetKnownFolderPathType)(const GUID *,
-                                              DWORD,
-                                              HANDLE,
-                                              PWSTR *);
+  typedef HRESULT (WINAPI *SHGetKnownFolderPathType)(const GUID *,
+                                                     DWORD,
+                                                     HANDLE,
+                                                     PWSTR *);
 
   auto SHGetKnownFolderPath = (SHGetKnownFolderPathType) func;
 
