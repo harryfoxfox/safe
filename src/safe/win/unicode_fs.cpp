@@ -96,11 +96,11 @@ get_rtl_equal_unicode_string() {
     GetProcAddress(mod, "RtlEqualUnicodeString");
 }
 
-typedef int (*CompareStringOrdinalType)(LPCWSTR lpString1,
-                                        int cchCount1,
-                                        LPCWSTR lpString2,
-                                        int cchCount2,
-                                        BOOL bIgnoreCase);
+typedef int (WINAPI *CompareStringOrdinalType)(LPCWSTR lpString1,
+                                               int cchCount1,
+                                               LPCWSTR lpString2,
+                                               int cchCount2,
+                                               BOOL bIgnoreCase);
 
 static
 CompareStringOrdinalType
@@ -140,14 +140,14 @@ normalized_path_components_equal(const std::string & comp_a,
   auto MyRtlEqualUnicodeString = get_rtl_equal_unicode_string();
   if (MyRtlEqualUnicodeString) {
     MyUNICODE_STRING string1 = {
-      (USHORT) (wstr_a.size() * sizeof(decltype(wstr_a)::size_type)),
-      (USHORT) (wstr_a.size() * sizeof(decltype(wstr_a)::size_type)),
+      (USHORT) (wstr_a.size() * sizeof(decltype(wstr_a)::value_type)),
+      (USHORT) (wstr_a.size() * sizeof(decltype(wstr_a)::value_type)),
       const_cast<PWSTR>(wstr_a.data()),
     };
 
     MyUNICODE_STRING string2 = {
-      (USHORT) (wstr_b.size() * sizeof(decltype(wstr_b)::size_type)),
-      (USHORT) (wstr_b.size() * sizeof(decltype(wstr_b)::size_type)),
+      (USHORT) (wstr_b.size() * sizeof(decltype(wstr_b)::value_type)),
+      (USHORT) (wstr_b.size() * sizeof(decltype(wstr_b)::value_type)),
       const_cast<PWSTR>(wstr_b.data()),
     };
 
