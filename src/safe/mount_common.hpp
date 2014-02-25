@@ -48,6 +48,7 @@ struct ServerThreadParams {
   encfs::EncfsConfig encfs_config;
   encfs::SecureMem password;
   std::string mount_name;
+  opt::optional<port_t> requested_listen_port;
 };
 
 template <typename MountEvent>
@@ -67,8 +68,9 @@ mount_thread_fn_common(ServerThreadParams<MountEvent> *p) {
 
     // we only listen on localhost
     auto ip_addr = LOCALHOST_IP;
-    auto listen_port =
-    find_random_free_listen_port(ip_addr, PRIVATE_PORT_START, PRIVATE_PORT_END);
+    auto listen_port = params->requested_listen_port
+      ? *params->requested_listen_port
+      : find_random_free_listen_port(ip_addr, PRIVATE_PORT_START, PRIVATE_PORT_END);
 
     auto our_callback = [&] (WebdavServerHandle webhandle) {
       params->mount_event_p->set_mount_success(listen_port, std::move(webhandle));

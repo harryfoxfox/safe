@@ -191,6 +191,8 @@ mount_thread(LPVOID params_) {
   return 0;
 }
 
+const port_t HTTP_PORT = 80;
+
 MountDetails
 mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                       const encfs::Path & encrypted_container_path,
@@ -200,6 +202,11 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
 
   auto ramdisk_handle = engage_ramdisk();
 
+  auto requested_listen_port = running_on_winxp()
+    // windows xp can only mount port 80 :/
+    ? opt::make_optional(HTTP_PORT)
+    : opt::nullopt;
+
   auto mount_event_p = std::make_shared<MountEvent>();
   auto thread_params = safe::make_unique<ServerThreadParams<MountEvent>>
     (ServerThreadParams<MountEvent>{
@@ -208,7 +215,9 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
       encrypted_container_path,
       cfg,
       password,
-      mount_name});
+      mount_name,
+      requested_listen_port,
+      });
 
   auto thread_handle =
     create_managed_thread_handle(CreateThread(NULL, 0, mount_thread,
@@ -233,10 +242,7 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
   parameters_builder << "use " << drive_letter <<
     // we wrap the url in quotes since it could have a space, etc.
     // we don't urlencode it because windows will do that for us
-    // NB: use "127.0.0.1" here instead of "localhost"
-    //     windows prefers ipv6 by default and we aren't
-    //     listening on ipv6, so that will slow down connections
-    ": \"http://127.0.0.1:" << listen_port << "/" <<
+    ": \"" << get_webdav_url_root(listen_port) <<
     safe::escape_double_quotes(mount_name) << "\" " <<
     "/persistent:no";
 
