@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# XXX: must be run in /assets/icons directory
+
 set -e
 
 DIR=$(mktemp -d -t createicns)
