@@ -184,10 +184,10 @@ get_links_folder_path() {
   auto func = w32util::check_null(GetProcAddress,
                                   mod, "SHGetKnownFolderPath");
 
-  typedef HRESULT (*SHGetKnownFolderPathType)(const GUID *,
-                                              DWORD,
-                                              HANDLE,
-                                              PWSTR *);
+  typedef HRESULT (WINAPI *SHGetKnownFolderPathType)(const GUID *,
+                                                     DWORD,
+                                                     HANDLE,
+                                                     PWSTR *);
 
   auto SHGetKnownFolderPath = (SHGetKnownFolderPathType) func;
 
@@ -468,10 +468,19 @@ void
 update_tray_menu(WindowData & wd) {
   w32util::menu_clear(wd.tray_menu.get());
   auto tm = safe::win::TrayMenu(wd.tray_menu);
+
+  // NB: don't allow more than one mount on windows xp.
+  //     xp can only mount drives on port 80 and
+  //     currently we listen on a different port for
+  //     each drive mounted
+  bool allow_more_mounts = (!safe::win::running_on_winxp() ||
+                            wd.mounts.size() < 1);
+
   safe::populate_tray_menu(tm,
                            wd.mounts,
                            wd.recent_mount_paths_store,
                            app_is_run_at_login(),
+                           allow_more_mounts,
                            wd.control_was_pressed_on_tray_open);
 
   auto ret = set_highest_non_disabled_to_default(wd.tray_menu.get());
@@ -647,16 +656,6 @@ is_app_running_as_admin() {
 
 static
 bool
-running_on_winxp() {
-  OSVERSIONINFOW vi;
-  safe::zero_object(vi);
-  vi.dwOSVersionInfoSize = sizeof(vi);
-  w32util::check_bool(GetVersionEx, &vi);
-  return vi.dwMajorVersion < 6;
-}
-
-static
-bool
 hibernate_is_enabled() {
   SYSTEM_POWER_CAPABILITIES powercap;
   w32util::check_bool(GetPwrCapabilities, &powercap);
@@ -780,7 +779,8 @@ bool
 system_changes_are_required() {
   return (safe::win::need_to_install_kernel_driver() ||
           hibernate_is_enabled() ||
-          !encrypted_pagefile_is_enabled());
+          (!safe::win::running_on_winxp() &&
+           !encrypted_pagefile_is_enabled()));
 }
 
 static
@@ -793,7 +793,7 @@ make_required_system_changes() {
     must_restart = true;
   }
 
-  if (!running_on_winxp() &&
+  if (!safe::win::running_on_winxp() &&
       !encrypted_pagefile_is_enabled() &&
       set_encrypted_pagefile(true)) {
     must_restart = true;
@@ -1089,7 +1089,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_SFX_APP,
                                       IMAGE_ICON, 32, 32, LR_SHARED));
 
-      if (running_on_winxp()) {
+      if (safe::win::running_on_winxp()) {
         auto should_continue = run_winxp_warning_dialog(hwnd);
         if (!should_continue) {
           PostMessage(hwnd, WM_CLOSE, 0, 0);

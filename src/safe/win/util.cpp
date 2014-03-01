@@ -65,5 +65,14 @@ get_parseable_platform_version() {
   return os.str();
 }
 
+bool
+running_on_winxp() {
+  OSVERSIONINFOW vi;
+  safe::zero_object(vi);
+  vi.dwOSVersionInfoSize = sizeof(vi);
+  w32util::check_bool(GetVersionEx, &vi);
+  return vi.dwMajorVersion < 6;
+}
+
 }}
 

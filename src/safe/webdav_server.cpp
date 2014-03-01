@@ -247,12 +247,7 @@ run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
                                                   webdav_backend_fs_destroy);
 
   // create server
-  std::ostringstream build_uri_root;
-  // NB: use "127.0.0.1" here instead of "localhost"
-  //     windows prefers ipv6 by default and we aren't
-  //     listening on ipv6, so that will slow down connections
-  build_uri_root << "http://127.0.0.1:" << port << "/";
-  auto public_uri_root = std::move(build_uri_root).str();
+  auto public_uri_root = get_webdav_url_root(port);
   auto internal_root = "/" + mount_name;
   const auto encoded_internal_root =
     encode_urlpath(internal_root.data(), internal_root.size());
@@ -297,6 +292,23 @@ run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
   if (!success_loop) throw std::runtime_error("Loop failed");
 
   log_info("Server stopped");
+}
+
+std::string
+get_webdav_url_root(port_t port) {
+  std::ostringstream build_uri_root;
+  // NB: use "127.0.0.1" here instead of "localhost"
+  //     windows prefers ipv6 by default and we aren't
+  //     listening on ipv6, so that will slow down connections
+  build_uri_root << "http://127.0.0.1";
+
+  // NB: this is not just a shortcut, windows xp can't handle
+  //     port numbers
+  if (port != 80) build_uri_root << ":" << port;
+
+  build_uri_root << "/";
+
+  return build_uri_root.str();
 }
 
 }

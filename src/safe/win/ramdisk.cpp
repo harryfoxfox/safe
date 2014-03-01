@@ -233,12 +233,17 @@ create_ramdisk_device(std::string full_inf_file_path,
                              DICD_GENERATE_ID, &device_info_data);
   if (!success_create_device_info) w32util::throw_windows_error();
 
+  // TODO: runtime stack array is a GCC extension
+  char reg_hardware_id[hardware_id.size() + 2];
+  memset(reg_hardware_id, 0, sizeof(reg_hardware_id));
+  memcpy(reg_hardware_id, hardware_id.data(), hardware_id.size());
+
   auto success_set_hardware_id =
     SetupDiSetDeviceRegistryPropertyA(device_info_set,
                                       &device_info_data,
                                       SPDRP_HARDWAREID,
-                                      (BYTE *) hardware_id.c_str(),
-                                      (DWORD) hardware_id.size() + 1);
+                                      (BYTE *) reg_hardware_id,
+                                      sizeof(reg_hardware_id));
   if (!success_set_hardware_id) w32util::throw_windows_error();
 
   auto success_class_installer =
@@ -347,6 +352,9 @@ install_kernel_driver() {
 
 RAMDiskHandle
 engage_ramdisk() {
+  // windows xp doesn't use the ramdisk for now
+  if (running_on_winxp()) return RAMDiskHandle();
+
   // check if we can access the ramdisk
   auto hFile = CreateFileW(L"\\\\.\\" RAMDISK_CTL_DOSNAME_W,
                            0, 0,

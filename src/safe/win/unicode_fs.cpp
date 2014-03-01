@@ -20,6 +20,7 @@
 
 #include <w32util/string.hpp>
 #include <safe/safe_winnls.h>
+#include <safe/deferred.hpp>
 
 #include <memory>
 
@@ -74,6 +75,45 @@ is_normalized_path_component(const std::string & comp) {
   return ret;
 }
 
+typedef struct {
+  USHORT Length;
+  USHORT MaximumLength;
+  PWSTR  Buffer;
+} MyUNICODE_STRING, *MyPUNICODE_STRING;
+
+typedef HRESULT (WINAPI *RtlEqualUnicodeStringType)(const MyPUNICODE_STRING,
+                                                    const MyPUNICODE_STRING,
+                                                    BOOLEAN);
+
+static
+RtlEqualUnicodeStringType
+get_rtl_equal_unicode_string() {
+  HMODULE mod;
+  w32util::check_bool(GetModuleHandleExW,
+                      0, L"ntdll.dll", &mod);
+  auto _free_mod = safe::create_deferred(FreeLibrary, mod);
+  return (RtlEqualUnicodeStringType)
+    GetProcAddress(mod, "RtlEqualUnicodeString");
+}
+
+typedef int (WINAPI *CompareStringOrdinalType)(LPCWSTR lpString1,
+                                               int cchCount1,
+                                               LPCWSTR lpString2,
+                                               int cchCount2,
+                                               BOOL bIgnoreCase);
+
+static
+CompareStringOrdinalType
+get_compare_string_ordinal() {
+  HMODULE mod;
+  w32util::check_bool(GetModuleHandleExW,
+                      0, L"kernel32.dll", &mod);
+  auto _free_mod = safe::create_deferred(FreeLibrary, mod);
+  return (CompareStringOrdinalType)
+    GetProcAddress(mod, "CompareStringOrdinal");
+}
+
+
 bool
 normalized_path_components_equal(const std::string & comp_a,
                                  const std::string & comp_b) {
@@ -83,12 +123,39 @@ normalized_path_components_equal(const std::string & comp_a,
   auto wstr_b = w32util::widen(comp_b);
 
   BOOL do_case_insensitive_compare = TRUE;
-  auto ret = CompareStringOrdinal(wstr_a.data(), wstr_a.size(),
-                                  wstr_b.data(), wstr_b.size(),
-                                  do_case_insensitive_compare);
-  if (!ret) w32util::throw_windows_error();
 
-  return ret == CSTR_EQUAL;
+  // yo if you're reading this
+  // you're a hacker
+  // holler
+
+  auto MyCompareStringOrdinal = get_compare_string_ordinal();
+  if (MyCompareStringOrdinal) {
+    auto ret = MyCompareStringOrdinal(wstr_a.data(), wstr_a.size(),
+                                      wstr_b.data(), wstr_b.size(),
+                                      do_case_insensitive_compare);
+    if (!ret) w32util::throw_windows_error();
+    return ret == CSTR_EQUAL;
+  }
+
+  auto MyRtlEqualUnicodeString = get_rtl_equal_unicode_string();
+  if (MyRtlEqualUnicodeString) {
+    MyUNICODE_STRING string1 = {
+      (USHORT) (wstr_a.size() * sizeof(decltype(wstr_a)::value_type)),
+      (USHORT) (wstr_a.size() * sizeof(decltype(wstr_a)::value_type)),
+      const_cast<PWSTR>(wstr_a.data()),
+    };
+
+    MyUNICODE_STRING string2 = {
+      (USHORT) (wstr_b.size() * sizeof(decltype(wstr_b)::value_type)),
+      (USHORT) (wstr_b.size() * sizeof(decltype(wstr_b)::value_type)),
+      const_cast<PWSTR>(wstr_b.data()),
+    };
+
+    return MyRtlEqualUnicodeString(&string1, &string2,
+                                   do_case_insensitive_compare);
+  }
+
+  throw std::runtime_error("no compare function!");
 }
 
 }}}
