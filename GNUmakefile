@@ -267,7 +267,7 @@ clean:
 	rm -f src/safe/*.o
 	rm -f src/safe/win/*.o
 	rm -f src/w32util/*.o
-	rm -f out/resources/*
+	rm -rf $(DYN_RESOURCES_ROOT)
 
 SRCS = fs_fsio.cpp CFsToFsIO.cpp webdav_server.cpp fs.cpp \
 	SecureMemPasswordReader.cpp UnicodeWrapperFsIO.cpp \
@@ -316,7 +316,7 @@ src/safe/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp src/safe
 src/safe/win/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp src/safe/win/*.hpp
 src/w32util/*.o: GNUmakefile src/safe/*.hpp src/safe/*.h src/w32util/*.hpp
 
-src/safe/win/*.rc.o: $(RESOURCES_ROOT)/* $(DYN_RESOURCES_ROOT)/*
+src/safe/win/*.rc.o: $(RESOURCES_ROOT)/* $(wildcard $(DYN_RESOURCES_ROOT)/*)
 
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) GNUmakefile
