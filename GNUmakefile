@@ -343,7 +343,6 @@ $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) \
         $(if $(RELEASE),$(LDFLAGS_RELEASE),$(LDFLAGS_DEBUG)) \
         $(if $(RELEASE),-static,) \
- -static \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
  -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof
