@@ -53,7 +53,7 @@ IS_WIN_TARGET = $(or $(IS_WIN_CROSS),$(IS_WIN))
 IS_WIN64_TARGET := $(if $(IS_WIN_TARGET),$(shell echo 'int main() {return 0;}' | ( $(CC) $(CFLAGS) -x c - -o test.exe && ( $(OBJDUMP) -x test.exe; rm test.exe) ) | head -n 2 | grep x86-64),)
 IS_MAC_TARGET = $(if $(IS_WIN_TARGET),,$(shell test `uname` = Darwin && echo 1))
 
-PROCS := $(if $(shell `which nproc 2>/dev/null`),$(shell nproc),$(if $(shell which sysctl),$(shell sysctl hw.ncpu | awk '{print $$2}'),1))
+PROCS := $(if $(IS_WIN),1,$(if $(shell `which nproc 2>/dev/null`),$(shell nproc),$(if $(shell which sysctl),$(shell sysctl hw.ncpu | awk '{print $$2}'),1)))
 
 WEBDAV_SERVER_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libwebdav_server_fs.a
 ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
