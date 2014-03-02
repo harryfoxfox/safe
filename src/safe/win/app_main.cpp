@@ -77,6 +77,12 @@
 #define GW_ENABLEDPOPUP 6
 #endif
 
+// MinGW32 workaround
+#ifdef __STRICT_ANSI__
+extern "C"
+int _stricmp(const char *, const char *);
+#endif
+
 // TODO:
 // 3) Unmount when webdav server unexpectedly stops (defensive coding)
 
@@ -747,7 +753,7 @@ encrypted_pagefile_is_enabled() {
   auto parser = safe::BufferParser(buffer.ptr.get(), buffer.size);
   parser.skip_byte(' ');
   auto key_name = parser.parse_string_until_byte(' ');
-  if (key_name != "EncryptPagingFile") {
+  if (_stricmp(key_name.c_str(), "EncryptPagingFile")) {
     throw std::runtime_error("invalid key name: " + key_name);
   }
 
