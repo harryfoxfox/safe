@@ -1079,15 +1079,16 @@ bool
 run_winxp_warning_dialog(HWND hwnd) {
   std::string message =
     ("The security of " PRODUCT_NAME_A " is degraded while "
-     "running under Windows XP. This is not a limitation of "
+     "running under Windows XP. This is not a strictly a limitation of "
      PRODUCT_NAME_A " and most security products on Windows XP "
      "suffer from the same weakness."
      "\n\n"
      "If you expect that the only "
-     "people who will ever have access to your physical hard "
+     "people who will ever have access to your internal hard "
      "disk are trusted, "
      "then this is not an issue. Otherwise we don't recommend "
-     "running " PRODUCT_NAME_A " in this environment."
+     "running " PRODUCT_NAME_A " in this environment unless you "
+     "know exactly what you're doing."
      );
 
   enum class XPWarningChoice {
