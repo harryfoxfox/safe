@@ -28,6 +28,7 @@
 
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
+static NSString *const SAFE_MAC_LOCK_FILE = @"LockFile";
 
 class MacOSXTrayMenuItem {
 private:
@@ -951,6 +952,30 @@ set_reboot_pending(bool waiting) {
     assert(false);
 }
 
+static
+bool
+exit_if_not_single_instance(NSURL *app_support_url) {
+    NSURL *lock_file_url = [app_support_url
+                            URLByAppendingPathComponent:SAFE_MAC_LOCK_FILE];
+
+    auto _fd = open(lock_file_url.path.fileSystemRepresentation, O_CREAT | O_RDONLY, 0777);
+    if (_fd < 0) throw std::system_error(errno, std::generic_category());
+    auto _close_file = safe::create_deferred(close, _fd);
+
+    auto ret = flock(_fd, LOCK_EX | LOCK_NB);
+    if (ret < 0) {
+        if (errno == EWOULDBLOCK) {
+            return true;
+        }
+        else throw std::system_error(errno, std::generic_category());
+    }
+
+    // intentionally leak file descriptor to retain lock for remainder of process
+    // existence
+    _close_file.cancel();
+    return false;
+}
+
 - (void)_applicationDidFinishLaunching:(NSNotification *)aNotification {
     (void)aNotification;
     
@@ -970,6 +995,14 @@ set_reboot_pending(bool waiting) {
     NSURL *appSupportDir = [SFXAppDelegate applicationSupportDirectoryError:&err];
     if (!appSupportDir) {
         throw std::runtime_error(safe::mac::from_ns_string(err.localizedDescription));
+    }
+
+    // check if app is already running
+    if (exit_if_not_single_instance(appSupportDir)) {
+        // TODO: would be nice to trigger default action in currently running app
+        //       just like on windows
+        [NSApp terminate:nil];
+        return;
     }
     
     safe::global_webdav_init();
