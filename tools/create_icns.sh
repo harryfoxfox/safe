@@ -44,6 +44,8 @@ fi
 
 mv "$DIR" "$DIR.iconset"
 
+echo "You'll find the icons in: $DIR.iconset"
+
 iconutil -c icns "$DIR.iconset"
 
 mv "$DIR.icns" "output.icns"
