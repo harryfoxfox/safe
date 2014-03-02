@@ -127,8 +127,18 @@ populate_tray_menu(Menu & menu,
 
     tray_menu_action_arg_t sub_tag = 0;
     for (const auto & p : recent_mounts) {
-      auto item = sub_menu.append_item(p.get_last_known_path().basename(), TrayMenuAction::MOUNT_RECENT, sub_tag);
-      item.set_tooltip(p.get_last_known_path());
+      auto item = sub_menu.append_item(p.get_last_known_name(),
+                                       TrayMenuAction::MOUNT_RECENT, sub_tag);
+      opt::optional<encfs::Path> path;
+      try {
+        path = p.get_last_known_path();
+      }
+      catch (const std::exception & err) {
+        lbx_log_error("Error while trying to get path: %s", err.what());
+      }
+
+      if (path) item.set_tooltip(*path);
+
       item.set_property(TrayMenuProperty::MAC_FILE_TYPE, "public.folder");
 
       ++sub_tag;

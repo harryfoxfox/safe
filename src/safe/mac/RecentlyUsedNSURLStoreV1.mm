@@ -25,13 +25,21 @@
 
 namespace safe { namespace mac {
 
+NSString *const SFXURLPathKey = @"SFXURLPathKey";
+
 RecentlyUsedByteStringStoreV1::ByteString
 PathSerializer::serialize(encfs::Path path) const {
   NSURL *url = [NSURL fileURLWithPath:safe::mac::to_ns_string(((const std::string &)path).c_str())];
 
+  NSMutableArray *resourceKeysInBookmark = [NSMutableArray arrayWithArray:@[NSURLNameKey]];
+
+  if (NSURLPathKey) {
+    [resourceKeysInBookmark addObject:NSURLPathKey];
+  }
+
   NSError *err;
   NSData *data = [url bookmarkDataWithOptions:0
-               includingResourceValuesForKeys:@[NSURLNameKey, NSURLPathKey]
+               includingResourceValuesForKeys:resourceKeysInBookmark
                                 relativeToURL:nil
                                         error:&err];
   if (!data) throw std::runtime_error("couldn't create bookmark: " + from_ns_string(err.localizedDescription));
@@ -53,7 +61,9 @@ PathResolver::PathResolver(std::shared_ptr<encfs::FsIO> fs,
 
 std::pair<encfs::Path, bool>
 PathResolver::resolve_path() const {
-  NSData *data_ref = [NSData dataWithBytesNoCopy:(void *)_bs.data() length:_bs.size() freeWhenDone:NO];
+  NSData *data_ref = [NSData dataWithBytesNoCopy:(void *)_bs.data()
+                                          length:_bs.size()
+                                    freeWhenDone:NO];
 
   NSError *err;
   BOOL data_is_stale;
@@ -69,13 +79,35 @@ PathResolver::resolve_path() const {
 
 encfs::Path
 PathResolver::get_last_known_path() const {
-  NSData *data_ref = [NSData dataWithBytesNoCopy:(void *)_bs.data() length:_bs.size() freeWhenDone:NO];
+  NSData *data_ref = [NSData dataWithBytesNoCopy:(void *)_bs.data()
+                                          length:_bs.size()
+                                    freeWhenDone:NO];
 
   NSDictionary *resources = [NSURL resourceValuesForKeys:@[NSURLPathKey] fromBookmarkData:data_ref];
-  if (!resources) throw std::runtime_error("name wasn't found!");
-  NSString *ret = resources[NSURLPathKey];
-  if (!ret) throw std::runtime_error("name wasn't found!");
+  if (!resources) throw std::runtime_error("path wasn't found!");
+
+  NSString *ret = nil;
+
+  if (NSURLPathKey) {
+    ret = resources[NSURLPathKey];
+  }
+
+  if (!ret) throw std::runtime_error("path wasn't found!");
   return string_to_path(_fs, ret);
+}
+
+std::string
+PathResolver::get_last_known_name() const {
+    NSData *data_ref = [NSData dataWithBytesNoCopy:(void *)_bs.data()
+                                            length:_bs.size()
+                                      freeWhenDone:NO];
+
+    NSDictionary *resources = [NSURL resourceValuesForKeys:@[NSURLNameKey] fromBookmarkData:data_ref];
+    if (!resources) throw std::runtime_error("name wasn't found!");
+
+    NSString *ret = resources[NSURLNameKey];
+    if (!ret) throw std::runtime_error("name wasn't found!");
+    return from_ns_string(ret);
 }
 
 }}

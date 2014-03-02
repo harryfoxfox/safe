@@ -370,6 +370,9 @@ class DefaultPathSerializer {
 
     std::pair<encfs::Path, bool>
     resolve_path() const { return std::make_pair(_p, false); }
+
+    std::string
+    get_last_known_name() const { return _p.basename(); }
   };
 
 public:

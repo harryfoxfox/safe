@@ -42,6 +42,9 @@ public:
 
   encfs::Path
   get_last_known_path() const;
+
+  std::string
+  get_last_known_name() const;
 };
 
 class PathSerializer {
