@@ -805,6 +805,11 @@ static
 bool
 set_encrypted_pagefile(bool encrypted) {
   auto cmdline_prefix = std::string("behavior set EncryptPagingFile ");
+  if (safe::win::running_on_vista()) {
+    // vista documentation tends to have this in all lower case
+    cmdline_prefix = "behavior set encryptpagingfile ";
+  }
+
   auto retcode =
     safe::win::run_command_sync("C:\\Windows\\system32\\fsutil.exe",
                                    cmdline_prefix +
