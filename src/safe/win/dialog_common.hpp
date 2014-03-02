@@ -114,8 +114,8 @@ draw_safe(LPDRAWITEMSTRUCT pDIS) {
     // NB: windows xp can't load our 256x256 icon
     //     perhaps because it's PNG
     //     so fallback to whatever it can load
-    load_image_width = 0;
-    load_image_height = 0;
+    load_image_width = 48;
+    load_image_height = 48;
   }
 
   draw_icon_item(pDIS, IDI_SFX_APP,
