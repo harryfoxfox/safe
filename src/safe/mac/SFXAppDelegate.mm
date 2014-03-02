@@ -347,12 +347,12 @@ public:
     if (ctx->quit_after) [NSApp terminate:nil];
 }
 
-- (void)showErrorOccuredDialog:(NSWindow *)window
-                   withTitle:(NSString *)title
-                   withMessage:(NSString *)message
-                 andQuitButton:(BOOL)haveQuitButton
-         withExceptionLocation:(safe::ExceptionLocation)location
-              withExceptionPtr:(std::exception_ptr)eptr {
+- (void)showErrorOccurredDialog:(NSWindow *)window
+                      withTitle:(NSString *)title
+                    withMessage:(NSString *)message
+                  andQuitButton:(BOOL)haveQuitButton
+          withExceptionLocation:(safe::ExceptionLocation)location
+               withExceptionPtr:(std::exception_ptr)eptr {
   NSAlert *alert = [[NSAlert alloc] init];
   NSString *realMessage =
     [message stringByAppendingString:
@@ -374,10 +374,10 @@ public:
                       contextInfo:(void *) ctx.release()];
 }
 
-
-static
-void
-dispatch_tray_menu_action(NSInteger tag) {
+// NB: this throws exception like a C++ function, even though it's objective-c
+//     we should really refactor the core functionality out of SFXAppDelegate into
+//     a C++ class
+- (void)__dispatch_tray_action:(NSInteger) tag {
     using safe::TrayMenuAction;
 
     TrayMenuAction menu_action;
@@ -422,7 +422,7 @@ dispatch_tray_menu_action(NSInteger tag) {
                                      informativeTextWithFormat:[NSString stringWithUTF8String:SAFE_DIALOG_QUIT_CONFIRMATION_MESSAGE], nil];
                 actually_quit = [alert runModal] == NSAlertDefaultReturn;
             }
-            if (actually_quit) [NSApp terminate:sender];
+            if (actually_quit) [NSApp terminate:self];
             break;
         }
         case TrayMenuAction::OPEN: {
@@ -485,8 +485,8 @@ dispatch_tray_menu_action(NSInteger tag) {
 
 - (void)_dispatchMenu:(id)sender {
   try {
-    NSMenuItem *mi = sender;
-    dispatch_tray_menu_action(mi.tag);
+      NSMenuItem *mi = sender;
+      [self __dispatch_tray_action:mi.tag];
   }
   catch (const std::exception & err) {
     // NB: this catch all assumes that all operations
@@ -498,12 +498,12 @@ dispatch_tray_menu_action(NSInteger tag) {
     //     on an exception
     lbx_log_critical("Uncaught exception: %s", err.what());
 
-    [self showErrorOccuredDialog:nil
-                       withTitle:@"Unexpected Error"
-                     withMessage:@"An unexpected error occurred."
-                   andQuitButton:NO
-           withExceptionLocation:safe::ExceptionLocation::TRAY_DISPATCH
-                withExceptionPtr:std::current_exception()];
+    [self showErrorOccurredDialog:nil
+                        withTitle:@"Unexpected Error"
+                      withMessage:@"An unexpected error occurred."
+                    andQuitButton:NO
+            withExceptionLocation:safe::ExceptionLocation::TRAY_DISPATCH
+                 withExceptionPtr:std::current_exception()];
   }
 }
 
@@ -842,7 +842,7 @@ set_reboot_pending(bool waiting) {
                               withMessage:safe::mac::to_ns_string(error_message)
                             andQuitButton:YES
                     withExceptionLocation:safe::ExceptionLocation::SYSTEM_CHANGES
-                         withExceptionPtr::std::current_exception()];
+                         withExceptionPtr:std::current_exception()];
         }
     };
     
