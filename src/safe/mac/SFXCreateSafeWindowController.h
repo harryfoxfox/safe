@@ -43,4 +43,6 @@
 - (IBAction)cancelWindow:(id)sender;
 - (IBAction)rememberPasswordChecked:(id)sender;
 
+- (void)shouldRememberPasswordChanged;
+
 @end

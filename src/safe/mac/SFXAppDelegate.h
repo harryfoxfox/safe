@@ -23,6 +23,7 @@
     std::shared_ptr<encfs::FsIO> native_fs;
     NSInteger lastModifierFlags;
     std::unique_ptr<safe::mac::RecentlyUsedNSURLStoreV1> path_store;
+    FSEventStreamRef fs_event_stream;
 }
 
 @property (retain) NSStatusItem *statusItem;

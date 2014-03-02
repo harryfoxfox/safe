@@ -253,6 +253,12 @@
     self.delegate.shouldRememberPassword = self.rememberPasswordCheckbox.state == NSOnState;
 }
 
+- (void)shouldRememberPasswordChanged {
+    self.rememberPasswordCheckbox.state = self.delegate.shouldRememberPassword
+    ? NSOnState
+    : NSOffState;
+}
+
 - (void)windowDidLoad
 {
     [super windowDidLoad];
@@ -265,9 +271,7 @@
         [self locationURLChanged:nil];
     }
 
-    self.rememberPasswordCheckbox.state = self.delegate.shouldRememberPassword
-    ? NSOnState
-    : NSOffState;
+    [self shouldRememberPasswordChanged];
 
     safe::mac::initialize_window_for_dialog(self.window);
 }

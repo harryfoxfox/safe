@@ -195,14 +195,18 @@ NSStringToSecureMem(NSString *str) {
     self.delegate.shouldRememberPassword = self.rememberPasswordCheckbox.state == NSOnState;
 }
 
+- (void)shouldRememberPasswordChanged {
+    self.rememberPasswordCheckbox.state = self.delegate.shouldRememberPassword
+    ? NSOnState
+    : NSOffState;
+}
+
 - (void)windowDidLoad
 {
     [super windowDidLoad];
     
     self.locationPathControl.URL = [NSURL fileURLWithPath:NSHomeDirectory()];
-    self.rememberPasswordCheckbox.state = self.delegate.shouldRememberPassword
-    ? NSOnState
-    : NSOffState;
+    [self shouldRememberPasswordChanged];
     
     safe::mac::initialize_window_for_dialog(self.window);
 }

@@ -53,4 +53,6 @@
 - (IBAction)showPassword:(id)sender;
 - (IBAction)rememberPasswordChecked:(id)sender;
 
+- (void)shouldRememberPasswordChanged;
+
 @end

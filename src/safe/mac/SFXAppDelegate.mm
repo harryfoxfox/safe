@@ -694,17 +694,20 @@ set_cookie_file_at_url(NSString *file_name, NSURL *appSupportDir, bool set) {
 
 static
 void
-set_cookie_file_at_url_async(NSString *file_name, NSURL *appSupportDir, bool set) {
+set_cookie_file_at_url_async(NSString *file_name, NSURL *appSupportDir, bool set,
+                             void (^when_done)(std::exception_ptr)) {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                    ^{
                        try {
                            set_cookie_file_at_url(file_name, appSupportDir, set);
+                           if (when_done) when_done(std::exception_ptr());
                        }
                        catch (const std::exception & err) {
                            // user wasn't interested in errors so we just log it
                            lbx_log_error("error setting cookie file url: %s %s: %d: %s",
                                          file_name.UTF8String, appSupportDir.path.UTF8String,
                                          (int) set, err.what());
+                           if (when_done) when_done(std::current_exception());
                        }
                    });
 }
@@ -718,7 +721,7 @@ set_cookie_file_at_url_async(NSString *file_name, NSURL *appSupportDir, bool set
 
 - (void)recordAppStart {
     set_cookie_file_at_url_async(safe::mac::to_ns_string(SAFE_APP_STARTED_COOKIE_FILENAME),
-                                 nil, true);
+                                 nil, true, nil);
 }
 
 - (void)startAppUI {
@@ -976,6 +979,60 @@ exit_if_not_single_instance(NSURL *app_support_url) {
     return false;
 }
 
+static
+void
+my_fs_stream_callback(ConstFSEventStreamRef streamRef,
+                      void *clientCallBackInfo,
+                      size_t numEvents,
+                      void *eventPaths,
+                      const FSEventStreamEventFlags eventFlags[],
+                      const FSEventStreamEventId eventIds[]) {
+    (void) streamRef;
+    (void) numEvents;
+    (void) eventFlags;
+    (void) eventIds;
+    (void) eventPaths;
+
+    SFXAppDelegate *self = (__bridge SFXAppDelegate *) clientCallBackInfo;
+
+    assert(self->fs_event_stream == streamRef);
+
+    [self handleChangedRememberPassword];
+}
+
+- (bool)listenToAppSupportDir:(NSURL *)appSupportDir {
+    struct FSEventStreamContext fs_event_stream_ctx = {
+        0,
+        (__bridge void *) self,
+        nullptr, nullptr, nullptr,
+    };
+
+    self->fs_event_stream = FSEventStreamCreate(kCFAllocatorDefault,
+                                                my_fs_stream_callback,
+                                                &fs_event_stream_ctx,
+                                                (__bridge CFArrayRef) @[appSupportDir.path],
+                                                kFSEventStreamEventIdSinceNow, 0,
+                                                kFSEventStreamCreateFlagUseCFTypes |
+                                                kFSEventStreamCreateFlagIgnoreSelf);
+    if (!self->fs_event_stream) return false;
+    auto _free_fs_event_stream = safe::create_deferred([&] {
+        FSEventStreamStop(self->fs_event_stream);
+        FSEventStreamInvalidate(self->fs_event_stream);
+        FSEventStreamRelease(self->fs_event_stream);
+    });
+
+    FSEventStreamScheduleWithRunLoop(self->fs_event_stream,
+                                     CFRunLoopGetCurrent(),
+                                     kCFRunLoopDefaultMode);
+
+    auto success = FSEventStreamStart(self->fs_event_stream);
+    if (!success) return false;
+
+    _free_fs_event_stream.cancel();
+
+    return true;
+}
+
 - (void)_applicationDidFinishLaunching:(NSNotification *)aNotification {
     (void)aNotification;
     
@@ -1024,7 +1081,12 @@ exit_if_not_single_instance(NSURL *app_support_url) {
 
     self.createWindows = [NSMutableArray array];
     self.mountWindows = [NSMutableArray array];
-    
+
+    auto success = [self listenToAppSupportDir:appSupportDir];
+    if (!success) throw std::runtime_error("failed to watch app support dir!");
+
+    // TODO: consider releasing when app dies self->fs_events_stream
+
     // get notification whenever active application changes,
     // we preserve this so we can switch back when the user
     // selects "cancel" on our dialogs
@@ -1147,14 +1209,27 @@ exit_if_not_single_instance(NSURL *app_support_url) {
     }
 }
 
+- (void)handleChangedRememberPassword {
+    for (SFXCreateSafeWindowController *c in self.createWindows) {
+        [c shouldRememberPasswordChanged];
+    }
+    for (SFXMountSafeWindowController *c in self.mountWindows) {
+        [c shouldRememberPasswordChanged];
+    }
+}
+
 - (BOOL)shouldRememberPassword {
-    return check_for_cookie_file_at_url(safe::mac::to_ns_string(SAFE_REMEMBER_PASSWORD_COOKIE_FILENAME),
-                                        nil);
+    return check_for_cookie_file_at_url
+    (safe::mac::to_ns_string(SAFE_REMEMBER_PASSWORD_COOKIE_FILENAME),
+     nil);
 }
 
 - (void)setShouldRememberPassword:(BOOL)shouldRememberPasword {
     set_cookie_file_at_url_async(safe::mac::to_ns_string(SAFE_REMEMBER_PASSWORD_COOKIE_FILENAME),
-                                 nil, shouldRememberPasword);
+                                 nil, shouldRememberPasword,
+                                 ^(std::exception_ptr) {
+                                     [self handleChangedRememberPassword];
+                                 });
 }
 
 @end
