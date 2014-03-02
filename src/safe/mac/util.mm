@@ -142,5 +142,12 @@ url_to_path(std::shared_ptr<encfs::FsIO> fs, NSURL *url) {
     return string_to_path(fs, url.filePathURL.path);
 }
 
+
+std::runtime_error
+nserror_to_exception(std::string context, NSError *err) {
+    return std::runtime_error(context + ": " +
+                              safe::mac::from_ns_string(err.localizedDescription));
+}
+
 }}
 

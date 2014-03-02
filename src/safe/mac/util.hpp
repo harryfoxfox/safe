@@ -66,8 +66,10 @@ url_to_path(std::shared_ptr<encfs::FsIO> fs, NSURL *url);
 encfs::Path
 string_to_path(std::shared_ptr<encfs::FsIO> fs, NSString *string);
 
-#endif
+std::runtime_error
+nserror_to_exception(std::string context, NSError *err);
 
+#endif
 
 }}
 

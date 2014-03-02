@@ -37,5 +37,7 @@
 - (void)createNewSafe:(id)sender;
 - (void)mountExistingSafe:(id)sender;
 - (void)welcomeWindowDone:(id)sender withAction:(welcome_window_action_t)action;
+- (BOOL)shouldRememberPassword;
+- (void)setShouldRememberPassword:(BOOL)shouldRememberPasword;
 
 @end

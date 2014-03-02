@@ -16,6 +16,8 @@
 
 @protocol SFXCreateSafeWindowControllerDelegate <NSObject>
 
+- (BOOL)shouldRememberPassword;
+- (void)setShouldRememberPassword:(BOOL)shouldRememberPasword;
 - (void)createSafeDone:(SFXCreateSafeWindowController *)wc
                     mount:(opt::optional<safe::mac::MountDetails>)a;
 
@@ -39,5 +41,6 @@
 
 - (IBAction)confirmCreate:(id)sender;
 - (IBAction)cancelWindow:(id)sender;
+- (IBAction)rememberPasswordChecked:(id)sender;
 
 @end

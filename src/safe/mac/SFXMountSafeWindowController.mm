@@ -248,6 +248,11 @@
     newFieldEditor.selectedRange = curRange;
 }
 
+- (IBAction)rememberPasswordChecked:(id)sender {
+    (void) sender;
+    self.delegate.shouldRememberPassword = self.rememberPasswordCheckbox.state == NSOnState;
+}
+
 - (void)windowDidLoad
 {
     [super windowDidLoad];
@@ -259,6 +264,10 @@
         [self.window makeFirstResponder:self.currentPasswordView];
         [self locationURLChanged:nil];
     }
+
+    self.rememberPasswordCheckbox.state = self.delegate.shouldRememberPassword
+    ? NSOnState
+    : NSOffState;
 
     safe::mac::initialize_window_for_dialog(self.window);
 }

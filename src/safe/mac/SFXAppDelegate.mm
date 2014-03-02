@@ -168,7 +168,7 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
     return std::move(md);
 }
 
-- (NSURL *)applicationSupportDirectoryError:(NSError **)err {
++ (NSURL *)applicationSupportDirectoryError:(NSError **)err {
     NSURL *p = [NSFileManager.defaultManager
                 URLForDirectory:NSApplicationSupportDirectory
                 inDomain:NSUserDomainMask
@@ -177,6 +177,7 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
     if (!p) return nil;
     
     NSString *executableName = NSBundle.mainBundle.infoDictionary[@"CFBundleExecutable"];
+    if (!executableName) return nil;
     
     NSURL *ourAppDirectory = [p URLByAppendingPathComponent:executableName];
 
@@ -647,45 +648,95 @@ _Pragma("clang diagnostic pop") \
     [self.aboutWindowController showWindow:nil];
 }
 
-- (BOOL)haveStartedAppBefore:(NSURL *)appSupportDir {
+static
+NSURL *
+get_default_cookie_url(NSURL *appSupportDir) {
     if (!appSupportDir) {
-        appSupportDir = [self applicationSupportDirectoryError:nil];
-        // TODO: don't do this
-        if (!appSupportDir) abort();
+        NSError *err;
+        appSupportDir = [SFXAppDelegate applicationSupportDirectoryError:&err];
+        if (!appSupportDir) throw safe::mac::nserror_to_exception("applicationSupportDirectory", err);
     }
-    NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:[NSString stringWithUTF8String:SAFE_APP_STARTED_COOKIE_FILENAME]];
+    return appSupportDir;
+}
+
+static
+bool
+check_for_cookie_file_at_url(NSString *file_name, NSURL *appSupportDir) {
+    appSupportDir = get_default_cookie_url(appSupportDir);
+    NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:file_name];
+
     // NB: assuming the following operation is quick
     return [NSFileManager.defaultManager fileExistsAtPath:cookieURL.path];
 }
 
-- (void)recordAppStart {
+static
+void
+set_cookie_file_at_url(NSString *file_name, NSURL *appSupportDir, bool set) {
+    appSupportDir = get_default_cookie_url(appSupportDir);
+
+    NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:file_name];
+
+    if (set) {
+        // NB: we don't check for error here
+        [NSFileManager.defaultManager createFileAtPath:cookieURL.path
+                                              contents:NSData.data
+                                            attributes:nil];
+    }
+    else {
+        NSError *err;
+        BOOL removed = [NSFileManager.defaultManager
+                        removeItemAtURL:cookieURL
+                        error:&err];
+        if (!removed) {
+            throw safe::mac::nserror_to_exception("removeItemAtURL", err);
+        }
+    }
+}
+
+static
+void
+set_cookie_file_at_url_async(NSString *file_name, NSURL *appSupportDir, bool set) {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                    ^{
-                       NSError *err;
-                       NSURL *appSupportDir = [self applicationSupportDirectoryError:&err];
-                       if (!appSupportDir) {
-                           lbx_log_critical("Error while getting application support directory: (%s:%ld) %s",
-                                            err.domain.UTF8String,
-                                            (long) err.code,
-                                            err.localizedDescription.UTF8String);
-                           return;
+                       try {
+                           set_cookie_file_at_url(file_name, appSupportDir, set);
                        }
-                       
-                       NSURL *cookieURL = [appSupportDir URLByAppendingPathComponent:[NSString stringWithUTF8String:SAFE_APP_STARTED_COOKIE_FILENAME]];
-                       [NSFileManager.defaultManager createFileAtPath:cookieURL.path
-                                                             contents:NSData.data
-                                                           attributes:nil];
+                       catch (const std::exception & err) {
+                           // user wasn't interested in errors so we just log it
+                           lbx_log_error("error setting cookie file url: %s %s: %d: %s",
+                                         file_name.UTF8String, appSupportDir.path.UTF8String,
+                                         (int) set, err.what());
+                       }
                    });
 }
 
+// NB: this interface currently throws an exception
+//     it should instead return an error
+- (BOOL)haveStartedAppBefore:(NSURL *)appSupportDir {
+    return check_for_cookie_file_at_url(safe::mac::to_ns_string(SAFE_APP_STARTED_COOKIE_FILENAME),
+                                        appSupportDir);
+}
+
+- (void)recordAppStart {
+    set_cookie_file_at_url_async(safe::mac::to_ns_string(SAFE_APP_STARTED_COOKIE_FILENAME),
+                                 nil, true);
+}
+
 - (void)startAppUI {
+    auto have_run_app_before = [self haveStartedAppBefore:nil];
+
+    if (!have_run_app_before) {
+        // initialize state
+        self.shouldRememberPassword = YES;
+    }
+
     [self _setupStatusBar];
     [self recordAppStart];
 
     if (self->path_store && !self->path_store->empty()) {
         [self mountNthMostRecentlyMounted:0];
     }
-    else if ([self haveStartedAppBefore:nil]) {
+    else if (have_run_app_before) {
         set_app_to_run_at_login(true);
         
         if ([self haveUserNotifications]) {
@@ -918,7 +969,7 @@ set_reboot_pending(bool waiting) {
     log_debug("Hello world!");
     
     NSError *err;
-    NSURL *appSupportDir = [self applicationSupportDirectoryError:&err];
+    NSURL *appSupportDir = [SFXAppDelegate applicationSupportDirectoryError:&err];
     if (!appSupportDir) {
         throw std::runtime_error(safe::mac::from_ns_string(err.localizedDescription));
     }
@@ -1065,5 +1116,14 @@ set_reboot_pending(bool waiting) {
     }
 }
 
+- (BOOL)shouldRememberPassword {
+    return check_for_cookie_file_at_url(safe::mac::to_ns_string(SAFE_REMEMBER_PASSWORD_COOKIE_FILENAME),
+                                        nil);
+}
+
+- (void)setShouldRememberPassword:(BOOL)shouldRememberPasword {
+    set_cookie_file_at_url_async(safe::mac::to_ns_string(SAFE_REMEMBER_PASSWORD_COOKIE_FILENAME),
+                                 nil, shouldRememberPasword);
+}
 
 @end

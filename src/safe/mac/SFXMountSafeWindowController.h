@@ -14,6 +14,8 @@
 
 @protocol SFXMountSafeWindowControllerDelegate <NSObject>
 
+- (BOOL)shouldRememberPassword;
+- (void)setShouldRememberPassword:(BOOL)shouldRememberPasword;
 - (void)mountSafeDone:(SFXMountSafeWindowController *)wc
                    mount:(opt::optional<safe::mac::MountDetails>)a;
 
@@ -49,5 +51,6 @@
 - (IBAction)cancelStart:(id)sender;
 - (IBAction)locationURLChanged:(id)sender;
 - (IBAction)showPassword:(id)sender;
+- (IBAction)rememberPasswordChecked:(id)sender;
 
 @end

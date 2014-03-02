@@ -157,6 +157,9 @@ Gw
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                             <font key="font" metaFont="system"/>
                         </buttonCell>
+                        <connections>
+                            <action selector="rememberPasswordChecked:" target="-2" id="cST-vr-4HY"/>
+                        </connections>
                     </button>
                     <button verticalHuggingPriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="jfc-vg-kWj">
                         <rect key="frame" x="98" y="79" width="228" height="18"/>

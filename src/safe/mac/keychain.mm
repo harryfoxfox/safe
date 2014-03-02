@@ -31,12 +31,6 @@ namespace safe { namespace mac {
 const char *SERVICE_NAME = "Safe";
 const char *KEYCHAIN_ID_FILE = ".safe_metadata.json";
 
-std::runtime_error
-nserror_to_exception(std::string context, NSError *err) {
-    return std::runtime_error(context + ": " +
-                              safe::mac::from_ns_string(err.localizedDescription));
-}
-
 static
 NSDictionary *
 write_directory_metadata(NSURL *dir_url, NSDictionary *dict) {
