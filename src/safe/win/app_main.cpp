@@ -304,9 +304,39 @@ new_mount(WindowData & wd, safe::win::MountDetails md) {
 
 static
 bool
+handle_multiple_mounts(HWND safe_main_window,
+                       WindowData & wd, bool creating) {
+  if (!safe::win::running_on_winxp() || wd.mounts.size() < 1) return true;
+
+  auto mount_name = wd.mounts.front().get_mount_name();
+
+  std::string message = 
+    ("We are unable to mount more than a single "
+     "Safe at a time on Windows XP. Would you like to unmount \"") +
+    mount_name +
+    ("\" first?");
+
+  auto ret = w32util::check_call(0, MessageBoxW, safe_main_window,
+                                 w32util::widen(message).c_str(),
+                                 (creating
+                                  ? L"Cannot Create New Safe"
+                                  : L"Cannot Mount Existing Safe"),
+                                 MB_YESNO | MB_ICONEXCLAMATION | MB_SETFOREGROUND);
+  if (ret != IDYES) return false;
+
+  unmount_and_stop_drive(safe_main_window, wd, 0);
+
+  return true;
+}
+
+static
+bool
 run_create_dialog(HWND safe_main_window, WindowData & wd) {
   // only run this dialog if we don't already have a dialog
   assert(!GetWindow(safe_main_window, GW_ENABLEDPOPUP));
+
+  auto ret1 = handle_multiple_mounts(safe_main_window, wd, true);
+  if (!ret1) return ret1;
 
   auto ret = safe::win::create_new_safe_dialog(safe_main_window, wd.native_fs);
   if (ret) new_mount(wd, std::move(*ret));
@@ -319,6 +349,9 @@ run_mount_dialog(HWND safe_main_window, WindowData & wd,
                  opt::optional<encfs::Path> p = opt::nullopt) {
   // only run this dialog if we don't already have a dialog
   assert(!GetWindow(safe_main_window, GW_ENABLEDPOPUP));
+
+  auto ret1 = handle_multiple_mounts(safe_main_window, wd, false);
+  if (!ret1) return ret1;
 
   safe::win::TakeMountFn take_mount = [&] (const encfs::Path & encrypted_container_path) -> opt::optional<safe::win::MountDetails> {
     auto it = std::find_if(wd.mounts.begin(), wd.mounts.end(),
@@ -475,18 +508,10 @@ update_tray_menu(WindowData & wd) {
   w32util::menu_clear(wd.tray_menu.get());
   auto tm = safe::win::TrayMenu(wd.tray_menu);
 
-  // NB: don't allow more than one mount on windows xp.
-  //     xp can only mount drives on port 80 and
-  //     currently we listen on a different port for
-  //     each drive mounted
-  bool allow_more_mounts = (!safe::win::running_on_winxp() ||
-                            wd.mounts.size() < 1);
-
   safe::populate_tray_menu(tm,
                            wd.mounts,
                            wd.recent_mount_paths_store,
                            app_is_run_at_login(),
-                           allow_more_mounts,
                            wd.control_was_pressed_on_tray_open);
 
   auto ret = set_highest_non_disabled_to_default(wd.tray_menu.get());

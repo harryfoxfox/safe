@@ -78,7 +78,6 @@ populate_tray_menu(Menu & menu,
                    const MountList & mounts,
                    const RecentMountStore & recent_mounts,
                    bool startup_enabled,
-                   bool enable_mounts,
                    bool show_alternative_menu) {
   // Menu is:
   // [ (Open | Unmount) "<mount name>" ]
@@ -132,8 +131,6 @@ populate_tray_menu(Menu & menu,
       item.set_tooltip(p.get_last_known_path());
       item.set_property(TrayMenuProperty::MAC_FILE_TYPE, "public.folder");
 
-      if (!enable_mounts) item.disable();
-
       ++sub_tag;
     }
 
@@ -144,14 +141,10 @@ populate_tray_menu(Menu & menu,
   }
 
   // Mount an Existing Bitvault
-  auto mount_existing_item =
-    menu.append_item("Mount Existing...", TrayMenuAction::MOUNT);
-  if (!enable_mounts) mount_existing_item.disable();
+  menu.append_item("Mount Existing...", TrayMenuAction::MOUNT);
 
   // Create a New Bitvault
-  auto create_new_item =
-    menu.append_item("Create New...", TrayMenuAction::CREATE);
-  if (!enable_mounts) create_new_item.disable();
+  menu.append_item("Create New...", TrayMenuAction::CREATE);
 
   menu.append_separator();
 

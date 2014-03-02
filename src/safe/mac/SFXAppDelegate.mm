@@ -515,10 +515,8 @@ public:
     bool show_alternative_menu = self->lastModifierFlags & NSAlternateKeyMask;
     auto m = MacOSXTrayMenu(menu, self, @selector(_dispatchMenu:));
     auto startup_item_is_enabled = app_is_run_at_login();
-    auto enable_mounting = true;
     safe::populate_tray_menu(m, self->mounts, *self->path_store,
                              startup_item_is_enabled,
-                             enable_mounting,
                              show_alternative_menu);
 }
 
