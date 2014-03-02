@@ -682,6 +682,44 @@ set_hibernate(bool hibernate) {
 static
 bool
 encrypted_pagefile_is_enabled() {
+  if (safe::win::running_on_vista()) {
+    // we have to query the registry because fsutil
+    // requires admin privileges for query on vista
+    // NB: we don't do this on more recent operating systems
+    // because this information could be stored somewhere elsea
+    HKEY filesystem_key;
+    w32util::check_error_call(RegOpenKeyEx,
+                              HKEY_LOCAL_MACHINE,
+                              L"SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+                              0,
+                              KEY_READ,
+                              &filesystem_key);
+
+    auto _close_key = safe::create_deferred(RegCloseKey, filesystem_key);
+
+    DWORD out;
+    DWORD out_size = sizeof(out);
+    DWORD type;
+
+    try {
+      w32util::check_error_call(RegQueryValueExW,
+                                filesystem_key,
+                                L"NtfsEncryptPagingFile",
+                                nullptr,
+                                &type,
+                                (LPBYTE) &out,
+                                &out_size);
+    }
+    catch (const std::system_error & err) {
+      if (err.code() == std::errc::no_such_file_or_directory) return false;
+      else throw;
+    }
+
+    if (type != REG_DWORD) throw std::runtime_error("bad registry type for NtfsEncryptPagingFile");
+
+    return out;
+  }
+
   // create a temp file to store the result of
   // calling query
   auto temp_root_path = w32util::get_temp_path();
@@ -904,16 +942,16 @@ static
 HKEY
 get_hklm_safe_key() {
   HKEY safe_key;
-  w32util::check_good_call(ERROR_SUCCESS, RegCreateKeyExW,
-                           HKEY_LOCAL_MACHINE,
-                           L"SOFTWARE\\Safe",
-                           0,
-                           nullptr,
-                           REG_OPTION_VOLATILE,
-                           KEY_ALL_ACCESS,
-                           nullptr,
-                           &safe_key,
-                           nullptr);
+  w32util::check_error_call(RegCreateKeyExW,
+                            HKEY_LOCAL_MACHINE,
+                            L"SOFTWARE\\Safe",
+                            0,
+                            nullptr,
+                            REG_OPTION_VOLATILE,
+                            KEY_ALL_ACCESS,
+                            nullptr,
+                            &safe_key,
+                            nullptr);
   return safe_key;
 }
 
@@ -926,16 +964,16 @@ set_reboot_pending(bool reboot_pending) {
   const wchar_t *REBOOT_PENDING_KEY_W = L"RebootPending";
 
   if (reboot_pending) {
-    w32util::check_good_call(ERROR_SUCCESS, RegSetValueExW, safe_key,
-                             REBOOT_PENDING_KEY_W,
-                             0,
-                             REG_NONE,
-                             nullptr, 0);
+    w32util::check_error_call(RegSetValueExW, safe_key,
+                              REBOOT_PENDING_KEY_W,
+                              0,
+                              REG_NONE,
+                              nullptr, 0);
   }
   else {
     try {
-      w32util::check_good_call(ERROR_SUCCESS, RegDeleteValueW,
-                               safe_key, REBOOT_PENDING_KEY_W);
+      w32util::check_error_call(RegDeleteValueW,
+                                safe_key, REBOOT_PENDING_KEY_W);
     }
     catch (const std::system_error & err) {
       if (err.code() != std::errc::no_such_file_or_directory) throw;

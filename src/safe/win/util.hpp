@@ -94,6 +94,10 @@ get_parseable_platform_version();
 bool
 running_on_winxp();
 
+bool
+running_on_vista();
+
+
 }}
 
 

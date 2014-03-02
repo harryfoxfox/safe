@@ -74,5 +74,14 @@ running_on_winxp() {
   return vi.dwMajorVersion < 6;
 }
 
+bool
+running_on_vista() {
+  OSVERSIONINFOW vi;
+  safe::zero_object(vi);
+  vi.dwOSVersionInfoSize = sizeof(vi);
+  w32util::check_bool(GetVersionEx, &vi);
+  return vi.dwMajorVersion < 7;
+}
+
 }}
 

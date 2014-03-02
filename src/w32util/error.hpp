@@ -150,6 +150,14 @@ check_good_call(ReturnType good, F && f, Args && ...args) {
                        std::forward<Args>(args)...);
 }
 
+template <class F, class... Args,
+          class ReturnType = typename std::result_of<F(Args...)>::type>
+void
+check_error_call(F && f, Args && ...args) {
+  auto ret = f(std::forward<Args>(args)...);
+  if (ret != ERROR_SUCCESS) throw w32util::windows_error(ret);
+}
+
 template <class F, class... Args>
 HANDLE
 check_invalid_handle(F && f, Args && ...args) {
