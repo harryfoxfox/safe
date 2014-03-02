@@ -320,15 +320,70 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
     }
 }
 
-- (void)_dispatchMenu:(id)sender {
+struct ErrorDialogContext {
+  bool quit_after;
+  safe::ExceptionLocation location;
+  std::exception_ptr eptr;
+
+public:
+  ErrorDialogContext(bool quit_after_,
+                     safe::ExceptionLocation location_,
+                     std::exception_ptr eptr_)
+    : quit_after(quit_after_)
+    , location(location_)
+    , eptr(std::move(eptr_)) {}
+};
+
+- (void)errorOccurredDialogResponse:(NSAlert *)alert
+                         returnCode:(NSInteger)returnCode
+                        contextInfo:(void *)contextInfo {
+    (void) alert;
+    auto ctx = std::unique_ptr<ErrorDialogContext>((ErrorDialogContext *) contextInfo);
+
+    if (returnCode == NSAlertFirstButtonReturn) {
+        safe::report_exception(ctx->location, ctx->eptr);
+    }
+
+    if (ctx->quit_after) [NSApp terminate:nil];
+}
+
+- (void)showErrorOccuredDialog:(NSWindow *)window
+                   withTitle:(NSString *)title
+                   withMessage:(NSString *)message
+                 andQuitButton:(BOOL)haveQuitButton
+         withExceptionLocation:(safe::ExceptionLocation)location
+              withExceptionPtr:(std::exception_ptr)eptr {
+  NSAlert *alert = [[NSAlert alloc] init];
+  NSString *realMessage =
+    [message stringByAppendingString:
+               (@" Please help us improve by sending a bug report. It's automatic and "
+                @"no personal information is used.")];
+
+  [alert setMessageText:title];
+  [alert setInformativeText:realMessage];
+  [alert addButtonWithTitle:@"Report Bug"];
+  [alert addButtonWithTitle:haveQuitButton ? @"Quit" : @"Cancel"];
+  [alert setAlertStyle:NSWarningAlertStyle];
+
+  auto ctx = safe::make_unique<ErrorDialogContext>
+    (haveQuitButton, location, eptr);
+  
+  [alert beginSheetModalForWindow:window
+                    modalDelegate:self
+                   didEndSelector:@selector(errorOccurredDialogResponse:returnCode:contextInfo:)
+                      contextInfo:(void *) ctx.release()];
+}
+
+
+static
+void
+dispatch_tray_menu_action(NSInteger tag) {
     using safe::TrayMenuAction;
 
-    NSMenuItem *mi = sender;
-    
     TrayMenuAction menu_action;
     safe::tray_menu_action_arg_t menu_action_arg;
     
-    std::tie(menu_action, menu_action_arg) = safe::decode_menu_id(mi.tag);
+    std::tie(menu_action, menu_action_arg) = safe::decode_menu_id(tag);
     
     switch (menu_action) {
         case TrayMenuAction::CREATE: {
@@ -426,6 +481,30 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
             break;
         }
     }
+}
+
+- (void)_dispatchMenu:(id)sender {
+  try {
+    NSMenuItem *mi = sender;
+    dispatch_tray_menu_action(mi.tag);
+  }
+  catch (const std::exception & err) {
+    // NB: this catch all assumes that all operations
+    //     run via _dispatch_tray_menu_action()
+    //     have "strong exception safety"
+    //     (i.e. failed operations should have no side-effects
+    //           or inconsistent state)
+    //     if this isn't true we should actually quit the application
+    //     on an exception
+    lbx_log_critical("Uncaught exception: %s", err.what());
+
+    [self showErrorOccuredDialog:nil
+                       withTitle:@"Unexpected Error"
+                     withMessage:@"An unexpected error occurred."
+                   andQuitButton:NO
+           withExceptionLocation:safe::ExceptionLocation::TRAY_DISPATCH
+                withExceptionPtr:std::current_exception()];
+  }
 }
 
 - (void)_updateStatusMenu {
@@ -735,28 +814,6 @@ set_reboot_pending(bool waiting) {
                      didEndSelector:@selector(rebootComputerResponse:returnCode:contextInfo:)
                         contextInfo:nil];
 }
-
-struct SystemChangesErrorContext {
-    void *w;
-    std::exception_ptr eptr;
-    SystemChangesErrorContext(void *w_, std::exception_ptr eptr_)
-    : w(w_)
-    , eptr(std::move(eptr_)) {}
-};
-
-- (void)systemChangesErrorResponse:(NSAlert *)alert
-                        returnCode:(NSInteger)returnCode
-                        contextInfo:(void *)contextInfo {
-    (void) alert;
-    auto ctx = std::unique_ptr<SystemChangesErrorContext>((SystemChangesErrorContext *) contextInfo);
-
-    if (returnCode == NSAlertFirstButtonReturn) {
-        safe::report_exception(safe::ExceptionLocation::SYSTEM_CHANGES, ctx->eptr);
-    }
-
-    [NSApp terminate:nil];
-}
-
 - (void)makeSystemChangesProgressDialog:(NSWindow *)window {
     auto onSuccess = ^(bool reboot_required) {
         if (reboot_required) {
@@ -778,23 +835,14 @@ struct SystemChangesErrorContext {
             lbx_log_debug("Error while making system changes: %s", err.what());
 
             auto error_message =
-            ("An error occured while attempting to make changes to your system. "
-             "Please help us improve by sending a bug report. It's automatic and "
-             "no personal information is used.");
+            ("An error occured while attempting to make changes to your system.");
 
-            NSAlert *alert = [[NSAlert alloc] init];
-            [alert setMessageText:@"Couldn't Make System Changes"];
-            [alert setInformativeText:safe::mac::to_ns_string(error_message)];
-            [alert addButtonWithTitle:@"Report Bug"];
-            [alert addButtonWithTitle:@"Quit"];
-            [alert setAlertStyle:NSWarningAlertStyle];
-
-            auto ctx = safe::make_unique<SystemChangesErrorContext>((__bridge void *)window, eptr);
-
-            [alert beginSheetModalForWindow:window
-                              modalDelegate:self
-                             didEndSelector:@selector(systemChangesErrorResponse:returnCode:contextInfo:)
-                                contextInfo:(void *) ctx.release()];
+            [self showErrorOccurredDialog:window
+                                withTitle:@"Couldn't Make System Changes"
+                              withMessage:safe::mac::to_ns_string(error_message)
+                            andQuitButton:YES
+                    withExceptionLocation:safe::ExceptionLocation::SYSTEM_CHANGES
+                         withExceptionPtr::std::current_exception()];
         }
     };
     

@@ -45,6 +45,7 @@ exception_location_to_string(ExceptionLocation el) {
     _CV(ExceptionLocation::STARTUP);
     _CV(ExceptionLocation::MOUNT);
     _CV(ExceptionLocation::CREATE);
+    _CV(ExceptionLocation::TRAY_DISPATCH);
   default: /* notreached */ assert(false); return "";
   }
 #undef _CV

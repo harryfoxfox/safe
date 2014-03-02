@@ -496,7 +496,7 @@ update_tray_menu(WindowData & wd) {
 
 static
 void
-dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd, UINT selected) {
+_dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd, UINT selected) {
   using safe::TrayMenuAction;
   TrayMenuAction menu_action;
   safe::tray_menu_action_arg_t menu_action_arg;
@@ -563,6 +563,33 @@ dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd, UINT selected)
     assert(false);
     lbx_log_warning("Bad tray action: %d", (int) menu_action);
   }
+  }
+}
+
+static
+void
+dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd,
+                          UINT selected) {
+  try {
+    _dispatch_tray_menu_action(safe_main_window, wd, selected);
+  }
+  catch (const std::exception & err) {
+    // NB: this catch all assumes that all operations
+    //     run via _dispatch_tray_menu_action()
+    //     have "strong exception safety"
+    //     (i.e. failed operations should have no side-effects
+    //           or inconsistent state)
+    //     if this isn't true we should actually quit the application
+    //     on an exception
+    lbx_log_critical("Uncaught exception: %s", err.what());
+
+    auto choice =
+      safe::win::report_bug_dialog(nullptr, "An unexpected error occured.");
+
+    if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
+      safe::report_exception(safe::ExceptionLocation::TRAY_DISPATCH,
+                             std::current_exception());
+    }
   }
 }
 

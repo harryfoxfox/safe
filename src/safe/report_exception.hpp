@@ -28,6 +28,7 @@ enum class ExceptionLocation {
     STARTUP,
     MOUNT,
     CREATE,
+    TRAY_DISPATCH,
 };
 
 void
