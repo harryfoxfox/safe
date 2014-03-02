@@ -42,6 +42,11 @@ namespace safe { namespace win {
 
 bool
 need_to_install_kernel_driver() {
+  // NB: while the driver works on windows xp
+  //     it does not yet engage properly
+  //     just don't install until we have a properly working driver
+  if (running_on_winxp()) return false;
+
   // check if we can access the ramdisk
   HANDLE hFile = CreateFileW(L"\\\\.\\" RAMDISK_CTL_DOSNAME_W,
 			     0, 0,
@@ -53,6 +58,8 @@ need_to_install_kernel_driver() {
     if (GetLastError() == ERROR_FILE_NOT_FOUND) return true;
     w32util::throw_windows_error();
   }
+
+  // TODO: the running ramdisk should have a version query
 
   CloseHandle(hFile);
   
