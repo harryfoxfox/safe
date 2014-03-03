@@ -112,13 +112,15 @@ map_to_same_target(std::string a, std::string b) {
           (a_info.nFileSizeLow == b_info.nFileSizeLow));
 }
 
-void
+bool
 ensure_deleted(std::string path) {
   try {
     w32util::check_bool(DeleteFileW, w32util::widen(path).c_str());
+    return true;
   }
   catch (const std::system_error & err) {
     if (err.code() != std::errc::no_such_file_or_directory) throw;
+    return false;
   }
 }
 

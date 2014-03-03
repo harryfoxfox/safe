@@ -476,6 +476,13 @@ set_app_to_run_at_login(bool run_at_login) {
 }
 
 static
+void
+normalize_app_is_run_at_login() {
+  auto removed = w32util::ensure_deleted(get_shortcut_path());
+  if (removed) set_app_to_run_at_login(true);
+}
+
+static
 bool
 set_highest_non_disabled_to_default(HMENU root) {
   // do a basic recursive dfs, it should be okay since we trust
@@ -1600,6 +1607,8 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
                                   SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
 
   auto first_run_cookie_path = app_directory_path.join(SAFE_APP_STARTED_COOKIE_FILENAME);
+
+  normalize_app_is_run_at_login();
 
   auto wd = WindowData {
     /*.native_fs = */std::move(native_fs),
