@@ -29,6 +29,7 @@
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
 static NSString *const SAFE_MAC_LOCK_FILE = @"LockFile";
+static NSString *const SAFE_LIST_ITEM_OWNER = @"Safe";
 
 class MacOSXTrayMenuItem {
 private:
@@ -114,37 +115,61 @@ public:
 static
 bool
 app_is_run_at_login() {
-	auto appPath = NSBundle.mainBundle.bundlePath;
-    NSURL *appURL = [NSURL fileURLWithPath:appPath];
-    return safe::mac::shared_file_list_contains_url(kLSSharedFileListSessionLoginItems, appURL);
+    return safe::mac::shared_file_list_contains_live_item_with_owner(kLSSharedFileListSessionLoginItems,
+                                                                     SAFE_LIST_ITEM_OWNER);
 }
 
 static
-void
+bool
 set_app_to_run_at_login(bool run_at_login) {
     auto appPath = NSBundle.mainBundle.bundlePath;
     NSURL *appURL = [NSURL fileURLWithPath:appPath];
 
+    // clear all other login items owned by us, this makes sure the list is normalized to
+    // run at most one "Safe" app at login
+    bool removed = safe::mac::remove_items_with_owner_from_shared_file_list(kLSSharedFileListSessionLoginItems,
+                                                                            SAFE_LIST_ITEM_OWNER);
+
     if (run_at_login) {
-        safe::mac::add_url_to_shared_file_list(kLSSharedFileListSessionLoginItems, appURL);
+        safe::mac::add_url_with_owner_to_shared_file_list(kLSSharedFileListSessionLoginItems,
+                                                          appURL, SAFE_LIST_ITEM_OWNER);
+        return removed;
     }
     else {
-        safe::mac::remove_url_from_shared_file_list(kLSSharedFileListSessionLoginItems, appURL);
+        bool removed2 =
+            safe::mac::remove_url_with_owner_from_shared_file_list(kLSSharedFileListSessionLoginItems,
+                                                                   appURL, safe::mac::kSFXAnyOwner);
+        return removed || removed2;
     }
+}
+
+static
+void
+normalize_app_is_run_at_login_setting() {
+    // the purpose of this method is to make sure we only have one Safe entry
+    // in the login items list and to make sure it now points to us (if there was one)
+    bool removed = set_app_to_run_at_login(false);
+    if (removed) set_app_to_run_at_login(true);
 }
 
 static
 void
 add_mount_to_favorites(const safe::mac::MountDetails & mount) {
-    return safe::mac::add_url_to_shared_file_list(kLSSharedFileListFavoriteVolumes,
-                                                  [NSURL fileURLWithPath:safe::mac::to_ns_string(mount.get_mount_point())]);
+    return safe::mac::add_url_with_owner_to_shared_file_list(kLSSharedFileListFavoriteVolumes,
+                                                             [NSURL
+                                                              fileURLWithPath:safe::mac::to_ns_string(mount.get_mount_point())
+                                                              isDirectory:YES], SAFE_LIST_ITEM_OWNER);
+
 }
 
 static
 bool
 remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
-    return safe::mac::remove_url_from_shared_file_list(kLSSharedFileListFavoriteVolumes,
-                                                       [NSURL fileURLWithPath:safe::mac::to_ns_string(mount.get_mount_point())]);
+    return safe::mac::remove_url_with_owner_from_shared_file_list(kLSSharedFileListFavoriteVolumes,
+                                                                  [NSURL
+                                                                   fileURLWithPath:safe::mac::to_ns_string(mount.get_mount_point())
+                                                                   isDirectory:YES],
+                                                                  SAFE_LIST_ITEM_OWNER);
 }
 
 @implementation SFXAppDelegate
@@ -1086,6 +1111,9 @@ my_fs_stream_callback(ConstFSEventStreamRef streamRef,
     if (!success) throw std::runtime_error("failed to watch app support dir!");
 
     // TODO: consider releasing when app dies self->fs_events_stream
+
+    // we do this to make sure this setting points to the last run app
+    normalize_app_is_run_at_login_setting();
 
     // get notification whenever active application changes,
     // we preserve this so we can switch back when the user

@@ -23,6 +23,9 @@
 
 namespace safe { namespace mac {
 
+NSString *kSFXItemOwner = @"SFXItemOwner";
+NSString *kSFXAnyOwner = @"SFXAnyOwner";
+
 template<class F>
 static
 bool
@@ -36,10 +39,22 @@ iterate_shared_file_list(LSSharedFileListRef list_ref, F f) {
     auto array_size = CFArrayGetCount(item_array_ref);
     for (CFIndex i = 0; i < array_size; ++i) {
         auto item_ref = (LSSharedFileListItemRef) CFArrayGetValueAtIndex(item_array_ref, i);
-        auto break_ = f(item_ref);
+        auto break_ = f(list_ref, item_ref);
         if (break_) return true;
     }
     return false;
+}
+
+template<class F>
+static
+bool
+iterate_shared_file_list(CFStringRef list_type, F && f) {
+    auto list_ref =
+    LSSharedFileListCreate(nullptr, list_type, nullptr);
+    if (!list_ref) throw std::runtime_error("unable to create shared file list");
+    auto _release_login_items = safe::create_deferred(CFRelease, list_ref);
+
+    return iterate_shared_file_list(list_ref, std::forward<F>(f));
 }
 
 static
@@ -60,10 +75,24 @@ list_item_equals_nsurl(LSSharedFileListItemRef item_ref, NSURL *url) {
     return [(__bridge NSURL *) out_url isEqual:url];
 }
 
+static
+bool
+list_item_owner_is(LSSharedFileListItemRef item_ref, NSString *owner) {
+    if (owner == kSFXAnyOwner) return true;
+
+    auto type_ref = LSSharedFileListItemCopyProperty(item_ref,
+                                                     (__bridge CFStringRef) kSFXItemOwner);
+    if (!type_ref) return !owner;
+    auto _release_item = safe::create_deferred(CFRelease, type_ref);
+
+    if (CFGetTypeID(type_ref) != CFStringGetTypeID()) return false;
+
+    return [owner isEqualToString:(__bridge NSString *) type_ref];
+}
+
 void
-add_url_to_shared_file_list(CFStringRef list_type, NSURL *url) {
-    // don't add a duplicate
-    if (shared_file_list_contains_url(list_type, url)) return;
+add_url_with_owner_to_shared_file_list(CFStringRef list_type, NSURL *url, NSString *owner) {
+    if (shared_file_list_contains_url_with_owner(list_type, url, owner)) return;
 
     auto list_ref =
     LSSharedFileListCreate(nullptr, list_type, nullptr);
@@ -80,35 +109,86 @@ add_url_to_shared_file_list(CFStringRef list_type, NSURL *url) {
                                                       nullptr);
     if (!new_item_ref) throw std::runtime_error("item creation failed");
     auto _free_item_ref = safe::create_deferred(CFRelease, new_item_ref);
+
+    // this makes the method "transactional" w.r.t. exceptions
+    auto _remove_item = safe::create_deferred(LSSharedFileListItemRemove, list_ref, new_item_ref);
+
+    if (owner) {
+        auto status = LSSharedFileListItemSetProperty(new_item_ref,
+                                                      (__bridge CFStringRef) kSFXItemOwner,
+                                                      (__bridge CFTypeRef) owner);
+        if (status != noErr) throw std::runtime_error("couldn't set property");
+    }
+
+    // operation was a success, don't delete item
+    _remove_item.cancel();
 }
 
 bool
-remove_url_from_shared_file_list(CFStringRef list_type, NSURL *url) {
-    auto list_ref =
-    LSSharedFileListCreate(nullptr, list_type, nullptr);
-    if (!list_ref) throw std::runtime_error("unable to create shared file list");
-    auto _release_login_items = safe::create_deferred(CFRelease, list_ref);
+remove_url_with_owner_from_shared_file_list(CFStringRef list_type, NSURL *url, NSString *owner) {
+    bool found = false;
 
-    return iterate_shared_file_list(list_ref, [&](LSSharedFileListItemRef item_ref) {
-        if (list_item_equals_nsurl(item_ref, url)) {
+    iterate_shared_file_list(list_type, [&](LSSharedFileListRef list_ref,
+                                            LSSharedFileListItemRef item_ref) {
+        if (list_item_owner_is(item_ref, owner) &&
+            list_item_equals_nsurl(item_ref, url)) {
             auto ret = LSSharedFileListItemRemove(list_ref, item_ref);
             if (ret != noErr) throw std::runtime_error("error deleting item from list");
-            return true;
+            found = true;
         }
 
         return false;
     });
+    
+    return found;
 }
 
 bool
-shared_file_list_contains_url(CFStringRef list_type, NSURL *url) {
-    auto list_ref =
-    LSSharedFileListCreate(nullptr, list_type, nullptr);
-    if (!list_ref) throw std::runtime_error("unable to create shared file list");
-    auto _release_login_items = safe::create_deferred(CFRelease, list_ref);
+shared_file_list_contains_url_with_owner(CFStringRef list_type, NSURL *url, NSString *owner) {
+    return iterate_shared_file_list(list_type, [&](LSSharedFileListRef /*list_ref*/,
+                                                   LSSharedFileListItemRef item_ref) {
+        return (list_item_equals_nsurl(item_ref, url)  &&
+                list_item_owner_is(item_ref, owner));
+    });
+}
 
-    return iterate_shared_file_list(list_ref, [&](LSSharedFileListItemRef item_ref) {
-        return list_item_equals_nsurl(item_ref, url);
+bool
+remove_items_with_owner_from_shared_file_list(CFStringRef list_type, NSString *owner) {
+    bool found = false;
+
+    iterate_shared_file_list(list_type, [&](LSSharedFileListRef list_ref,
+                                            LSSharedFileListItemRef item_ref) {
+        if (list_item_owner_is(item_ref, owner)) {
+            auto ret = LSSharedFileListItemRemove(list_ref, item_ref);
+            if (ret != noErr) throw std::runtime_error("error deleting item from list");
+            found = true;
+        }
+        
+        return false;
+    });
+    
+    return found;
+}
+
+bool
+shared_file_list_contains_live_item_with_owner(CFStringRef list_type, NSString *owner) {
+    return iterate_shared_file_list(list_type, [&](LSSharedFileListRef /*list_ref*/,
+                                                   LSSharedFileListItemRef item_ref) {
+        if (!list_item_owner_is(item_ref, owner)) return false;
+
+        CFURLRef out_url;
+        auto err = LSSharedFileListItemResolve(item_ref,
+                                               kLSSharedFileListNoUserInteraction,
+                                               &out_url, nullptr);
+        if (err != noErr) {
+            // not sure under what circumstances this can happen but let's not fail on this
+            lbx_log_error("Error while calling LSSharedFileListItemResolve: 0x%x", (unsigned) err);
+            return false;
+        }
+
+        auto _free_url = safe::create_deferred(CFRelease, out_url);
+
+        return (bool) [NSFileManager.defaultManager fileExistsAtPath:((__bridge NSURL *) out_url).path];
     });
 }
 

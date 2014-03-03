@@ -515,7 +515,8 @@ ensure_ramdisk() {
                                                stringWithFileSystemRepresentation:buf
                                                length:strlen(buf)]
                                   isDirectory:YES];
-    auto was_removed = remove_url_from_shared_file_list(kLSSharedFileListFavoriteVolumes, mount_url);
+    auto was_removed = remove_url_with_owner_from_shared_file_list(kLSSharedFileListFavoriteVolumes,
+                                                                   mount_url, kSFXAnyOwner);
     lbx_log_debug("RAMDisk was %sremoved from favorites", was_removed ? "" : "NOT ");
     
     // ramdisk is mounted by this point :)
