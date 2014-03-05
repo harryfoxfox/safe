@@ -137,6 +137,10 @@ public:
     InitializeCriticalSection(&_cs);
   }
 
+  ~MountEvent() {
+    DeleteCriticalSection(&_cs);
+  }
+
   void
   set_mount_success(port_t listen_port, WebdavServerHandle ws) {
     _set_mount_status(listen_port, std::move(ws), false);
