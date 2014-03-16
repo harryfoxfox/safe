@@ -359,7 +359,7 @@ $(EXE_NAME):
         $(if $(RELEASE),-static,) \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
- -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof
+ -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof -ldbghelp
 	$(if $(RELEASE),$(STRIP) -s $@.pre,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@.pre,)
 	mv $@.pre $@

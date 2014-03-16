@@ -55,6 +55,8 @@
 #include <davfuse/log_printer.h>
 #include <davfuse/webdav_server.h>
 
+#include <libstdcxx_get_exception_state.h>
+
 #include <iostream>
 #include <list>
 #include <memory>
@@ -72,6 +74,7 @@
 #include <dbt.h>
 #include <shlobj.h>
 #include <powrprof.h>
+#include <dbghelp.h>
 
 #ifndef GW_ENABLEDPOPUP
 #define GW_ENABLEDPOPUP 6
@@ -1493,9 +1496,76 @@ exit_if_not_single_app_instance(std::function<int(DWORD)> on_exit) {
 }
 
 static
+void
+my_terminate_handler() {
+  // NB: by using __builtin_frame_address() we force this function to have a
+  //     frame pointer
+  auto cur_ebp = __builtin_frame_address(0);
+
+  auto ebp_before_our_call = *(void **) cur_ebp;
+  auto esp_before_our_call = (void *) (((intptr_t) cur_ebp) + 8);
+
+  // NB: we need to use these functions to get this information
+  // because our exception throw stack
+  // may not have created frame pointers at each function call in the stack
+  // that would usually allow us to find the first return address
+  // (the location where the exception was thrown)
+  auto ebp_before_exception = libstdcxx_get_exception_ebp(ebp_before_our_call,
+                                                          esp_before_our_call);
+  auto esp_before_exception = libstdcxx_get_exception_esp(ebp_before_our_call,
+                                                          esp_before_our_call);
+
+  auto exc_return_address = *(void **) ((intptr_t) esp_before_exception - 4);
+
+  // set execution context to the return address of the call to the
+  // C++ runtime exception-throwing function
+  CONTEXT ctx;
+  memset(&ctx, 0, sizeof(ctx));
+  ctx.ContextFlags = CONTEXT_FULL;
+  ctx.Eip = (DWORD) exc_return_address;
+  ctx.Esp = (DWORD) esp_before_exception;
+  ctx.Ebp = (DWORD) ebp_before_exception;
+
+  // init stack frame structure
+  STACKFRAME64 frame;
+  memset(&frame, 0, sizeof(frame));
+
+  frame.AddrPC.Offset = ctx.Eip;
+  frame.AddrPC.Mode = AddrModeFlat;
+  frame.AddrStack.Offset = ctx.Esp;
+  frame.AddrStack.Mode = AddrModeFlat;
+  frame.AddrFrame.Offset = ctx.Ebp;
+  frame.AddrFrame.Mode = AddrModeFlat;
+  const auto machine = IMAGE_FILE_MACHINE_I386;
+
+  auto process = GetCurrentProcess();
+  auto thread = GetCurrentThread();
+
+  std::vector<void *> stack_trace;
+  while (true) {
+    auto success = StackWalk64(machine, process, thread,
+                               &frame, &ctx,
+                               nullptr, SymFunctionTableAccess64, SymGetModuleBase64,
+                               nullptr);
+    if (!success) break;
+    stack_trace.push_back((void *) frame.AddrPC.Offset);
+  }
+
+  {
+    // TODO: show UI
+  }
+
+  std::_Exit(-1);
+}
+
+static
 int
 winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
               LPSTR lpCmdLine, int nCmdShow) {
+  // TODO: my_terminate_handler() not working yet
+  (void) my_terminate_handler;
+  //std::set_terminate(my_terminate_handler);
+
   // TODO: de-initialize
   log_printer_default_init();
   encfs_set_log_printer(encfs_log_printer_adapter);
