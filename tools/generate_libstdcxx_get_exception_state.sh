@@ -75,7 +75,8 @@ get_restore_ebp_esp () {
                     *) false ;;
                 esac
 
-                echo "#define ${PREFIX}_prev_ebp(ebp, esp) (*(decltype(ebp) *)($CFA_EXPRESSION + $PREV_EBP_CFA_OFFSET))"
+                echo "#define _${PREFIX}_prev_ebp(ebp, esp) $CFA_EXPRESSION + $PREV_EBP_CFA_OFFSET"
+                echo "#define ${PREFIX}_prev_ebp(ebp, esp) (*(decltype(ebp) *) (_${PREFIX}_prev_ebp(((char *) (ebp)), ((char *) (esp)))))"
                 FOUND_EBP=true
                 break;
             fi
@@ -88,7 +89,8 @@ get_restore_ebp_esp () {
         fi
 
         # NB: restore esp is easy, just use CFA expression
-        echo "#define ${PREFIX}_prev_esp(ebp, esp) ($CFA_EXPRESSION)"
+        echo "#define _${PREFIX}_prev_esp(ebp, esp) $CFA_EXPRESSION"
+        echo "#define ${PREFIX}_prev_esp(ebp, esp) ((decltype(esp)) (_${PREFIX}_prev_esp(((char *) (ebp)), ((char *) (esp)))))"
         )
 
     IFS="$OLDIFS"
@@ -112,15 +114,15 @@ get_restore_ebp_esp "$EXE_FILE" "__cxa_throw" "___cxa_throw" "std::terminate()"
 # compose them to hide call stack detail from users of this header
 
 cat <<EOF
-#define libstdcxx_get_exception_ebp(esp, ebp) \
+#define libstdcxx_get_exception_ebp(ebp, esp) \
    __cxa_throw_prev_ebp( \
-      __std_terminate_prev_ebp(__terminate_prev_esp(esp, ebp), __terminate_prev_ebp(esp, ebp)), \
-      __std_terminate_prev_esp(__terminate_prev_esp(esp, ebp), __terminate_prev_ebp(esp, ebp)))
+      __std_terminate_prev_ebp(__terminate_prev_ebp(ebp, esp), __terminate_prev_esp(ebp, esp)), \
+      __std_terminate_prev_esp(__terminate_prev_ebp(ebp, esp), __terminate_prev_esp(ebp, esp)))
 
-#define libstdcxx_get_exception_esp(esp, ebp) \
+#define libstdcxx_get_exception_esp(ebp, esp) \
    __cxa_throw_prev_esp( \
-      __std_terminate_prev_ebp(__terminate_prev_esp(esp, ebp), __terminate_prev_ebp(esp, ebp)), \
-      __std_terminate_prev_esp(__terminate_prev_esp(esp, ebp), __terminate_prev_ebp(esp, ebp)))
+      __std_terminate_prev_ebp(__terminate_prev_ebp(ebp, esp), __terminate_prev_esp(ebp, esp)), \
+      __std_terminate_prev_esp(__terminate_prev_ebp(ebp, esp), __terminate_prev_esp(ebp, esp)))
 
 EOF
 
