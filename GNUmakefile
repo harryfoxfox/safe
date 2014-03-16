@@ -39,6 +39,7 @@ ifdef IS_WIN_CROSS
  DLLTOOL = $(IS_WIN_CROSS)-dlltool
  STRIP = $(IS_WIN_CROSS)-strip
  OBJDUMP = $(IS_WIN_CROSS)-objdump
+ BINUTILS_PREFIX = $(IS_WIN_CROSS)-
 else
  RANLIB ?= ranlib
  WINDRES ?= windres
@@ -251,11 +252,24 @@ $(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def
 
 mypowrprof: $(MYPOWRPROF_DEP) clean-exe
 
+CXA_THROW_OFFSET := $(CURDIR)/$(OUT_DIR)/deps/include/libstdcxx_get_exception_state.h
+$(CXA_THROW_OFFSET): clean
+	@mkdir -p /tmp/cxa_throw_offset && \
+         echo '#include <exception>' > /tmp/cxa_throw_offset/chk.cc && \
+         echo 'int main () { throw std::exception(); }' >> /tmp/cxa_throw_offset/chk.cc && \
+	 rm -f /tmp/cxa_throw_offset/chk && \
+         $(CXX) $(CPPFLAGS) -g --static $(CXXFLAGS) -o /tmp/cxa_throw_offset/chk /tmp/cxa_throw_offset/chk.cc 2>/dev/null >/dev/null && \
+         if [ -e /tmp/cxa_throw_offset/chk ]; then \
+             BINUTILS_PREFIX=$(BINUTILS_PREFIX) tools/generate_libstdcxx_get_exception_state.sh /tmp/cxa_throw_offset/chk > $(CXA_THROW_OFFSET); \
+         fi
+
+libstdcxx_get_exception_state: $(CXA_THROW_OFFSET)
+
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
  libencfs \
  libwebdav_server_fs \
- $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk_headers mypowrprof,)
+ $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk_headers mypowrprof libstdcxx_get_exception_state,)
 
 clean-deps:
 	rm -rf $(OUT_DIR)
