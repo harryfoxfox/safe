@@ -19,20 +19,26 @@
 #ifndef __safe_report_exception_hpp
 #define __safe_report_exception_hpp
 
+#include <safe/optional.hpp>
+
 #include <exception>
+#include <vector>
 
 namespace safe {
 
+// NB: only add to this list, *never* remove
 enum class ExceptionLocation {
     SYSTEM_CHANGES,
     STARTUP,
     MOUNT,
     CREATE,
     TRAY_DISPATCH,
+    UNEXPECTED,
 };
 
 void
-report_exception(ExceptionLocation, std::exception_ptr eptr);
+report_exception(ExceptionLocation, std::exception_ptr eptr,
+                 opt::optional<std::vector<void *>> maybe_stack_trace = opt::nullopt);
 
 }
 

@@ -7,6 +7,7 @@
 
 #include <encfs/base/optional.h>
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <string>
@@ -550,6 +551,18 @@ T
 create_bit_mask(size_t num_bits_to_mask) {
   assert(num_bits_to_mask <= numbits<T>::value);
   return ((T) 1 << num_bits_to_mask) - 1;
+}
+
+template <class Range>
+decltype(*std::declval<Range>().begin())
+join(std::string joiner, const Range & strings) {
+  auto it = strings.begin();
+  if (it == strings.end()) return "";
+  auto first = *it++;
+  return std::accumulate(it, strings.end(), first,
+                         [&] (const std::string & a, const std::string & b) {
+                           return a + joiner + b;
+                         });
 }
 
 }

@@ -97,6 +97,11 @@ running_on_winxp();
 bool
 running_on_vista();
 
+inline
+const char *
+get_target_platform_tag() {
+  return "win";
+}
 
 }}
 

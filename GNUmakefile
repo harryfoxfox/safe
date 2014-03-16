@@ -353,6 +353,8 @@ test_encfs_main:
 	$(CXX) -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
  -o $@ $(TEST_ENCFS_MAIN_OBJS) $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES)
 
+# NB: when debugging on WINE make sure it can find libstdc++
+
 $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) \
         $(if $(RELEASE),$(LDFLAGS_RELEASE),$(LDFLAGS_DEBUG)) \

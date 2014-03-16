@@ -1552,7 +1552,14 @@ my_terminate_handler() {
   }
 
   {
-    // TODO: show UI
+    auto choice =
+      safe::win::report_bug_dialog(nullptr, "An unexpected error occurred.");
+
+    if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
+      safe::report_exception(safe::ExceptionLocation::UNEXPECTED,
+                             std::current_exception(),
+                             stack_trace);
+    }
   }
 
   std::_Exit(-1);
@@ -1562,9 +1569,7 @@ static
 int
 winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
               LPSTR lpCmdLine, int nCmdShow) {
-  // TODO: my_terminate_handler() not working yet
-  (void) my_terminate_handler;
-  //std::set_terminate(my_terminate_handler);
+  std::set_terminate(my_terminate_handler);
 
   // TODO: de-initialize
   log_printer_default_init();

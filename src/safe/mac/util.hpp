@@ -46,6 +46,12 @@ reboot_machine();
 std::string
 get_parseable_platform_version();
 
+inline
+const char *
+get_target_platform_tag() {
+  return "mac";
+}
+
 #ifdef __OBJC__
 
 void
