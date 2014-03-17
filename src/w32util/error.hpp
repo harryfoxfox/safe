@@ -116,6 +116,7 @@ public:
   }
 };
 
+[[noreturn]]
 inline
 void
 throw_windows_error() {
