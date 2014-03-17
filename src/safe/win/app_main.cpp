@@ -1495,6 +1495,7 @@ exit_if_not_single_app_instance(std::function<int(DWORD)> on_exit) {
   }
 }
 
+[[noreturn]]
 static
 void
 my_terminate_handler() {
