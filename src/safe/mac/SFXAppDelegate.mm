@@ -26,6 +26,9 @@
 
 #import <encfs/base/logging.h>
 
+#import <dlfcn.h>
+#import <execinfo.h>
+
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
 static NSString *const SAFE_MAC_LOCK_FILE = @"LockFile";
@@ -1058,9 +1061,71 @@ my_fs_stream_callback(ConstFSEventStreamRef streamRef,
     return true;
 }
 
+[[noreturn]]
+static
+void
+my_terminate_handler() {
+    static void *_g_stack_trace[4096];
+
+    // figure out our base address
+    Dl_info dlinfo;
+    auto ret = dladdr((void *) &my_terminate_handler, &dlinfo);
+    // NB: this should never happen
+    if (!ret) abort();
+    auto base_address = dlinfo.dli_fbase;
+
+    // get stack trace
+    auto addresses_written = backtrace(_g_stack_trace, safe::numelementsf(_g_stack_trace));
+
+    std::vector<ptrdiff_t> stack_trace;
+    for (const auto & addr : safe::make_range(&_g_stack_trace[0], &_g_stack_trace[addresses_written])) {
+        Dl_info dlinfo2;
+        // NB: we subtract by one since addr points to the instruction
+        //     after the call instruction and that could be the end of the function
+        //     (in no-return functions)
+        assert(addr);
+        auto ret2 = dladdr((char *) addr - 1, &dlinfo2);
+        stack_trace.push_back(!ret2
+                              ? -1
+                              : base_address == dlinfo2.dli_fbase
+                              ? (char *) addr - (char *) base_address
+                              : 0);
+    }
+
+    auto current_exc = std::current_exception();
+
+    auto main_block_to_run = ^{
+        auto error_message = "An unexpected error occurred.";
+
+        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert setMessageText:@"Unexpected Error Occurred"];
+        [alert setInformativeText:safe::mac::to_ns_string(error_message)];
+        [alert addButtonWithTitle:@"Report Bug"];
+        [alert addButtonWithTitle:@"Quit"];
+        [alert setAlertStyle:NSWarningAlertStyle];
+
+        auto response = [alert runModal];
+        if (response == NSAlertFirstButtonReturn) {
+            safe::report_exception(safe::ExceptionLocation::UNEXPECTED, current_exc,
+                                   stack_trace);
+        }
+    };
+
+    if (dispatch_get_current_queue() == dispatch_get_main_queue()) {
+        main_block_to_run();
+    }
+    else {
+        dispatch_sync(dispatch_get_main_queue(), main_block_to_run);
+    }
+
+    std::_Exit(-1);
+}
+
 - (void)_applicationDidFinishLaunching:(NSNotification *)aNotification {
     (void)aNotification;
-    
+    std::set_terminate(my_terminate_handler);
+
     log_printer_default_init();
     encfs_set_log_printer(encfs_log_printer_adapter);
 
