@@ -676,7 +676,6 @@
 				GCC_PREFIX_HEADER = "Safe/Safe-Prefix.pch";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "Safe/Safe-Info.plist";
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
 				PRODUCT_NAME = Safe;
@@ -694,7 +693,6 @@
 				GCC_PREFIX_HEADER = "Safe/Safe-Prefix.pch";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "Safe/Safe-Info.plist";
-				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "$(PROTOBUF_CFLAGS)";
 				"OTHER_CFLAGS[arch=*]" = "$(PROTOBUF_CFLAGS)";
 				PRODUCT_NAME = Safe;
