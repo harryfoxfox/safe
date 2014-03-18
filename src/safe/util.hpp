@@ -140,18 +140,6 @@ public:
   }
 };
 
-template<typename T>
-class Range {
-private:
-  T _max;
-
-public:
-  explicit Range(T max) : _max(std::move(max)) {}
-
-  IntegralIterator<T> begin() const { return IntegralIterator<T>(0); }
-  IntegralIterator<T> end() const { return IntegralIterator<T>(_max); }
-};
-
 template<typename Iterator>
 class EnumerateIterator {
   typedef size_t size_type;
@@ -272,29 +260,6 @@ public:
   }
 };
 
-template<typename RangeType>
-class Reversed {
-  typedef decltype(std::declval<RangeType>().begin()) BeginIterator;
-  typedef decltype(std::declval<RangeType>().end()) EndIterator;
-
-  BeginIterator _begin;
-  EndIterator _end;
-  
-public:
-  template<typename R>
-  explicit Reversed(R && rt)
-    : _begin(std::forward<R>(rt).begin())
-    , _end(std::forward<R>(rt).end()) {}
-
-  ReversedIterator<EndIterator> begin() const {
-    return ReversedIterator<EndIterator>(_end);
-  }
-
-  ReversedIterator<BeginIterator> end() const {
-    return ReversedIterator<BeginIterator>(_begin);
-  }
-};
-
 template<class F, class Iterator>
 class MapIterator {
   F _fn;
@@ -334,32 +299,6 @@ public:
 
   bool operator!=(const MapIterator & other) const {
     return !(*this == other);
-  }
-};
-
-template<typename Fn, typename RangeType>
-class RangeMap  {
-  typedef decltype(std::declval<RangeType>().begin()) BeginIterator;
-  typedef decltype(std::declval<RangeType>().end()) EndIterator;
-
-  Fn _f;
-  BeginIterator _begin;
-  EndIterator _end;
-
-public:
-  template<typename R>
-  explicit RangeMap(Fn f, R && r)
-  : _f(std::move(f))
-  , _begin(r.begin())
-  , _end(r.end())
-  {}
-
-  MapIterator<Fn, BeginIterator> begin() const {
-    return MapIterator<Fn, BeginIterator>(_f, _begin);
-  }
-
-  MapIterator<Fn, EndIterator> end() const {
-    return MapIterator<Fn, EndIterator>(_f, _end);
   }
 };
 
@@ -442,48 +381,31 @@ public:
   }
 };
 
-template<typename RangeType1, typename RangeType2>
-class RangeZip  {
-  typedef decltype(std::declval<RangeType1>().begin()) BeginIterator1;
-  typedef decltype(std::declval<RangeType1>().end()) EndIterator1;
-
-  typedef decltype(std::declval<RangeType2>().begin()) BeginIterator2;
-  typedef decltype(std::declval<RangeType2>().end()) EndIterator2;
-
-
-  BeginIterator1 _begin1;
-  EndIterator1 _end1;
-
-  BeginIterator2 _begin2;
-  EndIterator2 _end2;
+template <class BeginIterator, class EndIterator>
+class IteratorBasedRange {
+    BeginIterator _begin;
+    EndIterator _end;
 
 public:
-  template<typename R, typename R2>
-  explicit
-  RangeZip(R && r, R2 && r2)
-   : _begin1(r.begin())
-   , _end1(r.end())
-   , _begin2(r2.begin())
-   , _end2(r2.end())
-  {}
+    template <class U, class V>
+    IteratorBasedRange(U && begin, V && end)
+    : _begin(std::forward<U>(begin)), _end(std::forward<V>(end)) {}
 
-  ZipIterator<BeginIterator1, BeginIterator2,
-              EndIterator1, EndIterator2>
-  begin() const {
-    return ZipIterator<BeginIterator1, BeginIterator2,
-                       EndIterator1, EndIterator2>
-      (_begin1, _begin2, _end1, _end2);
-  }
+    BeginIterator
+    begin() const { return _begin; }
 
-  ZipIterator<EndIterator1, EndIterator2,
-              EndIterator1, EndIterator2>
-  end() const {
-    return ZipIterator<EndIterator1, EndIterator2,
-                       EndIterator1, EndIterator2>
-      (_end1, _end2, _end1, _end2);
-  }
+    EndIterator
+    end() const { return _end; }
 };
 
+}
+
+template<class BeginIterator, class EndIterator>
+_int::IteratorBasedRange<BeginIterator, EndIterator>
+make_range(BeginIterator && begin, EndIterator && end) {
+    return _int::IteratorBasedRange<typename std::decay<BeginIterator>::type,
+                                    typename std::decay<EndIterator>::type>(std::forward<BeginIterator>(begin),
+                                                                            std::forward<EndIterator>(end));
 }
 
 /* works like a python range(), e.g.
@@ -492,38 +414,52 @@ public:
    for _ in range(4): pass
 */
 template<typename T>
-_int::Range<T>
-range(T max) {
-  return _int::Range<T>(max);
+auto
+range(T max) ->
+decltype(make_range(_int::IntegralIterator<T>(0), _int::IntegralIterator<T>(max))) {
+  return make_range(_int::IntegralIterator<T>(0), _int::IntegralIterator<T>(max));
 }
 
 template<typename RangeType>
-_int::Enumerate<typename std::decay<RangeType>::type>
-enumerate(RangeType && r) {
-  return _int::Enumerate<typename std::decay<RangeType>::type>(std::forward<RangeType>(r));
+auto
+enumerate(RangeType && r) ->
+decltype(make_range(_int::EnumerateIterator<decltype(r.begin())>(0, r.begin()),
+                    _int::EnumerateIterator<decltype(r.end())>(r.end() - r.begin(), r.end()))) {
+  return make_range(_int::EnumerateIterator<decltype(r.begin())>(0, r.begin()),
+                    _int::EnumerateIterator<decltype(r.end())>(r.end() - r.begin(), r.end()));
 }
 
 template<typename RangeType>
-_int::Reversed<typename std::decay<RangeType>::type>
-reversed(RangeType && r) {
-  return _int::Reversed<typename std::decay<RangeType>::type>(std::forward<RangeType>(r));
+auto
+reversed(RangeType && r) ->
+decltype(make_range(_int::ReversedIterator<decltype(r.end())>(r.end()),
+                    _int::ReversedIterator<decltype(r.begin())>(r.begin()))) {
+  return make_range(_int::ReversedIterator<decltype(r.end())>(r.end()),
+                    _int::ReversedIterator<decltype(r.begin())>(r.begin()));
 }
 
 template<typename F, typename RangeType>
-_int::RangeMap<typename std::decay<F>::type, typename std::decay<RangeType>::type>
-range_map(F && fn, RangeType && r) {
-  return _int::RangeMap<typename std::decay<F>::type, typename std::decay<RangeType>::type>(std::forward<F>(fn), std::forward<RangeType>(r));
+auto
+range_map(F && fn, RangeType && r) ->
+decltype(make_range(_int::MapIterator<typename std::decay<F>::type, decltype(r.begin())>(std::forward<F>(fn), r.begin()),
+                    _int::MapIterator<typename std::decay<F>::type, decltype(r.end())>(std::forward<F>(fn), r.end()))) {
+    return make_range(_int::MapIterator<typename std::decay<F>::type, decltype(r.begin())>(std::forward<F>(fn), r.begin()),
+                    _int::MapIterator<typename std::decay<F>::type, decltype(r.end())>(std::forward<F>(fn), r.end()));
 }
 
 template<typename RangeType1, typename RangeType2>
-_int::RangeZip<typename std::decay<RangeType1>::type,
-               typename std::decay<RangeType2>::type>
-range_zip(RangeType1 && r, RangeType2 && r2) {
+auto
+range_zip(RangeType1 && r, RangeType2 && r2) ->
+decltype(make_range(_int::ZipIterator<decltype(r.begin()), decltype(r2.begin()), decltype(r.end()), decltype(r2.end())>
+                    (r.begin(), r2.begin(), r.end(), r2.end()),
+                    _int::ZipIterator<decltype(r.end()), decltype(r2.end()), decltype(r.end()), decltype(r2.end())>
+                    (r.end(), r2.end(), r.end(), r2.end()))) {
   // i implemented this because i was feeling particularly
   // masochistic / adventurous
-  return _int::RangeZip<typename std::decay<RangeType1>::type,
-                        typename std::decay<RangeType2>::type>
-    (std::forward<RangeType1>(r), std::forward<RangeType2>(r2));
+    return make_range(_int::ZipIterator<decltype(r.begin()), decltype(r2.begin()), decltype(r.end()), decltype(r2.end())>
+                      (r.begin(), r2.begin(), r.end(), r2.end()),
+                      _int::ZipIterator<decltype(r.end()), decltype(r2.end()), decltype(r.end()), decltype(r2.end())>
+                      (r.end(), r2.end(), r.end(), r2.end()));
 }
 
 template<typename T>
