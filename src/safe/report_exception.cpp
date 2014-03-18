@@ -138,7 +138,7 @@ type(const T & t) {
 
 void
 report_exception(ExceptionLocation el, std::exception_ptr eptr,
-                 opt::optional<std::vector<void *> > maybe_stack_trace) {
+                 opt::optional<std::vector<ptrdiff_t> > maybe_offset_stack_trace) {
   safe::URLQueryArgs qargs =
     {{"where", exception_location_to_string(el)},
      {"arch", get_target_arch_tag()},
@@ -161,16 +161,15 @@ report_exception(ExceptionLocation el, std::exception_ptr eptr,
     // dont send any info up
   }
 
-  if (maybe_stack_trace) {
-    auto & stack_trace = *maybe_stack_trace;
-    auto ptr_to_hex_string = [] (void *ptr) {
+  if (maybe_offset_stack_trace) {
+    auto & offset_stack_trace = *maybe_offset_stack_trace;
+    auto ptr_to_hex_string = [] (ptrdiff_t ptr) {
       std::ostringstream os;
-      os << std::hex << ptr;
+      os << std::showbase << std::hex << ptr;
       return os.str();
     };
-
-    qargs.push_back({"stack_trace",
-          safe::join(",", safe::range_map(ptr_to_hex_string, stack_trace))
+    qargs.push_back({"offset_stack_trace",
+          safe::join(",", safe::range_map(ptr_to_hex_string, offset_stack_trace))
           });
   }
 
