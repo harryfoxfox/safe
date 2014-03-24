@@ -46,6 +46,9 @@ init_last_backtrace_key() {
     pthread_key_create(&_g_last_backtrace_key, destroy_backtrace);
 }
 
+// NB: for this to work, the C++ runtime library must be linked dynamically
+//     if linked statically, look into using GNU ld "--wrap" option
+
 extern "C"
 void
 __cxa_throw(void *thrown_exception,
