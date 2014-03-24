@@ -88,6 +88,7 @@
 		96185B3118361C1900A2A67F /* unicode_fs.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = unicode_fs.hpp; path = ../src/safe/unicode_fs.hpp; sourceTree = "<group>"; };
 		96185B3218361C1900A2A67F /* UnicodeWrapperFsIO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnicodeWrapperFsIO.cpp; path = ../src/safe/UnicodeWrapperFsIO.cpp; sourceTree = "<group>"; };
 		96185B3318361C1900A2A67F /* UnicodeWrapperFsIO.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = UnicodeWrapperFsIO.hpp; path = ../src/safe/UnicodeWrapperFsIO.hpp; sourceTree = "<group>"; };
+		9621431B18E01FD300F99033 /* either.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = either.hpp; path = ../src/safe/either.hpp; sourceTree = "<group>"; };
 		96230546182B2E5200913551 /* SFXCreateSafeWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFXCreateSafeWindowController.h; path = ../src/safe/mac/SFXCreateSafeWindowController.h; sourceTree = "<group>"; };
 		96230547182B2E5200913551 /* SFXCreateSafeWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = SFXCreateSafeWindowController.mm; path = ../src/safe/mac/SFXCreateSafeWindowController.mm; sourceTree = "<group>"; };
 		96230548182B2E5200913551 /* SFXCreateSafeWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = SFXCreateSafeWindowController.xib; path = ../src/safe/mac/SFXCreateSafeWindowController.xib; sourceTree = "<group>"; };
@@ -274,6 +275,7 @@
 		96C18F9D18B4209800D7DD37 /* core */ = {
 			isa = PBXGroup;
 			children = (
+				9621431B18E01FD300F99033 /* either.hpp */,
 				96C3708418B6EBE2008C1CE3 /* open_url.cpp */,
 				96C3708518B6EBE2008C1CE3 /* open_url.hpp */,
 				96C3708618B6EBE2008C1CE3 /* optional.hpp */,
