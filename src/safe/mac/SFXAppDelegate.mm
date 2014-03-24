@@ -15,6 +15,7 @@
 #import <safe/logging.h>
 #import <safe/mac/mount.hpp>
 #import <safe/parse.hpp>
+#import <safe/mac/last_throw_backtrace.hpp>
 #import <safe/mac/RecentlyUsedNSURLStoreV1.hpp>
 #import <safe/mac/shared_file_list.hpp>
 #import <safe/mac/system_changes.hpp>
@@ -27,7 +28,6 @@
 #import <encfs/base/logging.h>
 
 #import <dlfcn.h>
-#import <execinfo.h>
 
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
@@ -975,8 +975,6 @@ my_fs_stream_callback(ConstFSEventStreamRef streamRef,
 static
 void
 my_terminate_handler() {
-    static void *_g_stack_trace[4096];
-
     // figure out our base address
     Dl_info dlinfo;
     auto ret = dladdr((void *) &my_terminate_handler, &dlinfo);
@@ -984,11 +982,12 @@ my_terminate_handler() {
     if (!ret) abort();
     auto base_address = dlinfo.dli_fbase;
 
-    // get stack trace
-    auto addresses_written = backtrace(_g_stack_trace, safe::numelementsf(_g_stack_trace));
+    auto maybe_last_backtrace = safe::mac::last_throw_backtrace();
+    // NB: should never happen
+    if (!maybe_last_backtrace) abort();
 
     std::vector<ptrdiff_t> stack_trace;
-    for (const auto & addr : safe::make_range(&_g_stack_trace[0], &_g_stack_trace[addresses_written])) {
+    for (const auto & addr : *maybe_last_backtrace) {
         Dl_info dlinfo2;
         // NB: we subtract by one since addr points to the instruction
         //     after the call instruction and that could be the end of the function

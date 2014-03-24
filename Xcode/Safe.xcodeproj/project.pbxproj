@@ -48,6 +48,7 @@
 		96C3708718B6EBE2008C1CE3 /* open_url.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96C3708418B6EBE2008C1CE3 /* open_url.cpp */; };
 		96D2DC6218B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
+		96ECB4E418E07DDE00108E20 /* last_throw_backtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96ECB4E218E07DDE00108E20 /* last_throw_backtrace.cpp */; };
 		96F0640C18B58D7E0014F6A7 /* shared_file_list.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96F0640A18B58D7E0014F6A7 /* shared_file_list.mm */; };
 		96F36AC2185470B500DEE145 /* fs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36ABE185470B500DEE145 /* fs.cpp */; };
 		96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36AC0185470B500DEE145 /* webdav_server.cpp */; };
@@ -145,6 +146,8 @@
 		96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RecentlyUsedNSURLStoreV1.mm; path = ../src/safe/mac/RecentlyUsedNSURLStoreV1.mm; sourceTree = "<group>"; };
 		96D2DC6118B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RecentlyUsedNSURLStoreV1.hpp; path = ../src/safe/mac/RecentlyUsedNSURLStoreV1.hpp; sourceTree = "<group>"; };
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
+		96ECB4E218E07DDE00108E20 /* last_throw_backtrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = last_throw_backtrace.cpp; path = ../src/safe/mac/last_throw_backtrace.cpp; sourceTree = "<group>"; };
+		96ECB4E318E07DDE00108E20 /* last_throw_backtrace.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = last_throw_backtrace.hpp; path = ../src/safe/mac/last_throw_backtrace.hpp; sourceTree = "<group>"; };
 		96F0640A18B58D7E0014F6A7 /* shared_file_list.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = shared_file_list.mm; path = ../src/safe/mac/shared_file_list.mm; sourceTree = "<group>"; };
 		96F0640B18B58D7E0014F6A7 /* shared_file_list.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = shared_file_list.hpp; path = ../src/safe/mac/shared_file_list.hpp; sourceTree = "<group>"; };
 		96F36ABE185470B500DEE145 /* fs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs.cpp; path = ../src/safe/fs.cpp; sourceTree = "<group>"; };
@@ -251,6 +254,8 @@
 		96C18F9C18B4203800D7DD37 /* core-mac */ = {
 			isa = PBXGroup;
 			children = (
+				96ECB4E218E07DDE00108E20 /* last_throw_backtrace.cpp */,
+				96ECB4E318E07DDE00108E20 /* last_throw_backtrace.hpp */,
 				96185B2F18361C1900A2A67F /* unicode_fs.hpp */,
 				96185B3018361C1900A2A67F /* unicode_fs.mm */,
 				9602994618B165E500B34D75 /* util.hpp */,
@@ -515,6 +520,7 @@
 				96C3708318B6D148008C1CE3 /* report_exception.cpp in Sources */,
 				966ED38C184F2F3100463408 /* create_safe_dialog_logic.cpp in Sources */,
 				96C3708718B6EBE2008C1CE3 /* open_url.cpp in Sources */,
+				96ECB4E418E07DDE00108E20 /* last_throw_backtrace.cpp in Sources */,
 				9604753B18B2DF2600B9F5FB /* system_changes.cpp in Sources */,
 				9604753518B1667300B9F5FB /* util.mm in Sources */,
 				96042A5D18B34F7F00D6CD58 /* keychain.mm in Sources */,
