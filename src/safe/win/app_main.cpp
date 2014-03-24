@@ -531,7 +531,7 @@ update_tray_menu(WindowData & wd) {
 
 static
 void
-_dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd, UINT selected) {
+dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd, UINT selected) {
   using safe::TrayMenuAction;
   TrayMenuAction menu_action;
   safe::tray_menu_action_arg_t menu_action_arg;
@@ -601,32 +601,6 @@ _dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd, UINT selected
   }
 }
 
-static
-void
-dispatch_tray_menu_action(HWND safe_main_window, WindowData & wd,
-                          UINT selected) {
-  try {
-    _dispatch_tray_menu_action(safe_main_window, wd, selected);
-  }
-  catch (const std::exception & err) {
-    // NB: this catch all assumes that all operations
-    //     run via _dispatch_tray_menu_action()
-    //     have "strong exception safety"
-    //     (i.e. failed operations should have no side-effects
-    //           or inconsistent state)
-    //     if this isn't true we should actually quit the application
-    //     on an exception
-    lbx_log_critical("Uncaught exception: %s", err.what());
-
-    auto choice =
-      safe::win::report_bug_dialog(nullptr, "An unexpected error occured.");
-
-    if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
-      safe::report_exception(safe::ExceptionLocation::TRAY_DISPATCH,
-                             std::current_exception());
-    }
-  }
-}
 
 static
 void
@@ -1228,23 +1202,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	assert(choice == safe::win::SystemChangesChoice::OK);
 
-        bool must_restart = false;
-        try {
-          must_restart = make_required_system_changes_as_admin(hwnd);
-        }
-        catch (...) {
-          // show "report bug" dialog and quit
-          auto choice =
-            safe::win::report_bug_dialog(hwnd, "An error occured while attempting to make changes to your system.");
-          if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
-            safe::report_exception(safe::ExceptionLocation::SYSTEM_CHANGES,
-                                   std::current_exception());
-          }
-
-          PostMessage(hwnd, WM_CLOSE, 0, 0);
-	  return 0;
-        }
-
+        bool must_restart = make_required_system_changes_as_admin(hwnd);
         if (must_restart) {
           run_reboot_sequence(hwnd);
           PostMessage(hwnd, WM_CLOSE, 0, 0);
@@ -1779,20 +1737,6 @@ WINAPI
 int
 WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         LPSTR lpCmdLine, int nCmdShow) {
-  try {
-    return winmain_inner(hInstance, hPrevInstance,
-                         lpCmdLine, nCmdShow);
-  }
-  catch (const std::exception & err) {
-    lbx_log_critical("Uncaught exception: %s", err.what());
-    auto choice =
-      safe::win::report_bug_dialog(nullptr, "An error occured while starting " PRODUCT_NAME_A ".");
-
-    if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
-      safe::report_exception(safe::ExceptionLocation::STARTUP,
-                             std::current_exception());
-    }
-
-    return 0;
-  }
+  return winmain_inner(hInstance, hPrevInstance,
+                       lpCmdLine, nCmdShow);
 }
