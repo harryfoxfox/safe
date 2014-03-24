@@ -49,6 +49,7 @@
 		96D2DC6218B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96D2DC6018B48F3A006A48A5 /* RecentlyUsedNSURLStoreV1.mm */; };
 		96E1639517A7528D009BE867 /* output.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96E1639417A7528D009BE867 /* output.icns */; };
 		96ECB4E418E07DDE00108E20 /* last_throw_backtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96ECB4E218E07DDE00108E20 /* last_throw_backtrace.cpp */; };
+		96ECB4E718E0863100108E20 /* SFXUnknownErrorSheet.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96ECB4E618E0863100108E20 /* SFXUnknownErrorSheet.mm */; };
 		96F0640C18B58D7E0014F6A7 /* shared_file_list.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96F0640A18B58D7E0014F6A7 /* shared_file_list.mm */; };
 		96F36AC2185470B500DEE145 /* fs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36ABE185470B500DEE145 /* fs.cpp */; };
 		96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96F36AC0185470B500DEE145 /* webdav_server.cpp */; };
@@ -148,6 +149,8 @@
 		96E1639417A7528D009BE867 /* output.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = output.icns; path = ../output.icns; sourceTree = "<group>"; };
 		96ECB4E218E07DDE00108E20 /* last_throw_backtrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = last_throw_backtrace.cpp; path = ../src/safe/mac/last_throw_backtrace.cpp; sourceTree = "<group>"; };
 		96ECB4E318E07DDE00108E20 /* last_throw_backtrace.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = last_throw_backtrace.hpp; path = ../src/safe/mac/last_throw_backtrace.hpp; sourceTree = "<group>"; };
+		96ECB4E518E085FC00108E20 /* SFXUnknownErrorSheet.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SFXUnknownErrorSheet.hpp; path = ../src/safe/mac/SFXUnknownErrorSheet.hpp; sourceTree = "<group>"; };
+		96ECB4E618E0863100108E20 /* SFXUnknownErrorSheet.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = SFXUnknownErrorSheet.mm; path = ../src/safe/mac/SFXUnknownErrorSheet.mm; sourceTree = "<group>"; };
 		96F0640A18B58D7E0014F6A7 /* shared_file_list.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = shared_file_list.mm; path = ../src/safe/mac/shared_file_list.mm; sourceTree = "<group>"; };
 		96F0640B18B58D7E0014F6A7 /* shared_file_list.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = shared_file_list.hpp; path = ../src/safe/mac/shared_file_list.hpp; sourceTree = "<group>"; };
 		96F36ABE185470B500DEE145 /* fs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fs.cpp; path = ../src/safe/fs.cpp; sourceTree = "<group>"; };
@@ -314,6 +317,8 @@
 		96C18F9E18B420A300D7DD37 /* ui-mac */ = {
 			isa = PBXGroup;
 			children = (
+				96ECB4E618E0863100108E20 /* SFXUnknownErrorSheet.mm */,
+				96ECB4E518E085FC00108E20 /* SFXUnknownErrorSheet.hpp */,
 				96230546182B2E5200913551 /* SFXCreateSafeWindowController.h */,
 				96230547182B2E5200913551 /* SFXCreateSafeWindowController.mm */,
 				96230548182B2E5200913551 /* SFXCreateSafeWindowController.xib */,
@@ -529,6 +534,7 @@
 				9632FB7B182F13BD003C3F2E /* SFXMountSafeWindowController.mm in Sources */,
 				966ED38D184F2F3100463408 /* mount_safe_dialog_logic.cpp in Sources */,
 				96101772182A1499001D50E8 /* SecureMemPasswordReader.cpp in Sources */,
+				96ECB4E718E0863100108E20 /* SFXUnknownErrorSheet.mm in Sources */,
 				96F36AC2185470B500DEE145 /* fs.cpp in Sources */,
 				96230553182C708400913551 /* SFXProgressSheetController.mm in Sources */,
 				96597E011878D9B700073EC9 /* SFXAboutWindowController.mm in Sources */,

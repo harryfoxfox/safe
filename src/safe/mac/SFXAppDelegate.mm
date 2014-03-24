@@ -27,8 +27,6 @@
 
 #import <encfs/base/logging.h>
 
-#import <dlfcn.h>
-
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
 static NSString *const SAFE_MAC_LOCK_FILE = @"LockFile";
@@ -975,31 +973,7 @@ my_fs_stream_callback(ConstFSEventStreamRef streamRef,
 static
 void
 my_terminate_handler() {
-    // figure out our base address
-    Dl_info dlinfo;
-    auto ret = dladdr((void *) &my_terminate_handler, &dlinfo);
-    // NB: this should never happen
-    if (!ret) abort();
-    auto base_address = dlinfo.dli_fbase;
-
-    auto maybe_last_backtrace = safe::mac::last_throw_backtrace();
-    // NB: should never happen
-    if (!maybe_last_backtrace) abort();
-
-    std::vector<ptrdiff_t> stack_trace;
-    for (const auto & addr : *maybe_last_backtrace) {
-        Dl_info dlinfo2;
-        // NB: we subtract by one since addr points to the instruction
-        //     after the call instruction and that could be the end of the function
-        //     (in no-return functions)
-        assert(addr);
-        auto ret2 = dladdr((char *) addr - 1, &dlinfo2);
-        stack_trace.push_back(!ret2
-                              ? -1
-                              : base_address == dlinfo2.dli_fbase
-                              ? (char *) addr - (char *) base_address
-                              : 0);
-    }
+    auto stack_trace = safe::mac::backtrace_to_offset_backtrace(*safe::mac::last_throw_backtrace());
 
     auto current_exc = std::current_exception();
 

@@ -9,6 +9,7 @@
 #import <safe/mac/SFXCreateSafeWindowController.h>
 
 #import <safe/mac/SFXProgressSheetController.h>
+#import <safe/mac/SFXUnknownErrorSheet.hpp>
 #import <safe/mac/keychain.hpp>
 #import <safe/mac/mount.hpp>
 #import <safe/mac/util.hpp>
@@ -53,35 +54,12 @@ NSStringToSecureMem(NSString *str) {
     return std::move(password_buf);
 }
 
-- (void)unknownErrorResponse:(NSAlert *)alert
-                  returnCode:(NSInteger)returnCode
-                 contextInfo:(void *)contextInfo {
-    (void) alert;
-    auto ctx = std::unique_ptr<std::exception_ptr>((std::exception_ptr *) contextInfo);
-    if (returnCode == NSAlertSecondButtonReturn) {
-        safe::report_exception(safe::ExceptionLocation::MOUNT, *ctx);
-    }
-    [alert.window orderOut:self];
-    [self.window performClose:self];
-}
-
-- (void)unknownError:(const std::exception_ptr &)eptr {
-    // unknown error occured, allow user to report
-    auto message = (std::string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE) +
-                    (" Please help us improve by sending a bug report. It's automatic and "
-                     "no personal information is used."));
-
-    NSAlert *alert = [[NSAlert alloc] init];
-    [alert setMessageText:safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE)];
-    [alert setInformativeText:safe::mac::to_ns_string(message)];
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Report Bug"];
-    [alert setAlertStyle:NSWarningAlertStyle];
-
-    [alert beginSheetModalForWindow:self.window
-                      modalDelegate:self
-                     didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
-                        contextInfo:(void *) new std::exception_ptr(eptr)];
+- (void)unknownError:(const std::exception_ptr &)eptr
+       withBacktrace:(const safe::mac::Backtrace &) backtrace {
+    runUnknownErrorSheet(self.window,
+                         safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE),
+                         safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE),
+                         eptr, backtrace);
 }
 
 - (opt::optional<std::pair<encfs::Path, encfs::SecureMem>>) verifyFields {
@@ -112,7 +90,7 @@ NSStringToSecureMem(NSString *str) {
         maybe_encrypted_container_path = safe::mac::url_to_path(self->fs, encrypted_container_url);
     }
     catch (...) {
-        [self unknownError:std::current_exception()];
+        [self unknownError:std::current_exception() withBacktrace:*safe::mac::last_throw_backtrace()];
         return opt::nullopt;
     }
 
@@ -137,7 +115,7 @@ NSStringToSecureMem(NSString *str) {
         [self.window performClose:self];
     };
 
-    auto onFail = ^(const std::exception_ptr & eptr) {
+    auto onFail = ^(const std::exception_ptr & eptr, const safe::mac::Backtrace & backtrace) {
         // TODO: delete directory and .encfs.txt
         //       *only* if those are the only files that exist
         try {
@@ -147,7 +125,7 @@ NSStringToSecureMem(NSString *str) {
             lbx_log_error("Error deleting encrypted container: %s", err.what());
         }
 
-        [self unknownError:eptr];
+        [self unknownError:eptr withBacktrace:backtrace];
     };
 
     auto onCreateCfgSuccess = ^(encfs::EncfsConfig cfg) {

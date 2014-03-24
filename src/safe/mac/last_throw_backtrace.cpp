@@ -82,7 +82,7 @@ __cxa_throw(void *thrown_exception,
 
 namespace safe { namespace mac {
 
-opt::optional<std::vector<void *>>
+opt::optional<Backtrace>
 last_throw_backtrace() {
     auto ret = pthread_once(&_g_last_backtrace_init_control, init_last_backtrace_key);
     if (ret) abort();
@@ -91,6 +91,33 @@ last_throw_backtrace() {
     if (!current_backtrace_p) return opt::nullopt;
 
     return *current_backtrace_p;
+}
+
+OffsetBacktrace
+backtrace_to_offset_backtrace(const Backtrace & backtrace) {
+    // figure out our base address
+    Dl_info dlinfo;
+    auto ret = dladdr((void *) &backtrace_to_offset_backtrace, &dlinfo);
+    // NB: this should never happen
+    if (!ret) abort();
+    auto base_address = dlinfo.dli_fbase;
+
+    std::vector<ptrdiff_t> offset_backtrace;
+    for (const auto & addr : backtrace) {
+        Dl_info dlinfo2;
+        // NB: we subtract by one since addr points to the instruction
+        //     after the call instruction and that could be the end of the function
+        //     (in no-return functions)
+        assert(addr);
+        auto ret2 = dladdr((char *) addr - 1, &dlinfo2);
+        offset_backtrace.push_back(!ret2
+                                   ? -1
+                                   : base_address == dlinfo2.dli_fbase
+                                   ? (char *) addr - (char *) base_address
+                                   : 0);
+    }
+
+    return offset_backtrace;
 }
 
 }}

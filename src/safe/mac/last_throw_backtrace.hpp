@@ -23,10 +23,18 @@
 
 #include <vector>
 
+#include <cstdint>
+
 namespace safe { namespace mac {
 
-opt::optional<std::vector<void *>>
+typedef std::vector<void *> Backtrace;
+typedef std::vector<std::ptrdiff_t> OffsetBacktrace;
+
+opt::optional<Backtrace>
 last_throw_backtrace();
+
+OffsetBacktrace
+backtrace_to_offset_backtrace(const Backtrace &);
 
 }}
 
