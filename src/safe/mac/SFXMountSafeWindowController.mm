@@ -118,6 +118,7 @@
             runUnknownErrorSheet(self.window,
                                  safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE),
                                  safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE),
+                                 safe::ExceptionLocation::MOUNT,
                                  eptr, backtrace);
         }
     };

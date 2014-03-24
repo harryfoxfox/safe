@@ -19,6 +19,7 @@
 #ifndef __safe_mac_SFXUnknownErrorSheet_hpp
 #define __safe_mac_SFXUnknownErrorSheet_hpp
 
+#import <safe/report_exception.hpp>
 #import <safe/mac/last_throw_backtrace.hpp>
 
 #import <stdexcept>
@@ -29,6 +30,7 @@ void
 runUnknownErrorSheet(NSWindow *window,
                      NSString *title,
                      NSString *message,
+                     safe::ExceptionLocation location,
                      const std::exception_ptr & eptr,
                      const safe::mac::Backtrace & offset_backtrace);
 

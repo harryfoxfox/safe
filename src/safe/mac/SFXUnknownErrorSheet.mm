@@ -26,6 +26,7 @@
 #import <objc/runtime.h>
 
 struct UnknownErrorCtx {
+    safe::ExceptionLocation location;
     std::exception_ptr eptr;
     safe::mac::Backtrace backtrace;
 };
@@ -48,7 +49,7 @@ contextInfo:(void *)contextInfo {
     (void) alert;
     auto ctx = std::unique_ptr<UnknownErrorCtx>((UnknownErrorCtx *) contextInfo);
     if (returnCode == NSAlertSecondButtonReturn) {
-        safe::report_exception(safe::ExceptionLocation::MOUNT, ctx->eptr, safe::mac::backtrace_to_offset_backtrace(ctx->backtrace));
+        safe::report_exception(ctx->location, ctx->eptr, safe::mac::backtrace_to_offset_backtrace(ctx->backtrace));
     }
     [alert.window orderOut:self];
     [self.window performClose:self];
@@ -60,6 +61,7 @@ void
 runUnknownErrorSheet(NSWindow *window,
                      NSString *title,
                      NSString *message,
+                     safe::ExceptionLocation location,
                      const std::exception_ptr & eptr,
                      const safe::mac::Backtrace & backtrace) {
     message = [message stringByAppendingString:safe::mac::to_ns_string(" Please help us improve by sending a bug report. It's automatic and "
@@ -80,5 +82,5 @@ runUnknownErrorSheet(NSWindow *window,
     [alert beginSheetModalForWindow:window
                       modalDelegate:del
                      didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
-                        contextInfo:(void *) new UnknownErrorCtx { eptr, backtrace }];
+                        contextInfo:(void *) new UnknownErrorCtx { location, eptr, backtrace }];
 }

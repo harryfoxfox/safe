@@ -59,6 +59,7 @@ NSStringToSecureMem(NSString *str) {
     runUnknownErrorSheet(self.window,
                          safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_TITLE),
                          safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_CREATE_ERROR_MESSAGE),
+                         safe::ExceptionLocation::CREATE,
                          eptr, backtrace);
 }
 
