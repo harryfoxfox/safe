@@ -114,9 +114,9 @@ const auto SAFE_TRAY_ICON_MSG_2 = APP_BASE + 2;
 const auto SAFE_TRAY_ICON_ID = 1;
 
 const wchar_t SAFE_SINGLE_APP_INSTANCE_MUTEX_NAME[] =
-  L"SafeAppMutex";
+  PRODUCT_NAME_W L"AppMutex";
 const wchar_t SAFE_SINGLE_APP_INSTANCE_SHARED_MEMORY_NAME[] =
-  L"SafeAppSharedProcessId";
+  PRODUCT_NAME_W L"AppSharedProcessId";
 const wchar_t SAFE_DUPLICATE_INSTANCE_MESSAGE_NAME[] =
   L"SAFE_DUPLICATE_INSTANCE_MESSAGE_NAME";
 const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
