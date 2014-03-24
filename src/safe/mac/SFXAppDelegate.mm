@@ -350,60 +350,6 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
     }
 }
 
-struct ErrorDialogContext {
-  bool quit_after;
-  safe::ExceptionLocation location;
-  std::exception_ptr eptr;
-
-public:
-  ErrorDialogContext(bool quit_after_,
-                     safe::ExceptionLocation location_,
-                     std::exception_ptr eptr_)
-    : quit_after(quit_after_)
-    , location(location_)
-    , eptr(std::move(eptr_)) {}
-};
-
-- (void)errorOccurredDialogResponse:(NSAlert *)alert
-                         returnCode:(NSInteger)returnCode
-                        contextInfo:(void *)contextInfo {
-    (void) alert;
-    auto ctx = std::unique_ptr<ErrorDialogContext>((ErrorDialogContext *) contextInfo);
-
-    if (returnCode == NSAlertFirstButtonReturn) {
-        safe::report_exception(ctx->location, ctx->eptr);
-    }
-
-    if (ctx->quit_after) [NSApp terminate:nil];
-}
-
-- (void)showErrorOccurredDialog:(NSWindow *)window
-                      withTitle:(NSString *)title
-                    withMessage:(NSString *)message
-                  andQuitButton:(BOOL)haveQuitButton
-          withExceptionLocation:(safe::ExceptionLocation)location
-               withExceptionPtr:(std::exception_ptr)eptr {
-  NSAlert *alert = [[NSAlert alloc] init];
-  NSString *realMessage =
-    [message stringByAppendingString:
-               (@" Please help us improve by sending a bug report. It's automatic and "
-                @"no personal information is used.")];
-
-  [alert setMessageText:title];
-  [alert setInformativeText:realMessage];
-  [alert addButtonWithTitle:@"Report Bug"];
-  [alert addButtonWithTitle:haveQuitButton ? @"Quit" : @"Cancel"];
-  [alert setAlertStyle:NSWarningAlertStyle];
-
-  auto ctx = safe::make_unique<ErrorDialogContext>
-    (haveQuitButton, location, eptr);
-  
-  [alert beginSheetModalForWindow:window
-                    modalDelegate:self
-                   didEndSelector:@selector(errorOccurredDialogResponse:returnCode:contextInfo:)
-                      contextInfo:(void *) ctx.release()];
-}
-
 // NB: this throws exception like a C++ function, even though it's objective-c
 //     we should really refactor the core functionality out of SFXAppDelegate into
 //     a C++ class
@@ -514,27 +460,8 @@ public:
 }
 
 - (void)_dispatchMenu:(id)sender {
-  try {
-      NSMenuItem *mi = sender;
-      [self __dispatch_tray_action:mi.tag];
-  }
-  catch (const std::exception & err) {
-    // NB: this catch all assumes that all operations
-    //     run via _dispatch_tray_menu_action()
-    //     have "strong exception safety"
-    //     (i.e. failed operations should have no side-effects
-    //           or inconsistent state)
-    //     if this isn't true we should actually quit the application
-    //     on an exception
-    lbx_log_critical("Uncaught exception: %s", err.what());
-
-    [self showErrorOccurredDialog:nil
-                        withTitle:@"Unexpected Error"
-                      withMessage:@"An unexpected error occurred."
-                    andQuitButton:NO
-            withExceptionLocation:safe::ExceptionLocation::TRAY_DISPATCH
-                 withExceptionPtr:std::current_exception()];
-  }
+    NSMenuItem *mi = sender;
+    [self __dispatch_tray_action:mi.tag];
 }
 
 - (void)_updateStatusMenu {
@@ -908,31 +835,11 @@ set_reboot_pending(bool waiting) {
         }
     };
     
-    auto onFail = ^(const std::exception_ptr & eptr) {
-        try {
-            std::rethrow_exception(eptr);
-        }
-        catch (const std::exception & err) {
-            lbx_log_debug("Error while making system changes: %s", err.what());
-
-            auto error_message =
-            ("An error occured while attempting to make changes to your system.");
-
-            [self showErrorOccurredDialog:window
-                                withTitle:@"Couldn't Make System Changes"
-                              withMessage:safe::mac::to_ns_string(error_message)
-                            andQuitButton:YES
-                    withExceptionLocation:safe::ExceptionLocation::SYSTEM_CHANGES
-                         withExceptionPtr:std::current_exception()];
-        }
-    };
-    
     // perform changes
-    showBlockingSheetMessage(window,
-                             safe::mac::to_ns_string(SAFE_PROGRESS_SYSTEM_CHANGES_TITLE),
-                             onSuccess,
-                             onFail,
-                             make_required_system_changes_as_admin);
+    showBlockingSheetMessageNoCatch(window,
+                                    safe::mac::to_ns_string(SAFE_PROGRESS_SYSTEM_CHANGES_TITLE),
+                                    onSuccess,
+                                    make_required_system_changes_as_admin);
 }
 
 - (void)cancelSystemChangesResponse:(NSAlert *)alert
@@ -1122,7 +1029,7 @@ my_terminate_handler() {
     std::_Exit(-1);
 }
 
-- (void)_applicationDidFinishLaunching:(NSNotification *)aNotification {
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     (void)aNotification;
     std::set_terminate(my_terminate_handler);
 
@@ -1229,35 +1136,6 @@ my_terminate_handler() {
          ];
     }
     else [self startAppUI];
-}
-
-- (void)applicationDidFinishLaunching:(NSNotification *)notification {
-    try {
-        [self _applicationDidFinishLaunching:notification];
-    }
-    catch (const std::exception & err) {
-        lbx_log_debug("Error while starting up: %s", err.what());
-
-        auto error_message =
-        ("An unrecoverable error occured while starting " PRODUCT_NAME_A ". "
-         "Please help us improve by reporting the bug. It's automatic and "
-         "no personal information is used.");
-
-        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
-        NSAlert *alert = [[NSAlert alloc] init];
-        [alert setMessageText:@"Error During Startup"];
-        [alert setInformativeText:safe::mac::to_ns_string(error_message)];
-        [alert addButtonWithTitle:@"Report Bug"];
-        [alert addButtonWithTitle:@"Quit"];
-        [alert setAlertStyle:NSWarningAlertStyle];
-
-        auto response = [alert runModal];
-        if (response == NSAlertFirstButtonReturn) {
-            safe::report_exception(safe::ExceptionLocation::STARTUP, std::current_exception());
-        }
-
-        [NSApp terminate:nil];
-    }
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)notification {
