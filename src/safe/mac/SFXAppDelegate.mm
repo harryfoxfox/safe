@@ -450,6 +450,10 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
             safe::mac::open_url(SAFE_SEND_FEEDBACK_WEBSITE);
             break;
         }
+        case TrayMenuAction::THROW_EXCEPTION: {
+            throw std::runtime_error("TrayMenuAction::THROW_EXCEPTION");
+            break;
+        }
         default: {
             /* should never happen */
             assert(false);
