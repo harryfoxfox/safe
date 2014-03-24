@@ -41,6 +41,7 @@ enum class TrayMenuAction : uint16_t {
   TRIGGER_BREAKPOINT,
   QUIT_APP,
   SEND_FEEDBACK,
+  THROW_EXCEPTION,
 };
 
 typedef uint16_t tray_menu_action_arg_t;
@@ -174,6 +175,8 @@ populate_tray_menu(Menu & menu,
   menu.append_item("Test Bubble", TrayMenuAction::TEST_BUBBLE);
 
   menu.append_item("Trigger Breakpoint", TrayMenuAction::TRIGGER_BREAKPOINT);
+
+  menu.append_item("Throw Exception", TrayMenuAction::THROW_EXCEPTION);
 #endif
 
   menu.append_separator();
