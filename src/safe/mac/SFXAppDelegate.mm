@@ -32,7 +32,7 @@
 // 10 to model after system mac recent menus
 static NSString *const SFX_ACTION_KEY = @"_lbx_action";
 static NSString *const SAFE_MAC_LOCK_FILE = @"LockFile";
-static NSString *const SAFE_LIST_ITEM_OWNER = @"Safe";
+static NSString *const SAFE_LIST_ITEM_OWNER = safe::mac::to_ns_string(PRODUCT_NAME_A);
 
 class MacOSXTrayMenuItem {
 private:
@@ -205,8 +205,7 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
                 create:YES error:err];
     if (!p) return nil;
     
-    NSString *executableName = NSBundle.mainBundle.infoDictionary[@"CFBundleExecutable"];
-    if (!executableName) return nil;
+    NSString *executableName = safe::mac::to_ns_string(PRODUCT_NAME_A);
     
     NSURL *ourAppDirectory = [p URLByAppendingPathComponent:executableName];
 
