@@ -75,7 +75,7 @@ _get_tls_mgmt_state() {
   static TlsMgmtState state = {
     {},
     _start_cleanup_thread(),
-    std::unordered_map<DWORD, TlsMgmtState::ThreadInfo>(),
+    {},
     {false},
   };
   return state;
