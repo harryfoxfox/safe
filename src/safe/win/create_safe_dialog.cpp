@@ -23,6 +23,7 @@
 #include <safe/win/dialog_common.hpp>
 #include <safe/win/report_bug_dialog.hpp>
 #include <safe/report_exception.hpp>
+#include <safe/win/last_throw_backtrace.hpp>
 
 #include <w32util/async.hpp>
 #include <w32util/dialog.hpp>
@@ -151,7 +152,8 @@ create_new_safe_dialog_proc(HWND hwnd, UINT Message,
 
         if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
           safe::report_exception(safe::ExceptionLocation::CREATE,
-                                 std::current_exception());
+                                 std::current_exception(),
+                                 safe::win::backtrace_to_offset_backtrace(*safe::win::last_throw_backtrace()));
         }
 
         EndDialog(hwnd, (INT_PTR) 0);
