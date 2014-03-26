@@ -49,7 +49,7 @@ struct TlsMgmtState {
   w32util::Event new_thread_update_event;
 
   bool
-  can_watch_another_thread() {
+  can_watch_another_thread() const {
     return thread_map.size() < MAXIMUM_WAIT_OBJECTS - 1;
   }
 };
@@ -147,6 +147,10 @@ _set_tls_backtrace(safe::win::Backtrace backtrace) noexcept {
     thread_state_it->second.backtrace = std::move(backtrace);
   }
   else {
+    if (!tls_mgmt_state.can_watch_another_thread()) {
+      throw std::runtime_error("Cannot allocate another TLS block");
+    }
+
     HANDLE new_thread_handle;
     w32util::check_bool(DuplicateHandle,
                         GetCurrentProcess(),
