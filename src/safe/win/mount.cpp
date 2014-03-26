@@ -22,7 +22,9 @@
 #include <safe/util.hpp>
 #include <safe/win/util.hpp>
 #include <safe/webdav_server.hpp>
+#include <safe/win/last_throw_backtrace.hpp>
 #include <w32util/string.hpp>
+#include <w32util/sync.hpp>
 
 #include <encfs/fs/FileUtils.h>
 #include <encfs/fs/FsIO.h>
@@ -93,7 +95,7 @@ find_free_drive_letter() {
 }
 
 class MountEvent {
-  mutable CRITICAL_SECTION _cs;
+  w32util::CriticalSection _cs;
   ManagedHandle _event;
   bool _msg_sent;
   enum {
@@ -104,12 +106,12 @@ class MountEvent {
   port_t _listen_port;
   opt::optional<WebdavServerHandle> _ws;
   std::exception_ptr _eptr;
+  safe::win::Backtrace _bt;
 
   template <class F>
   void
   _receive_event(F f) {
-    EnterCriticalSection(&_cs);
-    auto _deferred_unlock = safe::create_deferred(LeaveCriticalSection, &_cs);
+    auto _deferred_unlock = _cs.create_guard();
 
     if (_msg_sent) throw std::runtime_error("Message already sent!");
     f();
@@ -134,11 +136,6 @@ public:
     auto event = CreateEvent(NULL, TRUE, FALSE, NULL);
     if (!event) w32util::throw_windows_error();
     _event.reset(event);
-    InitializeCriticalSection(&_cs);
-  }
-
-  ~MountEvent() {
-    DeleteCriticalSection(&_cs);
   }
 
   void
@@ -152,10 +149,11 @@ public:
   }
 
   void
-  set_mount_exception(std::exception_ptr eptr) {
+  set_mount_exception(std::exception_ptr eptr, safe::win::Backtrace bt) {
     _receive_event([&] {
         _event_type = EVENT_TYPE_EXCEPTION;
         _eptr = std::move(eptr);
+        _bt = std::move(bt);
       });
   }
 
@@ -168,8 +166,7 @@ public:
     auto res = WaitForSingleObject(_event.get(), INFINITE);
     if (res != WAIT_OBJECT_0) w32util::throw_windows_error();
 
-    EnterCriticalSection(&_cs);
-    auto _deferred_unlock = safe::create_deferred(LeaveCriticalSection, &_cs);
+    auto _deferred_unlock = _cs.create_guard();
     assert(_msg_sent);
 
     switch (_event_type) {
@@ -178,6 +175,7 @@ public:
     case EVENT_TYPE_FAIL:
       return opt::nullopt;
     case EVENT_TYPE_EXCEPTION:
+      safe::win::set_last_throw_backtrace(_bt);
       std::rethrow_exception(_eptr);
     default:
       /* notreached */

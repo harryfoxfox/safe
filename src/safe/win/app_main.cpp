@@ -34,6 +34,7 @@
 #include <safe/win/welcome_dialog.hpp>
 #include <safe/win/report_bug_dialog.hpp>
 #include <safe/win/general_safe_dialog.hpp>
+#include <safe/win/last_throw_backtrace.hpp>
 #include <w32util/async.hpp>
 #include <w32util/file.hpp>
 #include <w32util/gui_util.hpp>
@@ -474,6 +475,7 @@ set_app_to_run_at_login(bool run_at_login) {
                              get_application_path());
   }
   else {
+    throw std::runtime_error("runtime error");
     w32util::ensure_deleted(get_shortcut_path());
   }
 }
@@ -1453,52 +1455,18 @@ exit_if_not_single_app_instance(std::function<int(DWORD)> on_exit) {
   }
 }
 
+template <class T>
+ptrdiff_t
+pointer_difference_in_bytes(T *a, T *b) {
+  return (uint8_t *) a - (uint8_t *) b;
+}
+
 [[noreturn]]
 static
 void
 my_terminate_handler() {
-  // NB: by using __builtin_frame_address() we force this function to have a
-  //     frame pointer
-  auto cur_ebp = __builtin_frame_address(0);
-
-  auto ebp_before_our_call = *(void **) cur_ebp;
-  auto esp_before_our_call = (void *) (((intptr_t) cur_ebp) + 8);
-
-  // NB: we need to use these functions to get this information
-  // because our exception throw stack
-  // may not have created frame pointers at each function call in the stack
-  // that would usually allow us to find the first return address
-  // (the location where the exception was thrown)
-  auto ebp_before_exception = libstdcxx_get_exception_ebp(ebp_before_our_call,
-                                                          esp_before_our_call);
-  auto esp_before_exception = libstdcxx_get_exception_esp(ebp_before_our_call,
-                                                          esp_before_our_call);
-
-  auto exc_return_address = *(void **) ((intptr_t) esp_before_exception - 4);
-
-  // set execution context to the return address of the call to the
-  // C++ runtime exception-throwing function
-  CONTEXT ctx;
-  memset(&ctx, 0, sizeof(ctx));
-  ctx.ContextFlags = CONTEXT_FULL;
-  ctx.Eip = (DWORD) exc_return_address;
-  ctx.Esp = (DWORD) esp_before_exception;
-  ctx.Ebp = (DWORD) ebp_before_exception;
-
-  // init stack frame structure
-  STACKFRAME64 frame;
-  memset(&frame, 0, sizeof(frame));
-
-  frame.AddrPC.Offset = ctx.Eip;
-  frame.AddrPC.Mode = AddrModeFlat;
-  frame.AddrStack.Offset = ctx.Esp;
-  frame.AddrStack.Mode = AddrModeFlat;
-  frame.AddrFrame.Offset = ctx.Ebp;
-  frame.AddrFrame.Mode = AddrModeFlat;
-  const auto machine = IMAGE_FILE_MACHINE_I386;
-
-  auto process = GetCurrentProcess();
-  auto thread = GetCurrentThread();
+  auto maybe_backtrace = safe::win::last_throw_backtrace();
+  if (!maybe_backtrace) abort();
 
   HMODULE exe_module;
   auto success = GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -1507,25 +1475,19 @@ my_terminate_handler() {
   if (!success) abort();
 
   std::vector<ptrdiff_t> stack_trace;
-  while (true) {
-    auto success = StackWalk64(machine, process, thread,
-                               &frame, &ctx,
-                               nullptr, SymFunctionTableAccess64, SymGetModuleBase64,
-                               nullptr);
-    if (!success) break;
-
+  for (const auto & addr : *maybe_backtrace) {
     // find module of function
     HMODULE return_addr_module;
     auto success2 = GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                                        // NB: we subtract one because the return address might be after the
                                        //     last byte in the module (remote chance of this happening for noreturn functions)
-                                       (LPCWSTR) (frame.AddrPC.Offset - 1),
+                                       (LPCWSTR) ((char *) addr - 1),
                                        &return_addr_module);
 
     stack_trace.push_back(!success2
                           ? (ptrdiff_t) -1
                           : return_addr_module == exe_module
-                          ? frame.AddrPC.Offset - (decltype(frame.AddrPC.Offset)) exe_module
+                          ? pointer_difference_in_bytes(addr, (decltype(addr)) exe_module)
                           : 0);
   }
 

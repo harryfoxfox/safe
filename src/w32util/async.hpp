@@ -21,6 +21,7 @@
 
 #include <w32util/dialog.hpp>
 #include <w32util/gui_util.hpp>
+#include <safe/win/last_throw_backtrace.hpp>
 #include <safe/util.hpp>
 
 #include <davfuse/logging.h>
@@ -211,6 +212,7 @@ run_async_base(FunctionB && loop_stop,
                FunctionA && loop_wait,
                Function && f, Args &&... args) {
   // place to store result
+  safe::win::Backtrace bt;
   std::exception_ptr eptr;
   opt::optional<typename std::result_of<Function(Args...)>::type> ret_store;
   auto pre_bound_fn = std::bind(f, std::forward<Args>(args)...);
@@ -221,6 +223,7 @@ run_async_base(FunctionB && loop_stop,
     }
     catch (...) {
       eptr = std::current_exception();
+      bt = *safe::win::last_throw_backtrace();
     }
     // wake up main thread here
     loop_stop();
@@ -250,7 +253,10 @@ run_async_base(FunctionB && loop_stop,
 
   assert((bool) ret_store == !(bool) eptr);
 
-  if (!ret_store) std::rethrow_exception(eptr);
+  if (!ret_store) {
+    safe::win::set_last_throw_backtrace(bt);
+    std::rethrow_exception(eptr);
+  }
   else return std::move(ret_store);
 }
 

@@ -21,6 +21,7 @@
 
 #include <safe/fs.hpp>
 #include <safe/webdav_server.hpp>
+#include <safe/last_throw_backtrace.hpp>
 
 #include <encfs/fs/FileUtils.h>
 #include <encfs/fs/FsIO.h>
@@ -95,7 +96,7 @@ mount_thread_fn_common(ServerThreadParams<MountEvent> *p) {
       throw;
     }
     else {
-      params->mount_event_p->set_mount_exception(std::current_exception());
+      params->mount_event_p->set_mount_exception(std::current_exception(), *safe::last_throw_backtrace());
     }
   }
 

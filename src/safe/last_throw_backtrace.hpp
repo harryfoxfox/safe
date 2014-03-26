@@ -1,0 +1,41 @@
+/*
+  Safe: Encrypted File System
+  Copyright (C) 2014 Rian Hunter <rian@alum.mit.edu>
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>
+ */
+
+#ifndef __safe_last_throw_backtrace_hpp
+#define __safe_last_throw_backtrace_hpp
+
+// yes i know defines are suboptimal, but it's mostly contained
+#ifdef __APPLE__
+#include <safe/mac/last_throw_backtrace.hpp>
+#define __NS mac;
+#elif _WIN32
+#include <safe/win/last_throw_backtrace.hpp>
+#define __NS win
+#else
+#error last_throw_backtrace not supported on this platform
+#endif
+
+namespace safe {
+
+using safe::__NS::last_throw_backtrace;
+
+}
+
+#undef __NS
+
+#endif

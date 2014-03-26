@@ -252,24 +252,11 @@ $(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def
 
 mypowrprof: $(MYPOWRPROF_DEP) clean-exe
 
-CXA_THROW_OFFSET := $(CURDIR)/$(OUT_DIR)/deps/include/libstdcxx_get_exception_state.h
-$(CXA_THROW_OFFSET): clean
-	@mkdir -p /tmp/cxa_throw_offset && \
-         echo '#include <exception>' > /tmp/cxa_throw_offset/chk.cc && \
-         echo 'int main () { throw std::exception(); }' >> /tmp/cxa_throw_offset/chk.cc && \
-	 rm -f /tmp/cxa_throw_offset/chk && \
-         $(CXX) $(CPPFLAGS) -g --static $(CXXFLAGS) -o /tmp/cxa_throw_offset/chk /tmp/cxa_throw_offset/chk.cc 2>/dev/null >/dev/null && \
-         if [ -e /tmp/cxa_throw_offset/chk ]; then \
-             BINUTILS_PREFIX=$(BINUTILS_PREFIX) tools/generate_libstdcxx_get_exception_state.sh /tmp/cxa_throw_offset/chk > $(CXA_THROW_OFFSET); \
-         fi
-
-libstdcxx_get_exception_state: $(CXA_THROW_OFFSET)
-
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
  libencfs \
  libwebdav_server_fs \
- $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk_headers mypowrprof libstdcxx_get_exception_state,)
+ $(if $(IS_WIN_TARGET),normaliz nlscheck safe_ramdisk_headers mypowrprof,)
 
 clean-deps:
 	rm -rf $(OUT_DIR)
@@ -295,7 +282,8 @@ W32UTIL_SRCS = \
  gui_util.cpp \
  menu.cpp \
  file.cpp \
- shell.cpp
+ shell.cpp \
+ sync.cpp
 
 APP_SRCS = \
  create_safe_dialog_logic.cpp \
@@ -317,7 +305,8 @@ WIN_APP_SRCS = \
  ramdisk.cpp \
  guids.cpp \
  report_bug_dialog.cpp \
- util.cpp
+ util.cpp \
+ last_throw_backtrace.cpp
 
 WINDOWS_APP_MAIN_OBJS = \
  $(patsubst %,src/safe/%.o,${APP_SRCS}) \
@@ -356,7 +345,7 @@ test_encfs_main:
 # NB: when debugging on WINE make sure it can find libstdc++
 
 $(EXE_NAME):
-	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) \
+	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -Wl,--wrap,__cxa_throw \
         $(if $(RELEASE),$(LDFLAGS_RELEASE),$(LDFLAGS_DEBUG)) \
         $(if $(RELEASE),-static,) \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
