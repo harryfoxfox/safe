@@ -206,12 +206,15 @@ public:
   }
 
   TlsBool &operator=(bool f) {
-    TlsSetValue(_tls_idx, (LPVOID) f);
+    auto success = TlsSetValue(_tls_idx, (LPVOID) f);
+    if (!success) abort();
     return *this;
   }
 
   operator bool() const {
-    return (bool) TlsGetValue(_tls_idx);
+    auto ret = TlsGetValue(_tls_idx);
+    if (!ret && GetLastError() != ERROR_SUCCESS) abort();
+    return (bool) ret;
   }
 };
 
