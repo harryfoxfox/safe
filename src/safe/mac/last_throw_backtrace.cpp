@@ -63,8 +63,7 @@ __cxa_throw(void *thrown_exception,
 
     {
         // clear TLS stack trace
-        auto ret3 = (std::vector<void *> *) pthread_getspecific(_g_last_backtrace_key);
-        if (ret3) delete ret3;
+        destroy_backtrace(pthread_getspecific(_g_last_backtrace_key));
 
         // get stack trace
         void *stack_trace[4096];
