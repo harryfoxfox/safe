@@ -475,7 +475,6 @@ set_app_to_run_at_login(bool run_at_login) {
                              get_application_path());
   }
   else {
-    throw std::runtime_error("runtime error");
     w32util::ensure_deleted(get_shortcut_path());
   }
 }
