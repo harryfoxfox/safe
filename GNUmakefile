@@ -66,8 +66,8 @@ ENCFS_STATIC_LIBRARY = $(DEPS_INSTALL_ROOT)/lib/libencfs.a
 GLOBAL_WINDOWS_DEFINES = -D_UNICODE -DUNICODE -D_WIN32_IE=0x0600 -D_WIN32_WINNT=0x501 -DWINVER=0x501 -DNTDDI_VERSION=0x05010000
 
 CPPFLAGS_RELEASE = -DNDEBUG
-CXXFLAGS_RELEASE = -Os $(if $(IS_WIN_TARGET),-flto,,)
-CFLAGS_RELEASE = -Os $(if $(IS_WIN_TARGET),-flto,,)
+CXXFLAGS_RELEASE = -g -Os $(if $(IS_WIN_TARGET),-flto,,)
+CFLAGS_RELEASE = -g -Os $(if $(IS_WIN_TARGET),-flto,,)
 LDFLAGS_RELEASE = -fuse-linker-plugin
 CXXFLAGS_DEBUG = -g
 CFLAGS_DEBUG = -g
@@ -348,12 +348,12 @@ $(EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -Wl,--wrap,__cxa_throw \
         $(if $(RELEASE),$(LDFLAGS_RELEASE),$(LDFLAGS_DEBUG)) \
         $(if $(RELEASE),-static,) \
- -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@.pre $(WINDOWS_APP_MAIN_OBJS) \
+ -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
  -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof -ldbghelp
-	$(if $(RELEASE),$(STRIP) -s $@.pre,)
-	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@.pre,)
-	mv $@.pre $@
+	cp $@ Safe-Debug.exe
+	$(if $(RELEASE),$(STRIP) -s $@,)
+	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@,)
 	$(if $(RELEASE),signtool sign //v //s MY //n "Rian Hunter" //fd sha1 //t "http://timestamp.digicert.com" $@,)
 
 .PHONY: dependencies clean libbotan \
