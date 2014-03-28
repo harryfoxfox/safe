@@ -122,9 +122,10 @@ cleanup_thread_fn(LPVOID params_) {
       auto it = tls_mgmt_state.thread_map.begin();
       while (it != tls_mgmt_state.thread_map.end()) {
         if (it->second.thread_handle.get() == wait_on[offset]) {
-          tls_mgmt_state.thread_map.erase(it);
+          it = tls_mgmt_state.thread_map.erase(it);
           break;
         }
+        else ++it;
       }
     }
   }
