@@ -56,8 +56,6 @@
 #include <davfuse/log_printer.h>
 #include <davfuse/webdav_server.h>
 
-#include <libstdcxx_get_exception_state.h>
-
 #include <iostream>
 #include <list>
 #include <memory>
