@@ -32,7 +32,12 @@ done
 
 REVISION=VERSION-$VERSION
 
-echo "Traceback (most recent call last)"
+echo "Version: $VERSION"
+echo "Target: $TARGET_PLATFORM-$ARCH"
+echo "Platform: $PLATFORM"
+echo "Location: $WHERE"
+echo "Timestamp: $(date -r $TIMESTAMP +%+)"
+echo "Traceback (most recent call last):"
 
 if [ "$TARGET_PLATFORM" = win ]; then
     "$SCRIPT_DIR/decode_win_stack_trace.sh" "$DEBUG_INFO_DIR/$VERSION/win/Safe-Debug.exe" $REVISION $STACK_TRACE_ARG
@@ -41,3 +46,5 @@ elif [ "$TARGET_PLATFORM" = mac ]; then
 else
     false
 fi
+
+echo "$EXCEPTION_TYPE: $WHAT"
