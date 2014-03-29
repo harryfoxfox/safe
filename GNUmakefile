@@ -336,7 +336,7 @@ $(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(CXX) $(MY_CPPFLAGS) $(MY_CXXFLAGS) -c -o $@ $<
 
 %.rc.o: %.rc
-	$(WINDRES) -I$(DYN_RESOURCES_ROOT) -I$(RESOURCES_ROOT) -I./src -i $< -o $@
+	$(WINDRES) $(MY_CPPFLAGS) -I$(DYN_RESOURCES_ROOT) -I$(RESOURCES_ROOT) -I./src -i $< -o $@
 
 test_encfs_main:
 	$(CXX) -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) \
