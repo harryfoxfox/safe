@@ -14,11 +14,17 @@ IMAGE_BASE=0x$("$OBJDUMP" -p "$EXE" | awk '/ImageBase/ { print $2 }')
 
 PRETTY=1
 
+# disassemble file
+DISASS=$(mktemp -t decode_win_stack_trace)a
+
+"$OBJDUMP" -d "$EXE" > "$DISASS"
+
 for ADDR in $@; do
     if [ $(($ADDR)) -ne 0 ]; then
-        HEXADDR=0x$(printf '%x' $(($IMAGE_BASE + $ADDR)))
+        HEXADDR_RETURN=$(printf '%x' $(($IMAGE_BASE + $ADDR)))
+        HEXADDR=0x$(cat "$DISASS" | fgrep -B1 "$HEXADDR_RETURN:" | head -n 1 | awk '{ print $1 }' | sed 's/:$//')
         FN_NAME=$("$ADDR2LINE" -e "$EXE" -f "$HEXADDR" | awk '/^_/ { print "_"$0 } ! /^_/ { print $0 }' | head -n 1 | "$CPPFILT")
-        TBLINE=$("$ADDR2LINE" -e "$EXE" -f 0x$(printf '%x' $(($IMAGE_BASE + $ADDR))) | awk '/^_/ { print "_"$0 } ! /^_/ { print $0 }' | tail -n 1 | head -n 1)
+        TBLINE=$("$ADDR2LINE" -e "$EXE" -f "$HEXADDR" | awk '/^_/ { print "_"$0 } ! /^_/ { print $0 }' | tail -n 1 | head -n 1)
         if [ "x$PRETTY" != "x" ]; then
             FILENAME=$(echo "$TBLINE" | sed 's/^\(.*\):[0-9]\{1,\}$/\1/')
             if [ "$FILENAME" = "??" ]; then
