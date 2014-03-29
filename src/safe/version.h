@@ -23,7 +23,7 @@
 // the build version number indicates bug fixes
 
 #define SAFE_VERSION_MAJOR 0
-#define SAFE_VERSION_BUILD 6
+#define SAFE_VERSION_BUILD 7
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
