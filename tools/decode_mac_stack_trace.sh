@@ -2,8 +2,8 @@
 
 MAC_EXE="$1"
 shift
-
-echo "Traceback (most recent call last):"
+REVISION="$1"
+shift
 
 PRETTY=1
 
@@ -19,7 +19,7 @@ for ADDR in $@; do
                 FN_NAME=$(echo "$TBLINE" | sed 's/^\([^(]\{1,\}\).*$/\1/')
                 FILE_PATH=$(find . -name "$FILENAME" -type f | head -n 1)
                 echo "  File \"$FILE_PATH\", line $LINENO_, in $FN_NAME"
-                CODE_LINE=$(cat "$FILE_PATH" | tail "+$LINENO_" 2>/dev/null | head -n 1 | sed 's/^ *\([^ ].*\)$/    \1/')
+                CODE_LINE=$(hg cat -r "$REVISION" "$FILE_PATH" | tail "+$LINENO_" 2>/dev/null | head -n 1 | sed 's/^ *\([^ ].*\)$/    \1/')
                 echo "$CODE_LINE"
             fi
         else
