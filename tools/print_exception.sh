@@ -3,8 +3,8 @@
 set -e
 
 SCRIPT_DIR=$(dirname "$BASH_SOURCE[0]")
-EXCEPTION_ID="$1"
-DEBUG_INFO_DIR="$2"
+DEBUG_INFO_DIR="$1"
+EXCEPTION_ID="$2"
 
 EXCEPTION_FILE=$(mktemp -t safe_print_exception)
 
