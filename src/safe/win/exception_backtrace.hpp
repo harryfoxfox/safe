@@ -16,22 +16,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef __safe_mac_last_throw_backtrace_hpp
-#define __safe_mac_last_throw_backtrace_hpp
+#ifndef __safe_win_exception_backtrace_hpp
+#define __safe_win_exception_backtrace_hpp
 
-#include <safe/optional.hpp>
+#include <safe/exception_backtrace.hpp>
 
-#include <vector>
+#include <exception>
 
-#include <cstdint>
+namespace safe { namespace win {
 
-namespace safe { namespace mac {
-
-typedef std::vector<void *> Backtrace;
-typedef std::vector<std::ptrdiff_t> OffsetBacktrace;
-
-opt::optional<Backtrace>
-last_throw_backtrace();
+void *
+extract_raw_exception_pointer(std::exception_ptr p);
 
 OffsetBacktrace
 backtrace_to_offset_backtrace(const Backtrace &);

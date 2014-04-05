@@ -16,26 +16,38 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#ifndef __safe_last_throw_backtrace_hpp
-#define __safe_last_throw_backtrace_hpp
+#ifndef __safe_mac_mutex_hpp
+#define __safe_mac_mutex_hpp
 
-// yes i know defines are suboptimal, but it's mostly contained
-#ifdef __APPLE__
-#include <safe/mac/last_throw_backtrace.hpp>
-#define __NS mac;
-#elif _WIN32
-#include <safe/win/last_throw_backtrace.hpp>
-#define __NS win
-#else
-#error last_throw_backtrace not supported on this platform
-#endif
+#include <safe/deferred.hpp>
 
-namespace safe {
+#include <system_error>
 
-using safe::__NS::last_throw_backtrace;
+#include <pthread.h>
 
-}
+namespace safe { namespace mac {
 
-#undef __NS
+class Mutex {
+  pthread_mutex_t _mutex;
+
+public:
+  Mutex() {
+    auto ret = pthread_mutex_init(&_mutex, nullptr);
+    if (ret) throw std::system_error(ret, std::generic_category());
+  }
+
+  ~Mutex() {
+    pthread_mutex_destroy(&_mutex);
+  }
+
+  decltype(safe::create_deferred(pthread_mutex_unlock, &_mutex))
+  create_guard() {
+    auto ret = pthread_mutex_lock(&_mutex);
+    if (ret) throw std::system_error(ret, std::generic_category());
+    return safe::create_deferred(pthread_mutex_unlock, &_mutex);
+  }
+};
+
+}}
 
 #endif

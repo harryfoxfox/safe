@@ -21,15 +21,18 @@
 // yes i know defines are suboptimal, but it's mostly contained
 #ifdef __APPLE__
 #include <safe/mac/util.hpp>
+#include <safe/mac/exception_backtrace.hpp>
 #define platform mac
 #elif _WIN32
 #include <safe/win/util.hpp>
+#include <safe/win/exception_backtrace.hpp>
 #define platform win
 #else
 #error report_exception not supported on this platform
 #endif
 
 #include <safe/constants.h>
+#include <safe/exception_backtrace.hpp>
 #include <safe/open_url.hpp>
 #include <safe/util.hpp>
 #include <safe/version.h>
@@ -137,8 +140,7 @@ type(const T & t) {
 }
 
 void
-report_exception(ExceptionLocation el, std::exception_ptr eptr,
-                 opt::optional<std::vector<ptrdiff_t> > maybe_offset_stack_trace) {
+report_exception(ExceptionLocation el, std::exception_ptr eptr) {
   safe::URLQueryArgs qargs =
     {{"where", exception_location_to_string(el)},
      {"arch", get_target_arch_tag()},
@@ -161,8 +163,9 @@ report_exception(ExceptionLocation el, std::exception_ptr eptr,
     // dont send any info up
   }
 
-  if (maybe_offset_stack_trace) {
-    auto & offset_stack_trace = *maybe_offset_stack_trace;
+  auto maybe_backtrace = safe::backtrace_for_exception_ptr(eptr);
+  if (maybe_backtrace) {
+    auto offset_stack_trace = safe::platform::backtrace_to_offset_backtrace(std::move(*maybe_backtrace));
     auto ptr_to_hex_string = [] (ptrdiff_t ptr) {
       std::ostringstream os;
       os << std::showbase << std::hex << ptr;

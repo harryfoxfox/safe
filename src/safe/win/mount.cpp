@@ -22,7 +22,6 @@
 #include <safe/util.hpp>
 #include <safe/win/util.hpp>
 #include <safe/webdav_server.hpp>
-#include <safe/win/last_throw_backtrace.hpp>
 #include <w32util/string.hpp>
 #include <w32util/sync.hpp>
 
@@ -106,7 +105,6 @@ class MountEvent {
   port_t _listen_port;
   opt::optional<WebdavServerHandle> _ws;
   std::exception_ptr _eptr;
-  safe::win::Backtrace _bt;
 
   template <class F>
   void
@@ -149,11 +147,10 @@ public:
   }
 
   void
-  set_mount_exception(std::exception_ptr eptr, safe::win::Backtrace bt) {
+  set_mount_exception(std::exception_ptr eptr) {
     _receive_event([&] {
         _event_type = EVENT_TYPE_EXCEPTION;
         _eptr = std::move(eptr);
-        _bt = std::move(bt);
       });
   }
 
@@ -175,7 +172,6 @@ public:
     case EVENT_TYPE_FAIL:
       return opt::nullopt;
     case EVENT_TYPE_EXCEPTION:
-      safe::win::set_last_throw_backtrace(_bt);
       std::rethrow_exception(_eptr);
     default:
       /* notreached */

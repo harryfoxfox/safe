@@ -93,7 +93,7 @@
         return;
     }
 
-    auto onFail = ^(const std::exception_ptr & eptr, const safe::mac::Backtrace & backtrace) {
+    auto onFail = ^(const std::exception_ptr & eptr) {
         bool alerted = false;
         try {
             std::rethrow_exception(eptr);
@@ -119,7 +119,7 @@
                                  safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_TITLE),
                                  safe::mac::to_ns_string(SAFE_DIALOG_UNKNOWN_MOUNT_ERROR_MESSAGE),
                                  safe::ExceptionLocation::MOUNT,
-                                 eptr, backtrace);
+                                 eptr);
         }
     };
 
@@ -129,7 +129,7 @@
         maybe_encrypted_container_path = safe::mac::url_to_path(self->fs, self.locationPathControl.URL);
     }
     catch (...) {
-        onFail(std::current_exception(), *safe::mac::last_throw_backtrace());
+        onFail(std::current_exception());
         return;
     }
 

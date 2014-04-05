@@ -16,7 +16,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#import <safe/mac/last_throw_backtrace.hpp>
 #import <safe/mac/util.hpp>
 
 #import <safe/report_exception.hpp>
@@ -28,7 +27,6 @@
 struct UnknownErrorCtx {
     safe::ExceptionLocation location;
     std::exception_ptr eptr;
-    safe::mac::Backtrace backtrace;
 };
 
 @interface SFXUnknownErrorDelegate : NSObject
@@ -49,7 +47,7 @@ contextInfo:(void *)contextInfo {
     (void) alert;
     auto ctx = std::unique_ptr<UnknownErrorCtx>((UnknownErrorCtx *) contextInfo);
     if (returnCode == NSAlertSecondButtonReturn) {
-        safe::report_exception(ctx->location, ctx->eptr, safe::mac::backtrace_to_offset_backtrace(ctx->backtrace));
+        safe::report_exception(ctx->location, ctx->eptr);
     }
     [alert.window orderOut:self];
     [self.window performClose:self];
@@ -62,8 +60,7 @@ runUnknownErrorSheet(NSWindow *window,
                      NSString *title,
                      NSString *message,
                      safe::ExceptionLocation location,
-                     const std::exception_ptr & eptr,
-                     const safe::mac::Backtrace & backtrace) {
+                     const std::exception_ptr & eptr) {
     message = [message stringByAppendingString:safe::mac::to_ns_string(" Please help us improve by sending a bug report. It's automatic and "
                                                                        "no personal information is used.")];
 
@@ -82,5 +79,5 @@ runUnknownErrorSheet(NSWindow *window,
     [alert beginSheetModalForWindow:window
                       modalDelegate:del
                      didEndSelector:@selector(unknownErrorResponse:returnCode:contextInfo:)
-                        contextInfo:(void *) new UnknownErrorCtx { location, eptr, backtrace }];
+                        contextInfo:(void *) new UnknownErrorCtx { location, eptr }];
 }

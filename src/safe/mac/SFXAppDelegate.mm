@@ -15,7 +15,6 @@
 #import <safe/logging.h>
 #import <safe/mac/mount.hpp>
 #import <safe/parse.hpp>
-#import <safe/mac/last_throw_backtrace.hpp>
 #import <safe/mac/RecentlyUsedNSURLStoreV1.hpp>
 #import <safe/mac/shared_file_list.hpp>
 #import <safe/mac/system_changes.hpp>
@@ -973,12 +972,11 @@ my_fs_stream_callback(ConstFSEventStreamRef streamRef,
 static
 void
 my_terminate_handler() {
-    auto stack_trace = safe::mac::backtrace_to_offset_backtrace(*safe::mac::last_throw_backtrace());
-
     auto current_exc = std::current_exception();
 
     auto main_block_to_run = ^{
-        auto error_message = "An unexpected error occurred.";
+        auto error_message = ("An unexpected error occurred. Please help us improve by sending a bug report. It's automatic and "
+                              "no personal information is used.");
 
         [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
         NSAlert *alert = [[NSAlert alloc] init];
@@ -990,8 +988,7 @@ my_terminate_handler() {
 
         auto response = [alert runModal];
         if (response == NSAlertFirstButtonReturn) {
-            safe::report_exception(safe::ExceptionLocation::UNEXPECTED, current_exc,
-                                   stack_trace);
+            safe::report_exception(safe::ExceptionLocation::UNEXPECTED, current_exc);
         }
     };
 

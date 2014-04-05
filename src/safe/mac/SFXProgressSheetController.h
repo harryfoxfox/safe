@@ -7,7 +7,6 @@
 //
 
 #import <safe/either.hpp>
-#import <safe/mac/last_throw_backtrace.hpp>
 
 #import <Cocoa/Cocoa.h>
 
@@ -72,10 +71,10 @@ void
 showBlockingSheetMessage(NSWindow *w,
                          NSString *msg,
                          void (^onSuccess)(typename std::result_of<F(Args...)>::type),
-                         void (^onException)(const std::exception_ptr &, const safe::mac::Backtrace &),
+                         void (^onException)(const std::exception_ptr &),
                          F f,
                          Args... args) {
-    typedef std::pair<std::exception_ptr, safe::mac::Backtrace> ErrorType;
+    typedef std::exception_ptr ErrorType;
     typedef eit::either<ErrorType, typename std::result_of<F(Args...)>::type> ToRunResultType;
 
     auto toRun = ^{
@@ -83,14 +82,13 @@ showBlockingSheetMessage(NSWindow *w,
             return ToRunResultType(f(args...));
         }
         catch (...) {
-            return ToRunResultType(std::make_pair(std::current_exception(), *safe::mac::last_throw_backtrace()));
+            return ToRunResultType(std::current_exception());
         }
     };
 
     auto onComplete = ^(ToRunResultType res) {
         if (res.has_left()) {
-            const auto & error_type = res.left();
-            onException(error_type.first, error_type.second);
+            onException(std::move(res.left()));
         }
         else {
             onSuccess(std::move(res.right()));
@@ -105,7 +103,7 @@ void
 showBlockingSheetMessageNoRet(NSWindow *w,
                               NSString *msg,
                               void (^onSuccess)(void),
-                              void (^onException)(const std::exception_ptr &, const safe::mac::Backtrace &),
+                              void (^onException)(const std::exception_ptr &),
                               F f,
                               Args... args) {
     // NB: this method would be a lot more annoying to write without ARC
@@ -123,11 +121,10 @@ showBlockingSheetMessageNoRet(NSWindow *w,
                        }
                        catch (...) {
                            auto eptr = std::current_exception();
-                           auto maybe_backtrace = safe::mac::last_throw_backtrace();
                            dispatch_async(dispatch_get_main_queue(),
                                           ^{
                                               [NSApp endSheet:progressSheet.window];
-                                              onException(eptr, *maybe_backtrace);
+                                              onException(eptr);
                                           });
                        }
                    });

@@ -37,8 +37,7 @@ enum class ExceptionLocation {
 };
 
 void
-report_exception(ExceptionLocation, std::exception_ptr eptr,
-                 opt::optional<std::vector<ptrdiff_t>> maybe_offset_stack_trace = opt::nullopt);
+report_exception(ExceptionLocation, std::exception_ptr eptr);
 
 }
 

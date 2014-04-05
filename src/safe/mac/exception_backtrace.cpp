@@ -16,83 +16,98 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <safe/mac/last_throw_backtrace.hpp>
+#include <safe/mac/exception_backtrace.hpp>
 
-#include <safe/optional.hpp>
+#include <safe/exception_backtrace.hpp>
 #include <safe/util.hpp>
 
-#include <typeinfo>
+#include <system_error>
 #include <vector>
 
+#include <cassert>
 #include <cstdlib>
 
 #include <dlfcn.h>
 #include <execinfo.h>
 #include <pthread.h>
 
-// we wrap __cxa_throw to record last backtrace
-static pthread_once_t _g_last_backtrace_init_control = PTHREAD_ONCE_INIT;
-static pthread_key_t _g_last_backtrace_key;
+// NB: we wrap __cxa_throw to record last backtrace
 
-static
-void
-destroy_backtrace(void *a) {
-    if (a) delete (std::vector<void *> *) a;
-}
-
-static
-void
-init_last_backtrace_key() {
-    pthread_key_create(&_g_last_backtrace_key, destroy_backtrace);
-}
-
-// NB: for this to work, the C++ runtime library must be linked dynamically
-//     if linked statically, look into using GNU ld "--wrap" option
+// (for this to work, the C++ runtime library must be linked dynamically
+//  if linked statically, look into using GNU ld "--wrap" option)
 
 extern "C"
 void
 __cxa_throw(void *thrown_exception,
             std::type_info *tinfo, void (*dest)(void *)) __attribute__((noreturn));
 
+typedef void (*cxa_throw_fn_t)(void *, std::type_info *, void (*)(void *))  __attribute__((__noreturn__));
+
+static
+cxa_throw_fn_t
+get_original_cxa_throw() {
+  static auto original_cxa_throw = (cxa_throw_fn_t) dlsym(RTLD_NEXT, "__cxa_throw");
+  if (!original_cxa_throw) std::abort();
+  return original_cxa_throw;
+}
+
+class TlsBool {
+  pthread_key_t _key;
+
+public:
+  TlsBool() {
+    pthread_key_create(&_key, nullptr);
+  }
+
+  ~TlsBool() {
+    // TODO: log error
+    pthread_key_delete(_key);
+  }
+
+  TlsBool &
+  operator=(bool new_val) {
+    auto ret2 = pthread_setspecific(_key, (void *) new_val);
+    if (ret2) throw std::system_error(ret2, std::generic_category());
+    return *this;
+  }
+
+  operator bool() const {
+    return (bool) pthread_getspecific(_key);
+  }
+};
+
 extern "C"
 void
 __cxa_throw(void *thrown_exception,
             std::type_info *tinfo, void (*dest)(void *)) {
-    auto ret = pthread_once(&_g_last_backtrace_init_control, init_last_backtrace_key);
-    if (ret) std::abort();
+    static TlsBool is_currently_running;
 
-    {
-        // clear TLS stack trace
-        destroy_backtrace(pthread_getspecific(_g_last_backtrace_key));
+    if (is_currently_running) std::abort();
 
-        // get stack trace
-        void *stack_trace[4096];
-        auto addresses_written = backtrace(stack_trace, safe::numelementsf(stack_trace));
+    is_currently_running = true;
 
-        // save stack trace to TLS
-        auto ret2 = pthread_setspecific(_g_last_backtrace_key, new std::vector<void *>(&stack_trace[0], &stack_trace[addresses_written]));
-        if (ret2) std::abort();
-    }
+    // get stack trace
+    void *stack_trace[4096];
+    auto addresses_written = backtrace(stack_trace, safe::numelementsf(stack_trace));
 
-    typedef void (*cxa_throw_fn_t)(void *, std::type_info *, void (*)(void *))  __attribute__((__noreturn__));
+    safe::_set_backtrace_for_exception_ptr(thrown_exception,
+                                           safe::Backtrace(&stack_trace[0], &stack_trace[addresses_written]));
 
-    cxa_throw_fn_t original_cxa_throw = (cxa_throw_fn_t) dlsym(RTLD_NEXT, "__cxa_throw");
-    if (!original_cxa_throw) std::abort();
+    auto original_cxa_throw = get_original_cxa_throw();
+
+    is_currently_running = false;
 
     original_cxa_throw(thrown_exception, tinfo, dest);
 }
 
 namespace safe { namespace mac {
 
-opt::optional<Backtrace>
-last_throw_backtrace() {
-    auto ret = pthread_once(&_g_last_backtrace_init_control, init_last_backtrace_key);
-    if (ret) abort();
-
-    auto current_backtrace_p = (std::vector<void *> *) pthread_getspecific(_g_last_backtrace_key);
-    if (!current_backtrace_p) return opt::nullopt;
-
-    return *current_backtrace_p;
+void *
+extract_raw_exception_pointer(std::exception_ptr p) {
+  void *out;
+  static_assert(sizeof(p) == sizeof(out), "exception ptr is not a pointer?");
+  memcpy(&out, &p, sizeof(out));
+  return out;
 }
 
 OffsetBacktrace

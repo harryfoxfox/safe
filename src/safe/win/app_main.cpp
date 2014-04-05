@@ -34,7 +34,7 @@
 #include <safe/win/welcome_dialog.hpp>
 #include <safe/win/report_bug_dialog.hpp>
 #include <safe/win/general_safe_dialog.hpp>
-#include <safe/win/last_throw_backtrace.hpp>
+#include <safe/exception_backtrace.hpp>
 #include <w32util/async.hpp>
 #include <w32util/file.hpp>
 #include <w32util/gui_util.hpp>
@@ -1456,20 +1456,12 @@ exit_if_not_single_app_instance(std::function<int(DWORD)> on_exit) {
 static
 void
 my_terminate_handler() {
-  auto maybe_backtrace = safe::win::last_throw_backtrace();
-  if (!maybe_backtrace) abort();
+  auto choice =
+    safe::win::report_bug_dialog(nullptr, "An unexpected error occurred.");
 
-  auto stack_trace = safe::win::backtrace_to_offset_backtrace(std::move(*maybe_backtrace));
-
-  {
-    auto choice =
-      safe::win::report_bug_dialog(nullptr, "An unexpected error occurred.");
-
-    if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
-      safe::report_exception(safe::ExceptionLocation::UNEXPECTED,
-                             std::current_exception(),
-                             stack_trace);
-    }
+  if (choice == safe::win::ReportBugDialogChoice::REPORT_BUG) {
+    safe::report_exception(safe::ExceptionLocation::UNEXPECTED,
+                           std::current_exception());
   }
 
   std::_Exit(-1);

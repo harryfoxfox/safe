@@ -290,6 +290,7 @@ APP_SRCS = \
  mount_safe_dialog_logic.cpp \
  report_exception.cpp \
  open_url.cpp \
+ exception_backtrace.cpp \
  $(SRCS)
 
 WIN_APP_SRCS = \
@@ -306,7 +307,7 @@ WIN_APP_SRCS = \
  guids.cpp \
  report_bug_dialog.cpp \
  util.cpp \
- last_throw_backtrace.cpp
+ exception_backtrace.cpp
 
 WINDOWS_APP_MAIN_OBJS = \
  $(patsubst %,src/safe/%.o,${APP_SRCS}) \
