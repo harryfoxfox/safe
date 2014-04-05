@@ -19,13 +19,13 @@
 #ifndef __safe_windows_error_hpp
 #define __safe_windows_error_hpp
 
-#include <stdexcept>
-
 #include <safe/logging.h>
 #include <safe/lean_windows.h>
 
 #include <encfs/base/optional.h>
 
+#include <sstream>
+#include <stdexcept>
 #include <system_error>
 
 namespace w32util {
@@ -46,7 +46,11 @@ error_message(DWORD err_code) {
                    sizeof(error_buf_wide) / sizeof(error_buf_wide[0]),
                    NULL);
   if (!num_chars) {
-    return "Couldn't get error message, FormatMessageW() failed";
+    std::ostringstream os;
+    os << std::hex << std::showbase
+       << "Couldn't get error message for " << err_code << ", "
+       << "FormatMessageW() failed (" << GetLastError() << ")";
+    return os.str();
   }
 
   // clear \r\n
@@ -62,7 +66,11 @@ error_message(DWORD err_code) {
                         error_buf, sizeof(error_buf),
                         NULL, NULL);
   if (!required_buffer_size) {
-    return "Couldn't get error_message, WideCharToMultibyte() failed";
+    std::ostringstream os;
+    os << std::hex << std::showbase
+       << "Couldn't get error_message for " << err_code << ", "
+       << "WideCharToMultibyte() failed (" << GetLastError() << ")";
+    return os.str();
   }
 
   return std::string(error_buf, required_buffer_size);
@@ -193,20 +201,23 @@ public:
 
   std::error_condition
   default_error_condition(int cond) const noexcept {
-    if (cond & 0x80070000) {
-      return windows_error_category().default_error_condition(cond & 0x0000ffff);
+    HRESULT hr = {cond};
+
+    if (FACILITY_WINDOWS == HRESULT_FACILITY(hr)) {
+      return windows_error_category().default_error_condition(HRESULT_CODE(hr));
     }
 
     return std::error_category::default_error_condition(cond);
   }
 
   virtual std::string message(int cond) const {
-    if (cond & 0x80070000) {
-      return error_message((DWORD) (cond & 0x0000ffff));
+    HRESULT hr = {cond};
+
+    if (FACILITY_WINDOWS == HRESULT_FACILITY(hr)) {
+      hr = HRESULT_CODE(hr);
     }
-    else {
-      return "unknown com error!";
-    }
+
+    return error_message(hr);
   }
 };
 
@@ -232,6 +243,62 @@ check_hresult(F && f, Args && ...args) {
   auto hres = f(std::forward<Args>(args)...);
   if (!SUCCEEDED(hres)) throw com_error(hres);
   return hres;
+}
+
+class setupapi_error_category_cls : public std::error_category {
+public:
+  setupapi_error_category_cls() {}
+
+  virtual const char *name() const noexcept {
+    return "setupapi_error";
+  }
+
+  std::error_condition
+  default_error_condition(int cond) const noexcept {
+    HRESULT hr = HRESULT_FROM_SETUPAPI(cond);
+
+    if (FACILITY_WINDOWS == HRESULT_FACILITY(hr)) {
+      return windows_error_category().default_error_condition(HRESULT_CODE(hr));
+    }
+
+    return std::error_category::default_error_condition(cond);
+  }
+
+  virtual std::string message(int cond) const {
+    HRESULT hr = HRESULT_FROM_SETUPAPI(cond);
+
+    if (FACILITY_WINDOWS == HRESULT_FACILITY(hr)) {
+      hr = HRESULT_CODE(hr);
+    }
+
+    return error_message(hr);
+  }
+};
+
+inline
+const std::error_category &
+setupapi_error_category() noexcept {
+  static const setupapi_error_category_cls setupapi_error_category_instance;
+  return setupapi_error_category_instance;
+}
+
+class setupapi_error : public std::system_error {
+public:
+  setupapi_error(DWORD err_code)
+    : std::system_error(err_code, setupapi_error_category()) {
+    static_assert(sizeof(HRESULT) <= sizeof(int),
+		  "can't store HRESULT in an int!");
+  }
+};
+
+[[noreturn]]
+inline
+void
+throw_setupapi_error() {
+  // NB: for some reason on g++ the last error is reset 
+  //     when called on the same line as "throw"
+  auto err_code = GetLastError();
+  throw setupapi_error(err_code);
 }
 
 }
