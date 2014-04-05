@@ -39,6 +39,26 @@ enum class ExceptionLocation {
 void
 report_exception(ExceptionLocation, std::exception_ptr eptr);
 
+class TypedException : std::exception {
+  std::string _type_name;
+  std::string _what;
+
+public:
+  TypedException(std::string type_name, std::string what)
+    : _type_name(std::move(type_name))
+    , _what(std::move(what)) {}
+
+  const char *
+  what() const noexcept override {
+    return _what.c_str();
+  }
+
+  const char *
+  type_name() const {
+    return _type_name.c_str();
+  }
+};
+
 }
 
 #endif

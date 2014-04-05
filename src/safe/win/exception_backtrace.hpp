@@ -31,6 +31,9 @@ extract_raw_exception_pointer(std::exception_ptr p);
 OffsetBacktrace
 backtrace_to_offset_backtrace(const Backtrace &);
 
+void *
+get_image_base();
+
 }}
 
 #endif

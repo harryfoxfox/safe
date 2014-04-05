@@ -152,6 +152,12 @@ report_exception(ExceptionLocation el, std::exception_ptr eptr) {
   try {
     std::rethrow_exception(eptr);
   }
+  catch (const safe::TypedException & err) {
+    qargs.push_back({"what", err.what()});
+    // NB: type()/rtti requires polymorphic (virtual) types
+    //     this works because std::exception is virtual
+    qargs.push_back({"exception_type", demangle(err.type_name())});
+  }
   catch (const std::exception & err) {
     qargs.push_back({"what", err.what()});
     // NB: type()/rtti requires polymorphic (virtual) types

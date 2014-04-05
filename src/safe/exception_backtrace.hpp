@@ -42,6 +42,4 @@ _set_backtrace_for_exception_ptr(void *p, Backtrace backtrace);
 
 }
 
-#undef __NS
-
 #endif

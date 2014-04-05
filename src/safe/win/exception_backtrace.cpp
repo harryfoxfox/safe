@@ -54,6 +54,16 @@ pointer_difference_in_bytes(T *a, T *b) {
   return (uint8_t *) a - (uint8_t *) b;
 }
 
+void *
+get_image_base() {
+  HMODULE exe_module;
+  w32util::check_bool(GetModuleHandleExW,
+                      GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                      (LPCWSTR) &get_image_base,
+                      &exe_module);
+  return (void *) exe_module;
+}
+
 OffsetBacktrace
 backtrace_to_offset_backtrace(const Backtrace & backtrace) {
   HMODULE exe_module;

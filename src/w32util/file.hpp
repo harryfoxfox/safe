@@ -19,12 +19,15 @@
 #ifndef __Safe__windows_file_hpp
 #define __Safe__windows_file_hpp
 
-#include <cstddef>
+#include <w32util/error.hpp>
 
 #include <memory>
 #include <string>
+#include <streambuf>
 
-#include <safe/lean_windows.h>
+#include <cstddef>
+
+#include <windows.h>
 
 namespace w32util {
 
@@ -50,6 +53,77 @@ map_to_same_target(std::string a, std::string b);
 
 bool
 ensure_deleted(std::string path);
+
+// NB: we use a custom stream instead of fstream
+// because fstream is based on the CRT and that doesn't
+// handle unicode file names properly
+template <size_t BUF_SIZE>
+class HandleInputStreamBuf : public std::streambuf {
+  HANDLE _h;
+  typename HandleInputStreamBuf::char_type _buf[BUF_SIZE];
+
+public:
+  HandleInputStreamBuf(HANDLE h) : _h(h) {
+    setg(_buf, _buf, _buf);
+  }
+
+  int
+  underflow() {
+    if (gptr() == egptr()) {
+      DWORD amt_read;
+      auto success = ReadFile(_h, _buf,
+                              sizeof(_buf), &amt_read,
+                              nullptr);
+      if (success) setg(_buf, _buf, _buf + amt_read);
+    }
+
+    return gptr() == egptr()
+      ? HandleInputStreamBuf::traits_type::eof()
+      : HandleInputStreamBuf::traits_type::to_int_type(*gptr());
+  };
+};
+
+template <size_t BUF_SIZE>
+class HandleOutputStreamBuf : public std::streambuf {
+  HANDLE _h;
+  typename HandleOutputStreamBuf::char_type _buf[BUF_SIZE];
+
+public:
+  HandleOutputStreamBuf(HANDLE h) : _h(h) {
+    setp(_buf, _buf + sizeof(_buf) - 1);
+  }
+
+  ~HandleOutputStreamBuf() {
+    // TODO: log error
+    sync();
+  }
+
+  int
+  overflow(std::streambuf::int_type ch) {
+    auto end = pptr();
+    if (!std::streambuf::traits_type::eq_int_type(ch, std::streambuf::traits_type::eof())) {
+      *end++ = ch;
+    }
+
+    auto towrite = end - pbase();
+    size_t total_written = 0;
+    while (total_written != towrite) {
+      DWORD amt_written;
+      auto success = WriteFile(_h, pbase() + total_written,
+                               towrite - total_written, &amt_written,
+                               nullptr);
+      if (!success) return std::streambuf::traits_type::eof();
+      total_written += amt_written;
+    }
+    setp(_buf, _buf + sizeof(_buf) - 1);
+    return 0;
+  }
+
+  int
+  sync() {
+    return overflow(std::streambuf::traits_type::eof()) ? -1 : 0;
+  }
+};
 
 }
 

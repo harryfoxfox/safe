@@ -34,6 +34,7 @@
 #include <safe/win/welcome_dialog.hpp>
 #include <safe/win/report_bug_dialog.hpp>
 #include <safe/win/general_safe_dialog.hpp>
+#include <safe/win/exception_backtrace.hpp>
 #include <safe/exception_backtrace.hpp>
 #include <w32util/async.hpp>
 #include <w32util/file.hpp>
@@ -122,6 +123,8 @@ const wchar_t TASKBAR_CREATED_MESSAGE_NAME[] =
   L"TaskbarCreated";
 const wchar_t MAKE_REQUIRED_SYSTEM_CHANGES_ARG_W[] =
   L"/make_required_system_changes";
+const char MAKE_REQUIRED_SYSTEM_CHANGES_ARG[] =
+  "/make_required_system_changes";
 
 static
 void
@@ -891,6 +894,12 @@ make_required_system_changes() {
   return must_restart;
 }
 
+template <class T>
+T *
+add_to_pointer_in_bytes(T *a, ptrdiff_t b) {
+  return (T *)((uint8_t *) a + b);
+}
+
 static
 bool
 make_required_system_changes_as_admin(HWND hwnd) {
@@ -907,13 +916,23 @@ make_required_system_changes_as_admin(HWND hwnd) {
   // we have to start ourselves with a special flag
   auto application_path_w = w32util::widen(get_application_path());
 
+  // temp file path that sub-process will write output too
+  auto temp_file_path = w32util::get_temp_file_name(w32util::get_temp_path(),
+                                                    "SAFETEMP");
+
+  std::ostringstream parameters_stream;
+  parameters_stream << MAKE_REQUIRED_SYSTEM_CHANGES_ARG
+                    << " "
+                    << safe::wrap_quotes(temp_file_path);
+  auto parameters_w = w32util::widen(parameters_stream.str());
+
   SHELLEXECUTEINFOW shex;
   safe::zero_object(shex);
   shex.cbSize = sizeof(shex);
   shex.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOCLOSEPROCESS;
   shex.lpVerb = L"runas";
   shex.lpFile = application_path_w.c_str();
-  shex.lpParameters = MAKE_REQUIRED_SYSTEM_CHANGES_ARG_W;
+  shex.lpParameters = parameters_w.c_str();
   shex.nShow = SW_SHOWNORMAL;
 
   lbx_log_debug("Executing admin child, our pid is: %u",
@@ -941,7 +960,63 @@ make_required_system_changes_as_admin(HWND hwnd) {
   switch (exit_code) {
   case ERROR_SUCCESS: return false;
   case ERROR_SUCCESS_REBOOT_REQUIRED: return true;
-  default: throw w32util::windows_error(exit_code);
+  default: {
+    // command failed, read about exception info
+    auto hfile = w32util::check_invalid_handle(CreateFileW,
+                                               w32util::widen(temp_file_path).c_str(),
+                                               GENERIC_READ,
+                                               FILE_SHARE_READ | FILE_SHARE_DELETE,
+                                               nullptr,
+                                               OPEN_EXISTING,
+                                               FILE_ATTRIBUTE_NORMAL,
+                                               nullptr);
+    auto _close_file = safe::create_deferred(CloseHandle, hfile);
+
+    w32util::HandleInputStreamBuf<4096> streambuf(hfile);
+    std::istream is(&streambuf);
+    is.exceptions(std::istream::badbit | std::istream::failbit);
+
+    auto main_base = safe::win::get_image_base();
+    safe::Backtrace bt;
+
+    // first read out backtrace
+    while (true) {
+      // skip spaces (but not \n)
+      while (is.peek() == ' ') {
+        is.ignore();
+      }
+
+      if (is.peek() == '\n') {
+        is.ignore();
+        break;
+      }
+
+      std::ptrdiff_t return_address;
+      is >> return_address;
+
+      void *base_addr = nullptr;
+
+      // if the offset trace is actually an offset,
+      // then add our image base, otherwise leave as-is
+      if (return_address != (ptrdiff_t) -1 && return_address) {
+        base_addr = main_base;
+      }
+
+      bt.push_back(add_to_pointer_in_bytes(base_addr, return_address));
+    }
+
+    // read out type
+    std::string exception_type;
+    getline(is, exception_type);
+
+    // read out what
+    std::stringbuf what;
+    is >> &what;
+
+    auto eptr = std::make_exception_ptr(safe::TypedException(exception_type, what.str()));
+    safe::set_backtrace_for_exception_ptr(eptr, bt);
+    std::rethrow_exception(eptr);
+  }
   }
 }
 
@@ -1487,6 +1562,7 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
   lbx_log_debug("Hello world! CmdLine: %s", lpCmdLine);
 
   bool make_required_system_changes_ = false;
+  std::string output_path;
   {
     int argc;
     auto wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
@@ -1495,29 +1571,70 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     auto _free_wargv = safe::create_deferred(LocalFree, wargv);
 
     make_required_system_changes_ =
-      (argc == 2 &&
+      (argc == 3 &&
        !wcscmp(wargv[1], MAKE_REQUIRED_SYSTEM_CHANGES_ARG_W));
+
+    if (make_required_system_changes_) {
+      output_path = w32util::narrow(wargv[2]);
+    }
   }
 
   if (make_required_system_changes_) {
-    int toret;
+    int toret = -1;
+    std::string exception_what;
+    std::string exception_type;
+    std::exception_ptr eptr;
     try {
       auto restart_required = make_required_system_changes();
       toret = restart_required
         ? ERROR_SUCCESS_REBOOT_REQUIRED
         : ERROR_SUCCESS;
     }
-    catch (const w32util::windows_error & err) {
-      lbx_log_error("Failure to make system changes: %s", err.what());
-      toret = err.code().value();
-    }
     catch (const std::exception & err) {
-      lbx_log_error("Failure to make system changes: %s", err.what());
-      toret = -1;
+      eptr = std::current_exception();
+      exception_what = err.what();
+      exception_type = typeid(err).name();
+    }
+    catch (...) {
+      eptr = std::current_exception();
     }
 
     lbx_log_debug("installing driver is finished, status was: 0x%x",
                   (unsigned) toret);
+
+    // we had an error, we need to print details to temp file
+    // so parent can report error
+    if (eptr) {
+      auto hfile = w32util::check_invalid_handle(CreateFileW,
+                                                 w32util::widen(output_path).c_str(),
+                                                 GENERIC_WRITE,
+                                                 0,
+                                                 nullptr,
+                                                 OPEN_ALWAYS,
+                                                 FILE_ATTRIBUTE_NORMAL,
+                                                 nullptr);
+      auto _close_file = safe::create_deferred(CloseHandle, hfile);
+
+      w32util::HandleOutputStreamBuf<4096> streambuf(hfile);
+      std::ostream os(&streambuf);
+      os.exceptions(std::ostream::badbit | std::ostream::failbit);
+
+      // output stack trace
+      auto maybe_backtrace = safe::backtrace_for_exception_ptr(eptr);
+      if (maybe_backtrace) {
+        auto offset_backtrace = safe::win::backtrace_to_offset_backtrace(*maybe_backtrace);
+        for (const auto & a : offset_backtrace) {
+          os << a << " ";
+        }
+        os.put('\n');
+      }
+
+      // output exception name
+      os << exception_type << '\n';
+
+      // output exception what
+      os << exception_what;
+    }
 
     return toret;
   }
