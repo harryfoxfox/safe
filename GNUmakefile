@@ -229,17 +229,28 @@ safe_ramdisk_headers: clean
 	@mkdir -p $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
 	cp $(SAFE_RAMDISK_ROOT)/ramdisk_ioctl.h $(DEPS_INSTALL_ROOT)/include/safe_ramdisk
 
+UPDATE_DRIVER_SRCS := \
+ src/update_driver/main.cpp \
+ src/safe/win/ramdisk.cpp \
+ src/safe/exception_backtrace.cpp \
+ src/safe/win/exception_backtrace.cpp \
+ src/w32util/file.cpp \
+ src/w32util/sync.cpp \
+ src/safe/win/helper_binary.cpp
+
 # see note for safe_ramdisk: target above,
 # basically this is not run automatically when building deps
-$(DYN_RESOURCES_ROOT)/update_driver.exe: src/safe/win/ramdisk.cpp src/update_driver/main.cpp \
+$(DYN_RESOURCES_ROOT)/update_driver.exe: $(UPDATE_DRIVER_SRCS) \
  src/safe/*.h src/safe/*.hpp src/safe/win/*.hpp src/w32util/*.hpp
 	@mkdir -p $(DYN_RESOURCES_ROOT)
 
 	@echo "Build update_driver.exe"
 	$(if $(IS_WIN64_TARGET),true,echo "Not a 64-bit compiler" && false)
 	$(CXX) -o $@ -DSFX_EMBEDDED $(MY_CPPFLAGS) $(MY_CXXFLAGS) \
- $(ASLR_LINK_FLAGS) -mconsole $(if $(RELEASE),-static,) \
- src/update_driver/main.cpp src/safe/win/ramdisk.cpp -lsetupapi -lnewdev -lpsapi
+ $(ASLR_LINK_FLAGS) -Wl,--wrap,__cxa_throw -mconsole \
+ $(if $(RELEASE),-static,) \
+ $(UPDATE_DRIVER_SRCS) \
+ -lsetupapi -lnewdev -lpsapi -ldbghelp
 
 	$(if $(RELEASE),$(STRIP) -s $@,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@,)
@@ -307,7 +318,8 @@ WIN_APP_SRCS = \
  guids.cpp \
  report_bug_dialog.cpp \
  util.cpp \
- exception_backtrace.cpp
+ exception_backtrace.cpp \
+ helper_binary.cpp
 
 WINDOWS_APP_MAIN_OBJS = \
  $(patsubst %,src/safe/%.o,${APP_SRCS}) \

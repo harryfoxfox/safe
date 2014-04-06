@@ -32,8 +32,10 @@
 #endif
 
 #include <safe/optional.hpp>
+#include <safe/util.hpp>
 
 #include <algorithm>
+#include <sstream>
 #include <unordered_map>
 
 namespace safe {
@@ -112,6 +114,82 @@ _set_backtrace_for_exception_ptr(void *raw_eptr, Backtrace backtrace) {
 void
 set_backtrace_for_exception_ptr(std::exception_ptr p, Backtrace backtrace) {
   return _set_backtrace_for_exception_ptr(safe::platform::extract_raw_exception_pointer(p), std::move(backtrace));
+}
+
+static
+std::string
+get_target_fundamental_value_sizes() {
+  auto to_str = [] (size_t a) {
+    std::ostringstream os; os << a; return os.str();
+  };
+
+  return safe::join
+    (",",
+     safe::range_map
+     (to_str, std::vector<size_t>
+      {
+        sizeof(char),
+        sizeof(short),
+        sizeof(int),
+        sizeof(long),
+        sizeof(long long),
+        sizeof(void *),
+        sizeof(float),
+        sizeof(double),
+        sizeof(long double),
+      }
+      )
+     );
+}
+
+static
+const char *
+get_target_arch_tag() {
+#if defined(__amd64__) || defined(_M_AMD64)
+  return "amd64";
+#elif defined(__i386__) || defined(_M_IX86)
+  return "i386";
+#else
+#error "target abi identification not supported!"
+#endif
+}
+
+ExceptionInfo
+extract_exception_info(std::exception_ptr eptr) {
+  bool is_extra_binary_exception = false;
+  ExceptionInfo einfo;
+
+  try {
+    std::rethrow_exception(eptr);
+  }
+  catch (const safe::ExtraBinaryException & err) {
+    einfo = err.my_exception_info();
+    is_extra_binary_exception = true;
+  }
+  catch (const std::exception & err) {
+    einfo.maybe_what = std::string(err.what());
+    // NB: type()/rtti requires polymorphic (virtual) types
+    //     this works because std::exception is virtual
+    einfo.maybe_type_name = std::string(typeid(err).name());
+  }
+  catch (...) {
+    // this exception isn't based on std::exception
+    // dont send any info up
+  }
+
+  if (!is_extra_binary_exception) {
+    einfo.arch = get_target_arch_tag();
+    einfo.value_sizes = get_target_fundamental_value_sizes();
+
+    // if this wasn't an external binary, get the backtrace from
+    // the eptr
+    auto maybe_backtrace = safe::backtrace_for_exception_ptr(eptr);
+    if (maybe_backtrace) {
+      einfo.maybe_offset_backtrace = safe::platform::backtrace_to_offset_backtrace(std::move(*maybe_backtrace));
+    }
+  }
+
+  return einfo;
 }
 
 }

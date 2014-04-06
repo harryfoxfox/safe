@@ -91,8 +91,17 @@ open_url(const std::string & url);
 std::string
 get_parseable_platform_version();
 
+// NB: this is inline here to support update_driver.exe
+//     so that it doesn't have to compile util.cpp in
+inline
 bool
-running_on_winxp();
+running_on_winxp() {
+  OSVERSIONINFOW vi;
+  safe::zero_object(vi);
+  vi.dwOSVersionInfoSize = sizeof(vi);
+  w32util::check_bool(GetVersionEx, &vi);
+  return vi.dwMajorVersion < 6;
+}
 
 bool
 running_on_vista();

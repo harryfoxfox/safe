@@ -40,6 +40,41 @@ set_backtrace_for_exception_ptr(std::exception_ptr p, Backtrace backtrace);
 void
 _set_backtrace_for_exception_ptr(void *p, Backtrace backtrace);
 
+struct ExceptionInfo {
+  opt::optional<std::string> maybe_type_name;
+  opt::optional<std::string> maybe_what;
+  opt::optional<std::string> maybe_module;
+  opt::optional<safe::OffsetBacktrace> maybe_offset_backtrace;
+  std::string arch;
+  std::string value_sizes;
+};
+
+ExceptionInfo
+extract_exception_info(std::exception_ptr eptr);
+
+class ExtraBinaryException : public std::exception {
+  ExceptionInfo _einfo;
+
+public:
+  ExtraBinaryException(ExceptionInfo einfo)
+    : _einfo(std::move(einfo)) {}
+
+  // the "exception_info" name conflicts with something
+  const ExceptionInfo &
+  my_exception_info() const {
+    return _einfo;
+  }
+
+  const char *
+  what() const noexcept override {
+    auto & maybe_what = my_exception_info().maybe_what;
+    if (maybe_what) {
+      return maybe_what->c_str();
+    }
+    else return "<unknown>";
+  }
+};
+
 }
 
 #endif

@@ -68,45 +68,6 @@ exception_location_to_string(ExceptionLocation el) {
 #undef _CV
 }
 
-static
-std::string
-get_target_fundamental_value_sizes() {
-  auto to_str = [] (size_t a) {
-    std::ostringstream os; os << a; return os.str();
-  };
-
-  return safe::join
-    (",",
-     safe::range_map
-     (to_str, std::vector<size_t>
-      {
-        sizeof(char),
-        sizeof(short),
-        sizeof(int),
-        sizeof(long),
-        sizeof(long long),
-        sizeof(void *),
-        sizeof(float),
-        sizeof(double),
-        sizeof(long double),
-      }
-      )
-     );
-}
-
-static
-const char *
-get_target_arch_tag() {
-#if defined(__amd64__) || defined(_M_AMD64)
-  return "amd64";
-#elif defined(__i386__) || defined(_M_IX86)
-  return "i386";
-#else
-#error "target abi identification not supported!"
-#endif
-}
-
-
 #ifdef __GNUG__
 
 std::string
@@ -133,52 +94,40 @@ demangle(const char *name) {
 
 #endif
 
-template <class T>
-std::string
-type(const T & t) {
-  return demangle(typeid(t).name());
-}
-
 void
 report_exception(ExceptionLocation el, std::exception_ptr eptr) {
+  auto einfo = extract_exception_info(eptr);
+
   safe::URLQueryArgs qargs =
     {{"where", exception_location_to_string(el)},
-     {"arch", get_target_arch_tag()},
      {"version", SAFE_VERSION_STR},
      {"target_platform", safe::platform::get_target_platform_tag()},
      {"platform", safe::platform::get_parseable_platform_version()},
-     {"value_sizes", get_target_fundamental_value_sizes()}};
+     {"arch", einfo.arch},
+     {"value_sizes", einfo.value_sizes}};
 
-  try {
-    std::rethrow_exception(eptr);
-  }
-  catch (const safe::TypedException & err) {
-    qargs.push_back({"what", err.what()});
-    // NB: type()/rtti requires polymorphic (virtual) types
-    //     this works because std::exception is virtual
-    qargs.push_back({"exception_type", demangle(err.type_name())});
-  }
-  catch (const std::exception & err) {
-    qargs.push_back({"what", err.what()});
-    // NB: type()/rtti requires polymorphic (virtual) types
-    //     this works because std::exception is virtual
-    qargs.push_back({"exception_type", type(err)});
-  }
-  catch (...) {
-    // this exception isn't based on std::exception
-    // dont send any info up
+  if (einfo.maybe_module) {
+    qargs.push_back({"module", std::move(*einfo.maybe_module)});
   }
 
-  auto maybe_backtrace = safe::backtrace_for_exception_ptr(eptr);
-  if (maybe_backtrace) {
-    auto offset_stack_trace = safe::platform::backtrace_to_offset_backtrace(std::move(*maybe_backtrace));
+  if (einfo.maybe_what) {
+    qargs.push_back({"what", std::move(*einfo.maybe_what)});
+  }
+
+  if (einfo.maybe_type_name) {
+    qargs.push_back({"exception_type", demangle(einfo.maybe_type_name->c_str())});
+  }
+          
+  if (einfo.maybe_offset_backtrace) {
     auto ptr_to_hex_string = [] (ptrdiff_t ptr) {
       std::ostringstream os;
       os << std::showbase << std::hex << ptr;
       return os.str();
     };
+
     qargs.push_back({"offset_stack_trace",
-          safe::join(",", safe::range_map(ptr_to_hex_string, offset_stack_trace))
+          safe::join(",", safe::range_map(ptr_to_hex_string,
+                                          *einfo.maybe_offset_backtrace))
           });
   }
 

@@ -155,15 +155,16 @@ __wrap___cxa_throw(void *thrown_exception,
   CONTEXT ctx;
   memset(&ctx, 0, sizeof(ctx));
   ctx.ContextFlags = CONTEXT_FULL;
-  ctx.Eip = (DWORD) return_address;
-  ctx.Esp = (DWORD) sp_before_our_call;
-  ctx.Ebp = (DWORD) bp_before_our_call;
 
   // init stack frame structure
   STACKFRAME64 frame;
   memset(&frame, 0, sizeof(frame));
 
 #if defined(__i386__) && !defined(__x86_64)
+  ctx.Eip = (DWORD) return_address;
+  ctx.Esp = (DWORD) sp_before_our_call;
+  ctx.Ebp = (DWORD) bp_before_our_call;
+
   frame.AddrPC.Offset = ctx.Eip;
   frame.AddrPC.Mode = AddrModeFlat;
   frame.AddrStack.Offset = ctx.Esp;
@@ -172,6 +173,10 @@ __wrap___cxa_throw(void *thrown_exception,
   frame.AddrFrame.Mode = AddrModeFlat;
   const auto machine = IMAGE_FILE_MACHINE_I386;
 #elif defined(__x86_64)
+  ctx.Rip = (DWORD_PTR) return_address;
+  ctx.Rsp = (DWORD_PTR) sp_before_our_call;
+  ctx.Rbp = (DWORD_PTR) bp_before_our_call;
+
   frame.AddrPC.Offset = ctx.Rip;
   frame.AddrPC.Mode = AddrModeFlat;
   frame.AddrStack.Offset = ctx.Rsp;

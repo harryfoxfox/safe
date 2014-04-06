@@ -54,6 +54,9 @@ map_to_same_target(std::string a, std::string b);
 bool
 ensure_deleted(std::string path);
 
+std::string
+basename(std::string path);
+
 // NB: we use a custom stream instead of fstream
 // because fstream is based on the CRT and that doesn't
 // handle unicode file names properly

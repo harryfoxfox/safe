@@ -21,6 +21,7 @@
 #include <safe/deferred.hpp>
 #include <safe/win/resources.h>
 #include <safe/util.hpp>
+#include <safe/win/helper_binary.hpp>
 #include <w32util/error.hpp>
 #include <w32util/file.hpp>
 #include <w32util/string.hpp>
@@ -318,10 +319,11 @@ create_device_and_install_driver(std::string temp_dir,
     store_resource_to_file(ID_SFX_UPDATE_DRV, SFX_BIN_RSRC,
 			   binary_path);
 
-    auto parameters = (safe::wrap_quotes(hardware_id) + " " +
-                       safe::wrap_quotes(full_inf_path));
-
-    auto exit_code = run_command_sync(binary_path, parameters);
+    auto exit_code =
+      safe::win::run_helper_binary(false,
+                                   binary_path,
+                                   {hardware_id,
+                                    full_inf_path});
 
     switch (exit_code) {
     case ERROR_SUCCESS: return false;

@@ -16,28 +16,29 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <safe/win/ramdisk.hpp>
-#include <safe/win/helper_binary.hpp>
+#ifndef __safe_win_helper_binary_hpp
+#define __safe_win_helper_binary_hpp
 
-#include <w32util/error.hpp>
-#include <w32util/string.hpp>
+#include <functional>
+#include <string>
+#include <vector>
 
 #include <windows.h>
-#include <shellapi.h>
 
-extern "C"
-int main() {
-  return safe::win::helper_binary_main
-    ([] (std::vector<std::string> arguments) {
-      auto hardware_id = arguments.at(0);
-      auto inf_file_path = arguments.at(1);
+namespace safe { namespace win {
 
-      auto restart_required =
-        safe::win::create_device_and_install_driver_native(hardware_id,
-                                                           inf_file_path);
+DWORD
+run_helper_binary(bool elevate,
+                  std::string path,
+                  std::vector<std::string> arguments);
 
-      return restart_required
-        ? ERROR_SUCCESS_REBOOT_REQUIRED
-        : ERROR_SUCCESS;
-    });
-}
+DWORD
+helper_binary_main_no_argparse(std::string output_path,
+                               std::function<DWORD()> fn);
+
+DWORD
+helper_binary_main(std::function<DWORD(std::vector<std::string>)> fn);
+
+}}
+
+#endif
