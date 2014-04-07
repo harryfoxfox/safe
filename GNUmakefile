@@ -251,9 +251,10 @@ $(DYN_RESOURCES_ROOT)/update_driver.exe: $(UPDATE_DRIVER_SRCS) \
  $(if $(RELEASE),-static,) \
  $(UPDATE_DRIVER_SRCS) \
  -lsetupapi -lnewdev -lpsapi
-
+	cp $@ $(DYN_RESOURCES_ROOT)/update_driver-Debug.exe
 	$(if $(RELEASE),$(STRIP) -s $@,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@,)
+	$(if $(RELEASE),signtool sign //v //s MY //n "Rian Hunter" //fd sha1 //t "http://timestamp.digicert.com" $@,)
 
 update_driver: $(DYN_RESOURCES_ROOT)/update_driver.exe
 
