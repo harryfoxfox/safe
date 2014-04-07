@@ -203,7 +203,7 @@ public:
   default_error_condition(int cond) const noexcept {
     HRESULT hr = {cond};
 
-    if (FACILITY_WINDOWS == HRESULT_FACILITY(hr)) {
+    if (FACILITY_WIN32 == HRESULT_FACILITY(hr)) {
       return windows_error_category().default_error_condition(HRESULT_CODE(hr));
     }
 
@@ -213,7 +213,7 @@ public:
   virtual std::string message(int cond) const {
     HRESULT hr = {cond};
 
-    if (FACILITY_WINDOWS == HRESULT_FACILITY(hr)) {
+    if (FACILITY_WIN32 == HRESULT_FACILITY(hr)) {
       hr = HRESULT_CODE(hr);
     }
 
@@ -256,22 +256,12 @@ public:
   std::error_condition
   default_error_condition(int cond) const noexcept {
     HRESULT hr = HRESULT_FROM_SETUPAPI(cond);
-
-    if (FACILITY_WINDOWS == HRESULT_FACILITY(hr)) {
-      return windows_error_category().default_error_condition(HRESULT_CODE(hr));
-    }
-
-    return std::error_category::default_error_condition(cond);
+    return com_error_category().default_error_condition(hr);
   }
 
   virtual std::string message(int cond) const {
     HRESULT hr = HRESULT_FROM_SETUPAPI(cond);
-
-    if (FACILITY_WINDOWS == HRESULT_FACILITY(hr)) {
-      hr = HRESULT_CODE(hr);
-    }
-
-    return error_message(hr);
+    return com_error_category().message(hr);
   }
 };
 
