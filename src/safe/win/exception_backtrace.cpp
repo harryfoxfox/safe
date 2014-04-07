@@ -30,7 +30,6 @@
 #include <unordered_map>
 
 #include <windows.h>
-#include <dbghelp.h>
 
 // NB: Warning: this file is highly platform dependent
 //     it requires a specific:
@@ -127,6 +126,8 @@ public:
   }
 };
 
+void *_dummy = nullptr;
+
 extern "C"
 void
 __wrap___cxa_throw(void *thrown_exception,
@@ -141,67 +142,16 @@ __wrap___cxa_throw(void *thrown_exception,
 
   // NB: by using __builtin_frame_address() we force this function to have a
   //     frame pointer
-  auto cur_bp = __builtin_frame_address(0);
-
-  // derive pseudo-processor state after call to __cxa_throw()
-#if defined(__i386__) || defined(__x86_64)
-  auto bp_before_our_call = *(void **) cur_bp;
-  auto sp_before_our_call = (void *) (((intptr_t) cur_bp) + 2 * sizeof(void *));
-  auto return_address = *(void **) ((intptr_t) cur_bp + sizeof(void *));
-#else
-#error arch not supported!
-#endif
-
-  CONTEXT ctx;
-  memset(&ctx, 0, sizeof(ctx));
-  ctx.ContextFlags = CONTEXT_FULL;
-
-  // init stack frame structure
-  STACKFRAME64 frame;
-  memset(&frame, 0, sizeof(frame));
-
-#if defined(__i386__) && !defined(__x86_64)
-  ctx.Eip = (DWORD) return_address;
-  ctx.Esp = (DWORD) sp_before_our_call;
-  ctx.Ebp = (DWORD) bp_before_our_call;
-
-  frame.AddrPC.Offset = ctx.Eip;
-  frame.AddrPC.Mode = AddrModeFlat;
-  frame.AddrStack.Offset = ctx.Esp;
-  frame.AddrStack.Mode = AddrModeFlat;
-  frame.AddrFrame.Offset = ctx.Ebp;
-  frame.AddrFrame.Mode = AddrModeFlat;
-  const auto machine = IMAGE_FILE_MACHINE_I386;
-#elif defined(__x86_64)
-  ctx.Rip = (DWORD_PTR) return_address;
-  ctx.Rsp = (DWORD_PTR) sp_before_our_call;
-  ctx.Rbp = (DWORD_PTR) bp_before_our_call;
-
-  frame.AddrPC.Offset = ctx.Rip;
-  frame.AddrPC.Mode = AddrModeFlat;
-  frame.AddrStack.Offset = ctx.Rsp;
-  frame.AddrStack.Mode = AddrModeFlat;
-  frame.AddrFrame.Offset = ctx.Rbp;
-  frame.AddrFrame.Mode = AddrModeFlat;
-  const auto machine = IMAGE_FILE_MACHINE_AMD64;
-#else
-#error "arch not supported!"
-#endif
-
-  auto process = GetCurrentProcess();
-  auto thread = GetCurrentThread();
+  _dummy = __builtin_frame_address(0);
 
   // get stack trace
-  auto stack_trace = std::vector<void *>();
-  while (true) {
-    auto success = StackWalk64(machine, process, thread,
-                               &frame, &ctx,
-                               nullptr, SymFunctionTableAccess64, SymGetModuleBase64,
-                               nullptr);
-    if (!success) break;
+  void *frames[256];
+  auto frames_captured =
+    CaptureStackBackTrace(1, safe::numelementsf(frames),
+                          frames, nullptr);
 
-    stack_trace.push_back((void *) frame.AddrPC.Offset);
-  }
+  auto stack_trace = std::vector<void *>(&frames[0],
+                                         &frames[frames_captured]);
 
   safe::_set_backtrace_for_exception_ptr(thrown_exception, std::move(stack_trace));
 

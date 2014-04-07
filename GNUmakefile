@@ -250,7 +250,7 @@ $(DYN_RESOURCES_ROOT)/update_driver.exe: $(UPDATE_DRIVER_SRCS) \
  $(ASLR_LINK_FLAGS) -Wl,--wrap,__cxa_throw -mconsole \
  $(if $(RELEASE),-static,) \
  $(UPDATE_DRIVER_SRCS) \
- -lsetupapi -lnewdev -lpsapi -ldbghelp
+ -lsetupapi -lnewdev -lpsapi
 
 	$(if $(RELEASE),$(STRIP) -s $@,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@,)
@@ -363,7 +363,7 @@ $(EXE_NAME):
         $(if $(RELEASE),-static,) \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
- -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof -ldbghelp
+ -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof
 	cp $@ Safe-Debug.exe
 	$(if $(RELEASE),$(STRIP) -s $@,)
 	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@,)

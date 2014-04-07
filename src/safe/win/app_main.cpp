@@ -75,7 +75,6 @@
 #include <dbt.h>
 #include <shlobj.h>
 #include <powrprof.h>
-#include <dbghelp.h>
 
 #ifndef GW_ENABLEDPOPUP
 #define GW_ENABLEDPOPUP 6
