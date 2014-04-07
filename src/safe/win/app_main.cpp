@@ -1141,8 +1141,6 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
       if (first_run) { set_app_to_run_at_login(true); }
 
-      add_tray_icon(hwnd);
-
       // Set app icons (window icon and alt+tab icon)
       // NB: we only need to set this on top-level windows,
       //     dialogs that use this window as a parent derive
@@ -1192,6 +1190,8 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	made_system_changes = true;
       }
+
+      add_tray_icon(hwnd);
 
       auto choice =
         safe::win::WelcomeDialogChoice::NOTHING;

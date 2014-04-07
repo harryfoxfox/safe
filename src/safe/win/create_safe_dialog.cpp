@@ -28,12 +28,14 @@
 #include <w32util/dialog.hpp>
 #include <w32util/error.hpp>
 #include <w32util/gui_util.hpp>
+#include <w32util/shell.hpp>
 
 #include <encfs/fs/FsIO.h>
 
 #include <sstream>
 
 #include <windows.h>
+#include <shlobj.h>
 
 namespace safe { namespace win {
 
@@ -63,6 +65,10 @@ create_new_safe_dialog_proc(HWND hwnd, UINT Message,
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) ctx);
     w32util::center_window_in_monitor(hwnd);
     w32util::set_default_dialog_font(hwnd);
+
+    // set location default to home folder
+    auto home_path = w32util::get_folder_path(CSIDL_PERSONAL, 0);
+    SetDlgItemTextW(hwnd, IDC_LOCATION, w32util::widen(home_path).c_str());
 
     return TRUE;
   }

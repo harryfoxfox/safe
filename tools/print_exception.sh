@@ -16,7 +16,8 @@ is_safe () {
 }
 
 if ! is_safe "$EXCEPTION_FILE" [; then
-    echo "bad shell file from remote host"
+    echo "bad shell file from remote host:"
+    cat "$EXCEPTION_FILE"
     exit -1
 fi
 
