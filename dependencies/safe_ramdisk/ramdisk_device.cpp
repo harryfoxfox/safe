@@ -1470,7 +1470,7 @@ NTSTATUS
 read_registry_alloc_size(PDEVICE_OBJECT pdo,
                          PLARGE_INTEGER out) {
   HANDLE reg_key;
-  auto status = IoOpenDeviceRegistryKey(pdo, PLUGPLAY_REGKEY_DRIVER,
+  auto status = IoOpenDeviceRegistryKey(pdo, PLUGPLAY_REGKEY_DEVICE,
                                         KEY_READ, &reg_key);
   if (!NT_SUCCESS(status)) {
     nt_log_error("Error while doing IoOpenDeviceRegistryKey: %s (0x%x)",
