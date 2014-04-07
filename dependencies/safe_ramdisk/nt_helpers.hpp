@@ -63,4 +63,6 @@ check_parameter_size(PIO_STACK_LOCATION io_stack, size_t s) noexcept;
 #define nt_log_info nt_log
 #define nt_log_error nt_log
 
+#define _assert(exp,file,line) RtlAssert((PVOID)exp,(PVOID)file,line,nullptr)
+
 #endif
