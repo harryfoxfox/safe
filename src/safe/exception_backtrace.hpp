@@ -22,6 +22,7 @@
 #include <safe/optional.hpp>
 
 #include <exception>
+#include <string>
 #include <vector>
 
 #include <cstdint>
