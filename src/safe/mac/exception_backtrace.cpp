@@ -76,6 +76,8 @@ public:
   }
 };
 
+void *_dummy = nullptr;
+
 extern "C"
 void
 __cxa_throw(void *thrown_exception,
@@ -86,12 +88,16 @@ __cxa_throw(void *thrown_exception,
 
     is_currently_running = true;
 
+    // NB: by using __builtin_frame_address() we force this function to have a
+    //     frame pointer
+    _dummy = __builtin_frame_address(0);
+
     // get stack trace
     void *stack_trace[4096];
     auto addresses_written = backtrace(stack_trace, safe::numelementsf(stack_trace));
 
     safe::_set_backtrace_for_exception_ptr(thrown_exception,
-                                           safe::Backtrace(&stack_trace[0], &stack_trace[addresses_written]));
+                                           safe::Backtrace(&stack_trace[1], &stack_trace[addresses_written]));
 
     auto original_cxa_throw = get_original_cxa_throw();
 
