@@ -1,4 +1,4 @@
-# Safe
+# Safe: Encrypted File System
 
 Welcome to the Safe source!
 
