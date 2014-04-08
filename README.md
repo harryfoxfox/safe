@@ -126,7 +126,7 @@ Here are some manifestations of Safe's design philosophy:
 ## Building
 
 Before building make sure you have Safe's other dependencies in the
-same directory as this package: davfuse, encfs, google-glog,
+same directory as this package: davfuse, encfs,
 protobuf. These dependencies are not stock and contain Safe-specific
 patches, they are also versioned with Safe, so you need to make
 sure you have the right ones.
