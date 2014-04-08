@@ -188,7 +188,7 @@ dependencies.
 
 ## Copyright
 
-Copyright (c) 2013,2014 Rian Hunter
+Copyright (c) 2013, 2014 Rian Hunter
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
