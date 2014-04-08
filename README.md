@@ -18,7 +18,7 @@ Safe is licensed under the [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) and
 * `GNUmakefile`: main make file
 * `Xcode/`: Xcode project
 * `assets/`: non-code source (e.g. vector graphics)
-* `dependencies/`: packaged third-party dependencies
+* `dependencies/`: packaged third-party dependency sources
 * `resources/`: pre-built static binary resources for Windows build
 * `src/`: all source code, organized by component
 * `tools/`: build and development tools, usually scripts
