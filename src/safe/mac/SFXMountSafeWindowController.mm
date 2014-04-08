@@ -241,15 +241,24 @@
 
     [self showPassword:nil];
 
+    bool kick_off_mount = false;
     if (self.fileURL) {
         self.locationPathControl.URL = self.fileURL;
         [self.window makeFirstResponder:self.currentPasswordView];
         [self locationURLChanged:nil];
+
+        // if a password was loaded at initialization, then kick
+        // off a mount
+        if (self.password.length) {
+            kick_off_mount = true;
+        }
     }
 
     [self shouldRememberPasswordChanged];
 
     safe::mac::initialize_window_for_dialog(self.window);
+
+    if (kick_off_mount) [self confirmStart:nil];
 }
 
 @end
