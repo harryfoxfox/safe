@@ -47,7 +47,7 @@ system UI library.
 
 ## Source Code Conventions
 
-Safe is a (C++11)[https://en.wikipedia.org/wiki/C++11] project.
+Safe is a [C++11](https://en.wikipedia.org/wiki/C++11) project.
 Certain C++11 features are adopted to
 minimize the chances of programming errors using C++11 features.
 
