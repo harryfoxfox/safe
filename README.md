@@ -137,7 +137,7 @@ If you downloaded the Safe source release package (the .tar.gz),
 you should already have all the right files.
 
 If you obtained Safe from the GitHub repository, make sure
-you checked out http://github.com/safeapp/saferoot. That is a
+you checked out http://github.com/safeapp/safe-meta. That is a
 meta-repository that contains each correctly versioned dependency
 as a git submodule.
 
