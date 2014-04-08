@@ -22,8 +22,8 @@
 // the major version number indicates new release
 // the build version number indicates bug fixes
 
-#define SAFE_VERSION_MAJOR 0
-#define SAFE_VERSION_BUILD 8
+#define SAFE_VERSION_MAJOR 1
+#define SAFE_VERSION_BUILD 0
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
