@@ -11,7 +11,7 @@ Safe aims to be cross-platform and currently runs on Windows and
 Mac OS X. It works with all applications and file types and
 can store encrypted files anywhere.
 
-Safe is licensed under the GPLv3 and is based on free software.
+Safe is licensed under the [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) and is based on free software.
 
 ## Repository Layout
 
@@ -25,9 +25,9 @@ Safe is licensed under the GPLv3 and is based on free software.
 
 ## Architecture
 
-Safe's core is composed of two projects, Davfuse and EncFS.
-Davfuse is essentially used as an embeddable webdav server.
-EncFS is an encryption file system based on FUSE.
+Safe's core is composed of two projects, [Davfuse](http://github.com/rianhunter/davfuse) and [EncFS](http://www.arg0.net/encfs).
+Davfuse is essentially used as an embeddable [WebDAV](http://webdav.org/) server.
+EncFS is an encryption file system based on [FUSE](http://fuse.sourceforge.net/).
 
 Safe glues Davfuse, EncFS and the file
 system together to run a loopback WebDAV server that does on-the-fly
@@ -47,7 +47,8 @@ system UI library.
 
 ## Source Code Conventions
 
-Safe is a C++11 project. Certain C++11 features are adopted to
+Safe is a (C++11)[https://en.wikipedia.org/wiki/C++11] project.
+Certain C++11 features are adopted to
 minimize the chances of programming errors using C++11 features.
 
 * All functions signal error via the C++ exception mechanism.
@@ -60,7 +61,8 @@ minimize the chances of programming errors using C++11 features.
   mechanisms, use `std::unique_ptr::unique_ptr()` and
   `std::unique_ptr::release()`.
 
-* Use RAII for C-based resources via `safe::create_deferred()` and
+* Use [RAII](https://en.wikipedia.org/wiki/RAII) 
+  for C-based resources via `safe::create_deferred()` and
   `safe::ManagedResource<>`.
 
 Since Safe is a cross-platform project, it is sometimes necessary
