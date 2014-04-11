@@ -140,7 +140,7 @@ escape_double_quotes(std::string mount_name) {
 static
 std::string
 webdav_mount_url(port_t listen_port, std::string name) {
-  return get_webdav_url_root(listen_port) + name + "/";
+    return safe::get_webdav_mount_url(listen_port, name);
 }
 
 void

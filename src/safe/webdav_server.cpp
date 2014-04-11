@@ -311,6 +311,18 @@ get_webdav_url_root(port_t port) {
   return build_uri_root.str();
 }
 
+std::string
+get_webdav_mount_url(port_t port, std::string mount_name) {
+  auto url_root = get_webdav_url_root(port);
+  auto path = "/" + mount_name;
+  const auto encoded_path =
+    encode_urlpath(path.data(), path.size());
+  if (!encoded_path) throw std::runtime_error("encoding mount name failed!");
+  auto _destroy_encoded_internal_root =
+    create_destroyer(encoded_path, free);
+  return url_root + &encoded_path[1];
+}
+
 }
 
 #ifndef _CXX_STATIC_BUILD

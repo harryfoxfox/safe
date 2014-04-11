@@ -83,6 +83,9 @@ run_webdav_server(std::shared_ptr<encfs::FsIO> fs_io,
 std::string
 get_webdav_url_root(port_t port);
 
+std::string
+get_webdav_mount_url(port_t port, std::string mount_name);
+
 }
 
 #ifdef _CXX_STATIC_BUILD
