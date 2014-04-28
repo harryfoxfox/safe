@@ -9,6 +9,7 @@
 #import <safe/mac/SFXAboutWindowController.h>
 #import <safe/mac/SFXCreateSafeWindowController.h>
 #import <safe/mac/SFXMountSafeWindowController.h>
+#import <safe/mac/SFXSystemChangesWindowController.h>
 #import <safe/mac/SFXWelcomeWindowController.h>
 
 #import <safe/mac/mount.hpp>
@@ -32,7 +33,7 @@
 @property (retain) NSRunningApplication *lastActiveApp;
 @property (retain) SFXWelcomeWindowController *welcomeWindowDelegate;
 @property (retain) NSWindowController *aboutWindowController;
-@property (retain) SFXWelcomeWindowController *systemChangesWindowController;
+@property (retain) SFXSystemChangesWindowController *systemChangesWindowController;
 
 
 - (void)createNewSafe:(id)sender;

@@ -36,6 +36,8 @@
 		963F170B1877AF7B00E50B2A /* SFXWelcomeWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 963F17091877AF7B00E50B2A /* SFXWelcomeWindowController.mm */; };
 		963F170C1877AF7B00E50B2A /* SFXWelcomeWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 963F170A1877AF7B00E50B2A /* SFXWelcomeWindowController.xib */; };
 		9644D029182F251600ED4911 /* mount.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9644D028182F251600ED4911 /* mount.mm */; };
+		96497A73190DB56900E2310D /* SFXSystemChangesWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96497A71190DB56900E2310D /* SFXSystemChangesWindowController.mm */; };
+		96497A74190DB56900E2310D /* SFXSystemChangesWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 96497A72190DB56900E2310D /* SFXSystemChangesWindowController.xib */; };
 		96597DFE1878B0F500073EC9 /* menuBarIconTemplate.icns in Resources */ = {isa = PBXBuildFile; fileRef = 96597DFD1878B0F500073EC9 /* menuBarIconTemplate.icns */; };
 		96597E011878D9B700073EC9 /* SFXAboutWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96597E001878D9B700073EC9 /* SFXAboutWindowController.mm */; };
 		966ED38C184F2F3100463408 /* create_safe_dialog_logic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 966ED386184F2F3100463408 /* create_safe_dialog_logic.cpp */; };
@@ -124,6 +126,9 @@
 		963F170A1877AF7B00E50B2A /* SFXWelcomeWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = SFXWelcomeWindowController.xib; path = ../src/safe/mac/SFXWelcomeWindowController.xib; sourceTree = "<group>"; };
 		9644D028182F251600ED4911 /* mount.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mount.mm; path = ../src/safe/mac/mount.mm; sourceTree = "<group>"; };
 		9644D02A182F3E4100ED4911 /* logging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logging.h; path = ../src/safe/logging.h; sourceTree = "<group>"; };
+		96497A70190DB56900E2310D /* SFXSystemChangesWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFXSystemChangesWindowController.h; path = ../src/safe/mac/SFXSystemChangesWindowController.h; sourceTree = "<group>"; };
+		96497A71190DB56900E2310D /* SFXSystemChangesWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = SFXSystemChangesWindowController.mm; path = ../src/safe/mac/SFXSystemChangesWindowController.mm; sourceTree = "<group>"; };
+		96497A72190DB56900E2310D /* SFXSystemChangesWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = SFXSystemChangesWindowController.xib; path = ../src/safe/mac/SFXSystemChangesWindowController.xib; sourceTree = "<group>"; };
 		9653052618319A9900676ABE /* recent_paths_storage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = recent_paths_storage.hpp; path = ../src/safe/recent_paths_storage.hpp; sourceTree = "<group>"; };
 		96597DFD1878B0F500073EC9 /* menuBarIconTemplate.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = menuBarIconTemplate.icns; sourceTree = SOURCE_ROOT; };
 		96597DFF1878D9B700073EC9 /* SFXAboutWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SFXAboutWindowController.h; path = ../src/safe/mac/SFXAboutWindowController.h; sourceTree = "<group>"; };
@@ -342,6 +347,9 @@
 				9632FB79182F13BD003C3F2E /* SFXMountSafeWindowController.mm */,
 				9632FB7A182F13BD003C3F2E /* SFXMountSafeWindowController.xib */,
 				9632FB71182F107F003C3F2E /* SFXAppMain.xib */,
+				96497A70190DB56900E2310D /* SFXSystemChangesWindowController.h */,
+				96497A71190DB56900E2310D /* SFXSystemChangesWindowController.mm */,
+				96497A72190DB56900E2310D /* SFXSystemChangesWindowController.xib */,
 			);
 			name = "ui-mac";
 			sourceTree = "<group>";
@@ -480,6 +488,7 @@
 				96597DFE1878B0F500073EC9 /* menuBarIconTemplate.icns in Resources */,
 				96230554182C708400913551 /* SFXProgressSheetController.xib in Resources */,
 				9623054A182B2E5200913551 /* SFXCreateSafeWindowController.xib in Resources */,
+				96497A74190DB56900E2310D /* SFXSystemChangesWindowController.xib in Resources */,
 				96E1639517A7528D009BE867 /* output.icns in Resources */,
 				9632FB72182F107F003C3F2E /* SFXAppMain.xib in Resources */,
 			);
@@ -526,6 +535,7 @@
 				96185B3418361C1900A2A67F /* unicode_fs.mm in Sources */,
 				96F0640C18B58D7E0014F6A7 /* shared_file_list.mm in Sources */,
 				9610176D182A1499001D50E8 /* CFsToFsIO.cpp in Sources */,
+				96497A73190DB56900E2310D /* SFXSystemChangesWindowController.mm in Sources */,
 				96230549182B2E5200913551 /* SFXCreateSafeWindowController.mm in Sources */,
 				96F36AC3185470B500DEE145 /* webdav_server.cpp in Sources */,
 				96C695A318EF828300F769AC /* exception_backtrace.cpp in Sources */,
