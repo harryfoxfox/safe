@@ -695,6 +695,7 @@ set_cookie_file_at_url_async(NSString *file_name, NSURL *appSupportDir, bool set
         // initialize state
         self.shouldRememberPassword = YES;
         self.showSystemChangesWarningDialog = YES;
+        set_app_to_run_at_login(true);
     }
 
     [self _setupStatusBar];
@@ -704,8 +705,6 @@ set_cookie_file_at_url_async(NSString *file_name, NSURL *appSupportDir, bool set
         [self mountNthMostRecentlyMounted:0];
     }
     else if (have_run_app_before) {
-        set_app_to_run_at_login(true);
-        
         if ([self haveUserNotifications]) {
             [self notifyUserTitle:safe::mac::to_ns_string(SAFE_TRAY_ICON_WELCOME_TITLE)
                           message:safe::mac::to_ns_string(SAFE_TRAY_ICON_MAC_WELCOME_MSG)
