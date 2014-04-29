@@ -1084,6 +1084,50 @@ run_winxp_warning_dialog(HWND hwnd) {
   return ret == XPWarningChoice::CONTINUE;
 }
 
+static
+void
+start_app_ui(HWND hwnd, WindowData & wd, bool made_system_changes) {
+  // this code mimics the structure in src/safe/mac/SFXAppDelegate.mm of the
+  // "-(void)startAppUI" method
+
+  auto first_run = is_first_run(wd);
+
+  // initialize app state
+  if (first_run) set_app_to_run_at_login(true);
+
+  add_tray_icon(hwnd);
+
+  record_app_start(wd);
+
+  auto choice = first_run
+    ? safe::win::welcome_dialog(hwnd, made_system_changes)
+    : safe::win::WelcomeDialogChoice::NOTHING;
+
+  auto should_bubble = true;
+  // NB: if any of the initial actions were canceled,
+  //     then we should still do an introductory bubble
+  if (choice == safe::win::WelcomeDialogChoice::CREATE_NEW_SAFE) {
+    should_bubble = !run_create_dialog(hwnd, wd);
+  }
+  else if (choice == safe::win::WelcomeDialogChoice::MOUNT_EXISTING_SAFE) {
+    should_bubble = !run_mount_dialog(hwnd, wd);
+  }
+  else if (!wd.recent_mount_paths_store.empty()) {
+    assert(!first_run);
+    // if the user has mounted paths in the past
+    // auto start the mount dialog with the most recently path
+    // populated in the ui
+    should_bubble = !run_mount_dialog(hwnd, wd,
+                                      std::get<0>(wd.recent_mount_paths_store.front().resolve_path()));
+  }
+
+  if (should_bubble) {
+    bubble_msg(hwnd,
+               SAFE_TRAY_ICON_WELCOME_TITLE,
+               SAFE_TRAY_ICON_WELCOME_MSG);
+  }
+}
+
 #define NO_FALLTHROUGH(c) assert(false); case c
 
 static
@@ -1137,10 +1181,6 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
       const auto wd = (WindowData *) ((LPCREATESTRUCT) lParam)->lpCreateParams;
       SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR) wd);
 
-      auto first_run = is_first_run(*wd);
-
-      if (first_run) { set_app_to_run_at_login(true); }
-
       // Set app icons (window icon and alt+tab icon)
       // NB: we only need to set this on top-level windows,
       //     dialogs that use this window as a parent derive
@@ -1154,18 +1194,19 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                   (LPARAM) LoadImageW(GetModuleHandle(NULL), IDI_SFX_APP,
                                       IMAGE_ICON, 32, 32, LR_SHARED));
 
+      // Now begin app startup
+      if (is_reboot_pending()) {
+        run_reboot_sequence(hwnd);
+        PostMessage(hwnd, WM_CLOSE, 0, 0);
+        return 0;
+      }
+
       if (safe::win::running_on_winxp()) {
         auto should_continue = run_winxp_warning_dialog(hwnd);
         if (!should_continue) {
           PostMessage(hwnd, WM_CLOSE, 0, 0);
           return 0;
         }
-      }
-
-      if (is_reboot_pending()) {
-        run_reboot_sequence(hwnd);
-        PostMessage(hwnd, WM_CLOSE, 0, 0);
-        return 0;
       }
 
       bool made_system_changes = false;
@@ -1191,38 +1232,7 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	made_system_changes = true;
       }
 
-      add_tray_icon(hwnd);
-
-      auto choice =
-        safe::win::WelcomeDialogChoice::NOTHING;
-      if (first_run) choice = safe::win::welcome_dialog(hwnd,
-                                                           made_system_changes);
-
-      record_app_start(*wd);
-
-      auto should_bubble = true;
-      // NB: if any of the initial actions were canceled,
-      //     then we should still do an introductory bubble
-      if (choice == safe::win::WelcomeDialogChoice::CREATE_NEW_SAFE) {
-        should_bubble = !run_create_dialog(hwnd, *wd);
-      }
-      else if (choice == safe::win::WelcomeDialogChoice::MOUNT_EXISTING_SAFE) {
-        should_bubble = !run_mount_dialog(hwnd, *wd);
-      }
-      else if (!wd->recent_mount_paths_store.empty()) {
-        assert(!first_run);
-        // if the user has mounted paths in the past
-        // auto start the mount dialog with the most recently path
-        // populated in the ui
-        should_bubble = !run_mount_dialog(hwnd, *wd,
-                                          std::get<0>(wd->recent_mount_paths_store.front().resolve_path()));
-      }
-
-      if (should_bubble) {
-        bubble_msg(hwnd,
-                   SAFE_TRAY_ICON_WELCOME_TITLE,
-                   SAFE_TRAY_ICON_WELCOME_MSG);
-      }
+      start_app_ui(hwnd, *wd, made_system_changes);
 
       // return -1 on failure, CreateWindow* will return NULL
       return 0;
