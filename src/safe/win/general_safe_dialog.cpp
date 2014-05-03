@@ -26,6 +26,8 @@
 #include <w32util/gui_util.hpp>
 #include <safe/util.hpp>
 
+#include <utility>
+
 #include <windows.h>
 
 namespace safe { namespace win {
@@ -35,6 +37,7 @@ namespace _int {
 enum {
   IDC_LOGO = 1000,
   IDC_STATIC,
+  IDC_SUPPRESS_MSG,
   IDC_BUTTON_BASE,
 };
 
@@ -71,6 +74,11 @@ general_safe_dialog_proc(HWND hwnd, UINT Message,
   }
   case WM_COMMAND: {
     auto command = LOWORD(wParam);
+    if (command == IDC_SUPPRESS_MSG) {
+      // no-op
+      break;
+    }
+
     opt::optional<generic_choice_type> choice_number;
     if (command == IDCANCEL) {
       if (ctx->close_action) {
@@ -84,7 +92,9 @@ general_safe_dialog_proc(HWND hwnd, UINT Message,
     }
 
     if (choice_number) {
-      EndDialog(hwnd, send_dialog_box_data(*choice_number));
+      auto suppress_msg =
+        BST_CHECKED == IsDlgButtonChecked(hwnd, IDC_SUPPRESS_MSG);
+      EndDialog(hwnd, send_dialog_box_data(std::make_pair(*choice_number, suppress_msg)));
     }
     break;
   }
@@ -94,13 +104,14 @@ general_safe_dialog_proc(HWND hwnd, UINT Message,
   return TRUE;
 }
 
-_int::generic_choice_type
-generic_general_safe_dialog(HWND hwnd,
-                            std::string title,
-                            std::string msg,
-                            _int::generic_choices_type choices,
-                            opt::optional<ButtonAction<generic_choice_type>> close_action,
-                            GeneralDialogIcon t) {
+std::pair<_int::generic_choice_type, bool>
+generic_general_safe_dialog_with_suppression(HWND hwnd,
+                                             std::string title,
+                                             std::string msg,
+                                             _int::generic_choices_type choices,
+                                             opt::optional<ButtonAction<generic_choice_type>> close_action,
+                                             GeneralDialogIcon t,
+                                             bool show_suppression_dialog) {
   using namespace w32util;
 
   auto message_font = get_message_font();
@@ -151,21 +162,27 @@ generic_general_safe_dialog(HWND hwnd,
   const unit_t BODY_WIDTH = std::max(MIN_BODY_WIDTH, body_width);
 
   const unit_t TEXT_WIDTH = BODY_WIDTH;
-  const unit_t TEXT_HEIGHT = (FONT_HEIGHT * num_characters(msg) /
-                              MAX_CHARS_PER_LINE);
+  const unit_t TEXT_HEIGHT =
+    // NB: get_text_height() expects logical units, we're assuming this is the
+    //     the same as screen units
+    // NB: inline convert dialog box units <=> screen units
+    w32util::get_text_height(hwnd, message_font, msg,
+                             TEXT_WIDTH * base_units.cx / 4) * 8 / base_units.cy;
   const unit_t TEXT_LEFT = ICON_LEFT + ICON_WIDTH + ICON_MARGIN;
   const unit_t TEXT_TOP = TOP_MARGIN;
 
-  const unit_t BUTTON_HEIGHT = 11;
+  const unit_t BUTTON_HEIGHT = 14;
 
-  const unit_t DIALOG_WIDTH =
-    LEFT_MARGIN + ICON_WIDTH + ICON_MARGIN + BODY_WIDTH + RIGHT_MARGIN;
-  const unit_t DIALOG_HEIGHT =
-    TOP_MARGIN +
-    std::max(ICON_HEIGHT,
-             TEXT_HEIGHT + FONT_HEIGHT +
-             BUTTON_HEIGHT) +
-    BOTTOM_MARGIN;
+  unit_t BODY_HEIGHT = (TEXT_HEIGHT + FONT_HEIGHT +
+                        BUTTON_HEIGHT);
+
+  const unit_t SUPPRESS_MSG_MARGIN = FONT_HEIGHT;
+  const unit_t SUPPRESS_MSG_HEIGHT = FONT_HEIGHT;
+  const unit_t SUPPRESS_MSG_WIDTH = BODY_WIDTH;
+
+  if (show_suppression_dialog) {
+    BODY_HEIGHT += SUPPRESS_MSG_HEIGHT + SUPPRESS_MSG_MARGIN;
+  }
 
   auto controls =
     std::vector<DialogItemDesc>({
@@ -180,6 +197,14 @@ generic_general_safe_dialog(HWND hwnd,
                                ICON_WIDTH, ICON_HEIGHT));
   }
 
+  const unit_t DIALOG_WIDTH =
+    LEFT_MARGIN + ICON_WIDTH + ICON_MARGIN + BODY_WIDTH + RIGHT_MARGIN;
+
+  const unit_t DIALOG_HEIGHT =
+    TOP_MARGIN +
+    std::max(ICON_HEIGHT, BODY_HEIGHT) +
+    BOTTOM_MARGIN;
+
   // discover button offsets
   auto left_offset = DIALOG_WIDTH - RIGHT_MARGIN;
   std::vector<decltype(left_offset)> button_offsets;
@@ -190,8 +215,20 @@ generic_general_safe_dialog(HWND hwnd,
     left_offset -= BUTTON_SPACING;
   }
 
-  // add all buttons
   auto BUTTON_TOP = DIALOG_HEIGHT - BOTTOM_MARGIN - BUTTON_HEIGHT;
+
+  if (show_suppression_dialog) {
+    const unit_t SUPPRESS_MSG_LEFT = TEXT_LEFT;
+    const unit_t SUPPRESS_MSG_TOP = BUTTON_TOP - SUPPRESS_MSG_MARGIN - SUPPRESS_MSG_HEIGHT;
+
+    controls.push_back(CheckBox("Do not show this message again",
+                                IDC_SUPPRESS_MSG,
+                                SUPPRESS_MSG_LEFT, SUPPRESS_MSG_TOP,
+                                SUPPRESS_MSG_WIDTH, SUPPRESS_MSG_HEIGHT,
+                                BS_AUTOCHECKBOX | WS_TABSTOP));
+  }
+
+  // add all buttons
   for (const auto & e : enumerate(range_zip(reversed(button_offsets),
                                             choices))) {
     auto left_offset = e.value.first;
@@ -230,7 +267,7 @@ generic_general_safe_dialog(HWND hwnd,
                                     (LPARAM) &ctx);
   if (ret == 0 || ret == (INT_PTR) -1) throw_windows_error();
 
-  return receive_dialog_box_data<generic_choice_type>(ret);
+  return receive_dialog_box_data<std::pair<generic_choice_type, bool>>(ret);
 }
 
 }

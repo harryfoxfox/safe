@@ -22,6 +22,7 @@
 #include <functional>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include <encfs/base/optional.h>
@@ -81,11 +82,33 @@ namespace _int {
   typedef unsigned generic_choice_type;
   typedef std::vector<Choice<generic_choice_type>> generic_choices_type;
 
-  generic_choice_type
-  generic_general_safe_dialog(HWND, std::string, std::string,
-                              generic_choices_type,
-                              opt::optional<ButtonAction<generic_choice_type>>,
-                              GeneralDialogIcon);
+  std::pair<generic_choice_type, bool>
+  generic_general_safe_dialog_with_suppression(HWND, std::string, std::string,
+                                               generic_choices_type,
+                                               opt::optional<ButtonAction<generic_choice_type>>,
+                                               GeneralDialogIcon, bool show_suppression_checkbox);
+}
+
+template <class ChoiceType, class RangeType>
+std::pair<ChoiceType, bool>
+general_safe_dialog_with_suppression(HWND hwnd,
+                                     std::string title,
+                                     std::string msg, RangeType r,
+                                     opt::optional<ButtonAction<ChoiceType>> close_action = opt::nullopt,
+                                     GeneralDialogIcon t = GeneralDialogIcon::SAFE,
+                                     bool show_suppression_checkbox = false) {
+  auto choices = _int::generic_choices_type(r.begin(), r.end());
+  auto new_close_action = close_action
+    ? opt::make_optional(convert_button_action<_int::generic_choice_type>(*close_action))
+    : opt::nullopt;
+
+  auto ret =
+    _int::generic_general_safe_dialog_with_suppression(hwnd, title, msg,
+                                                       std::move(choices),
+                                                       new_close_action,
+                                                       t, show_suppression_checkbox);
+
+  return std::make_pair(static_cast<ChoiceType>(ret.first), ret.second);
 }
 
 template <class ChoiceType, class RangeType>
@@ -95,20 +118,10 @@ general_safe_dialog(HWND hwnd,
                     std::string msg, RangeType && r,
                     opt::optional<ButtonAction<ChoiceType>> close_action = opt::nullopt,
                     GeneralDialogIcon t = GeneralDialogIcon::SAFE) {
-  auto choices =
-    _int::generic_choices_type(std::forward<RangeType>(r).begin(),
-			       std::forward<RangeType>(r).end());
-  auto new_close_action = close_action
-    ? opt::make_optional(convert_button_action<_int::generic_choice_type>(*close_action))
-    : opt::nullopt;
-
-  auto ret =
-    _int::generic_general_safe_dialog(hwnd, title, msg,
-                                      std::move(choices),
-                                      new_close_action,
-                                      t);
-
-  return static_cast<ChoiceType>(ret);
+  return general_safe_dialog_with_suppression(hwnd, std::move(title),
+                                              std::move(msg), std::forward<RangeType>(r),
+                                              std::move(close_action),
+                                              t, false).first;
 }
 
 }}
