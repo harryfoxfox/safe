@@ -19,14 +19,17 @@
 #ifndef __Safe__system_changes_mac__
 #define __Safe__system_changes_mac__
 
+#include <functional>
 #include <iostream>
+#include <string>
+#include <vector>
 
 namespace safe { namespace mac {
 
 typedef std::function<void(const char *, const char *const [])> ShellRun;
 
-bool
-system_changes_are_required();
+std::vector<std::string>
+required_system_changes();
 
 bool
 make_required_system_changes_common(ShellRun shell_run);

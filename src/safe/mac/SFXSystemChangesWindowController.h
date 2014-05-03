@@ -9,7 +9,6 @@
 #import <Cocoa/Cocoa.h>
 
 typedef enum {
-    SYSTEM_CHANGES_ACTION_NONE,
     SYSTEM_CHANGES_ACTION_MORE_INFO,
     SYSTEM_CHANGES_ACTION_DONT_MAKE_CHANGES,
     SYSTEM_CHANGES_ACTION_MAKE_CHANGES,
@@ -17,14 +16,17 @@ typedef enum {
 
 @class SFXSystemChangesWindowController;
 
-typedef void (^SystemChangesWindowBlock)(SFXSystemChangesWindowController *, system_changes_action_t);
+typedef void (^SystemChangesWindowBlock)(SFXSystemChangesWindowController *, system_changes_action_t, BOOL dontShowAgain);
 
 @interface SFXSystemChangesWindowController : NSWindowController
 
 @property (nonatomic, strong) SystemChangesWindowBlock block;
+@property (nonatomic, strong) NSString *message;
 @property (weak) IBOutlet NSButton *makeChangesButton;
+@property (weak) IBOutlet NSTextField *messageTextField;
+@property (weak) IBOutlet NSButton *suppressMessageCheckbox;
 
-- (id)initWithBlock:(SystemChangesWindowBlock)block;
+- (id)initWithBlock:(SystemChangesWindowBlock)block andMessage:(NSString *)msg;
 
 - (IBAction)moreInfoPressed:(id)sender;
 - (IBAction)dontMakeChangesPressed:(id)sender;

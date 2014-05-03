@@ -679,13 +679,13 @@ set_cookie_file_at_url_async(NSString *file_name, NSURL *appSupportDir, bool set
                                  nil, true, nil);
 }
 
-- (BOOL)showSystemChangesWarningDialog {
-    return check_for_cookie_file_at_url(safe::mac::to_ns_string(SAFE_SHOW_SYSTEM_CHANGES_WARNING_COOKIE_FILENAME), nil);
+- (BOOL)showSystemChangesInstallDialog {
+    return !check_for_cookie_file_at_url(safe::mac::to_ns_string(SAFE_DONT_SHOW_SYSTEM_CHANGES_INSTALL_COOKIE_FILENAME), nil);
 }
 
-- (void)setShowSystemChangesWarningDialog:(BOOL)setting {
-    set_cookie_file_at_url_async(safe::mac::to_ns_string(SAFE_SHOW_SYSTEM_CHANGES_WARNING_COOKIE_FILENAME),
-                                 nil, setting, nil);
+- (void)setShowSystemChangesInstallDialog:(BOOL)setting {
+    set_cookie_file_at_url_async(safe::mac::to_ns_string(SAFE_DONT_SHOW_SYSTEM_CHANGES_INSTALL_COOKIE_FILENAME),
+                                 nil, !setting, nil);
 }
 
 - (void)startAppUI {
@@ -694,7 +694,6 @@ set_cookie_file_at_url_async(NSString *file_name, NSURL *appSupportDir, bool set
     if (!have_run_app_before) {
         // initialize state
         self.shouldRememberPassword = YES;
-        self.showSystemChangesWarningDialog = YES;
         set_app_to_run_at_login(true);
     }
 
@@ -869,7 +868,9 @@ set_reboot_pending(bool waiting) {
     else assert(false);
 }
 
-- (void)systemChangesResponseWithController:(SFXSystemChangesWindowController *)c action:(system_changes_action_t)action {
+- (void)systemChangesResponseWithController:(SFXSystemChangesWindowController *)c action:(system_changes_action_t)action dontShowAgain:(BOOL)dontShowAgain {
+    self.showSystemChangesInstallDialog = !dontShowAgain;
+
     switch (action) {
         case SYSTEM_CHANGES_ACTION_MAKE_CHANGES: {
             [self makeSystemChangesProgressDialog:c.window];
@@ -885,21 +886,6 @@ set_reboot_pending(bool waiting) {
         case SYSTEM_CHANGES_ACTION_MORE_INFO: {
             // pop-up more info dialog
             safe::mac::open_url(SAFE_MAC_SYSTEM_CHANGES_INFO_WEBSITE);
-            return;
-        }
-        case SYSTEM_CHANGES_ACTION_NONE: {
-            // show confirmation dialog
-            NSAlert *alert = [[NSAlert alloc] init];
-            [alert setMessageText:@"Really Quit?"];
-            [alert setInformativeText:@"Are you sure you want to quit Safe?"];
-            [alert addButtonWithTitle:@"Quit"];
-            [alert addButtonWithTitle:@"Cancel"];
-            [alert setAlertStyle:NSWarningAlertStyle];
-            
-            [alert beginSheetModalForWindow:c.window
-                              modalDelegate:self
-                             didEndSelector:@selector(cancelSystemChangesResponse:returnCode:contextInfo:)
-                                contextInfo:(__bridge void *)c.window];
             return;
         }
     }
@@ -1019,28 +1005,6 @@ my_terminate_handler() {
     std::_Exit(-1);
 }
 
-- (void)confirmNoSystemChangesResponse:(NSAlert *)alert
-                            returnCode:(NSInteger)returnCode
-                           contextInfo:(void *)contextInfo {
-    NSWindow *window = (__bridge NSWindow *) contextInfo;
-    (void) window;
-
-    self.showSystemChangesWarningDialog = alert.suppressionButton.state != NSOnState;
-
-    if (returnCode == NSAlertFirstButtonReturn) {
-        [self startAppUI];
-    }
-    else if (returnCode == NSAlertSecondButtonReturn) {
-        // let NSAlert close sheet
-        [self makeSystemChangesProgressDialog:alert.window];
-
-    }
-    else if (returnCode == NSAlertThirdButtonReturn) {
-
-    }
-    else assert(false);
-}
-
 - (void)handleMoreInfoButton:(id)sender {
     (void) sender;
     safe::mac::open_url(SAFE_MAC_SYSTEM_CHANGES_INFO_WEBSITE);
@@ -1138,44 +1102,31 @@ my_terminate_handler() {
 
     if (is_reboot_pending()) {
         [self runRebootSequence:nil];
-    } else if (safe::mac::system_changes_are_required()) {
-        if ([self haveStartedAppBefore:nil]) {
-            if (self.showSystemChangesWarningDialog) {
-                // show confirmation dialog
-                NSAlert *alert = [[NSAlert alloc] init];
-                [alert setMessageText:@"About to run Safe on an insecure system!"];
-                [alert setInformativeText:@"In your system's current configuration you risk having the data you store in Safe leaking to your hard drive without encryption. If this isn't intentional we strongly recommend choosing the \"Make Changes\" button to preserve your privacy, otherwise you may continue to use Safe as-is."];
-                [alert addButtonWithTitle:@"Continue"];
-                [alert addButtonWithTitle:@"Make Changes"];
-                [alert addButtonWithTitle:@"More Info"];
-                [alert setAlertStyle:NSWarningAlertStyle];
-                [alert setShowsSuppressionButton:YES];
+        return;
+    }
 
-                // make sure the last button doesn't close alert window
-                NSButton *lastButton = alert.buttons[2];
-                lastButton.target = self;
-                lastButton.action = @selector(handleMoreInfoButton:);
+    auto changes_required = safe::mac::required_system_changes();
+    if (!changes_required.empty() &&
+        self.showSystemChangesInstallDialog) {
 
-                [alert beginSheetModalForWindow:nil
-                                  modalDelegate:self
-                                 didEndSelector:@selector(confirmNoSystemChangesResponse:returnCode:contextInfo:)
-                                    contextInfo:nil];
-            }
-            else {
-                [self startAppUI];
-            }
+        std::ostringstream os;
+        os << SAFE_DIALOG_SYSTEM_CHANGES_HEADER;
+        os << "\n\n";
+        for (const auto & change : changes_required) {
+            os << "    " << SAFE_DIALOG_SYSTEM_CHANGES_BULLET << " " << change << "\n";
         }
-        else {
-            [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
-            decltype(self) __weak weakSelf = self;
-            self.systemChangesWindowController =
-            [[SFXSystemChangesWindowController alloc]
-             initWithBlock:^(SFXSystemChangesWindowController *c, system_changes_action_t action) {
-                 [weakSelf systemChangesResponseWithController:c action:action];
-             }
-             ];
-            [self.systemChangesWindowController showWindow:nil];
-        }
+        os << "\n" << SAFE_DIALOG_SYSTEM_CHANGES_FOOTER;
+
+        [NSApplication.sharedApplication activateIgnoringOtherApps:YES];
+        decltype(self) __weak weakSelf = self;
+        self.systemChangesWindowController =
+        [[SFXSystemChangesWindowController alloc]
+         initWithBlock:^(SFXSystemChangesWindowController *c, system_changes_action_t action, BOOL dontShowAgain) {
+             [weakSelf systemChangesResponseWithController:c action:action dontShowAgain:dontShowAgain];
+         }
+         andMessage:safe::mac::to_ns_string(os.str())
+         ];
+        [self.systemChangesWindowController showWindow:nil];
     }
     else [self startAppUI];
 }

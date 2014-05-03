@@ -20,6 +20,9 @@
 #include <safe/mac/system_changes.hpp>
 #include <safe/util.hpp>
 
+#include <string>
+#include <vector>
+
 #include <cstdint>
 
 #include <Security/Security.h>
@@ -163,9 +166,19 @@ enable_encrypted_swap(ShellRun shell_run, bool enable) {
     return must_reboot;
 }
 
-bool
-system_changes_are_required() {
-    return (hibernate_is_enabled() || !encrypted_swap_is_enabled());
+std::vector<std::string>
+required_system_changes() {
+    std::vector<std::string> to_ret;
+
+    if (hibernate_is_enabled()) {
+        to_ret.push_back("Disable hibernate sleep");
+    }
+
+    if (!encrypted_swap_is_enabled()) {
+        to_ret.push_back("Encrypt swap space");
+    }
+
+    return to_ret;
 }
 
 bool
