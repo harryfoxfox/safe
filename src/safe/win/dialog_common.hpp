@@ -126,7 +126,7 @@ draw_safe(LPDRAWITEMSTRUCT pDIS) {
 inline
 decltype(w32util::num_characters(""))
 button_width(const std::string & msg) {
-  auto width = w32util::num_characters(msg) * 4;
+  auto width = w32util::num_characters(msg) * 4 + 8;
   auto MIN_BUTTON_WIDTH = (decltype(width)) 10 * 4;
   return std::max(width, MIN_BUTTON_WIDTH);
 }
