@@ -337,5 +337,29 @@ compute_base_units_of_logfont(HWND hwnd, const LOGFONT & lplf) {
   return {baseunit_x, baseunit_y};
 }
 
+LONG
+get_text_height(HWND hwnd, const LOGFONT & lf,
+                const std::string & text, LONG width_in_logical_units) {
+  auto dc = GetDC(hwnd);
+  if (!dc) w32util::throw_windows_error();
+  auto _release_dc = safe::create_deferred(ReleaseDC, hwnd, dc);
+
+  auto hfont = CreateFontIndirect(&lf);
+  if (!hfont) w32util::throw_windows_error();
+  auto _release_hfont = safe::create_deferred(DeleteObject, hfont);
+
+  auto font_dc = SelectObject(dc, hfont);
+  if (!font_dc) w32util::throw_windows_error();
+
+  RECT rect;
+  safe::zero_object(rect);
+  rect.right = width_in_logical_units;
+  auto h = DrawTextW(dc, w32util::widen(text).data(), text.size(), &rect,
+                     DT_CALCRECT | DT_NOCLIP | DT_LEFT | DT_WORDBREAK);
+  if (!h) w32util::throw_windows_error();
+
+  return h;
+}
+
 }
 

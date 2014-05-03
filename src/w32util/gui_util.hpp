@@ -71,6 +71,10 @@ compute_point_size_of_logfont(HWND hwnd, const LOGFONT & lplf);
 SIZE
 compute_base_units_of_logfont(HWND hwnd, const LOGFONT & lplf);
 
+LONG
+get_text_height(HWND hwnd, const LOGFONT & lf,
+                const std::string & text, LONG width_in_logical_units);
+
 }
 
 #endif
