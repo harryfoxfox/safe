@@ -32,8 +32,10 @@
 
 namespace safe { namespace win {
 
-SystemChangesChoice
-system_changes_dialog(HWND hwnd) {
+std::pair<SystemChangesChoice, bool>
+system_changes_dialog(HWND hwnd, std::vector<std::string> changes) {
+  assert(!changes.empty());
+
   auto more_info = [=] () {
     try {
       w32util::open_url_in_browser(hwnd,
@@ -45,28 +47,27 @@ system_changes_dialog(HWND hwnd) {
     return opt::nullopt;
   };
 
-  auto quit = [=] () {
-    auto ret = MessageBoxW(hwnd,
-                           w32util::widen(SAFE_DIALOG_CANCEL_SYSTEM_CHANGES_MESSAGE).c_str(),
-                           w32util::widen(SAFE_DIALOG_CANCEL_SYSTEM_CHANGES_TITLE).c_str(),
-                           MB_YESNO | MB_ICONWARNING | MB_SETFOREGROUND);
-    return (ret == IDYES
-            ? opt::make_optional(SystemChangesChoice::QUIT)
-            : opt::nullopt);
-  };
-
   std::vector<Choice<SystemChangesChoice>> choices = {
-    {SAFE_DIALOG_SYSTEM_CHANGES_OK, SystemChangesChoice::OK},
+    // TODO: add "Admin" icon next to "Make Changes" button
+    {SAFE_DIALOG_SYSTEM_CHANGES_MAKE_CHANGES, SystemChangesChoice::MAKE_CHANGES},
+    {SAFE_DIALOG_SYSTEM_CHANGES_DONT_MAKE_CHANGES, SystemChangesChoice::DONT_MAKE_CHANGES},
     {SAFE_DIALOG_SYSTEM_CHANGES_MORE_INFO, more_info},
   };
 
-  return general_safe_dialog<SystemChangesChoice,
-                             decltype(choices)>
+  std::ostringstream os;
+  os << SAFE_DIALOG_SYSTEM_CHANGES_HEADER;
+  os << "\r\n\r\n";
+  for (const auto & change : changes) {
+    os << "    " << SAFE_DIALOG_SYSTEM_CHANGES_BULLET << " " << change << "\r\n";
+  }
+  os << "\r\n" << SAFE_DIALOG_SYSTEM_CHANGES_FOOTER;
+
+  return general_safe_dialog_with_suppression<SystemChangesChoice>
     (hwnd,
      SAFE_DIALOG_SYSTEM_CHANGES_TITLE,
-     SAFE_DIALOG_SYSTEM_CHANGES_MESSAGE,
+     os.str(),
      std::move(choices),
-     ButtonAction<SystemChangesChoice>(quit));
+     opt::nullopt, GeneralDialogIcon::SAFE, true);
 }
 
 }}

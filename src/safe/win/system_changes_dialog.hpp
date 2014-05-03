@@ -19,18 +19,21 @@
 #ifndef _safe_system_changes_dialog_win_hpp
 #define _safe_system_changes_dialog_win_hpp
 
-#include <safe/lean_windows.h>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <windows.h>
 
 namespace safe { namespace win {
 
 enum class SystemChangesChoice {
-  NOTHING=1,
-  QUIT,
-  OK,
+  DONT_MAKE_CHANGES,
+  MAKE_CHANGES,
 };
 
-SystemChangesChoice
-system_changes_dialog(HWND hwnd);
+std::pair<SystemChangesChoice, bool>
+system_changes_dialog(HWND hwnd, std::vector<std::string> changes);
 
 }}
 

@@ -26,6 +26,8 @@
 #define SAFE_RECENTLY_USED_PATHS_DB_FILE_NAME "RecentPaths.db"
 #define SAFE_REMEMBER_PASSWORD_COOKIE_FILENAME "RememberPasswordChecked"
 #define SAFE_SHOW_SYSTEM_CHANGES_WARNING_COOKIE_FILENAME "ShowSystemChangesWarning"
+#define SAFE_DONT_SHOW_SYSTEM_CHANGES_INSTALL_COOKIE_FILENAME "DontShowSystemChangesInstall"
+#define SAFE_DONT_SHOW_WINXP_WARNING_COOKIE_FILENAME "DontShowWindowsXPWarning"
 
 enum {
   SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS=10,
@@ -120,22 +122,19 @@ enum {
    PRODUCT_NAME_A ". You can also quit " PRODUCT_NAME_A " and reboot on " \
    "your own later. Reboot now?")
 
-#define SAFE_DIALOG_SYSTEM_CHANGES_TITLE ("Welcome to " PRODUCT_NAME_A "!")
-#define SAFE_DIALOG_SYSTEM_CHANGES_MESSAGE \
-  ("Before you can get started using " PRODUCT_NAME_A " " \
-   "we must make some low-level changes to your system " \
-   "to support greater privacy.")
-#define SAFE_DIALOG_SYSTEM_CHANGES_OK "OK"
+#define SAFE_DIALOG_SYSTEM_CHANGES_TITLE "System Changes Required"
+#define SAFE_DIALOG_SYSTEM_CHANGES_HEADER \
+  "Before using Safe, we recommend making the following changes to your system:"
+#define SAFE_DIALOG_SYSTEM_CHANGES_BULLET "•"
+#define SAFE_DIALOG_SYSTEM_CHANGES_FOOTER \
+  "These changes are critical for ensuring your privacy when using Safe but "\
+  "may not be necessary for your use case. If in doubt, we strongly recommend "\
+  "making these changes."
+#define SAFE_DIALOG_SYSTEM_CHANGES_MAKE_CHANGES "Make Changes"
+#define SAFE_DIALOG_SYSTEM_CHANGES_DONT_MAKE_CHANGES "Don't Make Changes"
 #define SAFE_DIALOG_SYSTEM_CHANGES_MORE_INFO "More Info"
 
 #define SAFE_PROGRESS_SYSTEM_CHANGES_TITLE "Making System Changes"
 #define SAFE_PROGRESS_SYSTEM_CHANGES_MESSAGE "Making System Changes..."
-
-#define SAFE_DIALOG_CANCEL_SYSTEM_CHANGES_TITLE "Are You Sure?"
-#define SAFE_DIALOG_CANCEL_SYSTEM_CHANGES_MESSAGE \
-  ("These changes are essential to keep your " \
-   "data safe from attackers. If you quit " \
-   "now you won't be able to use Safe. Are you " \
-   "sure you want to quit?")
 
 #endif

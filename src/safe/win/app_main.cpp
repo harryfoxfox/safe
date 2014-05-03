@@ -100,7 +100,7 @@ struct WindowData {
   safe::win::ManagedMenuHandle tray_menu;
   bool control_was_pressed_on_tray_open;
   safe::RecentlyUsedPathStoreV1 recent_mount_paths_store;
-  encfs::Path first_run_cookie_path;
+  encfs::Path app_directory_path;
   unsigned timer_rev;
 };
 
@@ -659,7 +659,8 @@ add_tray_icon(HWND safe_main_window) {
 static
 bool
 is_first_run(const WindowData & wd) {
-  return (!encfs::file_exists(wd.native_fs, wd.first_run_cookie_path) &&
+  auto first_run_cookie_path = wd.app_directory_path.join(SAFE_APP_STARTED_COOKIE_FILENAME);
+  return (!encfs::file_exists(wd.native_fs, first_run_cookie_path) &&
           wd.recent_mount_paths_store.empty());
 }
 
@@ -669,8 +670,52 @@ record_app_start(WindowData & wd) {
   // TODO: we can run this async
   bool open_for_write = true;
   bool should_create = true;
-  wd.native_fs->openfile(wd.first_run_cookie_path,
-                         open_for_write, should_create);
+  auto first_run_cookie_path = wd.app_directory_path.join(SAFE_APP_STARTED_COOKIE_FILENAME);
+  wd.native_fs->openfile(first_run_cookie_path, open_for_write, should_create);
+}
+
+static
+bool
+cookie_file_setting(WindowData & wd, std::string file_name) {
+  auto cookie_file_path = wd.app_directory_path.join(file_name);
+  return encfs::file_exists(wd.native_fs, cookie_file_path);
+}
+
+static
+void
+set_cookie_file_setting(WindowData & wd, std::string file_name, bool value) {
+  auto cookie_file_path = wd.app_directory_path.join(file_name);
+
+  if (value) {
+    wd.native_fs->openfile(cookie_file_path, true, true);
+  }
+  else {
+    w32util::ensure_deleted(cookie_file_path);
+  }
+}
+
+static
+bool
+should_show_system_changes_install_dialog(WindowData & wd) {
+  return !cookie_file_setting(wd, SAFE_DONT_SHOW_SYSTEM_CHANGES_INSTALL_COOKIE_FILENAME);
+}
+
+static
+void
+set_should_show_system_changes_install_dialog(WindowData & wd, bool should_show) {
+  set_cookie_file_setting(wd, SAFE_DONT_SHOW_SYSTEM_CHANGES_INSTALL_COOKIE_FILENAME, !should_show);
+}
+
+static
+bool
+should_show_windows_xp_warning_dialog(WindowData & wd) {
+  return !cookie_file_setting(wd, SAFE_DONT_SHOW_WINXP_WARNING_COOKIE_FILENAME);
+}
+
+static
+void
+set_should_show_windows_xp_warning_dialog(WindowData & wd, bool should_show) {
+  return set_cookie_file_setting(wd, SAFE_DONT_SHOW_WINXP_WARNING_COOKIE_FILENAME, !should_show);
 }
 
 static
@@ -862,12 +907,23 @@ set_encrypted_pagefile(bool encrypted) {
 }
 
 static
-bool
-system_changes_are_required() {
-  return (safe::win::need_to_install_kernel_driver() ||
-          hibernate_is_enabled() ||
-          (!safe::win::running_on_winxp() &&
-           !encrypted_pagefile_is_enabled()));
+std::vector<std::string>
+required_system_changes() {
+  std::vector<std::string> to_ret;
+
+  if (safe::win::need_to_install_kernel_driver()) {
+    to_ret.push_back("Install WebDAV RAMDisk cache");
+  }
+
+  if (hibernate_is_enabled()) {
+    to_ret.push_back("Disable hibernate sleep");
+  }
+
+  if (!encrypted_pagefile_is_enabled()) {
+    to_ret.push_back("Enable pagefile encryption");
+  }
+
+  return to_ret;
 }
 
 static
@@ -880,8 +936,7 @@ make_required_system_changes() {
     must_restart = true;
   }
 
-  if (!safe::win::running_on_winxp() &&
-      !encrypted_pagefile_is_enabled() &&
+  if (!encrypted_pagefile_is_enabled() &&
       set_encrypted_pagefile(true)) {
     must_restart = true;
   }
@@ -906,7 +961,7 @@ make_required_system_changes_as_admin(HWND hwnd) {
   std::function<bool()> impl;
 
   if (is_app_running_as_admin()) {
-    impl = [] {
+    impl = [&] {
       return make_required_system_changes();
     };
   }
@@ -1040,7 +1095,7 @@ run_reboot_sequence(HWND hwnd) {
 }
 
 static
-bool
+std::pair<bool, bool>
 run_winxp_warning_dialog(HWND hwnd) {
   std::string message =
     ("The security of " PRODUCT_NAME_A " is degraded while "
@@ -1074,14 +1129,15 @@ run_winxp_warning_dialog(HWND hwnd) {
   };
 
   auto ret =
-    safe::win::general_safe_dialog<XPWarningChoice>(hwnd,
-                                                    "Windows XP Warning",
-                                                    message,
-                                                    std::move(choices),
-                                                    opt::nullopt,
-                                                    safe::win::GeneralDialogIcon::NONE);
+    safe::win::general_safe_dialog_with_suppression<XPWarningChoice>
+    (hwnd,
+     "Windows XP Warning",
+     message,
+     std::move(choices),
+     opt::nullopt,
+     safe::win::GeneralDialogIcon::NONE, true);
 
-  return ret == XPWarningChoice::CONTINUE;
+  return std::make_pair(ret.first == XPWarningChoice::CONTINUE, ret.second);
 }
 
 static
@@ -1201,35 +1257,43 @@ main_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return 0;
       }
 
+      bool made_system_changes = false;
+
       if (safe::win::running_on_winxp()) {
-        auto should_continue = run_winxp_warning_dialog(hwnd);
-        if (!should_continue) {
-          PostMessage(hwnd, WM_CLOSE, 0, 0);
-          return 0;
+        if (should_show_windows_xp_warning_dialog(*wd)) {
+          // Windows XP doesn't support encrypted pagefile or our RAMDisk at the moment
+          // so just show user a big warning
+          bool dont_show_dialog_again;
+          bool should_continue;
+          std::tie(should_continue, dont_show_dialog_again) =
+            run_winxp_warning_dialog(hwnd);
+          if (!should_continue) {
+            PostMessage(hwnd, WM_CLOSE, 0, 0);
+            return 0;
+          }
+          set_should_show_windows_xp_warning_dialog(*wd, !dont_show_dialog_again);
         }
       }
+      else {
+        auto changes = required_system_changes();
+        if (!changes.empty() && should_show_system_changes_install_dialog(*wd)) {
+          safe::win::SystemChangesChoice system_changes_choice;
+          bool dont_show_dialog_again;
+          std::tie(system_changes_choice, dont_show_dialog_again) =
+            safe::win::system_changes_dialog(hwnd, changes);
+          set_should_show_system_changes_install_dialog(*wd, !dont_show_dialog_again);
 
-      bool made_system_changes = false;
-      if (system_changes_are_required()) {
-	// We need to install the kernel driver
-	// Thank user for starting program and let them know
-	// we have to make some changes before starting the program
-	auto choice = safe::win::system_changes_dialog(hwnd);
-	if (choice == safe::win::SystemChangesChoice::QUIT) {
-          PostMessage(hwnd, WM_CLOSE, 0, 0);
-	  return 0;
-	}
+          if (system_changes_choice == safe::win::SystemChangesChoice::MAKE_CHANGES) {
+            bool must_restart = make_required_system_changes_as_admin(hwnd);
+            if (must_restart) {
+              run_reboot_sequence(hwnd);
+              PostMessage(hwnd, WM_CLOSE, 0, 0);
+              return 0;
+            }
 
-	assert(choice == safe::win::SystemChangesChoice::OK);
-
-        bool must_restart = make_required_system_changes_as_admin(hwnd);
-        if (must_restart) {
-          run_reboot_sequence(hwnd);
-          PostMessage(hwnd, WM_CLOSE, 0, 0);
-	  return 0;
+            made_system_changes = true;
+          }
         }
-
-	made_system_changes = true;
       }
 
       start_app_ui(hwnd, *wd, made_system_changes);
@@ -1566,8 +1630,6 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
                                   recently_used_paths_storage_path,
                                   SAFE_RECENTLY_USED_PATHS_MENU_NUM_ITEMS);
 
-  auto first_run_cookie_path = app_directory_path.join(SAFE_APP_STARTED_COOKIE_FILENAME);
-
   normalize_app_is_run_at_login();
 
   auto wd = WindowData {
@@ -1581,7 +1643,7 @@ winmain_inner(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
     /*.tray_menu = */safe::win::ManagedMenuHandle(tray_menu_handle),
     /*.control_was_pressed_on_tray_open = */false,
     /*.recent_mount_paths_store = */std::move(path_store),
-    /*.first_run_cookie_path = */std::move(first_run_cookie_path),
+    /*.app_directory_path = */std::move(app_directory_path),
     /*.timer_rev = */0,
   };
 
