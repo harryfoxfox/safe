@@ -43,11 +43,6 @@ namespace safe { namespace win {
 
 bool
 need_to_install_kernel_driver() {
-  // NB: while the driver works on windows xp
-  //     it does not yet engage properly
-  //     just don't install until we have a properly working driver
-  if (running_on_winxp()) return false;
-
   // check if we can access the ramdisk
   HANDLE hFile = CreateFileW(L"\\\\.\\" RAMDISK_CTL_DOSNAME_W,
 			     0, 0,
@@ -337,6 +332,10 @@ create_device_and_install_driver(std::string temp_dir,
 
 bool
 install_kernel_driver() {
+  if (running_on_winxp()) {
+    throw std::runtime_error("driver is not supported on windows xp");
+  }
+
   // create temp directory
   auto temp_dir = w32util::get_temp_path() + "saferamdisk";
 
