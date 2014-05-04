@@ -31,6 +31,14 @@ namespace safe { namespace mac {
 
 static
 bool
+full_disk_encryption_is_active_on_startup_disk() {
+    auto ret = system("fdesetup isactive");
+    if (ret < 0) throw std::system_error(errno, std::generic_category());
+    return !ret;
+}
+
+static
+bool
 hibernate_is_enabled() {
     // NB: we specify full path to pmset since we have to trust
     //     the information that is returned from it
@@ -170,12 +178,19 @@ std::vector<std::string>
 required_system_changes() {
     std::vector<std::string> to_ret;
 
-    if (hibernate_is_enabled()) {
-        to_ret.push_back("Disable hibernate sleep");
-    }
+    // hibernate file must be stored on startup disk (according to man pmset),
+    // so if it's encrypted we don't have to disable hibernate
+    // same goes for swap file
+    if (!full_disk_encryption_is_active_on_startup_disk()) {
+        if (hibernate_is_enabled()) {
+            to_ret.push_back("Disable hibernate sleep");
+        }
 
-    if (!encrypted_swap_is_enabled()) {
-        to_ret.push_back("Encrypt swap space");
+        // NB: encrypted swapfile ("secure virtual memory" as its marketed)
+        //     has been default in mac os x since lion, despite filevault 2
+        if (!encrypted_swap_is_enabled()) {
+            to_ret.push_back("Encrypt swap space");
+        }
     }
 
     return to_ret;
@@ -184,13 +199,15 @@ required_system_changes() {
 bool
 make_required_system_changes_common(ShellRun shell_run) {
     bool reboot_required = false;
+
+    if (!full_disk_encryption_is_active_on_startup_disk()) {
+        if (enable_hibernate(shell_run, false)) {
+            reboot_required = true;
+        }
     
-    if (enable_hibernate(shell_run, false)) {
-        reboot_required = true;
-    }
-    
-    if (enable_encrypted_swap(shell_run, true)) {
-        reboot_required = true;
+        if (enable_encrypted_swap(shell_run, true)) {
+            reboot_required = true;
+        }
     }
     
     return reboot_required;
