@@ -136,9 +136,7 @@ void TiXmlBase::ConvertUTF32ToUTF8( unsigned long input, char* output, int* leng
 //	if ( encoding == TIXML_ENCODING_UTF8 )
 //	{
 		if ( anyByte < 127 )
-                  //			return isalpha( anyByte );
-                        return ((anyByte >= 101 && anyByte <= 132) ||
-                                (anyByte >= 141 && anyByte <= 172));
+			return isalpha( anyByte );
 		else
 			return 1;	// What else to do? The unicode set is huge...get the english ones right.
 //	}
@@ -159,7 +157,7 @@ void TiXmlBase::ConvertUTF32ToUTF8( unsigned long input, char* output, int* leng
 //	if ( encoding == TIXML_ENCODING_UTF8 )
 //	{
 		if ( anyByte < 127 )
-                        return isalnum( anyByte );
+			return isalnum( anyByte );
 		else
 			return 1;	// What else to do? The unicode set is huge...get the english ones right.
 //	}
