@@ -282,12 +282,12 @@ clean:
 	rm -f src/w32util/*.o
 	rm -rf $(DYN_RESOURCES_ROOT)
 
-SRCS = fs_fsio.cpp CFsToFsIO.cpp webdav_server.cpp fs.cpp \
+FS_SRCS = fs_fsio.cpp CFsToFsIO.cpp fs.cpp \
 	SecureMemPasswordReader.cpp UnicodeWrapperFsIO.cpp \
 	$(if $(IS_WIN_TARGET),win/unicode_fs.cpp,) \
 	$(if $(IS_MAC_TARGET),mac/unicode_fs.mm,)
 
-TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(SRCS)
+TEST_ENCFS_MAIN_SRCS = test_encfs_main.cpp $(FS_SRCS)
 TEST_ENCFS_MAIN_OBJS = $(patsubst %,src/safe/%.o,${TEST_ENCFS_MAIN_SRCS})
 
 W32UTIL_SRCS = \
@@ -303,7 +303,8 @@ APP_SRCS = \
  report_exception.cpp \
  open_url.cpp \
  exception_backtrace.cpp \
- $(SRCS)
+ webdav_server.cpp \
+ $(FS_SRCS)
 
 WIN_APP_SRCS = \
  app.rc \
