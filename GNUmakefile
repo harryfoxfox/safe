@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 EXE_NAME := Safe.exe
+DEBUG_EXE_NAME := $(basename $(EXE_NAME))-Debug.exe
 
 OUT_DIR ?= out
 
@@ -339,7 +340,7 @@ src/safe/win/*.rc.o: $(RESOURCES_ROOT)/* $(wildcard $(DYN_RESOURCES_ROOT)/*)
 test_encfs_main: $(TEST_ENCFS_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) GNUmakefile
 
-$(EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
+$(DEBUG_EXE_NAME): $(WINDOWS_APP_MAIN_OBJS) $(ENCFS_STATIC_LIBRARY) \
 	$(WEBDAV_SERVER_STATIC_LIBRARY) GNUmakefile
 
 # build instructions
@@ -359,17 +360,32 @@ test_encfs_main:
 
 # NB: when debugging on WINE make sure it can find libstdc++
 
-$(EXE_NAME):
+$(DEBUG_EXE_NAME):
 	$(CXX) $(ASLR_LINK_FLAGS) $(WINDOWS_SUBSYS_LINK_FLAGS) -Wl,--wrap,__cxa_throw \
         $(if $(RELEASE),$(LDFLAGS_RELEASE),$(LDFLAGS_DEBUG)) \
         $(if $(RELEASE),-static,) \
  -L$(DEPS_INSTALL_ROOT)/lib $(MY_CXXFLAGS) -o $@ $(WINDOWS_APP_MAIN_OBJS) \
  $(DEPS_LIBRARIES) $(DEPS_EXTRA_LIBRARIES) \
  -lole32 -lcomctl32 -lnormaliz -lsetupapi -lnewdev -lpsapi -lmypowrprof
-	cp $@ Safe-Debug.exe
-	$(if $(RELEASE),$(STRIP) -s $@,)
-	$(if $(RELEASE),upx --best --all-methods --ultra-brute $@,)
-	$(if $(RELEASE),signtool sign //v //s MY //n "Rian Hunter" //fd sha1 //t "http://timestamp.digicert.com" $@,)
+
+$(EXE_NAME): $(DEBUG_EXE_NAME)
+	cp $< $@.notsigned
+ifneq ($(RELEASE),)
+	$(STRIP) -s $@.notsigned
+	upx --best --all-methods --ultra-brute $@.notsigned
+ifneq ($(IS_WIN),)
+	signtool sign //v //s MY //n "Rian Hunter" //fd sha1 //t "http://timestamp.digicert.com" $@.notsigned
+	mv $@.notsigned $@
+else
+	@echo 'Signining...'; \
+ if [ -z $$SAFE_PFX_PATH ]; then printf 'Path to pfx file:'; read SAFE_PFX_PATH; fi; \
+ stty -echo; printf 'Password:'; \
+ read P; \
+ stty echo; \
+ echo; \
+ osslsigncode sign -pass $$P -h sha1 -t "http://timestamp.digicert.com" -pkcs12 $$SAFE_PFX_PATH -in $@.notsigned -out $@
+endif
+endif
 
 .PHONY: dependencies clean libbotan \
 	libprotobuf libtinyxml libencfs libwebdav_server_fs nlscheck normaliz clean-deps safe_ramdisk clean-exe
