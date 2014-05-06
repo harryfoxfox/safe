@@ -367,9 +367,6 @@ install_kernel_driver() {
 
 RAMDiskHandle
 engage_ramdisk() {
-  // windows xp doesn't use the ramdisk for now
-  if (running_on_winxp()) return RAMDiskHandle();
-
   // check if we can access the ramdisk
   auto hFile = CreateFileW(L"\\\\.\\" RAMDISK_CTL_DOSNAME_W,
                            0, 0,
@@ -377,7 +374,12 @@ engage_ramdisk() {
                            OPEN_EXISTING,
                            0,
                            NULL);
-  if (hFile == INVALID_HANDLE_VALUE) w32util::throw_windows_error();
+  if (hFile == INVALID_HANDLE_VALUE) {
+    if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+      throw RAMDiskDriverNotInstalledError();
+    }
+    w32util::throw_windows_error();
+  }
 
   auto toret = RAMDiskHandle(hFile);
 

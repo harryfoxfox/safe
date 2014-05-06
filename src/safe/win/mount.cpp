@@ -198,7 +198,14 @@ mount_new_encfs_drive(const std::shared_ptr<encfs::FsIO> & native_fs,
                       const encfs::SecureMem & password) {
   auto mount_name = encrypted_container_path.basename();
 
-  auto ramdisk_handle = engage_ramdisk();
+  decltype(engage_ramdisk()) ramdisk_handle;
+
+  try {
+    ramdisk_handle = engage_ramdisk();
+  }
+  catch (const RAMDiskDriverNotInstalledError &) {
+    // this is fine, user didn't install ramdisk
+  }
 
   auto requested_listen_port = running_on_winxp()
     // windows xp can only mount port 80 :/

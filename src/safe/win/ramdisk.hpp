@@ -21,9 +21,12 @@
 
 #include <safe/win/util.hpp>
 
+#include <exception>
 #include <string>
 
 namespace safe { namespace win {
+
+class RAMDiskDriverNotInstalledError : public std::exception {};
 
 bool
 need_to_install_kernel_driver();
