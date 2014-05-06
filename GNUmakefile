@@ -205,7 +205,7 @@ nlscheck: $(NLSCHECK)
 
 NORMALIZ_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libnormaliz.a
 $(NORMALIZ_DEP): $(CURDIR)/normaliz.def
-	$(DLLTOOL) -k -d $^ -l $@
+	$(DLLTOOL) -k -d $< -l $@
 
 normaliz: $(NORMALIZ_DEP) clean-exe
 
@@ -261,7 +261,7 @@ update_driver: $(DYN_RESOURCES_ROOT)/update_driver.exe
 
 MYPOWRPROF_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libmypowrprof.a
 $(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def
-	$(DLLTOOL) -k -d $^ -l $@
+	$(DLLTOOL) -k -d $< -l $@
 
 mypowrprof: $(MYPOWRPROF_DEP) clean-exe
 
