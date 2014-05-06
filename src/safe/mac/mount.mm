@@ -206,13 +206,27 @@ get_mount_device(std::string mount_point) {
 
 bool
 MountDetails::is_still_mounted() const {
+    opt::optional<std::string> maybe_device;
     try {
-        return get_mount_device(mount_point) == webdav_mount_url(listen_port, name);
+        maybe_device = get_mount_device(mount_point);
     }
     catch (const std::system_error & err) {
         if (err.code() == std::errc::no_such_file_or_directory) return false;
         throw;
     }
+
+    auto & device = *maybe_device;
+    if (device.empty()) return false;
+
+    auto mount_url = webdav_mount_url(listen_port, name);
+
+    assert(!mount_url.empty());
+
+    // normalize for trailing slash at the end
+    if (device.back() == '/') device.pop_back();
+    if (mount_url.back() == '/') mount_url.pop_back();
+
+    return device == mount_url;
 }
 
 template <typename T>
