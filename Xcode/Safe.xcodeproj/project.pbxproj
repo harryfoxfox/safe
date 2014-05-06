@@ -522,7 +522,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "# save unstripped version of binary\ncp \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\" ~/$(basename ${EXECUTABLE_PATH})-Unstripped\n\nstrip -u -r \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"\n\nUPX=$(which upx)\nif [ -z \"$UPX\"] && [ -x /usr/local/bin/upx ]; then\n    UPX=/usr/local/bin/upx\nfi\n\nexec \"$UPX\" --best --ultra-brute \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"";
+			shellScript = "# save unstripped version of binary\ncp \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\" ~/$(basename ${EXECUTABLE_PATH})-Unstripped\n\nstrip -u -r \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"\n\nUPX=$(which upx)\nif [ -z \"$UPX\" ] && [ -x /usr/local/bin/upx ]; then\n    UPX=/usr/local/bin/upx\nfi\n\nexec \"$UPX\" --best --ultra-brute \"${TARGET_BUILD_DIR}/${EXECUTABLE_PATH}\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
