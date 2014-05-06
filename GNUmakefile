@@ -190,7 +190,7 @@ libtinyxml: clean
 # we issue "clean" first because our source files use code in
 # "safe_nlscheck.h"
 NLSCHECK := $(CURDIR)/$(OUT_DIR)/deps/include/safe_nlscheck.h
-$(NLSCHECK): clean
+$(NLSCHECK):
 	@mkdir -p /tmp/nlschk && \
          echo '#include <windows.h>' > /tmp/nlschk/chk.c && \
          echo 'NORM_FORM a = NormalizationC;' >> /tmp/nlschk/chk.c && \
@@ -201,13 +201,13 @@ $(NLSCHECK): clean
          echo '#define SAFE_HAVE_WINNLS' >> $(NLSCHECK); \
          fi
 
-nlscheck: $(NLSCHECK)
+nlscheck: $(NLSCHECK) clean
 
 NORMALIZ_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libnormaliz.a
 $(NORMALIZ_DEP): $(CURDIR)/normaliz.def
 	$(DLLTOOL) -k -d $< -l $@
 
-normaliz: $(NORMALIZ_DEP) clean-exe
+normaliz: $(NORMALIZ_DEP) clean
 
 # this isn't run by default since we use the prebuild versions in "resources/"
 # but can be run manually, then upon build of Safe.exe, we'll pull in
@@ -263,7 +263,7 @@ MYPOWRPROF_DEP := $(CURDIR)/$(OUT_DIR)/deps/lib/libmypowrprof.a
 $(MYPOWRPROF_DEP): $(CURDIR)/mypowrprof.def
 	$(DLLTOOL) -k -d $< -l $@
 
-mypowrprof: $(MYPOWRPROF_DEP) clean-exe
+mypowrprof: $(MYPOWRPROF_DEP) clean
 
 dependencies: libprotobuf libtinyxml \
  $(if $(IS_WIN_TARGET),libbotan,) \
@@ -274,10 +274,8 @@ dependencies: libprotobuf libtinyxml \
 clean-deps:
 	rm -rf $(OUT_DIR)
 
-clean-exe:
-	rm -f $(EXE_NAME)
-
 clean:
+	rm -f $(EXE_NAME) $(DEBUG_EXE_NAME)
 	rm -f src/safe/*.o
 	rm -f src/safe/win/*.o
 	rm -f src/w32util/*.o
