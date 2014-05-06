@@ -265,7 +265,16 @@ remove_mount_from_favorites(const safe::mac::MountDetails & mount) {
     self->path_store->use_path(md.get_source_path());
     self->mounts.insert(self->mounts.begin(), std::move(md));
     const auto & new_mount = self->mounts.front();
-    add_mount_to_favorites(new_mount);
+    try {
+        add_mount_to_favorites(new_mount);
+    }
+    catch (const std::exception & err) {
+        // NB: This operation wasn't necessary for the mount to succeed,
+        // so just swallow the error
+        // TODO: we should have an asynchronous opt-in error reporting facility
+        lbx_log_error("Error while adding mount (%s) to favorites: %s",
+                      new_mount.get_mount_point().c_str(), err.what());
+    }
     [self _updateStatusMenu];
     new_mount.open_mount();
     [self notifyUserTitle:@"Success"
