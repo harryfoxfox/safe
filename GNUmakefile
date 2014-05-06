@@ -375,13 +375,15 @@ ifneq ($(IS_WIN),)
 	signtool sign //v //s MY //n "Rian Hunter" //fd sha1 //t "http://timestamp.digicert.com" $@.notsigned
 	mv $@.notsigned $@
 else
-	@echo 'Signining...'; \
+	@echo 'Signing...'; \
  if [ -z $$SAFE_PFX_PATH ]; then printf 'Path to pfx file:'; read SAFE_PFX_PATH; fi; \
+ if [ -z $$SAFE_PFX_PASSWORD ]; then \
  stty -echo; printf 'Password:'; \
- read P; \
+ read SAFE_PFX_PASSWORD; \
  stty echo; \
  echo; \
- osslsigncode sign -pass $$P -h sha1 -t "http://timestamp.digicert.com" -pkcs12 $$SAFE_PFX_PATH -in $@.notsigned -out $@
+ fi; \
+ osslsigncode sign -pass $$SAFE_PFX_PASSWORD -h sha1 -t "http://timestamp.digicert.com" -pkcs12 $$SAFE_PFX_PATH -in $@.notsigned -out $@
 endif
 endif
 
